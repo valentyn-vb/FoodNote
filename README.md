@@ -10,10 +10,10 @@ Capstone project demonstrating: Node.js, NestJS, Next.js, PostgreSQL (TypeORM), 
 
 npm workspaces monorepo:
 
-| Folder      | What it is                                                          |
-| ----------- | ------------------------------------------------------------------- |
-| `frontend/` | Next.js (App Router) + TypeScript + Tailwind — port **3000**         |
-| `backend/`  | NestJS + TypeScript API — port **3001**, all routes under `/api`     |
+| Folder      | What it is                                                              |
+| ----------- | ----------------------------------------------------------------------- |
+| `frontend/` | Next.js (App Router) + TypeScript + Tailwind — port **3000**            |
+| `backend/`  | NestJS + TypeScript API — port **3001**, all routes under `/api`        |
 | `shared/`   | `@foodnote/shared` — Zod schemas shared by both apps (the API contract) |
 
 ## Prerequisites
