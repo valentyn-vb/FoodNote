@@ -26,7 +26,7 @@ npm workspaces monorepo:
 ```bash
 npm install            # installs all three workspaces
 cp .env.example .env   # local configuration
-docker compose up -d   # PostgreSQL 16 on localhost:5432
+npm run db:up          # PostgreSQL 16 on localhost:5432 (Docker; waits for healthy)
 npm run dev            # shared (watch) + backend (3001) + frontend (3000)
 ```
 

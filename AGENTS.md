@@ -10,7 +10,7 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 
 - `npm run dev` — shared (watch) + backend + frontend
 - `npm test` / `npm run format:check` — must pass before a PR
-- `docker compose up -d` — local Postgres 16
+- `npm run db:up` — start local Postgres 16 (Docker, waits for healthy); `db:down` / `db:logs` to stop / tail
 
 ## Rules
 
