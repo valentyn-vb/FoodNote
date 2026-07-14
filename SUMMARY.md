@@ -22,7 +22,7 @@ FoodNote (`valentyn-vb/FoodNote`, public) — 4-person student capstone, 4 weeks
 
 ```bash
 npm install
-docker compose up -d   # Postgres 16
+npm run db:up          # Postgres 16 (Docker)
 npm run dev            # shared (watch) + backend :3001 + frontend :3000
 ```
 

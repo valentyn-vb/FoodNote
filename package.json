@@ -10,6 +10,9 @@
   "scripts": {
     "dev": "npm run build -w shared && concurrently -n shared,api,web -c blue,green,magenta \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
     "test": "npm test -w backend",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
