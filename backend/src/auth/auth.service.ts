@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -8,8 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
 import type { AuthResponse, AuthUser } from '@foodnote/shared';
 import * as bcrypt from 'bcrypt';
-import { USERS_REPOSITORY } from '../users/users.repository';
-import type { StoredUser, UsersRepository } from '../users/users.repository';
+import { UsersRepository } from '../users/users.repository';
+import type { StoredUser } from '../users/users.repository';
 
 const BCRYPT_COST = 10;
 
@@ -34,7 +33,7 @@ export class AuthService {
     '7d') as JwtSignOptions['expiresIn'];
 
   constructor(
-    @Inject(USERS_REPOSITORY) private readonly users: UsersRepository,
+    private readonly users: UsersRepository,
     private readonly jwt: JwtService,
   ) {}
 

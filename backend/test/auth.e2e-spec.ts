@@ -1,10 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import type { AuthResponse, RefreshResponse } from '@foodnote/shared';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { User } from '../src/user/user.entity';
 
 describe('Auth flow (e2e)', () => {
   let app: INestApplication<App>;
@@ -24,6 +27,10 @@ describe('Auth flow (e2e)', () => {
     app.use(cookieParser());
     app.setGlobalPrefix('api');
     await app.init();
+
+    // The store is a real Postgres now — clear leftovers from previous runs
+    const users = app.get<Repository<User>>(getRepositoryToken(User));
+    await users.delete({ email: EMAIL });
   });
 
   afterAll(() => app.close());

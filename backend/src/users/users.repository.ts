@@ -5,9 +5,14 @@ export interface StoredUser {
   createdAt: Date;
 }
 
-export interface UsersRepository {
-  findByEmail(email: string): Promise<StoredUser | null>;
-  create(data: { email: string; passwordHash: string }): Promise<StoredUser>;
+/**
+ * Abstract class instead of an interface so it can serve as both the
+ * TypeScript type and the runtime DI token — no Symbol/@Inject ceremony.
+ */
+export abstract class UsersRepository {
+  abstract findByEmail(email: string): Promise<StoredUser | null>;
+  abstract create(data: {
+    email: string;
+    passwordHash: string;
+  }): Promise<StoredUser>;
 }
-
-export const USERS_REPOSITORY = Symbol('USERS_REPOSITORY');

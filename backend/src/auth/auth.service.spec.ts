@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import { InMemoryUsersRepository } from '../users/in-memory-users.repository';
-import { USERS_REPOSITORY } from '../users/users.repository';
+import { UsersRepository } from '../users/users.repository';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -18,12 +18,12 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         JwtService,
-        { provide: USERS_REPOSITORY, useClass: InMemoryUsersRepository },
+        { provide: UsersRepository, useClass: InMemoryUsersRepository },
       ],
     }).compile();
 
     service = moduleRef.get(AuthService);
-    users = moduleRef.get(USERS_REPOSITORY);
+    users = moduleRef.get(UsersRepository);
   });
 
   describe('register', () => {

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { StoredUser, UsersRepository } from './users.repository';
+import { UsersRepository } from './users.repository';
+import type { StoredUser } from './users.repository';
 
 /**
- * Temporary store until the TypeORM User entity lands (issue #8) —
- * then a TypeORM-backed implementation replaces this provider.
+ * Test double for unit tests — production uses TypeormUsersRepository.
  */
 @Injectable()
 export class InMemoryUsersRepository implements UsersRepository {
