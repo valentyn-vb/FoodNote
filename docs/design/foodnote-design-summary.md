@@ -32,6 +32,9 @@ flowchart TD
     G --> H[Log a meal - AI]
     G --> I[Log a meal - manual]
     G --> J[Log weight]
+    G --> K[Tap avatar / profile icon]
+    K --> K1[User Profile: plan, personal details, log out]
+    K1 --> G
 
     H --> H1[Type meal description]
     H1 --> H2[POST /meals/ai-parse]
@@ -73,6 +76,7 @@ Static exports: [`flow-mobile.webp`](./exports/flow-mobile.webp) · [`flow-deskt
 | Meal Log — Loading | F04 | [`h05-meal-log-loading.webp`](./exports/h05-meal-log-loading.webp) |
 | Meal Log — AI Preview | F05 | [`h06-meal-log-ai-preview.webp`](./exports/h06-meal-log-ai-preview.webp) |
 | Meal Log — Not Food | F04 edge | [`h07-meal-log-not-food.webp`](./exports/h07-meal-log-not-food.webp) |
+| User Profile | F08 | [`h08-user-profile.webp`](./exports/h08-user-profile.webp) |
 | Dashboard (desktop) | F-D | [`h-desktop-dashboard.webp`](./exports/h-desktop-dashboard.webp) |
 
 Mobile is 390px (iPhone), designed first — desktop scope was deliberately limited to the Dashboard only, scaled up as a sidebar + multi-column chart grid rather than a stretched mobile layout.
@@ -102,6 +106,7 @@ Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a delibera
 | Crying | `foodnote_mascot_emotives004.webp` | "Not food" edge state | RECOVER — gentle redirect, not an error |
 | Excited / laughing | `foodnote_mascot_emotives001.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal |
 | Sleeping | `foodnote_mascot_emotives005.webp` | Empty dashboard (flow-only, not exported as a screen) | ACCOMPANY — nothing logged yet |
+| None (deliberate) | — | User Profile | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
 
 ## Implementation notes (from High Fidelity annotations)
 
