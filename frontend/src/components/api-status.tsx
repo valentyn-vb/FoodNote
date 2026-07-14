@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { healthResponseSchema, type HealthResponse } from '@foodnote/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-
 export function ApiStatus() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/health`)
+    fetch('/api/health')
       .then((res) => res.json())
       .then((data) => setHealth(healthResponseSchema.parse(data)))
       .catch(() => setError('API unreachable'));
