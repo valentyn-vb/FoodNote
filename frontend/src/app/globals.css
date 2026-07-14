@@ -9,7 +9,27 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-display: var(--font-display);
+
+  /* Paper design-system vocabulary — lets Paper's exported JSX (get_jsx) be
+     pasted with minimal translation. See docs/design/foodnote-design-summary.md. */
+  --color-text: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-bg: var(--background);
+  --color-surface: var(--card);
+  --color-primary-deep: var(--fn-primary-deep);
+  --color-secondary: var(--fn-secondary);
+  --color-secondary-deep: var(--fn-secondary-deep);
+  --color-tertiary: var(--fn-tertiary);
+  --color-error: var(--destructive);
+  --color-error-bg: var(--fn-error-bg);
+  --text-caption: 13px;
+  --text-label: 14px;
+  --text-body: 16px;
+  --text-heading: 20px;
+  --text-heading-lg: 24px;
+  --text-display: 40px;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,9 +59,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
@@ -49,24 +69,35 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* FoodNote brand tokens — sourced from the Paper design system
+     (docs/design/foodnote-design-summary.md); mirror these, don't rederive. */
+  --fn-primary: #f5a65c;
+  --fn-primary-deep: #e08a3c;
+  --fn-secondary: #5bb98c;
+  --fn-secondary-deep: #3e9a70;
+  --fn-tertiary: #f4907e;
+  --fn-error-bg: #fbe9e7;
+  --fn-text-muted: #6b6b6b;
+  /* --font-display comes from next/font/google (Fredoka) on <html>, see layout.tsx */
+
+  --background: #fdfdfb;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: var(--fn-primary);
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: var(--fn-text-muted);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --destructive: #d64545;
+  --border: #e5e2dc;
+  --input: #e5e2dc;
+  --ring: var(--fn-primary);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
