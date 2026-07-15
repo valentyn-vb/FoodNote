@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
+import { AppSidebar } from '@/components/app-sidebar';
 import {
   DailyCaloriesChart,
   RemainingTodayRingCard,
@@ -177,27 +178,7 @@ export default function DashboardPage() {
 
       {/* Desktop — lg and up: sidebar + multi-column layout, same route/data. */}
       <div className="hidden bg-bg lg:flex lg:h-screen">
-        <div className="flex w-56 shrink-0 flex-col gap-8 border-r border-border bg-surface px-4 py-7">
-          <div className="flex items-center gap-2.25 px-1">
-            <div className="font-display text-body font-semibold text-text">
-              FoodNote
-            </div>
-          </div>
-          <nav className="flex flex-col gap-1">
-            <div className="flex h-10 items-center gap-2.5 rounded-sm bg-[#FFF3E7] px-3 font-sans text-[13.5px] font-semibold text-primary-deep">
-              Dashboard
-            </div>
-            <div className="flex h-10 items-center gap-2.5 rounded-sm px-3 font-sans text-[13.5px] text-text-muted">
-              Log a meal
-            </div>
-            <div className="flex h-10 items-center gap-2.5 rounded-sm px-3 font-sans text-[13.5px] text-text-muted">
-              Log weight
-            </div>
-            <div className="flex h-10 items-center gap-2.5 rounded-sm px-3 font-sans text-[13.5px] text-text-muted">
-              Settings
-            </div>
-          </nav>
-        </div>
+        <AppSidebar active="Dashboard" />
 
         <div className="flex grow basis-0 flex-col gap-5.5 overflow-clip px-10 py-8">
           <div className="flex items-center justify-between">
