@@ -9,7 +9,6 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import {
   loginRequestSchema,
   registerRequestSchema,
@@ -32,20 +31,11 @@ const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // Matches the global 'api' prefix — the cookie is only sent to auth routes
 const REFRESH_COOKIE_PATH = '/api/auth';
 
-const AUTH_THROTTLE = {
-  default: {
-    limit: Number(process.env.AUTH_THROTTLE_LIMIT ?? 5),
-    ttl: 60_000,
-  },
-};
-
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @Throttle(AUTH_THROTTLE)
   async register(
     @Body(new ZodValidationPipe(registerRequestSchema)) body: RegisterRequest,
     @Res({ passthrough: true }) res: Response,
@@ -58,7 +48,6 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  @Throttle(AUTH_THROTTLE)
   async login(
     @Body(new ZodValidationPipe(loginRequestSchema)) body: LoginRequest,
     @Res({ passthrough: true }) res: Response,

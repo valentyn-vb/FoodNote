@@ -16,9 +16,6 @@ describe('Auth flow (e2e)', () => {
   const PASSWORD = 'e2e test password';
 
   beforeAll(async () => {
-    // Permissive throttling so the suite never trips the 5/min auth limit
-    process.env.AUTH_THROTTLE_LIMIT = '1000';
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
