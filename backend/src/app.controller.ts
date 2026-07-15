@@ -1,11 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
+import type { HealthResponse } from '@foodnote/shared';
 import { AppService } from './app.service';
-
-type HealthResponse = {
-  status: string;
-  service: string;
-  timestamp: string;
-};
 
 @Controller()
 export class AppController {

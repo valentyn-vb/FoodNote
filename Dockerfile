@@ -1,27 +1,31 @@
-# ---- Build stage: install deps and build the Nest backend (standalone) ----
+# ---- Build stage ----
 FROM node:26-alpine AS builder
 WORKDIR /app
 
-# Install backend deps first for layer caching (invalidated only on manifest change).
-COPY backend/package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+COPY shared/package.json shared/
+COPY backend/package.json backend/
+RUN npm ci -w shared -w backend
 
-# Copy backend sources and build (outputs to /app/dist, entry dist/main.js).
-COPY backend/ ./
-RUN npm run build
+# Sources, built in dependency order: shared first, then backend
+COPY shared/ shared/
+COPY backend/ backend/
+RUN npm run build -w shared && npm run build -w backend
 
-# Drop devDependencies for the runtime image (native bcrypt stays compiled for node:26-alpine).
 RUN npm prune --omit=dev
 
-# ---- Production stage: runtime only ----
+# ---- Production stage ----
 FROM node:26-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/shared/package.json ./shared/
+COPY --from=builder /app/shared/dist ./shared/dist
+COPY --from=builder /app/backend/package.json ./backend/
+COPY --from=builder /app/backend/dist ./backend/dist
 
-# Backend listens on process.env.PORT (Render injects it); 3001 is the local default.
+USER node
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+CMD ["node", "backend/dist/main.js"]
