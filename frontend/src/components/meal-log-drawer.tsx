@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import NumberFlow from '@number-flow/react';
 import {
@@ -88,14 +89,7 @@ export function MealLogDrawer({
                 Log a meal
               </DrawerTitle>
               <DrawerClose className="flex size-5 items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path
-                    d="M18 6L6 18M6 6l12 12"
-                    fill="none"
-                    stroke="#333333"
-                    strokeWidth="2"
-                  />
-                </svg>
+                <X size={20} className="text-[#333333]" strokeWidth={2} />
               </DrawerClose>
             </DrawerHeader>
             <div className="flex flex-col gap-3 px-5 pt-2">
@@ -167,14 +161,7 @@ export function MealLogDrawer({
                 Review your meal
               </DrawerTitle>
               <DrawerClose className="flex size-5 items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path
-                    d="M18 6L6 18M6 6l12 12"
-                    fill="none"
-                    stroke="#333333"
-                    strokeWidth="2"
-                  />
-                </svg>
+                <X size={20} className="text-[#333333]" strokeWidth={2} />
               </DrawerClose>
             </DrawerHeader>
             <div className="flex min-h-0 flex-col gap-4.5 overflow-y-auto px-5 pt-1.5">
@@ -268,14 +255,7 @@ export function MealLogDrawer({
                 Log a meal
               </DrawerTitle>
               <DrawerClose className="flex size-5 items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path
-                    d="M18 6L6 18M6 6l12 12"
-                    fill="none"
-                    stroke="#333333"
-                    strokeWidth="2"
-                  />
-                </svg>
+                <X size={20} className="text-[#333333]" strokeWidth={2} />
               </DrawerClose>
             </DrawerHeader>
             <div className="flex flex-col items-center gap-3.5 px-6 pt-9 pb-2">

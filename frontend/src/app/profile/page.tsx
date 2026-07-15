@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,16 +26,11 @@ export default function ProfilePage() {
     <div className="mx-auto flex w-full max-w-md flex-col bg-surface">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <Link href="/dashboard" aria-label="Back to dashboard">
-          <svg width="20" height="20" viewBox="0 0 20 20" className="shrink-0">
-            <path
-              d="M12.5 4.5L6 10l6.5 5.5"
-              fill="none"
-              stroke="var(--color-text)"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronLeft
+            size={20}
+            className="shrink-0 text-text"
+            strokeWidth={1.8}
+          />
         </Link>
         <div className="font-sans text-[15px] font-semibold text-text">
           Profile

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -51,14 +52,7 @@ export default function OnboardingPage() {
           href="/"
           className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path
-              d="M15 18l-6-6 6-6"
-              fill="none"
-              stroke="#333333"
-              strokeWidth="2"
-            />
-          </svg>
+          <ChevronLeft size={18} className="text-[#333333]" strokeWidth={2} />
         </Link>
         <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
           Tell us about you

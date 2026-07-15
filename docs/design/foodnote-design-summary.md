@@ -91,7 +91,7 @@ Mobile is 390px (iPhone), designed first — desktop scope was deliberately limi
 | `--color-error`                  | `#D64545`             | Validation errors, destructive states only                 |
 | `--color-bg` / `--color-surface` | `#FDFDFB` / `#FFFFFF` | Ground / card surfaces                                     |
 | `--font-display`                 | Fredoka               | Headlines, big numbers                                     |
-| `--font-sans`                    | Inter                 | UI, body, data labels                                      |
+| `--font-sans`                    | Figtree               | UI, body, data labels                                      |
 
 Full token set (spacing, radius, type scale) lives in the Paper file's token panel, not duplicated here to avoid drift.
 
