@@ -35,8 +35,10 @@ type Step = 'input' | 'loading' | 'preview' | 'not-food';
 
 export function MealLogDrawer({
   onMealSaved,
+  onMealUndone,
 }: {
   onMealSaved?: (kcal: number) => void;
+  onMealUndone?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('input');
@@ -59,7 +61,7 @@ export function MealLogDrawer({
     setOpen(false);
     onMealSaved?.(MOCK_TOTALS.kcal);
     toast.success('Meal saved', {
-      action: { label: 'Undo', onClick: () => {} },
+      action: { label: 'Undo', onClick: () => onMealUndone?.() },
     });
     setTimeout(reset, 300);
   }
@@ -77,7 +79,7 @@ export function MealLogDrawer({
         Log a meal
       </DrawerTrigger>
 
-      <DrawerContent className="mx-auto w-full max-w-md">
+      <DrawerContent>
         {step === 'input' && (
           <>
             <DrawerHeader className="flex-row items-center justify-between">
