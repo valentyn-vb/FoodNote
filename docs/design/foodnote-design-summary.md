@@ -91,7 +91,7 @@ Mobile is 390px (iPhone), designed first — desktop scope was deliberately limi
 | `--color-error`                  | `#D64545`             | Validation errors, destructive states only                 |
 | `--color-bg` / `--color-surface` | `#FDFDFB` / `#FFFFFF` | Ground / card surfaces                                     |
 | `--font-display`                 | Fredoka               | Headlines, big numbers                                     |
-| `--font-sans`                    | Inter                 | UI, body, data labels                                      |
+| `--font-sans`                    | Figtree               | UI, body, data labels                                      |
 
 Full token set (spacing, radius, type scale) lives in the Paper file's token panel, not duplicated here to avoid drift.
 
@@ -99,14 +99,14 @@ Full token set (spacing, radius, type scale) lives in the Paper file's token pan
 
 Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a deliberate functional choice, not decoration — mascot never appears on routine screens (forms, headings, routine saves).
 
-| Emotive             | Asset                              | Used for                                                         | Job                                                                                   |
-| ------------------- | ---------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Writing / attentive | `foodnote_mascot_logo.png`         | AI parsing (loading)                                             | GUIDE — reduce uncertainty during a first-time wait                                   |
-| Nervous / sweat     | `foodnote_mascot_emotives009.webp` | AI preview confidence note                                       | REASSURE — estimate is uncertain, review before saving                                |
-| Crying              | `foodnote_mascot_emotives004.webp` | "Not food" edge state                                            | RECOVER — gentle redirect, not an error                                               |
-| Excited / laughing  | `foodnote_mascot_emotives001.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal                                        |
-| Sleeping            | `foodnote_mascot_emotives005.webp` | Empty dashboard (flow-only, not exported as a screen)            | ACCOMPANY — nothing logged yet                                                        |
-| None (deliberate)   | —                                  | User Profile                                                     | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
+| Emotive             | Asset            | Used for                                                         | Job                                                                                   |
+| ------------------- | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Writing / attentive | `guide.png`      | AI parsing (loading)                                             | GUIDE — reduce uncertainty during a first-time wait                                   |
+| Nervous / sweat     | `reassure.webp`  | AI preview confidence note                                       | REASSURE — estimate is uncertain, review before saving                                |
+| Crying              | `recover.webp`   | "Not food" edge state                                            | RECOVER — gentle redirect, not an error                                               |
+| Excited / laughing  | `celebrate.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal                                        |
+| Sleeping            | `accompany.webp` | Empty dashboard (flow-only, not exported as a screen)            | ACCOMPANY — nothing logged yet                                                        |
+| None (deliberate)   | —                | User Profile                                                     | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
 
 ## Implementation notes (from High Fidelity annotations)
 

@@ -1,17 +1,12 @@
 import type { Metadata } from 'next';
-import { Fredoka, Geist, Geist_Mono, Inter } from 'next/font/google';
+import { Figtree, Fredoka, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-display' });
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -38,14 +33,15 @@ export default function RootLayout({
       className={cn(
         'h-full',
         'antialiased',
-        geistSans.variable,
         geistMono.variable,
         'font-sans',
-        inter.variable,
+        figtree.variable,
         fredoka.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">
+      {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
+          attributes into <body> before hydration — harmless, but noisy in dev. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
         <Toaster />
       </body>
