@@ -49,9 +49,7 @@ export default function RegisterPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
-          Create your account
-        </CardTitle>
+        <CardTitle>Create your account</CardTitle>
         <CardDescription>
           Start planning and tracking with FoodNote.
         </CardDescription>
@@ -81,7 +79,7 @@ export default function RegisterPage() {
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-text-muted text-center w-full">
           Already have an account?{' '}
           <Link
             href="/login"

@@ -29,6 +29,7 @@ function PasswordInput({
           size="icon-xs"
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
+          className="hover:bg-transparent"
           onClick={() => setVisible((v) => !v)}
         >
           {visible ? <EyeOff /> : <Eye />}

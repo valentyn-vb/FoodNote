@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Log in</CardTitle>
+        <CardTitle>Log in</CardTitle>
         <CardDescription>Welcome back to FoodNote.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -84,7 +84,7 @@ export default function LoginPage() {
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-text-muted text-center w-full">
           No account yet?{' '}
           <Link
             href="/register"
