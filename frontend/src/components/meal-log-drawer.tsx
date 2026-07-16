@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const CTA_CLASS =
   'w-full rounded-sm bg-primary py-3.5 text-surface shadow-[0_2px_8px_#f5a65c59]';
@@ -37,9 +38,13 @@ type Step = 'input' | 'loading' | 'preview' | 'not-food';
 export function MealLogDrawer({
   onMealSaved,
   onMealUndone,
+  triggerClassName,
+  children = 'Log a meal',
 }: {
   onMealSaved?: (kcal: number) => void;
   onMealUndone?: () => void;
+  triggerClassName?: string;
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('input');
@@ -61,7 +66,11 @@ export function MealLogDrawer({
   function handleConfirm() {
     setOpen(false);
     onMealSaved?.(MOCK_TOTALS.kcal);
+    // CELEBRATE mascot moment (design doc: quiet, since it happens every meal)
     toast.success('Meal saved', {
+      icon: (
+        <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
+      ),
       action: { label: 'Undo', onClick: () => onMealUndone?.() },
     });
     setTimeout(reset, 300);
@@ -76,8 +85,13 @@ export function MealLogDrawer({
       }}
       showSwipeHandle
     >
-      <DrawerTrigger className="h-12.5 grow-2 basis-0 rounded-sm bg-primary text-surface shadow-[0_2px_8px_#f5a65c59] lg:grow-0 lg:px-6">
-        Log a meal
+      <DrawerTrigger
+        className={cn(
+          'h-12.5 grow-2 basis-0 rounded-sm bg-primary text-surface shadow-[0_2px_8px_#f5a65c59] lg:grow-0 lg:px-6',
+          triggerClassName,
+        )}
+      >
+        {children}
       </DrawerTrigger>
 
       <DrawerContent>
@@ -136,7 +150,7 @@ export function MealLogDrawer({
             <div className="flex flex-col items-center justify-center gap-5 px-6 pt-16 pb-18">
               <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-[#FFF3E7]">
                 <Image
-                  src="/mascot/guide.png"
+                  src="/mascot/defaultlogo.png"
                   alt=""
                   width={104}
                   height={104}
