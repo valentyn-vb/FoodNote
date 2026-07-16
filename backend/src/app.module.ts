@@ -18,8 +18,11 @@ import { UserModule } from './user/user.module';
         type: 'postgres',
         url: config.getOrThrow<string>('DATABASE_URL'),
         autoLoadEntities: true,
-        // Auto-sync schema in dev only!!!
-        synchronize: config.get<string>('NODE_ENV') !== 'production',
+        // Auto-sync schema in dev; also opt-in via DB_SYNCHRONIZE=true so a fresh
+        // Render Postgres gets its schema on first boot (remove once migrations exist).
+        synchronize:
+          config.get<string>('NODE_ENV') !== 'production' ||
+          config.get<string>('DB_SYNCHRONIZE') === 'true',
       }),
     }),
     AuthModule,
