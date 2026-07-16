@@ -136,7 +136,7 @@ export function MealLogDrawer({
             <div className="flex flex-col items-center justify-center gap-5 px-6 pt-16 pb-18">
               <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-[#FFF3E7]">
                 <Image
-                  src="/mascot/guide.png"
+                  src="/mascot/guide.webp"
                   alt=""
                   width={104}
                   height={104}
