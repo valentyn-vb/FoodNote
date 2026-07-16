@@ -67,31 +67,31 @@ Static exports: [`flow-mobile.webp`](./exports/flow-mobile.webp) · [`flow-deskt
 
 ## Screens (High Fidelity)
 
-| Screen | Parent flow node | Export |
-|---|---|---|
-| Onboarding | F01 | [`h01-onboarding.webp`](./exports/h01-onboarding.webp) |
-| Plan Selection | F02 | [`h02-plan-selection.webp`](./exports/h02-plan-selection.webp) |
-| Dashboard (mobile) | F03 | [`h03-dashboard-mobile.webp`](./exports/h03-dashboard-mobile.webp) |
-| Meal Log — Input | F04 | [`h04-meal-log-input.webp`](./exports/h04-meal-log-input.webp) |
-| Meal Log — Loading | F04 | [`h05-meal-log-loading.webp`](./exports/h05-meal-log-loading.webp) |
-| Meal Log — AI Preview | F05 | [`h06-meal-log-ai-preview.webp`](./exports/h06-meal-log-ai-preview.webp) |
-| Meal Log — Not Food | F04 edge | [`h07-meal-log-not-food.webp`](./exports/h07-meal-log-not-food.webp) |
-| User Profile | F08 | [`h08-user-profile.webp`](./exports/h08-user-profile.webp) |
-| Dashboard (desktop) | F-D | [`h-desktop-dashboard.webp`](./exports/h-desktop-dashboard.webp) |
+| Screen                | Parent flow node | Export                                                                   |
+| --------------------- | ---------------- | ------------------------------------------------------------------------ |
+| Onboarding            | F01              | [`h01-onboarding.webp`](./exports/h01-onboarding.webp)                   |
+| Plan Selection        | F02              | [`h02-plan-selection.webp`](./exports/h02-plan-selection.webp)           |
+| Dashboard (mobile)    | F03              | [`h03-dashboard-mobile.webp`](./exports/h03-dashboard-mobile.webp)       |
+| Meal Log — Input      | F04              | [`h04-meal-log-input.webp`](./exports/h04-meal-log-input.webp)           |
+| Meal Log — Loading    | F04              | [`h05-meal-log-loading.webp`](./exports/h05-meal-log-loading.webp)       |
+| Meal Log — AI Preview | F05              | [`h06-meal-log-ai-preview.webp`](./exports/h06-meal-log-ai-preview.webp) |
+| Meal Log — Not Food   | F04 edge         | [`h07-meal-log-not-food.webp`](./exports/h07-meal-log-not-food.webp)     |
+| User Profile          | F08              | [`h08-user-profile.webp`](./exports/h08-user-profile.webp)               |
+| Dashboard (desktop)   | F-D              | [`h-desktop-dashboard.webp`](./exports/h-desktop-dashboard.webp)         |
 
 Mobile is 390px (iPhone), designed first — desktop scope was deliberately limited to the Dashboard only, scaled up as a sidebar + multi-column chart grid rather than a stretched mobile layout.
 
 ## Design tokens
 
-| Token | Value | Use |
-|---|---|---|
-| `--color-primary` | `#F5A65C` | Primary actions, active states — the one functional accent |
-| `--color-secondary` | `#5BB98C` | Positive/success states (weight loss, actual-vs-projected) |
-| `--color-tertiary` | `#F4907E` | Decorative only, mascot-adjacent — never UI state |
-| `--color-error` | `#D64545` | Validation errors, destructive states only |
-| `--color-bg` / `--color-surface` | `#FDFDFB` / `#FFFFFF` | Ground / card surfaces |
-| `--font-display` | Fredoka | Headlines, big numbers |
-| `--font-sans` | Inter | UI, body, data labels |
+| Token                            | Value                 | Use                                                        |
+| -------------------------------- | --------------------- | ---------------------------------------------------------- |
+| `--color-primary`                | `#F5A65C`             | Primary actions, active states — the one functional accent |
+| `--color-secondary`              | `#5BB98C`             | Positive/success states (weight loss, actual-vs-projected) |
+| `--color-tertiary`               | `#F4907E`             | Decorative only, mascot-adjacent — never UI state          |
+| `--color-error`                  | `#D64545`             | Validation errors, destructive states only                 |
+| `--color-bg` / `--color-surface` | `#FDFDFB` / `#FFFFFF` | Ground / card surfaces                                     |
+| `--font-display`                 | Fredoka               | Headlines, big numbers                                     |
+| `--font-sans`                    | Figtree               | UI, body, data labels                                      |
 
 Full token set (spacing, radius, type scale) lives in the Paper file's token panel, not duplicated here to avoid drift.
 
@@ -99,14 +99,14 @@ Full token set (spacing, radius, type scale) lives in the Paper file's token pan
 
 Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a deliberate functional choice, not decoration — mascot never appears on routine screens (forms, headings, routine saves).
 
-| Emotive | Asset | Used for | Job |
-|---|---|---|---|
-| Writing / attentive | `foodnote_mascot_logo.png` | AI parsing (loading) | GUIDE — reduce uncertainty during a first-time wait |
-| Nervous / sweat | `foodnote_mascot_emotives009.webp` | AI preview confidence note | REASSURE — estimate is uncertain, review before saving |
-| Crying | `foodnote_mascot_emotives004.webp` | "Not food" edge state | RECOVER — gentle redirect, not an error |
-| Excited / laughing | `foodnote_mascot_emotives001.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal |
-| Sleeping | `foodnote_mascot_emotives005.webp` | Empty dashboard (flow-only, not exported as a screen) | ACCOMPANY — nothing logged yet |
-| None (deliberate) | — | User Profile | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
+| Emotive             | Asset            | Used for                                                         | Job                                                                                   |
+| ------------------- | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Writing / attentive | `guide.png`      | AI parsing (loading)                                             | GUIDE — reduce uncertainty during a first-time wait                                   |
+| Nervous / sweat     | `reassure.webp`  | AI preview confidence note                                       | REASSURE — estimate is uncertain, review before saving                                |
+| Crying              | `recover.webp`   | "Not food" edge state                                            | RECOVER — gentle redirect, not an error                                               |
+| Excited / laughing  | `celebrate.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal                                        |
+| Sleeping            | `accompany.webp` | Empty dashboard (flow-only, not exported as a screen)            | ACCOMPANY — nothing logged yet                                                        |
+| None (deliberate)   | —                | User Profile                                                     | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
 
 ## Implementation notes (from High Fidelity annotations)
 
