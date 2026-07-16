@@ -105,3 +105,24 @@ export const mockDashboardStats: DashboardStats = {
   weightTrendPoints: [30, 40, 35, 55, 50, 65, 60],
   calorieChartDays: [60, 75, 50, 85, 65, 70, 42],
 };
+
+// Chart series for dashboard-charts.tsx (keys match Line/Bar dataKey props)
+export const mockWeightTrend: { day: string; kg: number }[] = [
+  { day: 'Mon', kg: 83.1 },
+  { day: 'Tue', kg: 83.0 },
+  { day: 'Wed', kg: 82.7 },
+  { day: 'Thu', kg: 82.8 },
+  { day: 'Fri', kg: 82.5 },
+  { day: 'Sat', kg: 82.2 },
+  { day: 'Sun', kg: 81.9 },
+];
+
+export const mockDailyCalories: { day: string; kcal: number }[] = [
+  { day: 'Mon', kcal: 1720 },
+  { day: 'Tue', kcal: 1540 },
+  { day: 'Wed', kcal: 1810 },
+  { day: 'Thu', kcal: 1490 },
+  { day: 'Fri', kcal: 1660 },
+  { day: 'Sat', kcal: 1930 },
+  { day: 'Sun', kcal: 1380 },
+];
