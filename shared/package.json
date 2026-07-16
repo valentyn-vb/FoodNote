@@ -5,9 +5,16 @@
   "description": "Shared Zod schemas and types — the FoodNote API contract",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch --preserveWatchOutput"
+    "dev": "tsc --watch --preserveWatchOutput",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "zod": "^3.24.1"

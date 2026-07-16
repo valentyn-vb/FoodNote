@@ -3,12 +3,13 @@ FROM node:26-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY shared/package.json shared/
+# shared is copied in full (not just package.json): its `prepare` script
+# builds dist/ during `npm ci`, which needs the sources present
+COPY shared/ shared/
 COPY backend/package.json backend/
 RUN npm ci -w shared -w backend
 
-# Sources, built in dependency order: shared first, then backend
-COPY shared/ shared/
+# Built in dependency order: shared first, then backend
 COPY backend/ backend/
 RUN npm run build -w shared && npm run build -w backend
 
