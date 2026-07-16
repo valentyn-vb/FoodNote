@@ -147,12 +147,6 @@ export function AppSidebar() {
                     <UserRoundPen />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => notImplemented('Switching profiles')}
-                  >
-                    <ChevronsUpDown />
-                    Switch profile
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => notImplemented('Log out')}>
                     <LogOut />

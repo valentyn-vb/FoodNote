@@ -1,32 +1,14 @@
-'use client';
-
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { NotImplementedButton } from '@/components/not-implemented-button';
 import { mockUserProfile } from '@/lib/mock-data';
-import { notImplemented } from '@/lib/not-implemented';
+import { DetailRow } from './detail-row';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
 // moment that needs guidance, reassurance, or celebration (see H08 in Paper).
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between border-b border-border px-4 py-3.5 last:border-b-0">
-      <div className="font-sans text-label text-text">{label}</div>
-      <div className="font-sans text-label text-text-muted [font-variant-numeric:tabular-nums]">
-        {value}
-      </div>
-    </div>
-  );
-}
 
 export default function ProfilePage() {
   const user = mockUserProfile;
@@ -52,13 +34,13 @@ export default function ProfilePage() {
         <h1 className="font-sans text-title font-semibold text-text lg:text-heading-lg">
           Profile
         </h1>
-        <Button
+        <NotImplementedButton
+          action="Edit"
           variant="ghost"
           className="h-auto p-0 font-sans text-title font-semibold text-primary-deep hover:bg-transparent"
-          onClick={() => notImplemented('Edit')}
         >
           Edit
-        </Button>
+        </NotImplementedButton>
       </div>
 
       <div className="flex flex-col items-center gap-2.5 pt-7 pb-5 lg:flex-row lg:items-center lg:gap-4 lg:px-4 lg:pt-6">
@@ -78,10 +60,10 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
-        <div className="flex flex-col gap-2.5">
-          <div className="font-sans text-caption text-text-muted">
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-sans text-caption text-text-muted">
             Current plan
-          </div>
+          </h2>
           <Card className="gap-1 rounded-lg border-[1.5px] border-border bg-surface p-4 py-4 shadow-[0_1px_3px_#0000000a] ring-0">
             <div className="font-display text-heading font-semibold text-text">
               {user.plan.kcal.toLocaleString()} kcal / day
@@ -99,36 +81,41 @@ export default function ProfilePage() {
               Change plan
             </Button>
           </Card>
-        </div>
+        </section>
 
-        <div className="flex flex-col gap-2.5">
-          <div className="font-sans text-caption text-text-muted">
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-sans text-caption text-text-muted">
             Personal details
-          </div>
+          </h2>
           <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
-            <DetailRow label="Sex" value={user.sex} />
-            <DetailRow label="Age" value={user.age} />
-            <DetailRow label="Height" value={`${user.heightCm} cm`} />
-            <DetailRow label="Weight goal" value={`${user.weightGoalKg} kg`} />
+            <dl>
+              <DetailRow label="Sex" value={user.sex} />
+              <DetailRow label="Age" value={user.age} />
+              <DetailRow label="Height" value={`${user.heightCm} cm`} />
+              <DetailRow
+                label="Weight goal"
+                value={`${user.weightGoalKg} kg`}
+              />
+            </dl>
           </Card>
-          <Button
+          <NotImplementedButton
+            action="Editing details"
             variant="ghost"
             className="h-auto w-fit p-0 font-sans text-label font-semibold text-primary-deep hover:bg-transparent"
-            onClick={() => notImplemented('Editing details')}
           >
             Edit details
-          </Button>
-        </div>
+          </NotImplementedButton>
+        </section>
       </div>
 
       <div className="border-t border-border px-4 pt-3 pb-6">
-        <Button
+        <NotImplementedButton
+          action="Log out"
           variant="outline"
           className="h-12 w-full rounded-sm border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
-          onClick={() => notImplemented('Log out')}
         >
           Log out
-        </Button>
+        </NotImplementedButton>
       </div>
     </div>
   );

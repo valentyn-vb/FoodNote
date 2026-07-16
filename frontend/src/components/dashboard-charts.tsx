@@ -119,13 +119,13 @@ export function RemainingTodayRingCard({
 }) {
   return (
     <Card className={className}>
-      <div className="self-start font-sans text-caption font-semibold text-text">
+      <h2 className="self-start font-sans text-caption font-semibold text-text">
         Remaining today
-      </div>
+      </h2>
       {/* Recharts radial gauge — animates the arc on mount and on value
           change. Center label is an HTML overlay so NumberFlow can animate
           the figure (it can't render inside SVG <text>). */}
-      <div className="relative size-[130px]">
+      <div className="relative size-[110px] shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <RadialBarChart
             data={[{ value: remainingKcal }]}

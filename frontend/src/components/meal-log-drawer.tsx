@@ -94,7 +94,9 @@ export function MealLogDrawer({
         {children}
       </DrawerTrigger>
 
-      <DrawerContent>
+      {/* Full width on mobile (per review); capped and centered on desktop —
+          an edge-to-edge sheet across a 1440px screen reads as broken. */}
+      <DrawerContent className="lg:mx-auto lg:max-w-lg">
         {step === 'input' && (
           <>
             <DrawerHeader className="flex-row items-center justify-between">
