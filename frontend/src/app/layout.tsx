@@ -32,6 +32,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // Browser extensions (LanguageTool etc.) mutate <html> attributes before
+      // hydration; suppress attribute-mismatch noise on this element only.
+      suppressHydrationWarning
       className={cn(
         'h-full',
         'antialiased',
