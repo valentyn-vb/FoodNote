@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Figtree, Fredoka, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import { AuthProvider } from '@/components/auth-provider';
 import { Toaster } from '@/components/ui/sonner';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
@@ -42,7 +43,7 @@ export default function RootLayout({
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
           attributes into <body> before hydration — harmless, but noisy in dev. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Toaster />
       </body>
     </html>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import NumberFlow from '@number-flow/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserMenu } from '@/components/user-menu';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
@@ -15,16 +15,8 @@ import {
 import {
   mockDashboardStats,
   mockRecentMeals,
-  mockUserProfile,
   type Meal,
 } from '@/lib/mock-data';
-
-function initialsOf(name: string) {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('');
-}
 
 const CARD_CLASS =
   'rounded-lg border border-border bg-surface shadow-[0_1px_3px_#0000000a] ring-0 py-0';
@@ -36,7 +28,6 @@ export default function DashboardPage() {
   // Meals live in state so a save from the Drawer visibly moves the numbers —
   // NumberFlow animates them, per the H03 implementation annotation.
   const [meals, setMeals] = useState<Meal[]>(mockRecentMeals);
-  const initials = initialsOf(mockUserProfile.name);
   const eatenKcal = meals.reduce((sum, meal) => sum + meal.kcal, 0);
   const remainingKcal = Math.max(0, stats.goalKcal - eatenKcal);
   const progressPct = Math.min(
@@ -73,11 +64,7 @@ export default function DashboardPage() {
           <h1 className="font-display text-heading-lg font-semibold text-text">
             Today
           </h1>
-          <Avatar>
-            <AvatarFallback className="bg-primary text-surface">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserMenu />
         </div>
 
         <Card className={`${CARD_CLASS} gap-2.5 p-5`}>
@@ -185,11 +172,7 @@ export default function DashboardPage() {
             <h1 className="font-display text-heading-lg font-semibold text-text">
               Dashboard
             </h1>
-            <Avatar>
-              <AvatarFallback className="bg-primary text-surface">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <UserMenu />
           </div>
 
           <div className="flex gap-3.5">
