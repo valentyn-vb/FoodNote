@@ -15,3 +15,9 @@ export const healthResponseSchema = z.object({
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
 export * from './auth';
+export * from './common';
+export * from './profile';
+export * from './goals';
+export * from './weights';
+export * from './meals';
+export * from './dashboard';
