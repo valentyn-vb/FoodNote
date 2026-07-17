@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ChevronsUpDown,
   LayoutDashboard,
@@ -33,6 +33,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/components/auth-provider';
 import { useMeals } from '@/lib/meals-context';
 import { mockUserProfile } from '@/lib/mock-data';
 import { notImplemented } from '@/lib/not-implemented';
@@ -45,12 +46,21 @@ const DRAWER_TRIGGER_CLASS =
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { onMealSaved, onMealUndone } = useMeals();
+  // Session identity (email, logout) comes from auth; name/initials are
+  // still the mock profile until the profile API exists.
+  const { user: authUser, logout } = useAuth();
   const user = mockUserProfile;
   const initials = user.name
     .split(' ')
     .map((part) => part[0])
     .join('');
+
+  async function handleLogout() {
+    await logout();
+    router.replace('/login');
+  }
 
   return (
     <div className="hidden lg:contents">
@@ -137,7 +147,7 @@ export function AppSidebar() {
                       {user.name}
                     </span>
                     <span className="truncate font-sans text-[11.5px] text-text-muted">
-                      {user.email}
+                      {authUser?.email}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -148,7 +158,7 @@ export function AppSidebar() {
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => notImplemented('Log out')}>
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut />
                     Log out
                   </DropdownMenuItem>

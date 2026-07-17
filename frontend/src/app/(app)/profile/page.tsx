@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { NotImplementedButton } from '@/components/not-implemented-button';
 import { mockUserProfile } from '@/lib/mock-data';
 import { DetailRow } from './detail-row';
+import { LogoutButton } from './logout-button';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
 // moment that needs guidance, reassurance, or celebration (see H08 in Paper).
@@ -109,13 +110,12 @@ export default function ProfilePage() {
       </div>
 
       <div className="border-t border-border px-4 pt-3 pb-6">
-        <NotImplementedButton
-          action="Log out"
+        <LogoutButton
           variant="outline"
           className="h-12 w-full rounded-sm border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
         >
           Log out
-        </NotImplementedButton>
+        </LogoutButton>
       </div>
     </div>
   );
