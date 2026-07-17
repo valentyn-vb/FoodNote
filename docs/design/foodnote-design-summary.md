@@ -97,7 +97,7 @@ Full token set (spacing, radius, type scale) lives in the Paper file's token pan
 
 ## Mascot usage
 
-Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a deliberate functional choice, not decoration — mascot never appears on routine screens (forms, headings, routine saves).
+Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a deliberate functional choice, not decoration — the mascot only appears where it reflects state or marks a moment (never as static filler on forms or headings). REFLECT states mirror live data, so they may live on the dashboard.
 
 | Emotive             | Asset            | Used for                                                         | Job                                                                                   |
 | ------------------- | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -106,6 +106,10 @@ Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a delibera
 | Crying              | `recover.webp`   | "Not food" edge state                                            | RECOVER — gentle redirect, not an error                                               |
 | Excited / laughing  | `celebrate.webp` | Meal-saved toast (implementation note only, not a static screen) | CELEBRATE — quiet, since it happens every meal                                        |
 | Sleeping            | `accompany.webp` | Empty dashboard (flow-only, not exported as a screen)            | ACCOMPANY — nothing logged yet                                                        |
+| Tongue out          | `hungry.webp`    | "Eaten today" while under 50% of goal                            | REFLECT — fullness mirrors intake, hungry early in the day                            |
+| Halo + wings        | `halo.webp`      | "Eaten today" between 50% and goal                               | REFLECT — on budget, being good                                                       |
+| Nervous / sweat     | `reassure.webp`  | "Eaten today" over goal (reused)                                 | REFLECT — over budget, no judgment (crying stays reserved for RECOVER)                |
+| Writing / attentive | `guide.png`      | App logo mark (sidebar header, reused)                           | Brand — the mascot is the product's face                                              |
 | None (deliberate)   | —                | User Profile                                                     | Routine settings surface — no moment here needs guidance, reassurance, or celebration |
 
 ## Implementation notes (from High Fidelity annotations)

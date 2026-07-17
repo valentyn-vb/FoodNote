@@ -22,3 +22,7 @@ shadcn/ui is the component vocabulary. Nothing below gets installed up front —
 
 - **Vaul** — unmaintained; shadcn's Drawer moved to Base UI
 - **Leva** — developer control panel, not product UI
+
+## Added
+
+- **EvilCharts** (`evilcharts.com` shadcn registry, recharts-based, MIT) — dashboard weight-trend line + 7-day calorie bars, themed with FoodNote tokens. Chosen by Jerry 2026-07-14; components land as reviewable source in `frontend/src/components/evilcharts/`.

@@ -91,8 +91,7 @@ export type DashboardStats = {
   goalDate: string;
   weeksLeft: number;
   weightTrendKg: number;
-  weightTrendPoints: number[];
-  calorieChartDays: number[];
+  weightTrendLastMonthKg: number;
 };
 
 export const mockDashboardStats: DashboardStats = {
@@ -102,27 +101,30 @@ export const mockDashboardStats: DashboardStats = {
   goalDate: 'Sep 19',
   weeksLeft: 9,
   weightTrendKg: -1.2,
-  weightTrendPoints: [30, 40, 35, 55, 50, 65, 60],
-  calorieChartDays: [60, 75, 50, 85, 65, 70, 42],
+  weightTrendLastMonthKg: -0.8,
 };
 
-// Chart series for dashboard-charts.tsx (keys match Line/Bar dataKey props)
-export const mockWeightTrend: { day: string; kg: number }[] = [
-  { day: 'Mon', kg: 83.1 },
-  { day: 'Tue', kg: 83.0 },
-  { day: 'Wed', kg: 82.7 },
-  { day: 'Thu', kg: 82.8 },
-  { day: 'Fri', kg: 82.5 },
-  { day: 'Sat', kg: 82.2 },
-  { day: 'Sun', kg: 81.9 },
+// `projected` starts at the same value as the last `actual` point so the
+// dashed line visually continues from where the solid line stops.
+export const mockWeightTrend = [
+  { week: '6w ago', actual: 74.2 },
+  { week: '5w ago', actual: 74.4 },
+  { week: '4w ago', actual: 73.9 },
+  { week: '3w ago', actual: 73.5 },
+  { week: '2w ago', actual: 73.6 },
+  { week: '1w ago', actual: 73.1 },
+  { week: 'Now', actual: 73.0, projected: 73.0 },
+  { week: '+3w', projected: 71.5 },
+  { week: '+6w', projected: 70.0 },
+  { week: '+9w', projected: 68.5 },
 ];
 
-export const mockDailyCalories: { day: string; kcal: number }[] = [
-  { day: 'Mon', kcal: 1720 },
-  { day: 'Tue', kcal: 1540 },
-  { day: 'Wed', kcal: 1810 },
-  { day: 'Thu', kcal: 1490 },
-  { day: 'Fri', kcal: 1660 },
-  { day: 'Sat', kcal: 1930 },
-  { day: 'Sun', kcal: 1380 },
+export const mockDailyCalories = [
+  { day: 'Mon', kcal: 990 },
+  { day: 'Tue', kcal: 1240 },
+  { day: 'Wed', kcal: 830 },
+  { day: 'Thu', kcal: 1400 },
+  { day: 'Fri', kcal: 1070 },
+  { day: 'Sat', kcal: 1160 },
+  { day: 'Sun', kcal: 690 },
 ];
