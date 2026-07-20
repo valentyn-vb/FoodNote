@@ -6,7 +6,7 @@ import NumberFlow from '@number-flow/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { NotImplementedButton } from '@/components/not-implemented-button';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import {
   DailyCaloriesChart,
   WeightTrendCard,
@@ -123,13 +123,9 @@ export function MobileDashboard() {
 
       <div className="flex gap-2.5 border-t border-border pt-3">
         <MealLogDrawer onMealSaved={onMealSaved} onMealUndone={onMealUndone} />
-        <NotImplementedButton
-          action="Log weight"
-          variant="outline"
-          className="h-12.5 grow basis-0 rounded-sm border-border text-[13.5px] font-medium"
-        >
+        <WeightLogDrawer triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text">
           Log weight
-        </NotImplementedButton>
+        </WeightLogDrawer>
       </div>
     </div>
   );

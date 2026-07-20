@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import {
   Sidebar,
   SidebarContent,
@@ -104,13 +105,10 @@ export function AppSidebar() {
                   </MealLogDrawer>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Log weight"
-                    onClick={() => notImplemented('Log weight')}
-                  >
+                  <WeightLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
                     <Scale />
                     <span>Log weight</span>
-                  </SidebarMenuButton>
+                  </WeightLogDrawer>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
