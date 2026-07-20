@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
 import { useMeals } from '@/lib/meals-context';
+import { useWeight } from '@/lib/weight-context';
 import { mockUserProfile } from '@/lib/mock-data';
 import { notImplemented } from '@/lib/not-implemented';
 
@@ -49,6 +50,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { onMealSaved, onMealUndone } = useMeals();
+  const { onWeightSaved } = useWeight();
   // Session identity (email, logout) comes from auth; name/initials are
   // still the mock profile until the profile API exists.
   const { user: authUser, logout } = useAuth();
@@ -105,7 +107,10 @@ export function AppSidebar() {
                   </MealLogDrawer>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <WeightLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
+                  <WeightLogDrawer
+                    onWeightSaved={onWeightSaved}
+                    triggerClassName={DRAWER_TRIGGER_CLASS}
+                  >
                     <Scale />
                     <span>Log weight</span>
                   </WeightLogDrawer>

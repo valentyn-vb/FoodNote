@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
 import { MealsProvider } from '@/lib/meals-context';
+import { WeightProvider } from '@/lib/weight-context';
 
 // Every page in the (app) group requires a session: while AuthProvider is
 // restoring one (refresh cookie → access token) we show a loader; once the
@@ -36,8 +37,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider className="lg:min-h-screen">
       <MealsProvider>
-        <AppSidebar />
-        <SidebarInset className="bg-bg">{children}</SidebarInset>
+        <WeightProvider>
+          <AppSidebar />
+          <SidebarInset className="bg-bg">{children}</SidebarInset>
+        </WeightProvider>
       </MealsProvider>
     </SidebarProvider>
   );
