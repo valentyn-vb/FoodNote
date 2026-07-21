@@ -19,9 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { weights } from '@/lib/api-client';
 
-const CTA_CLASS =
-  'w-full rounded-sm bg-primary py-3.5 text-surface shadow-[0_2px_8px_#f5a65c59]';
-
 export function WeightLogDrawer({
   onWeightSaved,
   triggerClassName,
@@ -45,7 +42,8 @@ export function WeightLogDrawer({
       }, 300);
   }
 
-  async function handleSave() {
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
     // Comma decimals ("71,4") are common on EU keyboards.
     const parsed = weightKgSchema.safeParse(Number(value.replace(',', '.')));
     if (!value.trim() || !parsed.success) {
@@ -77,51 +75,59 @@ export function WeightLogDrawer({
     <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
       <DrawerTrigger className={triggerClassName}>{children}</DrawerTrigger>
       <DrawerContent className="lg:mx-auto lg:max-w-lg">
-        <DrawerHeader className="flex-row items-center justify-between">
-          <div className="size-5" />
-          <DrawerTitle className="font-sans text-[15px] font-semibold text-text">
+        <DrawerHeader className="grid grid-cols-[1fr_auto_1fr] items-center">
+          <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
             Log weight
           </DrawerTitle>
-          <DrawerClose className="flex size-5 items-center justify-center">
+          <DrawerClose
+            aria-label="Close drawer"
+            className="col-start-3 flex size-5 items-center justify-self-end justify-center"
+          >
             <X size={20} className="text-[#333333]" strokeWidth={2} />
           </DrawerClose>
         </DrawerHeader>
-        <div className="flex flex-col gap-3 px-5 pt-2">
-          <DrawerDescription className="font-sans text-caption font-medium text-text">
-            Today&apos;s weight (kg)
-          </DrawerDescription>
-          <Input
-            type="text"
-            inputMode="decimal"
-            autoFocus
-            value={value}
-            onChange={(e) => {
-              const next = e.target.value;
-              if (/^\d{0,3}([.,]\d?)?$/.test(next)) {
-                setValue(next);
-                setError(null);
-              }
-            }}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="e.g. 71.4"
-            aria-invalid={!!error}
-            className="h-12 text-center font-display text-[22px] font-semibold [font-variant-numeric:tabular-nums]"
-          />
-          {error && (
-            <p role="alert" className="font-sans text-[12px] text-error">
-              {error}
-            </p>
-          )}
-          <div className="font-sans text-[12px] text-text-muted">
-            One entry per day — saving again replaces today&apos;s weight.
+        <form onSubmit={handleSave}>
+          <div className="flex flex-col gap-3 px-5 pt-2">
+            <DrawerDescription className="font-sans text-caption font-medium text-text">
+              Today&apos;s weight (kg)
+            </DrawerDescription>
+            <Input
+              type="text"
+              inputMode="decimal"
+              autoFocus
+              value={value}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (/^\d{0,3}([.,]\d?)?$/.test(next)) {
+                  setValue(next);
+                  setError(null);
+                }
+              }}
+              placeholder="e.g. 71.4"
+              aria-invalid={!!error}
+              className="h-12 text-center font-display text-[22px] font-semibold [font-variant-numeric:tabular-nums]"
+            />
+            {error && (
+              <p role="alert" className="font-sans text-[12px] text-error">
+                {error}
+              </p>
+            )}
+            <div className="font-sans text-[12px] text-text-muted">
+              One entry per day — saving again replaces today&apos;s weight.
+            </div>
           </div>
-        </div>
-        <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
-          <Button onClick={handleSave} disabled={saving} className={CTA_CLASS}>
-            {saving && <Loader2 className="size-4 animate-spin" />}
-            Save weight
-          </Button>
-        </DrawerFooter>
+          <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
+            <Button
+              type="submit"
+              disabled={saving}
+              variant="cta"
+              className="w-full py-3.5"
+            >
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              Save weight
+            </Button>
+          </DrawerFooter>
+        </form>
       </DrawerContent>
     </Drawer>
   );
