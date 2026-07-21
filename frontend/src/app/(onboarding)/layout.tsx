@@ -13,7 +13,11 @@ import { useAuth } from '@/components/auth-provider';
 //
 // TODO(onboarding-forms): once GET /goals/current ships, optionally bounce an
 // already-onboarded user who lands here back to /dashboard.
-export default function OnboardingLayout({ children }: { children: ReactNode }) {
+export default function OnboardingLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const { status } = useAuth();
   const router = useRouter();
 
