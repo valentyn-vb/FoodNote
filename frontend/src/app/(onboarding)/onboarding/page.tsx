@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PACE_OPTIONS } from '@foodnote/shared';
+import { activityLevelSchema, PACE_OPTIONS } from '@foodnote/shared';
+import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
@@ -112,17 +113,16 @@ export default function OnboardingPage() {
 
         <div className="flex flex-col gap-1.75">
           <FieldLabel>Activity level</FieldLabel>
-          <Select defaultValue="Lightly active">
+          <Select defaultValue="light">
             <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Sedentary">Sedentary</SelectItem>
-              <SelectItem value="Lightly active">Lightly active</SelectItem>
-              <SelectItem value="Moderately active">
-                Moderately active
-              </SelectItem>
-              <SelectItem value="Very active">Very active</SelectItem>
+              {activityLevelSchema.options.map((level) => (
+                <SelectItem key={level} value={level}>
+                  {ACTIVITY_LEVEL_LABELS[level]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
