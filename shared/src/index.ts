@@ -21,3 +21,4 @@ export * from './goals';
 export * from './weights';
 export * from './meals';
 export * from './dashboard';
+export * from './calc';

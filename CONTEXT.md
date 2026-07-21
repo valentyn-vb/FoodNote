@@ -35,14 +35,16 @@ An optional line inside a Meal Entry detailing one food ("Chicken breast,
 _Avoid_: ingredient, product
 
 **Goal**:
-A weight-loss plan: start weight/date, target weight, and Pace. At most one
-is active per user; creating a new Goal marks the previous active one
-`replaced`. Statuses: `active`, `completed`, `replaced`.
+A weight plan: start weight/date, target weight, and Pace. Direction (loss or
+gain) is implied by target vs. Current Weight; target == current is
+maintenance. At most one is active per user; creating a new Goal marks the
+previous active one `replaced`. Statuses: `active`, `completed`, `replaced`.
 _Avoid_: plan, target (alone)
 
 **Pace**:
-The Goal's chosen weekly weight-loss rate (kg/week), which implies the daily
-calorie deficit (~7700 kcal per kg).
+The Goal's chosen weekly weight-change rate (kg/week) — always a positive
+magnitude (0.25 / 0.5 / 0.75 / 1.0), never above the 1.0 kg/week safety
+ceiling. Implies the daily calorie deficit or surplus (~7700 kcal per kg).
 _Avoid_: speed, rate, weekly change
 
 **Maintenance Calories**:
@@ -51,10 +53,23 @@ The daily energy (kcal) that keeps Current Weight unchanged: BMR
 _Avoid_: TDEE (in user-facing text), baseline
 
 **Calorie Target**:
-The daily kcal budget: Maintenance Calories minus the deficit implied by the
-active Goal's pace, clamped to the safety floor (1200 kcal women / 1500 men).
-Recomputed on every read, never stored or edited directly.
+The daily kcal budget from the active Goal: Maintenance Calories minus the
+deficit (loss), plus the surplus (gain), or unchanged (maintenance). On the
+loss side only, clamped up to the Safety Floor. Recomputed on every read,
+never stored or edited directly.
 _Avoid_: daily goal, calorie limit
+
+**Safety Floor**:
+The lowest Calorie Target ever offered — 1200 kcal (female) / 1500 kcal
+(male). A loss-side concept only; it never affects gain or maintenance.
+_Avoid_: minimum, lower bound
+
+**Plan Option**:
+One viable plan for a given Pace, shown during onboarding before a Goal
+exists: its Calorie Target, daily deficit/surplus, and Projected Goal Date.
+An option whose unclamped loss target falls below the Safety Floor is hidden
+(omitted entirely), not shown disabled.
+_Avoid_: plan choice, tier
 
 **Sex**:
 Biological sex (`male` | `female`) — the input the BMR formula and the
@@ -63,8 +78,9 @@ field name does not change.
 _Avoid_: gender
 
 **Activity Level**:
-The user's habitual movement bucket, mapping to a TDEE multiplier
-(sedentary 1.2 … very active 1.725).
+The user's habitual movement bucket, mapping to a TDEE multiplier on the
+standard Mifflin-St Jeor scale: sedentary 1.2, light 1.375, moderate 1.55,
+active 1.725, very active 1.9.
 _Avoid_: exercise level, lifestyle
 
 **Projected Goal Date**:
