@@ -5,9 +5,9 @@ import { z } from 'zod';
  * error envelope. Every field carrying a unit spells it in its name
  * (weightKg, heightCm, proteinGrams); calories are always kcal.
  *
- * All daily boundaries (weight uniqueness, dashboard totals) use the UTC
- * calendar day of `recordedAt` — the API never deals in client timezones
- * (accepted MVP trade-off, see CONTRACT.md).
+ * All daily boundaries (dashboard totals) use the UTC calendar day of
+ * `recordedAt` — the API never deals in client timezones (accepted MVP
+ * trade-off, see CONTRACT.md).
  */
 
 export const sexSchema = z.enum(['male', 'female']);
