@@ -7,7 +7,7 @@ nothing is duplicated. All routes are under `/api`; everything except
 
 Conventions: fields carry units in their names (`weightKg`, `proteinGrams`);
 calories are kcal. `recordedAt` is an ISO UTC datetime; daily boundaries
-(weight uniqueness, dashboard totals) use its **UTC calendar day**. Errors use
+(dashboard totals) use its **UTC calendar day**. Errors use
 the NestJS default envelope (`errorResponseSchema`); clients branch on HTTP
 status. Domain vocabulary: see `/CONTEXT.md`.
 
@@ -26,7 +26,7 @@ status. Domain vocabulary: see `/CONTEXT.md`.
 | `POST /goals`          | `createGoalRequestSchema`        | `goalResponseSchema`        | 201³                |
 | `GET /goals/current`   | —                                | `goalResponseSchema`        | 200, 404⁴           |
 | `PATCH /goals/current` | `updateGoalRequestSchema`        | `goalResponseSchema`        | 200, 404⁴           |
-| `POST /weights`        | `createWeightRequestSchema`      | `weightEntryResponseSchema` | 201, 200⁵           |
+| `POST /weights`        | `createWeightRequestSchema`      | `weightEntryResponseSchema` | 201                 |
 | `GET /weights`         | `listWeightsQuerySchema` (query) | `listWeightsResponseSchema` | 200                 |
 | `PATCH /weights/:id`   | `updateWeightRequestSchema`      | `weightEntryResponseSchema` | 200, 404            |
 | `DELETE /weights/:id`  | —                                | —                           | 204, 404            |
@@ -44,8 +44,8 @@ replay-safe.
 ³ POST always creates a new **active** goal; a previous active goal becomes
 `replaced`. No 409.
 ⁴ 404 when no active goal exists — the "onboarding not complete" signal.
-⁵ Upsert per UTC day: 201 creates, a second POST for the same day updates the
-existing entry and returns 200 with the same `id`.
+⁵ POST always creates a new entry (201); the weight journal is a plain list
+with no per-day uniqueness.
 ⁶ "Not food" is **not** an error: 200 with `{ parsed: false, reason }`
 (discriminated union on `parsed`). 400 = bad description, 429 = per-user
 rate limit, 502 = OpenAI failure / invalid model output.
@@ -67,9 +67,10 @@ rate limit, 502 = OpenAI failure / invalid model output.
 - **Meal totals are authoritative**; `items` are an optional breakdown the
   server never sums or reconciles. `PATCH /meals/:id` with `items` replaces
   the whole list.
-- **Onboarding = three replay-safe calls**: `PUT /profile` →
-  `POST /weights` → `POST /goals`. No transaction needed; any step can be
-  retried.
+- **Onboarding = three calls**: `PUT /profile` →
+  `POST /weights` → `POST /goals`. No transaction needed. `PUT /profile` and
+  `POST /goals` are replay-safe; retrying `POST /weights` just appends another
+  entry (latest `recordedAt` wins for `currentWeightKg`).
 - The AI parse item/total field names match the meal schema exactly, so a
   confirmed preview posts to `POST /meals` (`source: 'ai'`) without mapping.
 
