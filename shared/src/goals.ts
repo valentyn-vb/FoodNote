@@ -13,11 +13,13 @@ import { dateSchema, idSchema, weightKgSchema } from './common';
 
 export const PACE_OPTIONS = [0.25, 0.5, 0.75] as const;
 
-export const paceSchema = z.union([
-  z.literal(0.25),
-  z.literal(0.5),
-  z.literal(0.75),
-]);
+export const paceSchema = z.union(
+  PACE_OPTIONS.map((pace) => z.literal(pace)) as [
+    z.ZodLiteral<(typeof PACE_OPTIONS)[number]>,
+    z.ZodLiteral<(typeof PACE_OPTIONS)[number]>,
+    z.ZodLiteral<(typeof PACE_OPTIONS)[number]>,
+  ],
+);
 
 export const goalStatusSchema = z.enum(['active', 'completed', 'replaced']);
 
