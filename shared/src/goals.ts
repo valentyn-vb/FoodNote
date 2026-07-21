@@ -11,9 +11,11 @@ import { dateSchema, idSchema, weightKgSchema } from './common';
  * projectedGoalDate is derived on read (remaining weight ÷ pace).
  */
 
-export const PACE_OPTIONS = [0.25, 0.5, 0.75] as const;
+export const paceSchema = z.literal([0.25, 0.5, 0.75]);
 
-export const paceSchema = z.literal(PACE_OPTIONS);
+// The three preset paces, derived from the schema so the values live in one
+// place. Used by both apps to render the pace picker.
+export const PACE_OPTIONS = [...paceSchema.values];
 
 export const goalStatusSchema = z.enum(['active', 'completed', 'replaced']);
 

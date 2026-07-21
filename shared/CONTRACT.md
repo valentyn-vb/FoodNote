@@ -61,8 +61,9 @@ rate limit, 502 = OpenAI failure / invalid model output.
   (Mifflin-St Jeor × activity factor − pace deficit, clamped to the
   1200 F / 1500 M floor); they are read-only and null until the first weight
   entry / active goal exist.
-- **Pace is one of `PACE_OPTIONS`** (`0.25 | 0.5 | 0.75` kg/week) — a frozen
-  literal union, not a free number.
+- **Pace is one of three presets** (`0.25 | 0.5 | 0.75` kg/week) — a frozen
+  `z.literal` set, not a free number. `PACE_OPTIONS` is derived from
+  `paceSchema` so the values are defined once.
 - **Meal totals are authoritative**; `items` are an optional breakdown the
   server never sums or reconciles. `PATCH /meals/:id` with `items` replaces
   the whole list.
