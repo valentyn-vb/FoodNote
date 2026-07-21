@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PACE_OPTIONS } from '@foodnote/shared';
 
-const WEEKLY_PACE_OPTIONS = ['0.25', '0.5', '0.75'];
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
 
@@ -135,10 +135,10 @@ export default function OnboardingPage() {
             spacing={2}
             className="w-full gap-2"
           >
-            {WEEKLY_PACE_OPTIONS.map((pace) => (
+            {PACE_OPTIONS.map((pace) => (
               <ToggleGroupItem
                 key={pace}
-                value={pace}
+                value={String(pace)}
                 className={`${TOGGLE_ITEM_CLASS} text-caption`}
               >
                 {pace} kg
