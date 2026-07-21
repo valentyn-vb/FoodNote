@@ -1,11 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Select,
   SelectContent,
@@ -13,8 +9,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { activityLevelSchema, PACE_OPTIONS } from '@foodnote/shared';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
+import {
+  activityLevelSchema,
+  PACE_OPTIONS,
+  putProfileRequestSchema,
+  type PutProfileRequest,
+} from '@foodnote/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
@@ -29,25 +37,57 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function TextField({
   label,
+  error,
   ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+}: {
+  label: string;
+  error?: string;
+} & React.ComponentProps<'input'>) {
   return (
     <div className="flex grow basis-0 flex-col gap-1.75">
       <FieldLabel>{label}</FieldLabel>
       <Input
         {...props}
+        aria-invalid={error ? true : undefined}
         className="h-11.5 rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008] focus-visible:border-primary focus-visible:ring-0"
       />
+      {error && (
+        <p className="font-sans text-[12px] text-destructive">{error}</p>
+      )}
     </div>
   );
 }
 
 export default function OnboardingPage() {
-  const [sex, setSex] = useState('Female');
+  const router = useRouter();
   const [weeklyPace, setWeeklyPace] = useState('0.5');
 
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<PutProfileRequest>({
+    resolver: zodResolver(putProfileRequestSchema),
+    defaultValues: {
+      age: 27,
+      sex: 'female',
+      heightCm: 168,
+      activityLevel: 'light',
+    },
+  });
+
+  const onSubmit = handleSubmit((profile) => {
+    console.log('onboarding profile payload', profile);
+    //router.push('/plan-selection');
+  });
+
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col bg-bg pt-1.5 pb-5">
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="mx-auto flex w-full max-w-md flex-col bg-bg pt-1.5 pb-5"
+    >
       <div className="flex flex-col gap-1 px-5 pb-4.5">
         <Link
           href="/"
@@ -68,32 +108,42 @@ export default function OnboardingPage() {
           <TextField
             label="Age"
             type="number"
-            defaultValue={27}
             inputMode="numeric"
+            error={errors.age?.message}
+            {...register('age', { valueAsNumber: true })}
           />
           <TextField
             label="Height (cm)"
             type="number"
-            defaultValue={168}
             inputMode="numeric"
+            error={errors.heightCm?.message}
+            {...register('heightCm', { valueAsNumber: true })}
           />
         </div>
 
         <div className="flex flex-col gap-1.75">
           <FieldLabel>Sex</FieldLabel>
-          <ToggleGroup
-            value={[sex]}
-            onValueChange={(values) => values[0] && setSex(values[0])}
-            spacing={2}
-            className="w-full gap-2"
-          >
-            <ToggleGroupItem value="Female" className={TOGGLE_ITEM_CLASS}>
-              Female
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Male" className={TOGGLE_ITEM_CLASS}>
-              Male
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <Controller
+            control={control}
+            name="sex"
+            render={({ field }) => (
+              <ToggleGroup
+                value={field.value ? [field.value] : []}
+                onValueChange={(values) =>
+                  values[0] && field.onChange(values[0])
+                }
+                spacing={2}
+                className="w-full gap-2"
+              >
+                <ToggleGroupItem value="female" className={TOGGLE_ITEM_CLASS}>
+                  Female
+                </ToggleGroupItem>
+                <ToggleGroupItem value="male" className={TOGGLE_ITEM_CLASS}>
+                  Male
+                </ToggleGroupItem>
+              </ToggleGroup>
+            )}
+          />
         </div>
 
         <div className="flex gap-3">
@@ -113,18 +163,24 @@ export default function OnboardingPage() {
 
         <div className="flex flex-col gap-1.75">
           <FieldLabel>Activity level</FieldLabel>
-          <Select defaultValue="light">
-            <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {activityLevelSchema.options.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {ACTIVITY_LEVEL_LABELS[level]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            control={control}
+            name="activityLevel"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {activityLevelSchema.options.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {ACTIVITY_LEVEL_LABELS[level]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
         <div className="flex flex-col gap-1.75">
@@ -154,13 +210,12 @@ export default function OnboardingPage() {
 
       <div className="px-5 pt-3">
         <Button
-          nativeButton={false}
-          render={<Link href="/plan-selection" />}
+          type="submit"
           className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
         >
           Continue
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
