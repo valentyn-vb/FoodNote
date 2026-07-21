@@ -36,6 +36,15 @@ export function WeightLogDrawer({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next)
+      setTimeout(() => {
+        setValue('');
+        setError(null);
+      }, 300);
+  }
+
   async function handleSave() {
     // Comma decimals ("71,4") are common on EU keyboards.
     const parsed = weightKgSchema.safeParse(Number(value.replace(',', '.')));
@@ -65,18 +74,7 @@ export function WeightLogDrawer({
   }
 
   return (
-    <Drawer
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next)
-          setTimeout(() => {
-            setValue('');
-            setError(null);
-          }, 300);
-      }}
-      showSwipeHandle
-    >
+    <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
       <DrawerTrigger className={triggerClassName}>{children}</DrawerTrigger>
       <DrawerContent className="lg:mx-auto lg:max-w-lg">
         <DrawerHeader className="flex-row items-center justify-between">
@@ -98,8 +96,11 @@ export function WeightLogDrawer({
             autoFocus
             value={value}
             onChange={(e) => {
-              setValue(e.target.value);
-              setError(null);
+              const next = e.target.value;
+              if (/^\d{0,3}([.,]\d?)?$/.test(next)) {
+                setValue(next);
+                setError(null);
+              }
             }}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             placeholder="e.g. 71.4"
