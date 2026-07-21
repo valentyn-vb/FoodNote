@@ -29,4 +29,8 @@ COPY --from=builder /app/backend/dist ./backend/dist
 
 USER node
 EXPOSE 3001
-CMD ["node", "backend/dist/main.js"]
+# Apply any pending migrations, then start the API. Migrations run against the
+# compiled data source via the plain typeorm CLI (a runtime dep) — ts-node and
+# src/ are not present in this stage. migrationsRun is off in production, so
+# this is the single place prod schema changes are applied.
+CMD ["sh", "-c", "npm run migration:run:prod -w backend && exec node backend/dist/main.js"]
