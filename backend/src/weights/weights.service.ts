@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { CreateWeightRequest } from '@foodnote/shared';
-import { WeightEntry } from './weight-entry.entity';
+import { WeightEntry } from '../weight/weight-entry.entity';
 
 @Injectable()
 export class WeightsService {
@@ -11,26 +11,16 @@ export class WeightsService {
     private readonly repo: Repository<WeightEntry>,
   ) {}
 
-  async upsertToday(
-    userId: string,
-    data: CreateWeightRequest,
-  ): Promise<{ entry: WeightEntry; created: boolean }> {
-    const recordedAt = new Date(data.recordedAt);
-    const day = recordedAt.toISOString().slice(0, 10);
-    const existing = await this.repo.findOne({ where: { userId, day } });
-
-    if (existing) {
-      existing.weightKg = data.weightKg;
-      existing.recordedAt = recordedAt;
-      return { entry: await this.repo.save(existing), created: false };
-    }
-
-    const created = this.repo.create({
+  /**
+   * The weight journal is a plain list (see CONTRACT.md): every log appends a
+   * new entry. currentWeightKg elsewhere is derived from the latest recordedAt.
+   */
+  async append(userId: string, data: CreateWeightRequest): Promise<WeightEntry> {
+    const entry = this.repo.create({
       userId,
-      day,
       weightKg: data.weightKg,
-      recordedAt,
+      recordedAt: new Date(data.recordedAt),
     });
-    return { entry: await this.repo.save(created), created: true };
+    return this.repo.save(entry);
   }
 }
