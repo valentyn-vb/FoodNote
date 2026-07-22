@@ -1,5 +1,6 @@
 'use client';
 
+import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -204,9 +205,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div className="px-5 pt-4 pb-1 font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer className="px-5 pt-4 pb-1" />
 
       <div className="px-5 pt-3">
         <Button

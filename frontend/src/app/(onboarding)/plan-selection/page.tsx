@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { mockPlanOptions } from '@/lib/mock-data';
+import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
@@ -68,9 +69,7 @@ export default function PlanSelectionPage() {
         })}
       </RadioGroup>
 
-      <div className="px-5 pt-3.5 font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer className="px-5 pt-3.5" />
 
       <div className="px-5 pt-3">
         <Button
