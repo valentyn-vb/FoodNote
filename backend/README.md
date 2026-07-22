@@ -57,6 +57,50 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Database & migrations
+
+Schema is managed by **TypeORM migrations** — `synchronize` is off. The
+connection lives in one place, `src/database/data-source.ts`, shared by the
+Nest app and the TypeORM CLI (so entity discovery never drifts). Entities are
+listed explicitly there; there is no `autoLoadEntities`.
+
+Migrations are applied automatically on boot in **dev and test**
+(`migrationsRun`), so `npm run dev` / `npm run test:e2e` just work against an
+up-to-date schema. **Production** does not auto-run — apply migrations
+explicitly during deploy.
+
+Start a local Postgres first (from the repo root):
+
+```bash
+npm run db:up      # Postgres 16 in Docker, waits until healthy
+```
+
+### Everyday workflow
+
+```bash
+# 1. Edit or add an entity (*.entity.ts)
+# 2. Generate a migration from the diff against your local DB:
+npm run migration:generate -- src/database/migrations/DescribeTheChange
+# 3. REVIEW the generated SQL by hand (generation is a draft, not gospel)
+# 4. Apply it:
+npm run migration:run
+# Roll back the last migration if needed:
+npm run migration:revert
+```
+
+Migration files live in `src/database/migrations/`. A fresh database is fully
+built by `npm run migration:run` (the initial migration creates every table,
+including `users`).
+
+### Production / Neon (deploy-owned)
+
+Production does **not** auto-migrate on boot. Instead the deploy applies
+migrations: the container's start command runs `migration:run:prod` (the
+plain typeorm CLI against the compiled `dist/database/data-source.js`) before
+launching the API, using the `DATABASE_URL` already configured on the host.
+So a normal deploy to `main` migrates the Neon schema automatically — no one
+needs to handle the connection string manually.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

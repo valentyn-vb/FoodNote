@@ -8,8 +8,9 @@ import {
 
 /**
  * Weight journal contract — the only place body weight is ever written.
- * One entry per UTC calendar day: POST upserts, so re-logging the same day
- * updates the existing entry (201 on create, 200 on update) and never 409s.
+ * A plain list of entries: POST always creates a new entry (201), any number
+ * per day. currentWeightKg is derived from the entry with the latest
+ * recordedAt.
  */
 
 export const createWeightRequestSchema = z.object({

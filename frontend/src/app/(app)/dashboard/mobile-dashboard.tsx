@@ -6,13 +6,14 @@ import NumberFlow from '@number-flow/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { NotImplementedButton } from '@/components/not-implemented-button';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import {
   DailyCaloriesChart,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { mockDashboardStats, mockUserProfile } from '@/lib/mock-data';
 import { useMeals } from '@/lib/meals-context';
+import { useWeight } from '@/lib/weight-context';
 import { CARD_CLASS, fullnessMascot, initialsOf } from './helpers';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
@@ -28,6 +29,7 @@ export function MobileDashboard() {
     onMealSaved,
     onMealUndone,
   } = useMeals();
+  const { weightTrend, weightChangeKg, onWeightSaved } = useWeight();
 
   return (
     <div className="flex flex-col gap-5 bg-bg px-5 pt-6 pb-8 lg:hidden">
@@ -89,12 +91,13 @@ export function MobileDashboard() {
             Weight trend
           </h2>
           <div className="font-sans text-[12px] font-medium text-secondary-deep">
-            <NumberFlow value={stats.weightTrendKg} suffix=" kg this month" />
+            <NumberFlow value={weightChangeKg} suffix=" kg this month" />
           </div>
         </div>
         <WeightTrendCard
           className={`${CARD_CLASS} p-4`}
           chartClassName="aspect-auto h-[110px] w-full flex-none"
+          data={weightTrend}
         />
       </div>
 
@@ -123,13 +126,12 @@ export function MobileDashboard() {
 
       <div className="flex gap-2.5 border-t border-border pt-3">
         <MealLogDrawer onMealSaved={onMealSaved} onMealUndone={onMealUndone} />
-        <NotImplementedButton
-          action="Log weight"
-          variant="outline"
-          className="h-12.5 grow basis-0 rounded-sm border-border text-[13.5px] font-medium"
+        <WeightLogDrawer
+          onWeightSaved={onWeightSaved}
+          triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
         >
           Log weight
-        </NotImplementedButton>
+        </WeightLogDrawer>
       </div>
     </div>
   );
