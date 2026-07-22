@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dateSchema, idSchema, weightKgSchema } from './common';
+import { caloriesSchema, dateSchema, idSchema, weightKgSchema } from './common';
 
 /**
  * Goal contract. At most one goal is active per user: POST always creates a
@@ -11,10 +11,11 @@ import { dateSchema, idSchema, weightKgSchema } from './common';
  * projectedGoalDate is derived on read (remaining weight ÷ pace).
  */
 
-export const paceSchema = z.literal([0.25, 0.5, 0.75]);
+export const paceSchema = z.literal([0.25, 0.5, 0.75, 1.0]);
 
-// The three preset paces, derived from the schema so the values live in one
-// place. Used by both apps to render the pace picker.
+// The four preset paces, derived from the schema so the values live in one
+// place. Used by both apps to render the pace picker. 1.0 is also the safety
+// ceiling (MAX_SAFE_PACE_KG in calc) — see docs/adr/0002.
 export const PACE_OPTIONS = [...paceSchema.values];
 
 export const goalStatusSchema = z.enum(['active', 'completed', 'replaced']);
@@ -42,3 +43,19 @@ export type GoalStatus = z.infer<typeof goalStatusSchema>;
 export type CreateGoalRequest = z.infer<typeof createGoalRequestSchema>;
 export type UpdateGoalRequest = z.infer<typeof updateGoalRequestSchema>;
 export type GoalResponse = z.infer<typeof goalResponseSchema>;
+
+/**
+ * A single viable plan shown during onboarding, one per Pace, before a Goal
+ * exists. Computed by the shared calc module; options whose loss target would
+ * fall below the safety floor are omitted entirely (see docs/adr/0002).
+ * dailyEnergyDelta is the magnitude of the daily deficit (loss) or surplus
+ * (gain).
+ */
+export const planOptionSchema = z.object({
+  pace: paceSchema,
+  dailyCalorieTarget: caloriesSchema,
+  dailyEnergyDelta: caloriesSchema,
+  projectedGoalDate: dateSchema.nullable(),
+});
+
+export type PlanOption = z.infer<typeof planOptionSchema>;
