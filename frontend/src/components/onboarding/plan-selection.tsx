@@ -2,92 +2,56 @@
 
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { getOnboardingData } from '@/lib/onboarding';
 import { cn, formatGoalDate } from '@/lib/utils';
-import {
-  buildPlanOptions,
-  type GoalResponse,
-  type Pace,
-  type ProfileResponse,
-} from '@foodnote/shared';
+import { buildPlanOptions, type Pace } from '@foodnote/shared';
 import { ChevronLeft, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { DEFAULT_PLAN_PACE, type OnboardingFormValues } from './form-schema';
 
-export default function PlanSelectionPage() {
-  const router = useRouter();
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
-  const [goalData, setGoalData] = useState<GoalResponse | null>(null);
-  const [ready, setReady] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+type PlanSelectionProps = {
+  input: OnboardingFormValues;
+  onBack: () => void;
+  onConfirm: (pace: Pace) => void | Promise<void>;
+  /** True while onConfirm is in flight — disables the button and shows a spinner. */
+  submitting?: boolean;
+  /** A retry-able error from onConfirm. */
+  submitError?: string | null;
+  /** Plan start date (defaults to today); injectable for tests. */
+  fromDate?: string;
+};
+
+export function PlanSelection({
+  input,
+  onBack,
+  onConfirm,
+  submitting = false,
+  submitError = null,
+  fromDate,
+}: PlanSelectionProps) {
   const [pickedPace, setPickedPace] = useState<Pace | null>(null);
 
-  // A missing profile or goal means onboarding isn't complete -> back to the form.
-  useEffect(() => {
-    let cancelled = false;
-    getOnboardingData()
-      .then(({ profile: p, goal: g }) => {
-        if (cancelled) return;
-        if (!p || !g) {
-          router.replace('/onboarding');
-          return;
-        }
-        setProfileData(p);
-        setGoalData(g);
-        setReady(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLoadError(true);
-        setReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+  const effectiveFromDate = fromDate ?? new Date().toISOString().slice(0, 10);
 
-  const options = useMemo(() => {
-    if (!profileData || !goalData) return [];
-    return buildPlanOptions({
-      age: profileData.age,
-      sex: profileData.sex,
-      heightCm: profileData.heightCm,
-      activityLevel: profileData.activityLevel,
-      currentWeightKg: goalData.startWeightKg,
-      targetWeightKg: goalData.targetWeightKg,
-      fromDate: new Date().toISOString().slice(0, 10),
-    });
-  }, [profileData, goalData]);
+  const options = useMemo(
+    () => buildPlanOptions({ ...input, fromDate: effectiveFromDate }),
+    [input, effectiveFromDate],
+  );
 
   const defaultPace = useMemo<Pace | null>(() => {
     if (options.length === 0) return null;
-    return options.some((option) => option.pace === 0.5)
-      ? 0.5
+    return options.some((option) => option.pace === DEFAULT_PLAN_PACE)
+      ? DEFAULT_PLAN_PACE
       : options[0].pace;
   }, [options]);
 
   const selectedPace = pickedPace ?? defaultPace;
-
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-text-muted" />
-      </div>
-    );
-  }
-
-  const onConfirm = () => {
-    // The goal already exists (created on form submit with the default pace).
-    // Applying a changed pace (PATCH /goals/current) is the next step.
-    //router.push('/dashboard');
-  };
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
       <div className="flex flex-col gap-1 px-5 pb-3.5">
         <button
           type="button"
-          onClick={() => router.push('/onboarding')}
+          onClick={onBack}
           aria-label="Back"
           className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
         >
@@ -101,14 +65,7 @@ export default function PlanSelectionPage() {
         </p>
       </div>
 
-      {loadError ? (
-        <p
-          role="alert"
-          className="px-5 py-4 font-sans text-label text-destructive"
-        >
-          Couldn&apos;t load your plan. Please refresh and try again.
-        </p>
-      ) : options.length === 0 ? (
+      {options.length === 0 ? (
         <p className="px-5 py-4 font-sans text-label text-text-muted">
           No safe plan reaches this target from your current weight. Try a
           smaller change.
@@ -166,13 +123,19 @@ export default function PlanSelectionPage() {
         This is an estimate, not medical advice. Actual results vary.
       </div>
 
-      <div className="px-5 pt-3">
+      <div className="flex flex-col gap-2.5 px-5 pt-3">
+        {submitError && (
+          <p role="alert" className="font-sans text-[12px] text-destructive">
+            {submitError}
+          </p>
+        )}
         <Button
           type="button"
-          onClick={onConfirm}
-          disabled={selectedPace === null}
+          onClick={() => selectedPace !== null && onConfirm(selectedPace)}
+          disabled={selectedPace === null || submitting}
           className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
         >
+          {submitting && <Loader2 className="size-4 animate-spin" />}
           Confirm plan
         </Button>
       </div>
