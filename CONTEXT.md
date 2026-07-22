@@ -7,15 +7,17 @@ progress on a dashboard.
 ## Language
 
 **Weight Entry**:
-A record of the user's body weight (kg) at a moment in time (`recordedAt`);
-at most one per Tracking Day. The weight journal is the only place weight is
-ever written.
+A record of the user's body weight (kg) at a moment in time (`recordedAt`).
+The weight journal is an append-only list — any number of entries per day —
+and is the only place weight is ever written. An entry is corrected or removed
+individually by id (`PATCH`/`DELETE /weights/:id`), never upserted.
 _Avoid_: weigh-in, measurement
 
 **Tracking Day**:
-The UTC calendar day derived from a record's `recordedAt`. All daily
-boundaries — weight uniqueness, dashboard totals — use it; the API never
-deals in client timezones (accepted MVP trade-off).
+The UTC calendar day derived from a record's `recordedAt`. Daily boundaries —
+dashboard totals, the `from`/`to` range bounds on the weight journal — use it;
+the API never deals in client timezones (accepted MVP trade-off). It does not
+govern weight uniqueness: the journal allows any number of entries per day.
 _Avoid_: local day, date (as a field concept)
 
 **Current Weight**:
