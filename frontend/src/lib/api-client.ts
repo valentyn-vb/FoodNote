@@ -116,18 +116,13 @@ export const auth = {
 };
 
 export const weights = {
-  /** POST /weights upserts today's entry: 201 = created, 200 = updated. */
-  async create(
-    data: CreateWeightRequest,
-  ): Promise<{ entry: WeightEntryResponse; updated: boolean }> {
+\  /** POST /weights appends a new journal entry (the journal is a plain list). */
+  async create(data: CreateWeightRequest): Promise<WeightEntryResponse> {
     const res = await apiFetch('/api/weights', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return {
-      entry: weightEntryResponseSchema.parse(await res.json()),
-      updated: res.status === 200,
-    };
+    return weightEntryResponseSchema.parse(await res.json());
   },
 };
 
