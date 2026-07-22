@@ -2,12 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { getOnboardingValues } from '@/lib/onboarding-store';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ApiError, goals, profile } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { buildPlanOptions } from '@foodnote/shared';
+import {
+  buildPlanOptions,
+  type GoalResponse,
+  type Pace,
+  type ProfileResponse,
+} from '@foodnote/shared';
 
 function formatGoalDate(date: string | null): string {
   if (!date) return 'Target already reached';
@@ -20,30 +25,61 @@ function formatGoalDate(date: string | null): string {
 
 export default function PlanSelectionPage() {
   const router = useRouter();
-  // Simulated "GET profile": read what onboarding mock-saved. Null on reload or
-  // direct navigation (module state is cleared), so bounce back to onboarding.
-  const values = getOnboardingValues();
+  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
+  const [goalData, setGoalData] = useState<GoalResponse | null>(null);
+  const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [pickedPace, setPickedPace] = useState<Pace | null>(null);
 
-  const options = useMemo(
-    () =>
-      values
-        ? buildPlanOptions({
-            ...values,
-            fromDate: new Date().toISOString().slice(0, 10),
-          })
-        : [],
-    [values],
-  );
-
-  const [selectedPace, setSelectedPace] = useState<number | null>(
-    () => options[0]?.pace ?? null,
-  );
-
+  // Plan-selection reads the onboarding data straight from the backend. A 404
+  // on either means onboarding isn't complete -> back to the form.
   useEffect(() => {
-    if (!values) router.replace('/onboarding');
-  }, [values, router]);
+    let cancelled = false;
+    Promise.all([profile.current(), goals.current()])
+      .then(([p, g]) => {
+        if (cancelled) return;
+        setProfileData(p);
+        setGoalData(g);
+        setReady(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          router.replace('/onboarding');
+          return;
+        }
+        setLoadError(true);
+        setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
-  if (!values) {
+  const options = useMemo(() => {
+    if (!profileData || !goalData) return [];
+    return buildPlanOptions({
+      age: profileData.age,
+      sex: profileData.sex,
+      heightCm: profileData.heightCm,
+      activityLevel: profileData.activityLevel,
+      currentWeightKg: goalData.startWeightKg,
+      targetWeightKg: goalData.targetWeightKg,
+      fromDate: new Date().toISOString().slice(0, 10),
+    });
+  }, [profileData, goalData]);
+
+  const defaultPace = useMemo<Pace | null>(() => {
+    if (options.length === 0) return null;
+    const paces = options.map((option) => option.pace);
+    return goalData && paces.includes(goalData.preferredWeeklyChangeKg)
+      ? goalData.preferredWeeklyChangeKg
+      : options[0].pace;
+  }, [options, goalData]);
+
+  const selectedPace = pickedPace ?? defaultPace;
+
+  if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="size-6 animate-spin text-text-muted" />
@@ -52,16 +88,22 @@ export default function PlanSelectionPage() {
   }
 
   const onConfirm = () => {
-    // Mock-save the goal, then finish. Real path:
-    // POST /goals { targetWeightKg: values.targetWeightKg,
-    //               preferredWeeklyChangeKg: selectedPace }.
-    // TODO(goal-persistence): create the goal once the endpoint exists.
-    router.push('/dashboard');
+    // The goal already exists (created on form submit with the default pace).
+    // Applying a changed pace (PATCH /goals/current) is the next step.
+    //router.push('/dashboard');
   };
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
       <div className="flex flex-col gap-1 px-5 pb-3.5">
+        <button
+          type="button"
+          onClick={() => router.push('/onboarding')}
+          aria-label="Back"
+          className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
+        >
+          <ChevronLeft size={18} className="text-[#333333]" strokeWidth={2} />
+        </button>
         <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
           Choose your plan
         </h1>
@@ -70,7 +112,14 @@ export default function PlanSelectionPage() {
         </p>
       </div>
 
-      {options.length === 0 ? (
+      {loadError ? (
+        <p
+          role="alert"
+          className="px-5 py-4 font-sans text-label text-destructive"
+        >
+          Couldn&apos;t load your plan. Please refresh and try again.
+        </p>
+      ) : options.length === 0 ? (
         <p className="px-5 py-4 font-sans text-label text-text-muted">
           No safe plan reaches this target from your current weight. Try a
           smaller change.
@@ -78,7 +127,7 @@ export default function PlanSelectionPage() {
       ) : (
         <RadioGroup
           value={selectedPace !== null ? String(selectedPace) : ''}
-          onValueChange={(value) => setSelectedPace(Number(value))}
+          onValueChange={(value) => setPickedPace(Number(value) as Pace)}
           className="gap-3 px-5"
         >
           {options.map((option) => {

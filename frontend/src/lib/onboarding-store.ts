@@ -1,33 +1,42 @@
-import type { PutProfileRequest } from '@foodnote/shared';
+import type { Pace, PutProfileRequest } from '@foodnote/shared';
 
 /**
- * The values the onboarding screen collects in one step. They span three
- * backend resources — profile (age/sex/heightCm/activityLevel), the first
- * weight entry (currentWeightKg), and the goal (targetWeightKg) — so this is a
- * form-only grouping, not a profile. See CONTRACT.md: weight lives in the
- * weight journal and the target lives on the goal; PUT /profile takes neither.
+ * The values the onboarding form collects. Profile fields (incl. currentWeightKg)
+ * come from PutProfileRequest; targetWeightKg feeds the goal + plan math.
  */
 export type OnboardingFormValues = PutProfileRequest & {
-  currentWeightKg: number;
   targetWeightKg: number;
 };
 
-/**
- * Mock stand-in for persistence while the backend endpoints don't exist. The
- * form "saves" here on submit and plan-selection reads it back, simulating
- * PUT /profile + POST /weights → GET /profile (+ current weight). Module-level
- * state survives client navigation between the two steps; a full page reload
- * clears it (plan-selection then bounces back to /onboarding).
- *
- * TODO(onboarding-persistence): replace with real PUT /profile + POST /weights
- * on submit, and a GET /profile + latest-weight fetch on plan-selection.
- */
-let saved: OnboardingFormValues | null = null;
+/** Form values plus the pace picked on the form, carried to plan-selection. */
+export type StoredOnboarding = OnboardingFormValues & { weeklyPace: Pace };
 
-export function saveOnboardingValues(values: OnboardingFormValues): void {
-  saved = values;
+/**
+ * Onboarding is a two-screen flow (form -> plan-selection). We stash the
+ * collected values in sessionStorage so a reload or stepping back keeps them,
+ * and plan-selection can compute its plans without re-fetching. It's cleared
+ * once the goal is created. NOT the onboarding-complete signal — that stays
+ * server-truth via GET /goals/current.
+ */
+const KEY = 'foodnote.onboarding';
+
+export function saveOnboardingValues(values: StoredOnboarding): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(KEY, JSON.stringify(values));
 }
 
-export function getOnboardingValues(): OnboardingFormValues | null {
-  return saved;
+export function getOnboardingValues(): StoredOnboarding | null {
+  if (typeof window === 'undefined') return null;
+  const raw = sessionStorage.getItem(KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as StoredOnboarding;
+  } catch {
+    return null;
+  }
+}
+
+export function clearOnboardingValues(): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(KEY);
 }

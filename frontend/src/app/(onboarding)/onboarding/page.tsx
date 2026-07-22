@@ -11,33 +11,43 @@ import {
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import {
-  saveOnboardingValues,
-  type OnboardingFormValues,
-} from '@/lib/onboarding-store';
+import { ApiError, goals, profile, weights } from '@/lib/api-client';
 import {
   activityLevelSchema,
-  PACE_OPTIONS,
   putProfileRequestSchema,
   weightKgSchema,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
 
-// Profile fields (PUT /profile) plus the current & target weight the plan math
-// needs. The weights aren't part of the profile contract — they map to the
-// weight journal and the goal — so they're added here only as a form model.
+// The goal's pace isn't asked here — it's chosen on plan-selection. The goal is
+// created now with this default so the target/pace are persisted (and fetchable).
+const DEFAULT_PACE = 0.5 as const;
+
+// Profile fields (PUT /profile, incl. currentWeightKg) plus targetWeightKg,
+// which isn't a profile field — it maps to the goal and the plan math.
 const onboardingFormSchema = putProfileRequestSchema.extend({
-  currentWeightKg: weightKgSchema,
   targetWeightKg: weightKgSchema,
 });
+
+type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
+
+const DEFAULT_VALUES: OnboardingFormValues = {
+  age: 27,
+  sex: 'female',
+  heightCm: 168,
+  activityLevel: 'light',
+  currentWeightKg: 72,
+  targetWeightKg: 64,
+};
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -70,33 +80,96 @@ function TextField({
   );
 }
 
+async function fetchOr404<T>(p: Promise<T>): Promise<T | null> {
+  try {
+    return await p;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
-  const [weeklyPace, setWeeklyPace] = useState('0.5');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
-    defaultValues: {
-      age: 27,
-      sex: 'female',
-      heightCm: 168,
-      activityLevel: 'light',
-      currentWeightKg: 72,
-      targetWeightKg: 64,
-    },
+    defaultValues: DEFAULT_VALUES,
   });
 
-  const onSubmit = handleSubmit((values) => {
-    // Mock-save the collected values (real: PUT /profile + POST /weights),
-    // then advance — plan-selection reads them back to compute the plans.
-    saveOnboardingValues(values);
-    router.push('/plan-selection');
+  // Prefill from the backend so stepping back from plan-selection keeps the
+  // already-saved values. A brand-new user has neither profile nor goal (both
+  // 404) and just sees the defaults.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([fetchOr404(profile.current()), fetchOr404(goals.current())])
+      .then(([savedProfile, goal]) => {
+        if (cancelled) return;
+        if (savedProfile && goal) {
+          reset({
+            age: savedProfile.age,
+            sex: savedProfile.sex,
+            heightCm: savedProfile.heightCm,
+            activityLevel: savedProfile.activityLevel,
+            currentWeightKg: goal.startWeightKg,
+            targetWeightKg: goal.targetWeightKg,
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reset]);
+
+  const onSubmit = handleSubmit(async (values) => {
+    // The three onboarding calls: profile, first weight, goal (default pace).
+    // The pace is refined on plan-selection.
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const {
+        age,
+        sex,
+        heightCm,
+        activityLevel,
+        currentWeightKg,
+        targetWeightKg,
+      } = values;
+      await profile.put({ age, sex, heightCm, activityLevel, currentWeightKg });
+      await weights.create({
+        weightKg: currentWeightKg,
+        recordedAt: new Date().toISOString(),
+      });
+      await goals.create({
+        targetWeightKg,
+        preferredWeeklyChangeKg: DEFAULT_PACE,
+      });
+      router.push('/plan-selection');
+    } catch {
+      setSubmitError("Couldn't save your details. Please try again.");
+      setSubmitting(false);
+    }
   });
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-text-muted" />
+      </div>
+    );
+  }
 
   return (
     <form
@@ -200,37 +273,24 @@ export default function OnboardingPage() {
             )}
           />
         </div>
-
-        <div className="flex flex-col gap-1.75">
-          <FieldLabel>Weekly pace</FieldLabel>
-          <ToggleGroup
-            value={[weeklyPace]}
-            onValueChange={(values) => values[0] && setWeeklyPace(values[0])}
-            spacing={2}
-            className="w-full gap-2"
-          >
-            {PACE_OPTIONS.map((pace) => (
-              <ToggleGroupItem
-                key={pace}
-                value={String(pace)}
-                className={`${TOGGLE_ITEM_CLASS} text-caption`}
-              >
-                {pace} kg
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
       </div>
 
       <div className="px-5 pt-4 pb-1 font-sans text-[11.5px] text-text-muted">
         This is an estimate, not medical advice. Actual results vary.
       </div>
 
-      <div className="px-5 pt-3">
+      <div className="flex flex-col gap-2.5 px-5 pt-3">
+        {submitError && (
+          <p role="alert" className="font-sans text-[12px] text-destructive">
+            {submitError}
+          </p>
+        )}
         <Button
           type="submit"
+          disabled={submitting}
           className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
         >
+          {submitting && <Loader2 className="size-4 animate-spin" />}
           Continue
         </Button>
       </div>
