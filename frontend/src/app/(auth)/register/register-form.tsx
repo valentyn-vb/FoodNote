@@ -32,7 +32,7 @@ export function RegisterForm() {
   const onSubmit = form.handleSubmit(async (data) => {
     try {
       await register(data);
-      router.push('/dashboard');
+      router.push('/onboarding');
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         form.setError('email', {

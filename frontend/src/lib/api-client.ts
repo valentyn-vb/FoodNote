@@ -1,11 +1,13 @@
 import {
   authResponseSchema,
   authUserSchema,
+  goalResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
   type AuthResponse,
   type AuthUser,
   type CreateWeightRequest,
+  type GoalResponse,
   type LoginRequest,
   type RegisterRequest,
   type WeightEntryResponse,
@@ -126,5 +128,12 @@ export const weights = {
       entry: weightEntryResponseSchema.parse(await res.json()),
       updated: res.status === 200,
     };
+  },
+};
+
+export const goals = {
+  async current(): Promise<GoalResponse> {
+    const res = await apiFetch('/api/goals/current');
+    return goalResponseSchema.parse(await res.json());
   },
 };

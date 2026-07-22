@@ -1,6 +1,9 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { createWeightRequestSchema } from '@foodnote/shared';
-import type { CreateWeightRequest, WeightEntryResponse } from '@foodnote/shared';
+import type {
+  CreateWeightRequest,
+  WeightEntryResponse,
+} from '@foodnote/shared';
 import type { Response } from 'express';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
