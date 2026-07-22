@@ -1,9 +1,11 @@
 import {
   authResponseSchema,
   authUserSchema,
+  goalResponseSchema,
   refreshResponseSchema,
   type AuthResponse,
   type AuthUser,
+  type GoalResponse,
   type LoginRequest,
   type RegisterRequest,
 } from '@foodnote/shared';
@@ -107,5 +109,12 @@ export const auth = {
   async me(): Promise<AuthUser> {
     const res = await apiFetch('/api/auth/me');
     return authUserSchema.parse(await res.json());
+  },
+};
+
+export const goals = {
+  async current(): Promise<GoalResponse> {
+    const res = await apiFetch('/api/goals/current');
+    return goalResponseSchema.parse(await res.json());
   },
 };
