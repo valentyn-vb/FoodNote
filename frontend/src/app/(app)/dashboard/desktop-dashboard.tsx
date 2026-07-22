@@ -9,6 +9,7 @@ import {
 } from '@/components/dashboard-charts';
 import { mockDailyCalories, mockDashboardStats } from '@/lib/mock-data';
 import { useMeals } from '@/lib/meals-context';
+import { useWeight } from '@/lib/weight-context';
 import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
 import { CompareStat } from './compare-stat';
 import { EmptyMeals } from './empty-meals';
@@ -17,6 +18,7 @@ import { MealRow } from './meal-row';
 export function DesktopDashboard() {
   const stats = mockDashboardStats;
   const { meals, eatenKcal, remainingKcal, goalKcal } = useMeals();
+  const { weightTrend, weightChangeKg } = useWeight();
   // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
   const eatenYesterday = mockDailyCalories.at(-2)!.kcal;
   const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
@@ -50,7 +52,7 @@ export function DesktopDashboard() {
         />
         <CompareStat
           label="Weight change"
-          value={stats.weightTrendKg}
+          value={weightChangeKg}
           compareLabel="Last month"
           compareValue={stats.weightTrendLastMonthKg}
           suffix=" kg"
@@ -72,6 +74,7 @@ export function DesktopDashboard() {
             className={`${CARD_CLASS} grow-2 basis-0 gap-3 px-6 py-5.5`}
             chartClassName="aspect-auto min-h-0 w-full grow basis-0"
             title="Weight trend"
+            data={weightTrend}
           />
 
           <div className="flex min-h-0 grow basis-0 flex-col gap-2.5">

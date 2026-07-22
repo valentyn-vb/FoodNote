@@ -1,11 +1,16 @@
 import {
   authResponseSchema,
   authUserSchema,
+  goalResponseSchema,
   refreshResponseSchema,
+  weightEntryResponseSchema,
   type AuthResponse,
   type AuthUser,
+  type CreateWeightRequest,
+  type GoalResponse,
   type LoginRequest,
   type RegisterRequest,
+  type WeightEntryResponse,
 } from '@foodnote/shared';
 
 /**
@@ -107,5 +112,28 @@ export const auth = {
   async me(): Promise<AuthUser> {
     const res = await apiFetch('/api/auth/me');
     return authUserSchema.parse(await res.json());
+  },
+};
+
+export const weights = {
+  /** POST /weights upserts today's entry: 201 = created, 200 = updated. */
+  async create(
+    data: CreateWeightRequest,
+  ): Promise<{ entry: WeightEntryResponse; updated: boolean }> {
+    const res = await apiFetch('/api/weights', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return {
+      entry: weightEntryResponseSchema.parse(await res.json()),
+      updated: res.status === 200,
+    };
+  },
+};
+
+export const goals = {
+  async current(): Promise<GoalResponse> {
+    const res = await apiFetch('/api/goals/current');
+    return goalResponseSchema.parse(await res.json());
   },
 };

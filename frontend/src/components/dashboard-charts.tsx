@@ -42,10 +42,16 @@ const calorieConfig = {
   kcal: { label: 'kcal', colors: { light: ['var(--fn-primary)'] } },
 };
 
-export function WeightTrendChart({ className }: { className?: string }) {
+export function WeightTrendChart({
+  className,
+  data = mockWeightTrend,
+}: {
+  className?: string;
+  data?: typeof mockWeightTrend;
+}) {
   return (
     <EvilLineChart
-      data={mockWeightTrend}
+      data={data}
       config={weightConfig}
       className={className}
       curveType="monotone"
@@ -91,10 +97,12 @@ export function WeightTrendCard({
   className,
   chartClassName,
   title,
+  data,
 }: {
   className?: string;
   chartClassName?: string;
   title?: string;
+  data?: typeof mockWeightTrend;
 }) {
   return (
     <Card className={className}>
@@ -103,7 +111,7 @@ export function WeightTrendCard({
           {title}
         </div>
       )}
-      <WeightTrendChart className={chartClassName} />
+      <WeightTrendChart className={chartClassName} data={data} />
     </Card>
   );
 }
