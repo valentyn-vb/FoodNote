@@ -1,4 +1,4 @@
-import { Body, Controller, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
 import { putProfileRequestSchema } from '@foodnote/shared';
 import type { ProfileResponse, PutProfileRequest } from '@foodnote/shared';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
@@ -10,6 +10,11 @@ import { ProfileService } from './profile.service';
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
   constructor(private readonly profile: ProfileService) {}
+
+  @Get()
+  async get(@Req() req: AuthenticatedRequest): Promise<ProfileResponse> {
+    return this.profile.getCurrent(req.user.id);
+  }
 
   @Put()
   async put(

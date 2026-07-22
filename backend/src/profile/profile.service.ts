@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -14,6 +14,28 @@ export class ProfileService {
     @InjectRepository(UserProfile)
     private readonly profiles: Repository<UserProfile>,
   ) {}
+
+  /**
+   * The stored profile, or 404 until it exists. currentWeightKg /
+   * maintenanceCalories are null on reads: they need a weight, and this service
+   * stays decoupled from the journal (maintenance is only computed on PUT, from
+   * the weight the client passes). calorieTarget is always null — goal's concern.
+   */
+  async getCurrent(userId: string): Promise<ProfileResponse> {
+    const profile = await this.profiles.findOne({ where: { userId } });
+    if (!profile) {
+      throw new NotFoundException('No profile');
+    }
+    return {
+      age: profile.age,
+      sex: profile.sex,
+      heightCm: profile.heightCm,
+      activityLevel: profile.activityLevel,
+      currentWeightKg: null, // worse considering removing this fields from zod schema
+      maintenanceCalories: null,
+      calorieTarget: null,
+    };
+  }
 
   /**
    * Create-or-replace the profile (the onboarding entry point). currentWeightKg
