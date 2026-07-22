@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { buildDataSourceOptions } from './database/data-source';
 import { UserModule } from './user/user.module';
 import { WeightsModule } from './weights/weights.module';
 
@@ -15,16 +16,14 @@ import { WeightsModule } from './weights/weights.module';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        url: config.getOrThrow<string>('DATABASE_URL'),
-        autoLoadEntities: true,
-        // Auto-sync schema in dev; also opt-in via DB_SYNCHRONIZE=true so a fresh
-        // Render Postgres gets its schema on first boot (remove once migrations exist).
-        synchronize:
-          config.get<string>('NODE_ENV') !== 'production' ||
-          config.get<string>('DB_SYNCHRONIZE') === 'true',
-      }),
+      useFactory: (config: ConfigService) =>
+        buildDataSourceOptions(config.getOrThrow<string>('DATABASE_URL'), {
+          // Schema is managed by migrations (no synchronize). Apply pending
+          // migrations on boot everywhere except production, so dev and e2e
+          // run against an up-to-date schema without a manual step. Production
+          // runs `migration:run` explicitly during deploy.
+          migrationsRun: config.get<string>('NODE_ENV') !== 'production',
+        }),
     }),
     AuthModule,
     UserModule,
