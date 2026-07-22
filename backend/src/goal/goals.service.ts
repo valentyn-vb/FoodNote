@@ -28,7 +28,34 @@ export class GoalsService {
     return new Date().toISOString().slice(0, 10);
   }
 
-  toResponse(goal: Goal, currentWeightKg: number | null): GoalResponse {
+  // Fetch Current Weight and assemble the response — the read-shape the
+  // controller returns for every goal endpoint.
+  private async buildResponse(goal: Goal): Promise<GoalResponse> {
+    const latest = await this.weights.getLatestForUser(goal.userId);
+    return this.toResponse(goal, latest ? latest.weightKg : null);
+  }
+
+  async createResponse(
+    userId: string,
+    data: CreateGoalRequest,
+  ): Promise<GoalResponse> {
+    return this.buildResponse(await this.create(userId, data));
+  }
+
+  async getCurrentResponse(userId: string): Promise<GoalResponse | null> {
+    const goal = await this.getActiveGoal(userId);
+    return goal ? this.buildResponse(goal) : null;
+  }
+
+  async updateResponse(
+    userId: string,
+    data: UpdateGoalRequest,
+  ): Promise<GoalResponse | null> {
+    const goal = await this.update(userId, data);
+    return goal ? this.buildResponse(goal) : null;
+  }
+
+  private toResponse(goal: Goal, currentWeightKg: number | null): GoalResponse {
     const remainingKg =
       currentWeightKg === null
         ? 0

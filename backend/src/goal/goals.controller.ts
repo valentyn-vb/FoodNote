@@ -21,35 +21,28 @@ import type {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { WeightsService } from '../weights/weights.service';
 import { GoalsService } from './goals.service';
 
 @Controller('goals')
 @UseGuards(JwtAuthGuard)
 export class GoalsController {
-  constructor(
-    private readonly goals: GoalsService,
-    private readonly weights: WeightsService,
-  ) {}
+  constructor(private readonly goals: GoalsService) {}
 
   @Post()
   @HttpCode(201)
-  async create(
+  create(
     @Body(new ZodValidationPipe(createGoalRequestSchema))
     body: CreateGoalRequest,
     @Req() req: AuthenticatedRequest,
   ): Promise<GoalResponse> {
-    const goal = await this.goals.create(req.user.id, body);
-    const latest = await this.weights.getLatestForUser(req.user.id);
-    return this.goals.toResponse(goal, latest ? latest.weightKg : null);
+    return this.goals.createResponse(req.user.id, body);
   }
 
   @Get('current')
   async current(@Req() req: AuthenticatedRequest): Promise<GoalResponse> {
-    const goal = await this.goals.getActiveGoal(req.user.id);
-    if (!goal) throw new NotFoundException('No active goal');
-    const latest = await this.weights.getLatestForUser(req.user.id);
-    return this.goals.toResponse(goal, latest ? latest.weightKg : null);
+    const response = await this.goals.getCurrentResponse(req.user.id);
+    if (!response) throw new NotFoundException('No active goal');
+    return response;
   }
 
   @Patch('current')
@@ -58,9 +51,8 @@ export class GoalsController {
     body: UpdateGoalRequest,
     @Req() req: AuthenticatedRequest,
   ): Promise<GoalResponse> {
-    const goal = await this.goals.update(req.user.id, body);
-    if (!goal) throw new NotFoundException('No active goal');
-    const latest = await this.weights.getLatestForUser(req.user.id);
-    return this.goals.toResponse(goal, latest ? latest.weightKg : null);
+    const response = await this.goals.updateResponse(req.user.id, body);
+    if (!response) throw new NotFoundException('No active goal');
+    return response;
   }
 }
