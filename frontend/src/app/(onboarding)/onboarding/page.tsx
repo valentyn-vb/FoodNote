@@ -12,10 +12,14 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import {
+  saveOnboardingValues,
+  type OnboardingFormValues,
+} from '@/lib/onboarding-store';
+import {
   activityLevelSchema,
   PACE_OPTIONS,
   putProfileRequestSchema,
-  type PutProfileRequest,
+  weightKgSchema,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
@@ -26,6 +30,14 @@ import { Controller, useForm } from 'react-hook-form';
 
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
+
+// Profile fields (PUT /profile) plus the current & target weight the plan math
+// needs. The weights aren't part of the profile contract — they map to the
+// weight journal and the goal — so they're added here only as a form model.
+const onboardingFormSchema = putProfileRequestSchema.extend({
+  currentWeightKg: weightKgSchema,
+  targetWeightKg: weightKgSchema,
+});
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -67,19 +79,23 @@ export default function OnboardingPage() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<PutProfileRequest>({
-    resolver: zodResolver(putProfileRequestSchema),
+  } = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingFormSchema),
     defaultValues: {
       age: 27,
       sex: 'female',
       heightCm: 168,
       activityLevel: 'light',
+      currentWeightKg: 72,
+      targetWeightKg: 64,
     },
   });
 
-  const onSubmit = handleSubmit((profile) => {
-    console.log('onboarding profile payload', profile);
-    //router.push('/plan-selection');
+  const onSubmit = handleSubmit((values) => {
+    // Mock-save the collected values (real: PUT /profile + POST /weights),
+    // then advance — plan-selection reads them back to compute the plans.
+    saveOnboardingValues(values);
+    router.push('/plan-selection');
   });
 
   return (
@@ -150,14 +166,16 @@ export default function OnboardingPage() {
           <TextField
             label="Current weight (kg)"
             type="number"
-            defaultValue={72}
             inputMode="numeric"
+            error={errors.currentWeightKg?.message}
+            {...register('currentWeightKg', { valueAsNumber: true })}
           />
           <TextField
             label="Target weight (kg)"
             type="number"
-            defaultValue={64}
             inputMode="numeric"
+            error={errors.targetWeightKg?.message}
+            {...register('targetWeightKg', { valueAsNumber: true })}
           />
         </div>
 
