@@ -13,7 +13,7 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f db",
-    "test": "npm test -w backend",
+    "test": "npm test -w shared && npm test -w backend",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
