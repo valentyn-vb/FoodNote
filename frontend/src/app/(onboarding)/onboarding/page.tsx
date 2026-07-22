@@ -230,7 +230,11 @@ export default function OnboardingPage() {
             control={control}
             name="activityLevel"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={ACTIVITY_LEVEL_LABELS}
+              >
                 <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008]">
                   <SelectValue />
                 </SelectTrigger>
