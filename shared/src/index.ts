@@ -22,3 +22,4 @@ export * from './weights';
 export * from './meals';
 export * from './dashboard';
 export * from './calc';
+export * from './calc.types';

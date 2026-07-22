@@ -1,4 +1,5 @@
 import type { ActivityLevel, Sex } from './common';
+import type { BodyMetrics, PlanInput } from './calc.types';
 import type { Pace, PlanOption } from './goals';
 import { PACE_OPTIONS } from './goals';
 
@@ -8,15 +9,9 @@ import { PACE_OPTIONS } from './goals';
  * (profile/dashboard read-time recompute) and the frontend (onboarding plan
  * preview) run the identical numbers. See docs/adr/0001, docs/adr/0002.
  *
- * Internals carry full float precision; only user-facing kcal outputs round.
+ * Types live in ./calc.types; internals carry full float precision, only
+ * user-facing kcal outputs round.
  */
-
-export interface BodyMetrics {
-  age: number;
-  sex: Sex;
-  heightCm: number;
-  weightKg: number;
-}
 
 /**
  * Basal Metabolic Rate via Mifflin-St Jeor, returned unrounded so callers can
@@ -65,16 +60,6 @@ export function dailyEnergyDeltaForPace(pace: Pace): number {
 
 /** Lowest calorie target ever offered, by sex. Loss-side only. */
 export const SAFETY_FLOOR: Record<Sex, number> = { female: 1200, male: 1500 };
-
-/** A user's profile plus the goal endpoints the plan math needs. */
-export interface PlanInput {
-  age: number;
-  sex: Sex;
-  heightCm: number;
-  activityLevel: ActivityLevel;
-  currentWeightKg: number;
-  targetWeightKg: number;
-}
 
 /**
  * Recommended daily calorie target for a chosen pace, rounded to whole kcal.
@@ -144,19 +129,17 @@ export function buildPlanOptions(
   const isLoss = input.targetWeightKg < input.currentWeightKg;
   const remainingKg = Math.abs(input.targetWeightKg - input.currentWeightKg);
 
-  return PACE_OPTIONS.flatMap((pace: Pace) => {
-    const delta = dailyEnergyDeltaForPace(pace);
-    // Hide any loss option whose (unclamped) target dips below the floor.
-    if (isLoss && maintenance - delta < SAFETY_FLOOR[input.sex]) {
-      return [];
-    }
-    return [
-      {
-        pace,
-        dailyCalorieTarget: calorieTargetForPace(input, pace),
-        dailyEnergyDelta: Math.round(delta),
-        projectedGoalDate: projectedDate(remainingKg, pace, input.fromDate),
-      },
-    ];
-  });
+  // A loss option is hidden when its unclamped target would dip below the
+  // floor; gain and maintenance options are always viable. Keep the viable
+  // paces, then map each to a full option.
+  const isViable = (pace: Pace): boolean =>
+    !isLoss ||
+    maintenance - dailyEnergyDeltaForPace(pace) >= SAFETY_FLOOR[input.sex];
+
+  return PACE_OPTIONS.filter(isViable).map((pace) => ({
+    pace,
+    dailyCalorieTarget: calorieTargetForPace(input, pace),
+    dailyEnergyDelta: Math.round(dailyEnergyDeltaForPace(pace)),
+    projectedGoalDate: projectedDate(remainingKg, pace, input.fromDate),
+  }));
 }
