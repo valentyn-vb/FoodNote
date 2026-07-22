@@ -9,5 +9,6 @@ import { WeightsService } from './weights.service';
   imports: [TypeOrmModule.forFeature([WeightEntry]), AuthModule],
   controllers: [WeightsController],
   providers: [WeightsService],
+  exports: [WeightsService],
 })
 export class WeightsModule {}

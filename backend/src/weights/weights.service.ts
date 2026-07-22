@@ -11,26 +11,24 @@ export class WeightsService {
     private readonly repo: Repository<WeightEntry>,
   ) {}
 
-  async upsertToday(
+  // Plain append: the weight journal is a list. One-per-day upsert is #31.
+  async create(
     userId: string,
     data: CreateWeightRequest,
-  ): Promise<{ entry: WeightEntry; created: boolean }> {
-    const recordedAt = new Date(data.recordedAt);
-    const day = recordedAt.toISOString().slice(0, 10);
-    const existing = await this.repo.findOne({ where: { userId, day } });
-
-    if (existing) {
-      existing.weightKg = data.weightKg;
-      existing.recordedAt = recordedAt;
-      return { entry: await this.repo.save(existing), created: false };
-    }
-
-    const created = this.repo.create({
+  ): Promise<WeightEntry> {
+    const entry = this.repo.create({
       userId,
-      day,
       weightKg: data.weightKg,
-      recordedAt,
+      recordedAt: new Date(data.recordedAt),
     });
-    return { entry: await this.repo.save(created), created: true };
+    return this.repo.save(entry);
+  }
+
+  // Current Weight source: the entry with the latest recordedAt.
+  async getLatestForUser(userId: string): Promise<WeightEntry | null> {
+    return this.repo.findOne({
+      where: { userId },
+      order: { recordedAt: 'DESC' },
+    });
   }
 }

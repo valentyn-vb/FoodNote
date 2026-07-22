@@ -2,35 +2,42 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { numericTransformer } from '../database/numeric.transformer';
+import { User } from '../user/user.entity';
 
 /**
- * `day` is the UTC calendar day derived from recordedAt, stored redundantly
- * so the (userId, day) unique index can enforce one entry per day without a
- * generated/expression column. No migration backs this yet — relies on
- * TypeORM `synchronize` (see app.module.ts); a real migration is still owed
- * before this can run against production Postgres.
+ * The weight journal — the only place body weight is written. A plain list:
+ * a user may log any number of entries. currentWeightKg (on /profile and
+ * /dashboard) is derived from the entry with the latest recordedAt.
+ * One-entry-per-UTC-day upsert is deferred to #31 (needs its own migration).
  */
 @Entity('weight_entries')
-@Index(['userId', 'day'], { unique: true })
 export class WeightEntry {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column('uuid')
   userId: string;
 
-  @Column({ type: 'double precision' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   weightKg: number;
 
   @Column({ type: 'timestamptz' })
   recordedAt: Date;
-
-  @Column({ type: 'date' })
-  day: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -6,7 +6,7 @@ import { MealEntry } from '../meal/meal-entry.entity';
 import { MealItem } from '../meal/meal-item.entity';
 import { UserProfile } from '../profile/user-profile.entity';
 import { User } from '../user/user.entity';
-import { WeightEntry } from '../weight/weight-entry.entity';
+import { WeightEntry } from '../weights/weight-entry.entity';
 
 /**
  * The single source of truth for the TypeORM connection. Both Nest
