@@ -69,13 +69,12 @@ export default function PlanSelectionPage() {
     });
   }, [profileData, goalData]);
 
+  // Default to 0.5 kg/week when it's an available option, else the first one;
+  // a manual pick overrides it.
   const defaultPace = useMemo<Pace | null>(() => {
     if (options.length === 0) return null;
-    const paces = options.map((option) => option.pace);
-    return goalData && paces.includes(goalData.preferredWeeklyChangeKg)
-      ? goalData.preferredWeeklyChangeKg
-      : options[0].pace;
-  }, [options, goalData]);
+    return options.some((option) => option.pace === 0.5) ? 0.5 : options[0].pace;
+  }, [options]);
 
   const selectedPace = pickedPace ?? defaultPace;
 
