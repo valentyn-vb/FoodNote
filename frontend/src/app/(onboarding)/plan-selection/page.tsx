@@ -1,27 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft, Loader2 } from 'lucide-react';
-import { getOnboardingData } from '@/lib/onboarding';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { getOnboardingData } from '@/lib/onboarding';
+import { cn, formatGoalDate } from '@/lib/utils';
 import {
   buildPlanOptions,
   type GoalResponse,
   type Pace,
   type ProfileResponse,
 } from '@foodnote/shared';
-
-function formatGoalDate(date: string | null): string {
-  if (!date) return 'Target already reached';
-  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function PlanSelectionPage() {
   const router = useRouter();
