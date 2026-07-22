@@ -101,16 +101,6 @@ launching the API, using the `DATABASE_URL` already configured on the host.
 So a normal deploy to `main` migrates the Neon schema automatically — no one
 needs to handle the connection string manually.
 
-**One-time cutover only:** the current Neon schema was created by the old
-`synchronize`, so the initial migration's `CREATE TABLE users` collides with
-the existing table. Neon data is disposable, so reset the schema once (run by
-the Neon owner, or with their OK); the next deploy then migrates cleanly.
-
-```sql
--- one-time, against the Neon DATABASE_URL:
-DROP SCHEMA public CASCADE; CREATE SCHEMA public;
-```
-
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
