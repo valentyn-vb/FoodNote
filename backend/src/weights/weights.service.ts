@@ -15,7 +15,10 @@ export class WeightsService {
    * The weight journal is a plain list (see CONTRACT.md): every log appends a
    * new entry. currentWeightKg elsewhere is derived from the latest recordedAt.
    */
-  async append(userId: string, data: CreateWeightRequest): Promise<WeightEntry> {
+  async append(
+    userId: string,
+    data: CreateWeightRequest,
+  ): Promise<WeightEntry> {
     const entry = this.repo.create({
       userId,
       weightKg: data.weightKg,

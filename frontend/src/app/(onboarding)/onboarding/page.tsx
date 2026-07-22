@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -11,88 +12,61 @@ import {
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { ApiError, goals, profile, weights } from '@/lib/api-client';
-import {
-  activityLevelSchema,
-  putProfileRequestSchema,
-  weightKgSchema,
-} from '@foodnote/shared';
+import { goals, profile, weights } from '@/lib/api-client';
+import { getOnboardingData } from '@/lib/onboarding';
+import { activityLevelSchema } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { z } from 'zod';
+import {
+  DEFAULT_GOAL_PACE,
+  ONBOARDING_DEFAULTS,
+  onboardingFormSchema,
+  type OnboardingFormValues,
+} from './form-schema';
 
 const TOGGLE_ITEM_CLASS =
   'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep';
 
-// The goal's pace isn't asked here — it's chosen on plan-selection. The goal is
-// created now with this default so the target/pace are persisted (and fetchable).
-const DEFAULT_PACE = 0.5 as const;
+const LABEL_CLASS = 'font-sans text-caption font-medium text-text';
+const INPUT_CLASS =
+  'h-11.5 rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008] focus-visible:border-primary focus-visible:ring-0';
 
-// Profile fields (PUT /profile, incl. currentWeightKg) plus targetWeightKg,
-// which isn't a profile field — it maps to the goal and the plan math.
-const onboardingFormSchema = putProfileRequestSchema.extend({
-  targetWeightKg: weightKgSchema,
-});
-
-type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
-
-const DEFAULT_VALUES: OnboardingFormValues = {
-  age: 27,
-  sex: 'female',
-  heightCm: 168,
-  activityLevel: 'light',
-  currentWeightKg: 72,
-  targetWeightKg: 64,
-};
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="font-sans text-caption font-medium text-text">
-      {children}
-    </div>
-  );
-}
-
-function TextField({
+function NumberField({
+  id,
   label,
   error,
   ...props
-}: {
-  label: string;
-  error?: string;
-} & React.ComponentProps<'input'>) {
+}: { id: string; label: string; error?: string } & React.ComponentProps<
+  typeof Input
+>) {
   return (
-    <div className="flex grow basis-0 flex-col gap-1.75">
-      <FieldLabel>{label}</FieldLabel>
+    <Field
+      className="grow basis-0 gap-1.75"
+      data-invalid={!!error || undefined}
+    >
+      <FieldLabel htmlFor={id} className={LABEL_CLASS}>
+        {label}
+      </FieldLabel>
       <Input
+        id={id}
+        aria-invalid={!!error || undefined}
+        className={INPUT_CLASS}
         {...props}
-        aria-invalid={error ? true : undefined}
-        className="h-11.5 rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008] focus-visible:border-primary focus-visible:ring-0"
       />
       {error && (
-        <p className="font-sans text-[12px] text-destructive">{error}</p>
+        <FieldError className="font-sans text-[12px]">{error}</FieldError>
       )}
-    </div>
+    </Field>
   );
-}
-
-async function fetchOr404<T>(p: Promise<T>): Promise<T | null> {
-  try {
-    return await p;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
-  }
 }
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -100,31 +74,29 @@ export default function OnboardingPage() {
     control,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: ONBOARDING_DEFAULTS,
   });
 
-  // Prefill from the backend so stepping back from plan-selection keeps the
-  // already-saved values. A brand-new user has neither profile nor goal (both
-  // 404) and just sees the defaults.
+  // A returning (stepped-back) user has a saved profile + goal to prefill; a new
+  // user has neither and keeps the defaults.
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchOr404(profile.current()), fetchOr404(goals.current())])
-      .then(([savedProfile, goal]) => {
-        if (cancelled) return;
-        if (savedProfile && goal) {
-          reset({
-            age: savedProfile.age,
-            sex: savedProfile.sex,
-            heightCm: savedProfile.heightCm,
-            activityLevel: savedProfile.activityLevel,
-            currentWeightKg: goal.startWeightKg,
-            targetWeightKg: goal.targetWeightKg,
-          });
-        }
+    getOnboardingData()
+      .then(({ profile: savedProfile, goal }) => {
+        if (cancelled || !savedProfile || !goal) return;
+        reset({
+          age: savedProfile.age,
+          sex: savedProfile.sex,
+          heightCm: savedProfile.heightCm,
+          activityLevel: savedProfile.activityLevel,
+          currentWeightKg: goal.startWeightKg,
+          targetWeightKg: goal.targetWeightKg,
+        });
       })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -134,9 +106,6 @@ export default function OnboardingPage() {
   }, [reset]);
 
   const onSubmit = handleSubmit(async (values) => {
-    // The three onboarding calls: profile, first weight, goal (default pace).
-    // The pace is refined on plan-selection.
-    setSubmitting(true);
     setSubmitError(null);
     try {
       const {
@@ -154,12 +123,11 @@ export default function OnboardingPage() {
       });
       await goals.create({
         targetWeightKg,
-        preferredWeeklyChangeKg: DEFAULT_PACE,
+        preferredWeeklyChangeKg: DEFAULT_GOAL_PACE,
       });
       router.push('/plan-selection');
     } catch {
       setSubmitError("Couldn't save your details. Please try again.");
-      setSubmitting(false);
     }
   });
 
@@ -194,14 +162,16 @@ export default function OnboardingPage() {
 
       <div className="flex flex-col gap-5 px-5 pt-4.5">
         <div className="flex gap-3">
-          <TextField
+          <NumberField
+            id="age"
             label="Age"
             type="number"
             inputMode="numeric"
             error={errors.age?.message}
             {...register('age', { valueAsNumber: true })}
           />
-          <TextField
+          <NumberField
+            id="heightCm"
             label="Height (cm)"
             type="number"
             inputMode="numeric"
@@ -210,8 +180,8 @@ export default function OnboardingPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-1.75">
-          <FieldLabel>Sex</FieldLabel>
+        <Field className="gap-1.75">
+          <FieldLabel className={LABEL_CLASS}>Sex</FieldLabel>
           <Controller
             control={control}
             name="sex"
@@ -233,17 +203,19 @@ export default function OnboardingPage() {
               </ToggleGroup>
             )}
           />
-        </div>
+        </Field>
 
         <div className="flex gap-3">
-          <TextField
+          <NumberField
+            id="currentWeightKg"
             label="Current weight (kg)"
             type="number"
             inputMode="numeric"
             error={errors.currentWeightKg?.message}
             {...register('currentWeightKg', { valueAsNumber: true })}
           />
-          <TextField
+          <NumberField
+            id="targetWeightKg"
             label="Target weight (kg)"
             type="number"
             inputMode="numeric"
@@ -252,8 +224,8 @@ export default function OnboardingPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-1.75">
-          <FieldLabel>Activity level</FieldLabel>
+        <Field className="gap-1.75">
+          <FieldLabel className={LABEL_CLASS}>Activity level</FieldLabel>
           <Controller
             control={control}
             name="activityLevel"
@@ -272,7 +244,7 @@ export default function OnboardingPage() {
               </Select>
             )}
           />
-        </div>
+        </Field>
       </div>
 
       <div className="px-5 pt-4 pb-1 font-sans text-[11.5px] text-text-muted">
@@ -287,10 +259,10 @@ export default function OnboardingPage() {
         )}
         <Button
           type="submit"
-          disabled={submitting}
+          disabled={isSubmitting}
           className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
         >
-          {submitting && <Loader2 className="size-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="size-4 animate-spin" />}
           Continue
         </Button>
       </div>

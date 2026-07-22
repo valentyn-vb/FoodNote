@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Loader2 } from 'lucide-react';
-import { ApiError, goals, profile } from '@/lib/api-client';
+import { getOnboardingData } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -31,23 +31,22 @@ export default function PlanSelectionPage() {
   const [loadError, setLoadError] = useState(false);
   const [pickedPace, setPickedPace] = useState<Pace | null>(null);
 
-  // Plan-selection reads the onboarding data straight from the backend. A 404
-  // on either means onboarding isn't complete -> back to the form.
+  // A missing profile or goal means onboarding isn't complete -> back to the form.
   useEffect(() => {
     let cancelled = false;
-    Promise.all([profile.current(), goals.current()])
-      .then(([p, g]) => {
+    getOnboardingData()
+      .then(({ profile: p, goal: g }) => {
         if (cancelled) return;
+        if (!p || !g) {
+          router.replace('/onboarding');
+          return;
+        }
         setProfileData(p);
         setGoalData(g);
         setReady(true);
       })
-      .catch((err) => {
+      .catch(() => {
         if (cancelled) return;
-        if (err instanceof ApiError && err.status === 404) {
-          router.replace('/onboarding');
-          return;
-        }
         setLoadError(true);
         setReady(true);
       });
@@ -69,11 +68,11 @@ export default function PlanSelectionPage() {
     });
   }, [profileData, goalData]);
 
-  // Default to 0.5 kg/week when it's an available option, else the first one;
-  // a manual pick overrides it.
   const defaultPace = useMemo<Pace | null>(() => {
     if (options.length === 0) return null;
-    return options.some((option) => option.pace === 0.5) ? 0.5 : options[0].pace;
+    return options.some((option) => option.pace === 0.5)
+      ? 0.5
+      : options[0].pace;
   }, [options]);
 
   const selectedPace = pickedPace ?? defaultPace;
