@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Disclaimer } from '@/components/disclaimer';
 import {
   DailyCaloriesChart,
   RemainingTodayRingCard,
@@ -105,9 +106,7 @@ export function DesktopDashboard() {
         </div>
       </div>
 
-      <div className="font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer />
     </div>
   );
 }

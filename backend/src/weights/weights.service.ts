@@ -28,6 +28,14 @@ export class WeightsService {
     return this.repo.save(entry);
   }
 
+  // Current Weight source: the entry with the latest recordedAt.
+  async getLatestForUser(userId: string): Promise<WeightEntry | null> {
+    return this.repo.findOne({
+      where: { userId },
+      order: { recordedAt: 'DESC' },
+    });
+  }
+
   async list(
     userId: string,
     from?: string,
