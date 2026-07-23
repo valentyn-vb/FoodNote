@@ -105,7 +105,13 @@ export function PersonalDetailsSection() {
         currentWeightKg: values.currentWeightKg,
         targetWeightKg: values.targetWeightKg,
       });
-      toast.success('Details updated');
+      toast.success('Details updated', {
+        description:
+          updated.calorieTarget &&
+          updated.calorieTarget !== previous.calorieTarget
+            ? `New daily calorie target: ${updated.calorieTarget.toLocaleString()} kcal`
+            : undefined,
+      });
     } catch {
       toast.error("Couldn't save your details. Please try again.");
     } finally {
