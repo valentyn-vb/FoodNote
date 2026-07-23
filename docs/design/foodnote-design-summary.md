@@ -116,6 +116,7 @@ Source assets: [`docs/design/mascot/`](./mascot/). Each appearance is a delibera
 
 - **Drawer, not push navigation**: "Log a meal" should open as a shadcn Drawer over the dashboard, not a full route change — keeps today's totals as visible ground to return to.
 - **Sonner over blocking confirms**: on save, dismiss the Drawer and show a Sonner toast ("Meal saved") with Undo rather than a blocking dialog.
+- **Error toast voice** (ticket #41): short, apologetic, generic retry CTA, no jargon — e.g. "Couldn't save your weight. Please try again." Never expose a raw error message or status code.
 - **NumberFlow**: the remaining-kcal figure, progress bar, and macro totals should animate with NumberFlow on every save/edit so updates read as caused by the action just taken, not a page refresh.
 - **Tabular numbers**: all calorie/weight/macro figures use `font-variant-numeric: tabular-nums` so digits don't shift width as they change.
 

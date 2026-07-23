@@ -5,6 +5,7 @@ import Link from 'next/link';
 import NumberFlow from '@number-flow/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Disclaimer } from '@/components/disclaimer';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import {
@@ -110,9 +111,7 @@ export function MobileDashboard() {
         </Card>
       </div>
 
-      <div className="font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer />
 
       <div className="flex flex-col gap-2.5">
         <h2 className="font-sans text-caption font-medium text-text">

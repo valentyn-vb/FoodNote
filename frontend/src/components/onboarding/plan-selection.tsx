@@ -1,5 +1,6 @@
 'use client';
 
+import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn, formatGoalDate } from '@/lib/utils';
@@ -119,9 +120,7 @@ export function PlanSelection({
         </RadioGroup>
       )}
 
-      <div className="px-5 pt-3.5 font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer className="px-5 pt-3.5" />
 
       <div className="flex flex-col gap-2.5 px-5 pt-3">
         {submitError && (

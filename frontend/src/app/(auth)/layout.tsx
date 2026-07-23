@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
+import { AuthFormSkeleton } from './auth-form-skeleton';
 
 /**
  * The form only renders once the session restore has settled as
@@ -38,13 +38,7 @@ export default function AuthLayout({
         </div>
       </div>
       <div className="w-full max-w-sm">
-        {status === 'unauthenticated' ? (
-          children
-        ) : (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-6 animate-spin text-text-muted" />
-          </div>
-        )}
+        {status === 'unauthenticated' ? children : <AuthFormSkeleton />}
       </div>
     </div>
   );
