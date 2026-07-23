@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { GoalResponse, ProfileResponse } from '@foodnote/shared';
+import type { ProfileResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -28,7 +28,7 @@ import {
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { ApiError, goals, profile, weights } from '@/lib/api-client';
+import { goals, profile, weights } from '@/lib/api-client';
 import { DetailRow } from './detail-row';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
@@ -36,7 +36,6 @@ const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
 export function PersonalDetailsSection() {
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
-  const [goalData, setGoalData] = useState<GoalResponse | null>(null);
   const [open, setOpen] = useState(false);
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
@@ -44,18 +43,10 @@ export function PersonalDetailsSection() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      profile.current(),
-      // No active goal yet is a known empty state, not an error.
-      goals.current().catch((err) => {
-        if (err instanceof ApiError && err.status === 404) return null;
-        throw err;
-      }),
-    ])
-      .then(([p, g]) => {
-        if (cancelled) return;
-        setProfileData(p);
-        setGoalData(g);
+    profile
+      .current()
+      .then((p) => {
+        if (!cancelled) setProfileData(p);
       })
       .catch(() => {
         if (!cancelled) toast.error("Couldn't load your details.");
@@ -77,8 +68,7 @@ export function PersonalDetailsSection() {
         heightCm: profileData.heightCm,
         activityLevel: profileData.activityLevel,
         currentWeightKg: profileData.currentWeightKg ?? undefined,
-        targetWeightKg:
-          goalData?.targetWeightKg ?? profileData.currentWeightKg ?? undefined,
+        targetWeightKg: profileData.targetWeightKg ?? undefined,
       });
     }
     setOpen(next);
@@ -86,44 +76,36 @@ export function PersonalDetailsSection() {
 
   async function handleSave(values: OnboardingFormValues) {
     if (!profileData) return;
-    const previousProfile = profileData;
-    const previousGoal = goalData;
+    const previous = profileData;
 
     setOpen(false);
     setLoading(true);
     try {
-      const updatedProfile = await profile.put({
-        age: values.age,
-        sex: values.sex,
-        heightCm: values.heightCm,
-        activityLevel: values.activityLevel,
-      });
-
-      // Each of these is a distinct journal/goal write, so only fire them
-      // when the relevant value actually changed — otherwise saving an
-      // unrelated field (e.g. activity level) would spam the weight journal
-      // or reset the goal's start date/weight for no reason.
-      if (values.currentWeightKg !== previousProfile.currentWeightKg) {
+      // Write the weight/goal changes first, then PUT the profile last — its
+      // response recomputes every derived field from the fresh weight and
+      // active goal, so it becomes the single source of truth for local state.
+      // Each write fires only when its value actually changed: a new weight
+      // entry or goal otherwise pollutes the journal / resets goal history.
+      if (values.currentWeightKg !== previous.currentWeightKg) {
         await weights.create({
           weightKg: values.currentWeightKg,
           recordedAt: new Date().toISOString(),
         });
       }
-
-      let updatedGoal = previousGoal;
-      if (values.targetWeightKg !== previousGoal?.targetWeightKg) {
-        updatedGoal = await goals.create({
+      if (values.targetWeightKg !== previous.targetWeightKg) {
+        await goals.create({
           targetWeightKg: values.targetWeightKg,
           preferredWeeklyChangeKg:
-            previousGoal?.preferredWeeklyChangeKg ?? DEFAULT_PLAN_PACE,
+            previous.preferredWeeklyChangeKg ?? DEFAULT_PLAN_PACE,
         });
       }
-
-      setProfileData({
-        ...updatedProfile,
-        currentWeightKg: values.currentWeightKg,
+      const updated = await profile.put({
+        age: values.age,
+        sex: values.sex,
+        heightCm: values.heightCm,
+        activityLevel: values.activityLevel,
       });
-      setGoalData(updatedGoal);
+      setProfileData(updated);
       toast.success('Details updated');
     } catch {
       toast.error("Couldn't save your details. Please try again.");
@@ -151,8 +133,8 @@ export function PersonalDetailsSection() {
           <DetailRow
             label="Weight goal"
             value={
-              goalData
-                ? `${goalData.targetWeightKg} kg`
+              profileData?.targetWeightKg != null
+                ? `${profileData.targetWeightKg} kg`
                 : profileData
                   ? 'Not set'
                   : '—'
