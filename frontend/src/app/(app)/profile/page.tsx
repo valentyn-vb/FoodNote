@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { NotImplementedButton } from '@/components/not-implemented-button';
 import { mockUserProfile } from '@/lib/mock-data';
-import { DetailRow } from './detail-row';
 import { LogoutButton } from './logout-button';
+import { PersonalDetailsSection } from './personal-details-section';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
 // moment that needs guidance, reassurance, or celebration (see H08 in Paper).
@@ -82,29 +82,7 @@ export default function ProfilePage() {
           </Card>
         </section>
 
-        <section className="flex flex-col gap-2.5">
-          <h2 className="font-sans text-caption text-text-muted">
-            Personal details
-          </h2>
-          <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
-            <dl>
-              <DetailRow label="Sex" value={user.sex} />
-              <DetailRow label="Age" value={user.age} />
-              <DetailRow label="Height" value={`${user.heightCm} cm`} />
-              <DetailRow
-                label="Weight goal"
-                value={`${user.weightGoalKg} kg`}
-              />
-            </dl>
-          </Card>
-          <NotImplementedButton
-            action="Editing details"
-            variant="ghost"
-            className="h-auto w-fit p-0 font-sans text-label font-semibold text-primary-deep hover:bg-transparent"
-          >
-            Edit details
-          </NotImplementedButton>
-        </section>
+        <PersonalDetailsSection />
       </div>
 
       <div className="border-t border-border px-4 pt-3 pb-6">
