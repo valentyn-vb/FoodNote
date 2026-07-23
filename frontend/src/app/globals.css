@@ -160,3 +160,63 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  /* Homepage only (ticket #58) — light-mode "liquid glass" card treatment:
+     translucent white over the gradient-mesh background, not a dark-glass
+     effect. Pairs with Canvas UI's Glass for the one interactive lens. */
+  .glass-card {
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.95) 45%,
+      rgba(255, 255, 255, 0.15) 100%
+    );
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at 15% 15%,
+      rgba(255, 255, 255, 0.5),
+      transparent 45%
+    );
+    pointer-events: none;
+  }
+}
+
+@keyframes gradient-mesh-drift {
+  0%,
+  100% {
+    background-position:
+      0% 0%,
+      100% 100%;
+  }
+  50% {
+    background-position:
+      20% 10%,
+      80% 90%;
+  }
+}
+
+.gradient-mesh {
+  background-image:
+    radial-gradient(circle at 20% 20%, var(--fn-primary) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, var(--fn-tertiary) 0%, transparent 50%);
+  background-color: var(--fn-bg, #fdfdfb);
+  background-size: 140% 140%;
+  opacity: 0.28;
+  animation: gradient-mesh-drift 18s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-mesh {
+    animation: none;
+  }
+}

@@ -1,0 +1,17 @@
+# FoodNote
+
+> Weight-loss planning and calorie tracking with AI-assisted meal logging. A single user plans a goal, logs weight and meals, and tracks progress on a dashboard.
+
+FoodNote lets people describe a meal in plain language and get calories and macros back in seconds via AI parsing, log body weight as an append-only journal, and follow a personalized daily Calorie Target paced toward a goal, never below a safety floor of 1,200 kcal (female) / 1,500 kcal (male). Calorie math is based on the Mifflin-St Jeor equation.
+
+## Product
+
+- [Homepage](/): public marketing page, unauthenticated.
+- [Register](/register): create an account.
+- [Login](/login): sign in.
+- [Dashboard](/dashboard): daily calories remaining, weight trend, recent meals (requires an account).
+
+## Notes for automated agents
+
+- The API lives under `/api/*` on the same origin; it is not a public/third-party API and is not documented here.
+- This file describes the product for AI assistants and crawlers; it is not a Terms of Service or a machine-readable API spec.
