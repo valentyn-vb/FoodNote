@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { NotImplementedButton } from '@/components/not-implemented-button';
 import { mockUserProfile } from '@/lib/mock-data';
@@ -73,14 +72,13 @@ export default function ProfilePage() {
               {user.plan.label} · {user.plan.protein}g protein ·{' '}
               {user.plan.carbs}g carbs · {user.plan.fat}g fat
             </div>
-            <Button
+            <NotImplementedButton
+              action="Change plan"
               variant="outline"
-              nativeButton={false}
-              render={<Link href="/plan-selection" />}
               className="mt-1.5 h-9.5 w-fit rounded-sm border-[1.5px] border-primary bg-transparent px-3.5 text-label font-semibold text-primary-deep shadow-none hover:bg-[#FFF3E7]"
             >
               Change plan
-            </Button>
+            </NotImplementedButton>
           </Card>
         </section>
 

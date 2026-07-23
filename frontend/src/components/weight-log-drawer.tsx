@@ -52,13 +52,13 @@ export function WeightLogDrawer({
     }
     setSaving(true);
     try {
-      const { updated } = await weights.create({
+      await weights.create({
         weightKg: parsed.data,
         recordedAt: new Date().toISOString(),
       });
       setOpen(false);
       setValue('');
-      toast.success(updated ? "Updated today's weight" : 'Weight logged', {
+      toast.success('Weight logged', {
         icon: (
           <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
         ),
@@ -113,7 +113,7 @@ export function WeightLogDrawer({
               </p>
             )}
             <div className="font-sans text-[12px] text-text-muted">
-              One entry per day — saving again replaces today&apos;s weight.
+              Each save adds a new entry to your weight journal.
             </div>
           </div>
           <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
