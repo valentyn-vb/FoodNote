@@ -259,7 +259,8 @@ describe('Meals API (e2e)', () => {
     }).expect(400);
 
     // Missing a required total.
-    const { totalCalories: _omit, ...withoutCalories } = manualMeal;
+    const withoutCalories: Partial<CreateMealRequest> = { ...manualMeal };
+    delete withoutCalories.totalCalories;
     await request(app.getHttpServer())
       .post('/api/meals')
       .set(authed(ownerToken))
