@@ -70,21 +70,35 @@ function FeatureCard({ feature }: { feature: Feature }) {
   const Icon = feature.icon;
   const animated = ANIMATED_ICONS.includes(Icon);
   return (
-    <div
-      className={`flex flex-col gap-3 rounded-xl bg-gradient-to-br p-6 shadow-[0_1px_3px_#00000012] ${feature.bg}`}
+    // Layered shadow (tight contact + soft ambient) instead of one flat
+    // value, a subtle top-light inset on the icon tile, and a hover lift —
+    // small, deliberate details rather than a single generic card style.
+    // The lift is done via Motion, not a Tailwind hover: class — a
+    // comma-separated arbitrary box-shadow value silently failed to
+    // generate under `hover:`, confirmed by comparing against a plain
+    // `hover:underline` elsewhere on the page, which worked fine.
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className={`flex flex-col gap-4 rounded-xl border border-black/[0.04] bg-gradient-to-br p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_20px_-10px_rgba(0,0,0,0.1)] ${feature.bg}`}
     >
-      {animated ? (
-        <Icon className={feature.iconColor} size={36} />
-      ) : (
-        <Icon className={`size-9 ${feature.iconColor}`} strokeWidth={1.75} />
-      )}
+      <div className="flex size-11 items-center justify-center rounded-xl bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.05)]">
+        {animated ? (
+          <Icon className={feature.iconColor} size={22} />
+        ) : (
+          <Icon
+            className={`size-[22px] ${feature.iconColor}`}
+            strokeWidth={1.75}
+          />
+        )}
+      </div>
       <h3 className="font-display text-[19px] font-semibold text-text">
         {feature.title}
       </h3>
       <p className="font-sans text-[14px] leading-[1.4] text-text/70">
         {feature.description}
       </p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -103,7 +117,7 @@ export function AnalyticsSlide() {
     >
       <motion.div
         style={{ scale }}
-        className="relative overflow-visible rounded-[32px] bg-[#fafaf7] p-6 sm:p-10"
+        className="relative overflow-visible rounded-[32px] border border-black/[0.03] bg-[#fafaf7] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-10"
       >
         <h2 className="max-w-md font-display text-[clamp(26px,4vw,34px)] font-semibold text-text">
           Everything you need, nothing you don&apos;t

@@ -64,7 +64,7 @@ export function CoverSlide() {
           sits inside the image, like the reference. Padding lives on this
           wrapper (not the shared root) so the mobile branch below can be
           full-bleed without cancelling it back out. */}
-      <div className="hidden px-10 pt-10 sm:block">
+      <div className="hidden px-10 pt-2 sm:block">
         <motion.div
           style={{ y: parallaxY }}
           className="relative mx-auto aspect-[1672/941] w-full max-w-[1290px] overflow-hidden rounded-[32px]"
@@ -77,7 +77,7 @@ export function CoverSlide() {
             sizes="(min-width: 1290px) 1290px, 100vw"
             className="object-cover"
           />
-          <div className="absolute top-[11%] left-[5%] max-w-[46%]">
+          <div className="absolute top-[15%] left-[5%] max-w-[46%]">
             <HeroCopy className="flex flex-col gap-4" />
           </div>
           {/* Hidden below lg: the copy block's buttons need real pixel height
@@ -119,8 +119,7 @@ export function CoverSlide() {
             <div className="absolute top-[58%] left-[32%] w-[22%] max-w-[200px]">
               <div className="rounded-2xl bg-white/90 px-3.5 py-2.5 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.25)]">
                 <p className="font-[family-name:var(--font-accent-serif)] text-[14px] leading-[1.3] text-text italic">
-                  Meet Hammy. He hoards food and never overeats, like a good AI
-                  should.
+                  Meet Hammy, your new AI calorie-tracking pet.
                 </p>
                 <p className="mt-1 font-sans text-[10.5px] text-text-muted">
                   Drag him. He doesn&apos;t mind.

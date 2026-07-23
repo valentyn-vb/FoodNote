@@ -9,7 +9,7 @@ import {
 
 export function SiteNav() {
   return (
-    <nav className="glass-card fixed inset-x-4 top-4 z-30 flex items-center justify-between rounded-full px-5 py-2.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] sm:inset-x-16 sm:top-6">
+    <nav className="glass-card fixed inset-x-4 top-4 z-30 flex items-center justify-between rounded-full px-5 py-2.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] sm:inset-x-56 sm:top-6">
       <Tooltip>
         <TooltipTrigger className="flex items-center gap-2">
           <Image
