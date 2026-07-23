@@ -17,3 +17,4 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `main` only via PR; branches reference a ticket: https://github.com/users/valentyn-vb/projects/5/views/1
 - API request/response shapes live in `shared/` — never duplicate them in an app
 - `CONTEXT.md` is the domain glossary (the ubiquitous language) — use its terms in code, tests, and docs, and update it when the model changes; architectural decisions are recorded in `docs/adr/`
+- adding, removing, or changing an endpoint means updating the OpenAPI docs (`backend/src/docs/openapi.ts`, served at `/api/docs`) in the same change — schemas come from `shared/`, so only the route wiring needs a new entry
