@@ -1,21 +1,22 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Disclaimer } from '@/components/disclaimer';
 import {
-  DetailsForm,
   DETAILS_FORM_ID,
+  DetailsForm,
 } from '@/components/onboarding/details-form';
 import {
   onboardingFormSchema,
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
+import { Button } from '@/components/ui/button';
 import { goals, profile, weights } from '@/lib/api-client';
+import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { Pace } from '@foodnote/shared';
 
 type Step = 'details' | 'plan';
 
@@ -88,9 +89,7 @@ export function OnboardingWizard() {
 
       <DetailsForm form={form} onSubmit={goToPlan} />
 
-      <div className="px-5 pt-4 pb-1 font-sans text-[11.5px] text-text-muted">
-        This is an estimate, not medical advice. Actual results vary.
-      </div>
+      <Disclaimer className="px-5 pt-4 pb-1" />
 
       <div className="flex flex-col gap-2.5 px-5 pt-3">
         <Button
