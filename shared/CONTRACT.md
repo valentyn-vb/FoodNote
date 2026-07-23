@@ -53,18 +53,14 @@ rate limit, 502 = OpenAI failure / invalid model output.
 
 ## Semantics worth restating
 
-- **Weight has one source of truth**: the weight journal. It is never
-  persisted on the profile. `PUT/PATCH /profile` accept `currentWeightKg` only
-  as a **compute input** for `maintenanceCalories` (so the response needs no
-  journal read); the value is not stored. Onboarding logs the first entry via
-  `POST /weights`, which remains the source of truth for `currentWeightKg` on
-  reads (`/dashboard`, a future `GET /profile`).
-- **`maintenanceCalories` is derived** (Mifflin-St Jeor × activity factor) from
-  the profile's body metrics + `currentWeightKg`; read-only.
-- **`calorieTarget` is not a profile value** — it is maintenance shifted by the
-  active goal's pace/direction, so it belongs to the goal. `profileResponse`
-  always returns it `null`; the daily target is computed by the client (shared
-  `calc`) or a goal-owned read.
+- **Weight has one source of truth**: the weight journal. `currentWeightKg`
+  on `/profile` and `/dashboard` is derived from the latest entry;
+  `PUT/PATCH /profile` do not accept weight. Onboarding logs the first entry
+  via `POST /weights`.
+- **`maintenanceCalories` / `calorieTarget` are computed on every read**
+  (Mifflin-St Jeor × activity factor − pace deficit, clamped to the
+  1200 F / 1500 M floor); they are read-only and null until the first weight
+  entry / active goal exist.
 - **Pace is one of three presets** (`0.25 | 0.5 | 0.75` kg/week) — a frozen
   `z.literal` set, not a free number. `PACE_OPTIONS` is derived from
   `paceSchema` so the values are defined once.
@@ -82,10 +78,7 @@ rate limit, 502 = OpenAI failure / invalid model output.
 
 - **`POST /auth/refresh`, `GET /auth/me`** — added for the stateless
   refresh-token flow (documented in PR #24).
-- **`PUT /profile`** — added; the doc lists no way to create a profile. Its
-  request carries `currentWeightKg` as a compute input for `maintenanceCalories`
-  (not persisted; see "Semantics"), and its response leaves `calorieTarget`
-  null (a goal-owned value).
+- **`PUT /profile`** — added; the doc lists no way to create a profile.
 - **`GET /weights`, query params on `GET /meals`** — added so the charts and
   the edit/delete UI have a list source; the dashboard stays thin.
 - **AI parse response** — the doc's flat example became a discriminated
