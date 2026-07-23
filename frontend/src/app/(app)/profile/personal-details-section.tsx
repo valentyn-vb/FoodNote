@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import type { ProfileResponse } from '@foodnote/shared';
+import {
+  DETAILS_FORM_ID,
+  DetailsForm,
+} from '@/components/onboarding/details-form';
+import {
+  DEFAULT_PLAN_PACE,
+  onboardingFormSchema,
+  type OnboardingFormValues,
+} from '@/components/onboarding/form-schema';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -18,17 +21,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  DetailsForm,
-  DETAILS_FORM_ID,
-} from '@/components/onboarding/details-form';
-import {
-  DEFAULT_PLAN_PACE,
-  onboardingFormSchema,
-  type OnboardingFormValues,
-} from '@/components/onboarding/form-schema';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { goals, profile, weights } from '@/lib/api-client';
+import type { ProfileResponse } from '@foodnote/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { DetailRow } from './detail-row';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
@@ -81,11 +81,6 @@ export function PersonalDetailsSection() {
     setOpen(false);
     setLoading(true);
     try {
-      // Write the weight/goal changes first, then PUT the profile last — its
-      // response recomputes every derived field from the fresh weight and
-      // active goal, so it becomes the single source of truth for local state.
-      // Each write fires only when its value actually changed: a new weight
-      // entry or goal otherwise pollutes the journal / resets goal history.
       if (values.currentWeightKg !== previous.currentWeightKg) {
         await weights.create({
           weightKg: values.currentWeightKg,
@@ -105,7 +100,11 @@ export function PersonalDetailsSection() {
         heightCm: values.heightCm,
         activityLevel: values.activityLevel,
       });
-      setProfileData(updated);
+      setProfileData({
+        ...updated,
+        currentWeightKg: values.currentWeightKg,
+        targetWeightKg: values.targetWeightKg,
+      });
       toast.success('Details updated');
     } catch {
       toast.error("Couldn't save your details. Please try again.");
