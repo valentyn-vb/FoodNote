@@ -2,13 +2,17 @@ import {
   authResponseSchema,
   authUserSchema,
   goalResponseSchema,
+  profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
   type AuthResponse,
   type AuthUser,
+  type CreateGoalRequest,
   type CreateWeightRequest,
   type GoalResponse,
   type LoginRequest,
+  type ProfileResponse,
+  type PutProfileRequest,
   type RegisterRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
@@ -116,22 +120,43 @@ export const auth = {
 };
 
 export const weights = {
-  /** POST /weights upserts today's entry: 201 = created, 200 = updated. */
-  async create(
-    data: CreateWeightRequest,
-  ): Promise<{ entry: WeightEntryResponse; updated: boolean }> {
+  /** POST /weights appends a new journal entry (the journal is a plain list). */
+  async create(data: CreateWeightRequest): Promise<WeightEntryResponse> {
     const res = await apiFetch('/api/weights', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return {
-      entry: weightEntryResponseSchema.parse(await res.json()),
-      updated: res.status === 200,
-    };
+    return weightEntryResponseSchema.parse(await res.json());
+  },
+};
+
+export const profile = {
+  /** GET /profile — 404 until the profile exists. */
+  async current(): Promise<ProfileResponse> {
+    const res = await apiFetch('/api/profile');
+    return profileResponseSchema.parse(await res.json());
+  },
+
+  /** PUT /profile create-or-replaces the profile (the onboarding entry point). */
+  async put(data: PutProfileRequest): Promise<ProfileResponse> {
+    const res = await apiFetch('/api/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return profileResponseSchema.parse(await res.json());
   },
 };
 
 export const goals = {
+  /** POST /goals creates a new active goal (replacing any prior active one). */
+  async create(data: CreateGoalRequest): Promise<GoalResponse> {
+    const res = await apiFetch('/api/goals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return goalResponseSchema.parse(await res.json());
+  },
+
   async current(): Promise<GoalResponse> {
     const res = await apiFetch('/api/goals/current');
     return goalResponseSchema.parse(await res.json());
