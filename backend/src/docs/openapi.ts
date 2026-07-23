@@ -1,14 +1,19 @@
 import {
   authResponseSchema,
   authUserSchema,
+  createMealRequestSchema,
   createWeightRequestSchema,
   errorResponseSchema,
   healthResponseSchema,
+  listMealsQuerySchema,
+  listMealsResponseSchema,
   listWeightsQuerySchema,
   listWeightsResponseSchema,
   loginRequestSchema,
+  mealResponseSchema,
   refreshResponseSchema,
   registerRequestSchema,
+  updateMealRequestSchema,
   updateWeightRequestSchema,
   weightEntryResponseSchema,
 } from '@foodnote/shared';
@@ -65,6 +70,10 @@ export function buildOpenApiDocument(): OpenAPIObject {
     UpdateWeightRequest: schemaObject(updateWeightRequestSchema, 'input'),
     WeightEntryResponse: schemaObject(weightEntryResponseSchema, 'output'),
     ListWeightsResponse: schemaObject(listWeightsResponseSchema, 'output'),
+    CreateMealRequest: schemaObject(createMealRequestSchema, 'input'),
+    UpdateMealRequest: schemaObject(updateMealRequestSchema, 'input'),
+    MealResponse: schemaObject(mealResponseSchema, 'output'),
+    ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
     HealthResponse: schemaObject(healthResponseSchema, 'output'),
     ErrorResponse: schemaObject(errorResponseSchema, 'output'),
   };
@@ -80,6 +89,21 @@ export function buildOpenApiDocument(): OpenAPIObject {
       name,
       in: 'query',
       required: listQuery.required?.includes(name) ?? false,
+      schema,
+    }),
+  );
+
+  // GET /meals shares the same from/to day-range shape, derived from its own
+  // schema so the param list can't drift from the handler's validation.
+  const mealsListQuery = schemaObject(listMealsQuerySchema, 'input') as {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+  const mealsQueryParams = Object.entries(mealsListQuery.properties ?? {}).map(
+    ([name, schema]) => ({
+      name,
+      in: 'query',
+      required: mealsListQuery.required?.includes(name) ?? false,
       schema,
     }),
   );
@@ -108,6 +132,10 @@ export function buildOpenApiDocument(): OpenAPIObject {
       {
         name: 'weights',
         description: 'The weight journal — an append-only list',
+      },
+      {
+        name: 'meals',
+        description: 'Logged meals with their macro totals and optional items',
       },
       { name: 'health', description: 'Liveness probe' },
     ],
@@ -239,6 +267,72 @@ export function buildOpenApiDocument(): OpenAPIObject {
             204: { description: 'Deleted' },
             401: unauthorized,
             404: errorResponse('No such entry owned by the caller'),
+          },
+        },
+      },
+      '/meals': {
+        post: {
+          tags: ['meals'],
+          summary: 'Log a meal with its totals and optional items',
+          description:
+            'Totals are the source of truth; `items` are an optional ' +
+            'breakdown the server never sums. `source` (manual | ai) is stored ' +
+            'as given — a confirmed AI parse posts here with source: ai.',
+          requestBody: jsonBody('CreateMealRequest'),
+          responses: {
+            201: {
+              description: 'Meal created',
+              ...jsonContent('MealResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+          },
+        },
+        get: {
+          tags: ['meals'],
+          summary: 'List meals in a UTC-day range (inclusive), oldest first',
+          description:
+            'Without `from`/`to`, returns all the meals owned by the caller. ' +
+            'Each bound is a UTC calendar day, widened to the whole day ' +
+            'inclusively.',
+          parameters: mealsQueryParams,
+          responses: {
+            200: {
+              description: "The caller's meals in range",
+              ...jsonContent('ListMealsResponse'),
+            },
+            401: unauthorized,
+          },
+        },
+      },
+      '/meals/{id}': {
+        patch: {
+          tags: ['meals'],
+          summary: 'Edit an owned meal',
+          description:
+            'Any subset of the create fields. When `items` is present it ' +
+            'replaces the whole list (an empty array clears it); omit `items` ' +
+            'to leave the breakdown untouched.',
+          parameters: [idParam],
+          requestBody: jsonBody('UpdateMealRequest'),
+          responses: {
+            200: {
+              description: 'Meal updated',
+              ...jsonContent('MealResponse'),
+            },
+            400: errorResponse('Validation failed or malformed id'),
+            401: unauthorized,
+            404: errorResponse('No such meal owned by the caller'),
+          },
+        },
+        delete: {
+          tags: ['meals'],
+          summary: 'Delete an owned meal (its items cascade)',
+          parameters: [idParam],
+          responses: {
+            204: { description: 'Deleted' },
+            401: unauthorized,
+            404: errorResponse('No such meal owned by the caller'),
           },
         },
       },

@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { buildDataSourceOptions } from './database/data-source';
 import { GoalModule } from './goal/goal.module';
+import { MealsModule } from './meals/meals.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { WeightsModule } from './weights/weights.module';
@@ -32,6 +33,7 @@ import { WeightsModule } from './weights/weights.module';
     WeightsModule,
     ProfileModule,
     GoalModule,
+    MealsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
