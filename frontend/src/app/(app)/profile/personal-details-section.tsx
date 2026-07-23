@@ -26,41 +26,32 @@ import { goals, profile, weights } from '@/lib/api-client';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DetailRow } from './detail-row';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
 
-export function PersonalDetailsSection() {
-  const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
+type PersonalDetailsSectionProps = {
+  profileData: ProfileResponse | null;
+  loading: boolean;
+  onProfileChange: (profile: ProfileResponse) => void;
+};
+
+export function PersonalDetailsSection({
+  profileData,
+  loading,
+  onProfileChange,
+}: PersonalDetailsSectionProps) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    profile
-      .current()
-      .then((p) => {
-        if (!cancelled) setProfileData(p);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Couldn't load your details.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   function handleOpenChange(next: boolean) {
-    if (loading) return;
+    if (loading || saving) return;
     if (next && profileData) {
       form.reset({
         age: profileData.age,
@@ -79,7 +70,7 @@ export function PersonalDetailsSection() {
     const previous = profileData;
 
     setOpen(false);
-    setLoading(true);
+    setSaving(true);
     try {
       if (values.currentWeightKg !== previous.currentWeightKg) {
         await weights.create({
@@ -100,7 +91,7 @@ export function PersonalDetailsSection() {
         heightCm: values.heightCm,
         activityLevel: values.activityLevel,
       });
-      setProfileData({
+      onProfileChange({
         ...updated,
         currentWeightKg: values.currentWeightKg,
         targetWeightKg: values.targetWeightKg,
@@ -115,7 +106,7 @@ export function PersonalDetailsSection() {
     } catch {
       toast.error("Couldn't save your details. Please try again.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
@@ -158,10 +149,10 @@ export function PersonalDetailsSection() {
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
-          disabled={loading}
+          disabled={loading || saving}
           className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
         >
-          {loading && <Loader2 className="size-4 animate-spin" />}
+          {(loading || saving) && <Loader2 className="size-4 animate-spin" />}
           Edit details
         </DialogTrigger>
         <DialogContent>

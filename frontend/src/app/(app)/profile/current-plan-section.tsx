@@ -5,35 +5,25 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
-import type { Pace, ProfileResponse } from '@foodnote/shared';
+import { type Pace, type ProfileResponse } from '@foodnote/shared';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-export function CurrentPlanSection() {
-  const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
+type CurrentPlanSectionProps = {
+  profileData: ProfileResponse | null;
+  loading: boolean;
+  onProfileChange: (profile: ProfileResponse) => void;
+};
+
+export function CurrentPlanSection({
+  profileData,
+  loading,
+  onProfileChange,
+}: CurrentPlanSectionProps) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    profile
-      .current()
-      .then((p) => {
-        if (!cancelled) setProfileData(p);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Couldn't load your plan.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   function handleOpenChange(next: boolean) {
     if (loading || submitting) return;
@@ -48,7 +38,7 @@ export function CurrentPlanSection() {
       await goals.update({ preferredWeeklyChangeKg: pace });
       // Re-read so the card shows the server-recomputed calorie target.
       const updated = await profile.current();
-      setProfileData(updated);
+      onProfileChange(updated);
       setOpen(false);
       toast.success('Plan updated', {
         description:

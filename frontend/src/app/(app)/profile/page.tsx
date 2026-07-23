@@ -1,8 +1,14 @@
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+'use client';
+
 import { NotImplementedButton } from '@/components/not-implemented-button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { profile } from '@/lib/api-client';
 import { mockUserProfile } from '@/lib/mock-data';
+import type { ProfileResponse } from '@foodnote/shared';
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { CurrentPlanSection } from './current-plan-section';
 import { LogoutButton } from './logout-button';
 import { PersonalDetailsSection } from './personal-details-section';
@@ -16,6 +22,30 @@ export default function ProfilePage() {
     .split(' ')
     .map((part) => part[0])
     .join('');
+
+  // Profile is the single source of truth for both sections: a change in one
+  // (e.g. editing weight recomputes the calorie target) must re-render the
+  // other, so the data and its updater live here and flow down as props.
+  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    profile
+      .current()
+      .then((p) => {
+        if (!cancelled) setProfileData(p);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Couldn't load your profile.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex w-full max-w-md flex-col bg-surface lg:mx-14 lg:my-10 lg:max-w-xl">
@@ -60,9 +90,17 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
-        <CurrentPlanSection />
+        <CurrentPlanSection
+          profileData={profileData}
+          loading={loading}
+          onProfileChange={setProfileData}
+        />
 
-        <PersonalDetailsSection />
+        <PersonalDetailsSection
+          profileData={profileData}
+          loading={loading}
+          onProfileChange={setProfileData}
+        />
       </div>
 
       <div className="border-t border-border px-4 pt-3 pb-6">
