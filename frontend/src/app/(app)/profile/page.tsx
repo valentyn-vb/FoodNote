@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
 import { NotImplementedButton } from '@/components/not-implemented-button';
 import { mockUserProfile } from '@/lib/mock-data';
+import { CurrentPlanSection } from './current-plan-section';
 import { LogoutButton } from './logout-button';
 import { PersonalDetailsSection } from './personal-details-section';
 
@@ -60,27 +60,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
-        <section className="flex flex-col gap-2.5">
-          <h2 className="font-sans text-caption text-text-muted">
-            Current plan
-          </h2>
-          <Card className="gap-1 rounded-lg border-[1.5px] border-border bg-surface p-4 py-4 shadow-[0_1px_3px_#0000000a] ring-0">
-            <div className="font-display text-heading font-semibold text-text">
-              {user.plan.kcal.toLocaleString()} kcal / day
-            </div>
-            <div className="font-sans text-caption text-text-muted">
-              {user.plan.label} · {user.plan.protein}g protein ·{' '}
-              {user.plan.carbs}g carbs · {user.plan.fat}g fat
-            </div>
-            <NotImplementedButton
-              action="Change plan"
-              variant="outline"
-              className="mt-1.5 h-9.5 w-fit rounded-sm border-[1.5px] border-primary bg-transparent px-3.5 text-label font-semibold text-primary-deep shadow-none hover:bg-[#FFF3E7]"
-            >
-              Change plan
-            </NotImplementedButton>
-          </Card>
-        </section>
+        <CurrentPlanSection />
 
         <PersonalDetailsSection />
       </div>

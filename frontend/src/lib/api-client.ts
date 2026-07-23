@@ -14,6 +14,7 @@ import {
   type ProfileResponse,
   type PutProfileRequest,
   type RegisterRequest,
+  type UpdateGoalRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
 
@@ -159,6 +160,15 @@ export const goals = {
 
   async current(): Promise<GoalResponse> {
     const res = await apiFetch('/api/goals/current');
+    return goalResponseSchema.parse(await res.json());
+  },
+
+  /** PATCH /goals/current edits the active goal in place (e.g. change pace). */
+  async update(data: UpdateGoalRequest): Promise<GoalResponse> {
+    const res = await apiFetch('/api/goals/current', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
     return goalResponseSchema.parse(await res.json());
   },
 };
