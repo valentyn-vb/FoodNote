@@ -32,6 +32,8 @@ npm run dev            # shared (watch) + backend (3001) + frontend (3000)
 
 Open http://localhost:3000 — the page shows live backend status via `GET /api/health`.
 
+Browse the API at http://localhost:3001/api/docs (Swagger UI); the raw OpenAPI spec is at http://localhost:3001/api/openapi.json.
+
 ## Working rules
 
 - `main` is protected: changes land via pull request with at least one review.
