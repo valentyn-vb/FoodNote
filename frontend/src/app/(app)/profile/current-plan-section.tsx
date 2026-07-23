@@ -94,7 +94,6 @@ export function CurrentPlanSection() {
               <PlanSelection
                 input={profileData as OnboardingFormValues}
                 initialPace={profileData?.preferredWeeklyChangeKg ?? null}
-                onBack={() => handleOpenChange(false)}
                 onConfirm={handleConfirm}
                 submitting={submitting}
                 submitError={submitError}

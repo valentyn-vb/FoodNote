@@ -10,7 +10,7 @@ import { PlanOptions } from './plan-options';
 
 type PlanSelectionProps = {
   input: OnboardingFormValues;
-  onBack: () => void;
+  onBack?: () => void;
   onConfirm: (pace: Pace) => void | Promise<void>;
   /** True while onConfirm is in flight — disables the button and shows a spinner. */
   submitting?: boolean;
@@ -53,14 +53,16 @@ export function PlanSelection({
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
       <div className="flex flex-col gap-1 px-5 pb-3.5">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back"
-          className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
-        >
-          <ChevronLeft size={18} className="text-[#333333]" strokeWidth={2} />
-        </button>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
+          >
+            <ChevronLeft size={18} className="text-[#333333]" strokeWidth={2} />
+          </button>
+        )}
         <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
           Choose your plan
         </h1>
