@@ -5,7 +5,10 @@ import {
 } from '@foodnote/shared';
 import type { z } from 'zod';
 
+// currentWeightKg is collected on the form (it seeds POST /weights and the plan
+// math) but is not part of the profile request — weight lives in the journal.
 export const onboardingFormSchema = putProfileRequestSchema.extend({
+  currentWeightKg: weightKgSchema,
   targetWeightKg: weightKgSchema,
 });
 

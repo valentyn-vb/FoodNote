@@ -45,8 +45,8 @@ export function OnboardingWizard() {
         sex: values.sex,
         heightCm: values.heightCm,
         activityLevel: values.activityLevel,
-        currentWeightKg: values.currentWeightKg,
       });
+      // Weight is written only to the journal, never the profile.
       await weights.create({
         weightKg: values.currentWeightKg,
         recordedAt: new Date().toISOString(),
