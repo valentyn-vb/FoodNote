@@ -89,3 +89,11 @@ _Avoid_: exercise level, lifestyle
 The date the active Goal should be reached at its Pace: remaining weight ÷
 Pace, added to today. Derived on read from Current Weight.
 _Avoid_: ETA, deadline
+
+**Dashboard**:
+The user's progress view for a single Tracking Day: calories eaten and
+remaining against the Calorie Target with macro totals, plus Goal progress
+(Current Weight vs. target, Projected Goal Date). A point-in-time read of one
+day — the trend and history charts are assembled by the client from the Weight
+Entry and Meal Entry journals, not part of the Dashboard itself.
+_Avoid_: overview, home, summary
