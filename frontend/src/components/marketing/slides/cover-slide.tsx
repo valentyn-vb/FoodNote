@@ -9,6 +9,7 @@ import {
   useScroll,
   useTransform,
 } from 'motion/react';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import type { Asciify as AsciifyComponent } from '@/components/canvasui/Asciify';
 import type {
@@ -103,6 +104,8 @@ function DesktopHeroImage() {
 
 function HeroCopy({ className }: { className?: string }) {
   const sparkleRef = useRef<SparklesIconHandle>(null);
+  const { status } = useAuth();
+  const authed = status === 'authenticated';
 
   return (
     <div className={className}>
@@ -117,7 +120,7 @@ function HeroCopy({ className }: { className?: string }) {
       </p>
       <div className="flex flex-row gap-3 pt-1">
         <Button
-          render={<Link href="/register" />}
+          render={<Link href={authed ? '/dashboard' : '/register'} />}
           nativeButton={false}
           variant="cta"
           className="gap-2 px-6 py-3.5"
@@ -129,16 +132,18 @@ function HeroCopy({ className }: { className?: string }) {
           }
         >
           <SparklesIcon ref={sparkleRef} size={16} />
-          Get started
+          {authed ? 'Go to dashboard' : 'Get started'}
         </Button>
-        <Button
-          render={<Link href="/login" />}
-          nativeButton={false}
-          variant="outline"
-          className="border-black/10 bg-white/70 px-6 py-3.5"
-        >
-          Log in
-        </Button>
+        {!authed && (
+          <Button
+            render={<Link href="/login" />}
+            nativeButton={false}
+            variant="outline"
+            className="border-black/10 bg-white/70 px-6 py-3.5"
+          >
+            Log in
+          </Button>
+        )}
       </div>
     </div>
   );

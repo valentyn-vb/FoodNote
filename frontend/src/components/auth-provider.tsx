@@ -6,19 +6,19 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import { usePathname } from 'next/navigation';
 import type { AuthUser, LoginRequest, RegisterRequest } from '@foodnote/shared';
 
 // api-client pulls in the @foodnote/shared zod schemas (~67KB gz) for
 // response validation. This provider sits in the root layout, so a *static*
 // import would force zod into every route's shared bundle — including the
-// anonymous homepage, which never runs an auth op (the session restore below
-// is deferred on '/', and there's nothing to log in/out). Importing it lazily
-// inside each operation keeps zod out of any route that doesn't actually call
-// one; the module is cached after first load, so repeat calls don't re-fetch.
+// homepage. Importing it lazily inside each operation keeps zod out of the
+// eager bundle: the session restore below runs on mount everywhere (the
+// homepage now shows a Dashboard link when authenticated, so it needs the
+// status too), but it goes through this dynamic import, so zod loads async
+// off the critical path rather than blocking first render. The module is
+// cached after first load, so repeat calls don't re-fetch.
 const apiClient = () => import('@/lib/api-client');
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -36,21 +36,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const pathname = usePathname();
-  const hasCheckedRef = useRef(false);
 
   // Session restore: the access token never survives a reload (memory only),
   // but auth.me() 401s, api-client silently exchanges the refresh cookie for
   // a new access token and retries — so this resolves the real session state.
-  // Deferred while on the anonymous marketing homepage ('/'): nothing there
-  // reads `status`, so the request (and the bundle weight it drags in) has
-  // no payoff for a page whose only auth-adjacent UI is plain links to
-  // /login and /register. Runs exactly once, the first time the pathname is
-  // anything else — hasCheckedRef (not the `[]` this used to depend on)
-  // keeps it from refiring on every later navigation.
+  // Runs once on mount on every route (including the homepage, which shows a
+  // Dashboard link when authenticated); the api-client import is lazy, so this
+  // stays off the initial render's critical path.
   useEffect(() => {
-    if (hasCheckedRef.current || pathname === '/') return;
-    hasCheckedRef.current = true;
     let cancelled = false;
     apiClient()
       .then(({ auth }) => auth.me())
@@ -67,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname]);
+  }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const { auth } = await apiClient();

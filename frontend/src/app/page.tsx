@@ -27,9 +27,7 @@ export default function Home() {
       <ScrollReveal>
         <IntroSlide />
       </ScrollReveal>
-      <ScrollReveal>
-        <QuoteSlide />
-      </ScrollReveal>
+      <QuoteSlide />
       <ScrollReveal>
         <AnalyticsSlide />
       </ScrollReveal>

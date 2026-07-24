@@ -7,7 +7,12 @@ import {
   useScroll,
   useTransform,
 } from 'motion/react';
-import { FlaskConical, Scale, UtensilsCrossed } from 'lucide-react';
+import {
+  FlaskConical,
+  LayoutDashboard,
+  Scale,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { GaugeIcon } from '@/components/ui/gauge';
 import { ShieldCheckIcon } from '@/components/ui/shield-check';
 import { ScrollReveal } from '@/components/marketing/scroll-reveal';
@@ -41,6 +46,14 @@ const FEATURES: Feature[] = [
       'Log whenever you want. Watch your trend and projected date update automatically.',
     bg: 'from-[#dcf0e4] to-[#eef7f0]',
     iconColor: 'text-secondary-deep',
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'Interactive Analytics',
+    description:
+      'Monitor calories, weight trends, and progress in real time with clear, interactive charts.',
+    bg: 'from-[#e0f2fe] to-[#f0f9ff]',
+    iconColor: 'text-[#0284c7]',
   },
   {
     icon: GaugeIcon as unknown as typeof UtensilsCrossed,
