@@ -10,3 +10,9 @@ coverage/
 *.tsbuildinfo
 *.log
 .DS_Store
+
+# Locally-installed agent skills (emilkowalski/skills etc.) — run entirely
+# on-disk, never need to be committed for Claude Code to use them.
+.agents/
+.claude/skills/
+skills-lock.json
