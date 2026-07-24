@@ -10,7 +10,7 @@ import {
   useTransform,
 } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import { Asciify } from '@/components/canvasui/Asciify';
+import type { Asciify as AsciifyComponent } from '@/components/canvasui/Asciify';
 import type {
   DitheredObjectProps,
   DitheredObject as DitheredObjectComponent,
@@ -48,6 +48,57 @@ function LazyMascot(props: DitheredObjectProps) {
 
   if (!Loaded) return null;
   return <Loaded {...props} />;
+}
+
+// The desktop hero photo, with the Asciify cursor-lens as a progressive
+// enhancement. The lens is a mouse-only delight (it follows the pointer) and
+// wraps a photo that only shows at sm+, so it's pure waste on touch devices:
+// it would still mount a WebGL context and run a render loop for an effect no
+// one can trigger. Gating on a real pointer + width check (not just CSS)
+// keeps its code and its GL context off phones/tablets entirely; the base
+// <Image> renders identically with or without it (Asciify overlays a
+// transparent canvas, it doesn't replace the photo), so the LCP image and its
+// priority preload are unaffected and there's no swap flash on desktop.
+function DesktopHeroImage() {
+  const enhance = useMediaQuery(
+    '(min-width: 1024px) and (hover: hover) and (pointer: fine)',
+  );
+  const [Asciify, setAsciify] = useState<typeof AsciifyComponent | null>(null);
+
+  useEffect(() => {
+    if (!enhance) return;
+    let cancelled = false;
+    import('@/components/canvasui/Asciify').then((mod) => {
+      if (!cancelled) setAsciify(() => mod.Asciify);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [enhance]);
+
+  const image = (
+    <Image
+      src="/inappscreens/studioshot_phoneinhand_dashboard.webp.avif"
+      alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
+      fill
+      priority
+      sizes="(min-width: 1290px) 1290px, 100vw"
+      className="object-cover"
+    />
+  );
+
+  if (enhance && Asciify) {
+    return (
+      <Asciify
+        radius={0.25}
+        color={[0.961, 0.651, 0.361]}
+        className="h-full w-full"
+      >
+        {image}
+      </Asciify>
+    );
+  }
+  return image;
 }
 
 function HeroCopy({ className }: { className?: string }) {
@@ -118,39 +169,15 @@ export function CoverSlide() {
           style={{ y: parallaxY }}
           className="relative mx-auto aspect-[1672/941] w-full max-w-[1290px] overflow-hidden rounded-[32px]"
         >
-          {/* Cursor-only delight, reads the photo as live ascii art in a
-              lens around the pointer. Ported Liquid's uHasContent fallback
-              shape into this vendored shader (see Asciify.tsx): without
-              drawElementImage support (no browser has it yet), the native
-              path would otherwise render nothing at all — the fallback
-              branch draws glyphs from values already available without
-              captured content (the lens mask, per-cell hashes), tinted with
-              `color`, instead of doing nothing. Wraps only the photo, as a
-              sibling of the overlaid copy/mascot/etc. below, not their
-              parent — pointer events over those overlays bubble through
-              their own ancestry, never through this wrapper, so the effect
-              stays inert over text and buttons and only activates on the
-              plain photo. Mouse-only by nature (no touch on mobile), and
-              mobile already uses a separate, simpler hero image entirely.
-              Canvas UI's root forces `position: relative` via inline style,
-              which beats an `absolute` utility class — sizing it with
-              w-full/h-full instead lets it size to this aspect-ratio parent
-              as a normal first child; the later siblings are already
-              absolute against the same motion.div, so stacking is unaffected. */}
-          <Asciify
-            radius={0.25}
-            color={[0.961, 0.651, 0.361]}
-            className="h-full w-full"
-          >
-            <Image
-              src="/inappscreens/studioshot_phoneinhand_dashboard.webp.avif"
-              alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
-              fill
-              priority
-              sizes="(min-width: 1290px) 1290px, 100vw"
-              className="object-cover"
-            />
-          </Asciify>
+          {/* The photo plus its cursor-lens enhancement. See DesktopHeroImage:
+              the lens is mouse-only and gated off touch devices so it never
+              mounts a WebGL context there; the photo itself (this slide's LCP
+              on desktop) renders the same either way. The Asciify wrapper it
+              may add forces `position: relative` inline and sizes itself with
+              w-full/h-full to this aspect-ratio parent; the copy/mascot/etc.
+              siblings below are absolute against the same motion.div, so
+              stacking is unaffected whether or not the lens is present. */}
+          <DesktopHeroImage />
           <div className="absolute top-[15%] left-[5%] max-w-[46%]">
             <HeroCopy className="flex flex-col gap-4" />
           </div>

@@ -204,22 +204,32 @@
   100% {
     background-position:
       0% 0%,
-      100% 100%;
+      100% 100%,
+      50% 50%;
   }
   50% {
     background-position:
       20% 10%,
-      80% 90%;
+      80% 90%,
+      40% 60%;
   }
 }
 
+/* Pure-CSS brand gradient mesh — three soft radials (primary/tertiary/
+   secondary) drifting on the GPU via background-position. Replaces the
+   former @shadergradient/react WebGL canvas, which pulled three.js +
+   @react-three/fiber (~295KB gz) and ran a live WebGL context on every
+   viewport including mobile, for what is a decorative background. The
+   third radial (green) matches the shader's color3 so the look carries
+   over. Animation only; honors prefers-reduced-motion below. */
 .gradient-mesh {
   background-image:
     radial-gradient(circle at 20% 20%, var(--fn-primary) 0%, transparent 45%),
-    radial-gradient(circle at 85% 80%, var(--fn-tertiary) 0%, transparent 50%);
+    radial-gradient(circle at 85% 80%, var(--fn-tertiary) 0%, transparent 50%),
+    radial-gradient(circle at 55% 62%, var(--fn-secondary) 0%, transparent 48%);
   background-color: var(--fn-bg, #fdfdfb);
-  background-size: 140% 140%;
-  opacity: 0.28;
+  background-size: 150% 150%;
+  opacity: 0.3;
   animation: gradient-mesh-drift 18s ease-in-out infinite;
 }
 
