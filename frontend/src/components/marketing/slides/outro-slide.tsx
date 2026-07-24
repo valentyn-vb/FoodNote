@@ -9,6 +9,7 @@ import {
   SparklesIcon,
   type SparklesIconHandle,
 } from '@/components/ui/sparkles';
+import { supportsHover } from '@/lib/utils';
 
 export function OutroSlide() {
   const sparkleRef = useRef<SparklesIconHandle>(null);
@@ -28,7 +29,7 @@ export function OutroSlide() {
         >
           <div className="flex flex-col items-center gap-6 bg-[var(--fn-secondary)] px-8 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-14">
             <div className="flex flex-col items-center gap-2 text-center sm:items-start sm:text-left">
-              <h2 className="font-[family-name:var(--font-accent-serif)] text-[clamp(30px,4vw,40px)] text-white italic">
+              <h2 className="font-[family-name:var(--font-accent-serif)] text-balance text-[clamp(30px,4vw,40px)] text-white italic">
                 Ready to stop guessing?
               </h2>
               <p className="font-sans text-[15px] text-white/85">
@@ -40,8 +41,12 @@ export function OutroSlide() {
               nativeButton={false}
               variant="secondary"
               className="shrink-0 gap-2 bg-white px-7 py-3.5 text-secondary-deep hover:bg-white/90"
-              onMouseEnter={() => sparkleRef.current?.startAnimation()}
-              onMouseLeave={() => sparkleRef.current?.stopAnimation()}
+              onMouseEnter={() =>
+                supportsHover() && sparkleRef.current?.startAnimation()
+              }
+              onMouseLeave={() =>
+                supportsHover() && sparkleRef.current?.stopAnimation()
+              }
             >
               <SparklesIcon ref={sparkleRef} size={16} />
               Create your free account

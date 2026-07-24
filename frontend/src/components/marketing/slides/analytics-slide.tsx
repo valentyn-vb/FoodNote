@@ -1,7 +1,12 @@
 'use client';
 
 import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 import { FlaskConical, Scale, UtensilsCrossed } from 'lucide-react';
 import { GaugeIcon } from '@/components/ui/gauge';
 import { ShieldCheckIcon } from '@/components/ui/shield-check';
@@ -92,7 +97,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
           />
         )}
       </div>
-      <h3 className="font-display text-[19px] font-semibold text-text">
+      <h3 className="font-display text-pretty text-[19px] font-semibold text-text">
         {feature.title}
       </h3>
       <p className="font-sans text-[14px] leading-[1.4] text-text/70">
@@ -104,11 +109,13 @@ function FeatureCard({ feature }: { feature: Feature }) {
 
 export function AnalyticsSlide() {
   const ref = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start 0.95', 'start 0.5'],
   });
-  const scale = useTransform(scrollYProgress, [0, 1], [0.96, 1]);
+  const rawScale = useTransform(scrollYProgress, [0, 1], [0.96, 1]);
+  const scale = shouldReduceMotion ? 1 : rawScale;
 
   return (
     <div
@@ -119,7 +126,7 @@ export function AnalyticsSlide() {
         style={{ scale }}
         className="relative overflow-visible rounded-[32px] border border-black/[0.03] bg-[#fafaf7] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-10"
       >
-        <h2 className="max-w-md font-display text-[clamp(26px,4vw,34px)] font-semibold text-text">
+        <h2 className="max-w-md font-display text-pretty text-[clamp(26px,4vw,34px)] font-semibold text-text">
           Everything you need, nothing you don&apos;t
         </h2>
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

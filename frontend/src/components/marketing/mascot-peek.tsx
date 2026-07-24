@@ -2,7 +2,12 @@
 
 import { useRef } from 'react';
 import Image from 'next/image';
-import { motion, useScroll, useTransform } from 'motion/react';
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 import { cn } from '@/lib/utils';
 
 type ScrollOffset = NonNullable<Parameters<typeof useScroll>[0]>['offset'];
@@ -28,18 +33,23 @@ export function MascotPeek({
   offset?: ScrollOffset;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset,
   });
-  const x = useTransform(scrollYProgress, [0, 1], [80, 0]);
+  // useTransform must always run (Rules of Hooks) — reduced motion instead
+  // swaps in a static value, keeping the opacity fade but dropping the
+  // slide-in and tilt.
+  const rawX = useTransform(scrollYProgress, [0, 1], [80, 0]);
   const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const x = shouldReduceMotion ? 0 : rawX;
 
   return (
     <motion.div
       ref={ref}
       className={cn('pointer-events-none absolute', className)}
-      style={{ x, opacity, rotate }}
+      style={{ x, opacity, rotate: shouldReduceMotion ? 0 : rotate }}
     >
       <Image src={src} alt="" fill className="object-contain" />
     </motion.div>

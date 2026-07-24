@@ -3,20 +3,27 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'motion/react';
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 import { Button } from '@/components/ui/button';
+import { Asciify } from '@/components/canvasui/Asciify';
 import { DitheredObject } from '@/components/canvasui/DitheredObject';
 import {
   SparklesIcon,
   type SparklesIconHandle,
 } from '@/components/ui/sparkles';
+import { supportsHover } from '@/lib/utils';
 
 function HeroCopy({ className }: { className?: string }) {
   const sparkleRef = useRef<SparklesIconHandle>(null);
 
   return (
     <div className={className}>
-      <h1 className="font-display text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-text">
+      <h1 className="font-display text-pretty text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-text">
         Your calories,
         <br />
         actually tracked.
@@ -31,8 +38,12 @@ function HeroCopy({ className }: { className?: string }) {
           nativeButton={false}
           variant="cta"
           className="gap-2 px-6 py-3.5"
-          onMouseEnter={() => sparkleRef.current?.startAnimation()}
-          onMouseLeave={() => sparkleRef.current?.stopAnimation()}
+          onMouseEnter={() =>
+            supportsHover() && sparkleRef.current?.startAnimation()
+          }
+          onMouseLeave={() =>
+            supportsHover() && sparkleRef.current?.stopAnimation()
+          }
         >
           <SparklesIcon ref={sparkleRef} size={16} />
           Get started
@@ -52,11 +63,13 @@ function HeroCopy({ className }: { className?: string }) {
 
 export function CoverSlide() {
   const ref = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end start'],
   });
-  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 60]);
+  const rawParallaxY = useTransform(scrollYProgress, [0, 1], [0, 60]);
+  const parallaxY = shouldReduceMotion ? 0 : rawParallaxY;
 
   return (
     <div ref={ref} className="bg-bg pb-16">
@@ -69,14 +82,39 @@ export function CoverSlide() {
           style={{ y: parallaxY }}
           className="relative mx-auto aspect-[1672/941] w-full max-w-[1290px] overflow-hidden rounded-[32px]"
         >
-          <Image
-            src="/inappscreens/studioshot_phoneinhand_dashboard.webp.avif"
-            alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
-            fill
-            priority
-            sizes="(min-width: 1290px) 1290px, 100vw"
-            className="object-cover"
-          />
+          {/* Cursor-only delight, reads the photo as live ascii art in a
+              lens around the pointer. Ported Liquid's uHasContent fallback
+              shape into this vendored shader (see Asciify.tsx): without
+              drawElementImage support (no browser has it yet), the native
+              path would otherwise render nothing at all — the fallback
+              branch draws glyphs from values already available without
+              captured content (the lens mask, per-cell hashes), tinted with
+              `color`, instead of doing nothing. Wraps only the photo, as a
+              sibling of the overlaid copy/mascot/etc. below, not their
+              parent — pointer events over those overlays bubble through
+              their own ancestry, never through this wrapper, so the effect
+              stays inert over text and buttons and only activates on the
+              plain photo. Mouse-only by nature (no touch on mobile), and
+              mobile already uses a separate, simpler hero image entirely.
+              Canvas UI's root forces `position: relative` via inline style,
+              which beats an `absolute` utility class — sizing it with
+              w-full/h-full instead lets it size to this aspect-ratio parent
+              as a normal first child; the later siblings are already
+              absolute against the same motion.div, so stacking is unaffected. */}
+          <Asciify
+            radius={0.25}
+            color={[0.961, 0.651, 0.361]}
+            className="h-full w-full"
+          >
+            <Image
+              src="/inappscreens/studioshot_phoneinhand_dashboard.webp.avif"
+              alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
+              fill
+              priority
+              sizes="(min-width: 1290px) 1290px, 100vw"
+              className="object-cover"
+            />
+          </Asciify>
           <div className="absolute top-[15%] left-[5%] max-w-[46%]">
             <HeroCopy className="flex flex-col gap-4" />
           </div>
@@ -132,7 +170,7 @@ export function CoverSlide() {
             <svg
               viewBox="0 0 110 50"
               fill="none"
-              className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-text/35"
+              className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-text/35 select-none"
             >
               <path
                 d="M100 8C70 8 35 20 14 32"

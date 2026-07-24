@@ -11,7 +11,7 @@ function Chip({
   return (
     <div
       className={cn(
-        'absolute z-20 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-semibold text-text shadow-[0_4px_12px_-4px_rgba(0,0,0,0.25)]',
+        'absolute z-20 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-semibold text-text shadow-[0_4px_12px_-4px_rgba(0,0,0,0.25)] select-none',
         className,
       )}
     >
@@ -31,7 +31,7 @@ function Chip({
 export function IntroSlide() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-20 sm:px-10 sm:py-28">
-      <h2 className="max-w-xl font-display text-[clamp(28px,4vw,40px)] leading-[1.1] font-semibold text-text">
+      <h2 className="max-w-xl font-display text-pretty text-[clamp(28px,4vw,40px)] leading-[1.1] font-semibold text-text">
         Less calculating. More living.
       </h2>
 
