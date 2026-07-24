@@ -1,46 +1,22 @@
 'use client';
 
-import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import { cn } from '@/lib/utils';
 
-// Homepage only (ticket #58). Light-mode brand colors, not the library's
-// dark-theme example defaults — colors are our --fn-primary/-secondary/-tertiary.
+// Homepage only (ticket #58). Light-mode brand colors (--fn-primary/-secondary/-tertiary).
+// Uses a GPU-composited CSS mesh gradient instead of heavy WebGL canvas for 60fps scroll performance.
 export function GradientMesh({ className }: { className?: string }) {
   return (
-    <div className={cn('pointer-events-none absolute inset-0', className)}>
-      <ShaderGradientCanvas
-        style={{ width: '100%', height: '100%' }}
-        pixelDensity={1}
-        fov={45}
-      >
-        <ShaderGradient
-          animate="on"
-          type="plane"
-          wireframe={false}
-          shader="defaults"
-          color1="#f5a65c"
-          color2="#f4907e"
-          color3="#5bb98c"
-          brightness={1.1}
-          grain="off"
-          cAzimuthAngle={180}
-          cPolarAngle={90}
-          cDistance={1.2}
-          cameraZoom={1}
-          reflection={0.1}
-          uAmplitude={0.4}
-          uDensity={1.3}
-          uFrequency={5.5}
-          uSpeed={0.3}
-          uStrength={1.2}
-          positionX={0}
-          positionY={0}
-          positionZ={0}
-          rotationX={0}
-          rotationY={0}
-          rotationZ={0}
-        />
-      </ShaderGradientCanvas>
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-0 overflow-hidden opacity-70',
+        className,
+      )}
+    >
+      <div className="absolute -top-[30%] -left-[20%] h-[160%] w-[140%] animate-[spin_20s_linear_infinite] filter blur-[90px] will-change-transform">
+        <div className="absolute top-[20%] left-[20%] h-[55%] w-[55%] rounded-full bg-[#f5a65c]/45 mix-blend-multiply" />
+        <div className="absolute top-[25%] right-[15%] h-[50%] w-[50%] rounded-full bg-[#f4907e]/40 mix-blend-multiply" />
+        <div className="absolute bottom-[15%] left-[25%] h-[55%] w-[55%] rounded-full bg-[#5bb98c]/40 mix-blend-multiply" />
+      </div>
     </div>
   );
 }
