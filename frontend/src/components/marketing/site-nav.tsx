@@ -1,6 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -21,6 +24,9 @@ const SECTIONS = [
 ];
 
 export function SiteNav() {
+  const { status } = useAuth();
+  const authed = status === 'authenticated';
+
   return (
     <nav className="glass-card fixed inset-x-4 top-4 z-30 flex items-center justify-between rounded-full px-5 py-2.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] sm:inset-x-56 sm:top-6">
       <Tooltip>
@@ -57,13 +63,13 @@ export function SiteNav() {
 
       <div className="flex items-center gap-1">
         <Button
-          render={<Link href="/login" />}
+          render={<Link href={authed ? '/dashboard' : '/login'} />}
           nativeButton={false}
           variant="ghost"
           size="sm"
           className="text-text"
         >
-          Log in
+          {authed ? 'Dashboard' : 'Log in'}
         </Button>
 
         {/* Mobile only — section links live behind a burger instead of

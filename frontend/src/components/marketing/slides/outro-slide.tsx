@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Liquid } from '@/components/canvasui/Liquid';
 import { MascotPeek } from '@/components/marketing/mascot-peek';
@@ -13,6 +14,8 @@ import { supportsHover } from '@/lib/utils';
 
 export function OutroSlide() {
   const sparkleRef = useRef<SparklesIconHandle>(null);
+  const { status } = useAuth();
+  const authed = status === 'authenticated';
 
   return (
     <div className="flex flex-col items-center gap-6 bg-bg px-6 py-16 sm:py-20">
@@ -37,7 +40,7 @@ export function OutroSlide() {
               </p>
             </div>
             <Button
-              render={<Link href="/register" />}
+              render={<Link href={authed ? '/dashboard' : '/register'} />}
               nativeButton={false}
               variant="secondary"
               className="shrink-0 gap-2 bg-white px-7 py-3.5 text-secondary-deep hover:bg-white/90"
@@ -49,7 +52,7 @@ export function OutroSlide() {
               }
             >
               <SparklesIcon ref={sparkleRef} size={16} />
-              Create your free account
+              {authed ? 'Go to dashboard' : 'Create your free account'}
             </Button>
           </div>
         </Liquid>
@@ -63,15 +66,17 @@ export function OutroSlide() {
         />
       </div>
 
-      <p className="font-sans text-[13px] text-text-muted">
-        Already have one?{' '}
-        <Link
-          href="/login"
-          className="font-medium text-primary-deep hover:underline"
-        >
-          Log in
-        </Link>
-      </p>
+      {!authed && (
+        <p className="font-sans text-[13px] text-text-muted">
+          Already have one?{' '}
+          <Link
+            href="/login"
+            className="font-medium text-primary-deep hover:underline"
+          >
+            Log in
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
