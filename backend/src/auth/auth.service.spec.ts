@@ -58,6 +58,8 @@ describe('AuthService', () => {
       expect(typeof result.refreshToken).toBe('string');
       expect(typeof result.user.id).toBe('string');
       expect(result.user.email).toBe(EMAIL);
+      expect(result.user.firstName).toBe(FIRST_NAME);
+      expect(result.user.lastName).toBe(LAST_NAME);
     });
 
     it('rejects a duplicate email with ConflictException', async () => {
@@ -98,7 +100,11 @@ describe('AuthService', () => {
 
       const { accessToken } = await service.refresh(refreshToken);
 
-      expect(await service.verifyAccessToken(accessToken)).toEqual(user);
+      // The access token carries only identity (id + email), not the name.
+      expect(await service.verifyAccessToken(accessToken)).toEqual({
+        id: user.id,
+        email: user.email,
+      });
     });
 
     it('rejects garbage tokens', async () => {
@@ -111,6 +117,31 @@ describe('AuthService', () => {
       const { accessToken } = await service.register(registration());
 
       await expect(service.refresh(accessToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('account', () => {
+    it('updateAccount changes the name and getUser reflects it', async () => {
+      const { user } = await service.register(registration());
+
+      const updated = await service.updateAccount(user.id, {
+        firstName: 'Sergi',
+        lastName: 'Roberto',
+      });
+
+      expect(updated).toEqual({
+        id: user.id,
+        email: EMAIL,
+        firstName: 'Sergi',
+        lastName: 'Roberto',
+      });
+      expect(await service.getUser(user.id)).toEqual(updated);
+    });
+
+    it('getUser rejects an unknown id', async () => {
+      await expect(service.getUser('missing-id')).rejects.toThrow(
         UnauthorizedException,
       );
     });

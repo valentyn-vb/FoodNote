@@ -1,6 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
+import type { UpdateAccountRequest } from '@foodnote/shared';
 import { User } from '../user/user.entity';
 import { UsersRepository } from './users.repository';
 import type { CreateUserData, StoredUser } from './users.repository';
@@ -16,6 +21,18 @@ export class TypeormUsersRepository implements UsersRepository {
 
   findByEmail(email: string): Promise<StoredUser | null> {
     return this.repo.findOne({ where: { email } });
+  }
+
+  findById(id: string): Promise<StoredUser | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
+  async update(id: string, data: UpdateAccountRequest): Promise<StoredUser> {
+    const user = await this.repo.preload({ id, ...data });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.repo.save(user);
   }
 
   async create(data: CreateUserData): Promise<StoredUser> {
