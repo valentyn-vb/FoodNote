@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { buildDataSourceOptions } from './database/data-source';
 import { GoalsModule } from './goal/goals.module';
 import { MealsModule } from './meals/meals.module';
@@ -33,6 +34,7 @@ import { WeightsModule } from './weights/weights.module';
     WeightsModule,
     GoalsModule,
     ProfileModule,
+    DashboardModule,
     MealsModule,
   ],
   controllers: [AppController],
