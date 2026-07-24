@@ -120,7 +120,8 @@ export function AnalyticsSlide() {
   return (
     <div
       ref={ref}
-      className="relative mx-auto max-w-6xl px-6 py-20 sm:px-10 sm:py-28"
+      id="features"
+      className="relative mx-auto max-w-6xl scroll-mt-24 px-6 py-20 sm:px-10 sm:py-28"
     >
       <motion.div
         style={{ scale }}

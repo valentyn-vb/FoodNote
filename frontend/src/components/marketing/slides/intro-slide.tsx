@@ -28,14 +28,65 @@ function Chip({
 // what to restore — it's a straightforward revert, not a rebuild: swap this
 // function body back to a flex row per feature, each with its own text
 // beside its own phone.
+function Feature({
+  image,
+  alt,
+  title,
+  description,
+}: {
+  image: string;
+  alt: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <Image
+        src={image}
+        alt={alt}
+        width={1080}
+        height={1350}
+        className="mx-auto h-auto w-full max-w-[220px]"
+      />
+      <p className="mt-4 font-sans text-[15px] leading-[1.6] text-text/75">
+        <span className="font-display font-semibold text-text">{title}</span>{' '}
+        {description}
+      </p>
+    </div>
+  );
+}
+
 export function IntroSlide() {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-20 sm:px-10 sm:py-28">
+    <div
+      id="how-it-works"
+      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 sm:px-10 sm:py-28"
+    >
       <h2 className="max-w-xl font-display text-pretty text-[clamp(28px,4vw,40px)] leading-[1.1] font-semibold text-text">
         Less calculating. More living.
       </h2>
 
-      <div className="relative mt-14 overflow-hidden rounded-[32px] bg-[#f5f5f2] px-8 py-14 sm:px-14 sm:py-20">
+      {/* Mobile: the desktop card below overlaps two tilted phones inside
+          one shared card — at mobile widths that piles the phones and both
+          text blocks into too little space to read comfortably. Simplest
+          fix, not a smaller version of the same idea: one image per
+          feature, stacked, nothing overlapping or absolutely positioned. */}
+      <div className="mt-10 flex flex-col gap-10 sm:hidden">
+        <Feature
+          image="/inappscreens/logmeal_feature_tilt.avif"
+          alt="FoodNote parsing a described meal into calories and macros"
+          title="Describe it. We'll do the math."
+          description="Type what you ate. FoodNote's AI turns it into calories and macros in seconds, ready to review and edit before it's saved."
+        />
+        <Feature
+          image="/inappscreens/logweight_feature_tilt.avif"
+          alt="FoodNote's weight trend chart with a projected goal date"
+          title="Your weight, without the guesswork."
+          description="Log whenever you step on the scale. Your trend and projected date update automatically, paced at 0.25–1.0 kg/wk, never below the Safety Floor."
+        />
+      </div>
+
+      <div className="relative mt-14 hidden overflow-hidden rounded-[32px] bg-[#f5f5f2] px-8 py-14 sm:block sm:px-14 sm:py-20">
         <div className="relative z-10 max-w-sm">
           <p className="font-sans text-[17px] leading-[1.65] text-text/75">
             <span className="font-display font-semibold text-text">

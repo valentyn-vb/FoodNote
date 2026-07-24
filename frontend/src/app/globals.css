@@ -161,6 +161,14 @@
   }
 }
 
+/* Homepage only (ticket #58) — smooth in-page nav scrolling, off for
+   prefers-reduced-motion (native CSS, no JS scroll library needed). */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @layer components {
   /* Homepage only (ticket #58) — light-mode "liquid glass" card treatment:
      translucent white over the gradient-mesh background, not a dark-glass
