@@ -16,5 +16,6 @@ import { UserProfile } from './user-profile.entity';
   ],
   controllers: [ProfileController],
   providers: [ProfileService],
+  exports: [ProfileService],
 })
 export class ProfileModule {}

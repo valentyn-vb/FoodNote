@@ -95,6 +95,10 @@ export class ProfileService {
       currentWeightKg,
       maintenanceCalories,
       calorieTarget,
+      targetWeightKg: goal ? goal.targetWeightKg : null,
+      preferredWeeklyChangeKg: goal
+        ? (goal.preferredWeeklyChangeKg as Pace)
+        : null,
     };
   }
 }
