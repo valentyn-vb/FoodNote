@@ -23,7 +23,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { mockDailyCalories, mockWeightTrend } from '@/lib/mock-data';
+import type {
+  DailyCaloriePoint,
+  WeightTrendPoint,
+} from '@/lib/dashboard-transforms';
 
 // Shared by the mobile and desktop dashboard layouts — same chart, sized by
 // className. Colors come from the FoodNote tokens, not EvilCharts defaults.
@@ -44,10 +47,10 @@ const calorieConfig = {
 
 export function WeightTrendChart({
   className,
-  data = mockWeightTrend,
+  data,
 }: {
   className?: string;
-  data?: typeof mockWeightTrend;
+  data: WeightTrendPoint[];
 }) {
   return (
     <EvilLineChart
@@ -74,13 +77,15 @@ export function WeightTrendChart({
   );
 }
 
-export function DailyCaloriesChart({ className }: { className?: string }) {
+export function DailyCaloriesChart({
+  className,
+  data,
+}: {
+  className?: string;
+  data: DailyCaloriePoint[];
+}) {
   return (
-    <EvilBarChart
-      data={mockDailyCalories}
-      config={calorieConfig}
-      className={className}
-    >
+    <EvilBarChart data={data} config={calorieConfig} className={className}>
       <BarGrid />
       <XAxis dataKey="day" />
       <Bar dataKey="kcal" radius={4} />
@@ -102,7 +107,7 @@ export function WeightTrendCard({
   className?: string;
   chartClassName?: string;
   title?: string;
-  data?: typeof mockWeightTrend;
+  data: WeightTrendPoint[];
 }) {
   return (
     <Card className={className}>
