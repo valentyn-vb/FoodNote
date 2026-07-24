@@ -1,16 +1,25 @@
 import {
   authResponseSchema,
   authUserSchema,
+  dashboardResponseSchema,
   goalResponseSchema,
+  listMealsResponseSchema,
+  listWeightsResponseSchema,
+  mealResponseSchema,
   profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
   type AuthResponse,
   type AuthUser,
   type CreateGoalRequest,
+  type CreateMealRequest,
   type CreateWeightRequest,
+  type DashboardResponse,
   type GoalResponse,
+  type ListMealsResponse,
+  type ListWeightsResponse,
   type LoginRequest,
+  type MealResponse,
   type ProfileResponse,
   type PutProfileRequest,
   type RegisterRequest,
@@ -120,6 +129,14 @@ export const auth = {
   },
 };
 
+function rangeQuery(from?: string, to?: string): string {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
 export const weights = {
   /** POST /weights appends a new journal entry (the journal is a plain list). */
   async create(data: CreateWeightRequest): Promise<WeightEntryResponse> {
@@ -128,6 +145,46 @@ export const weights = {
       body: JSON.stringify(data),
     });
     return weightEntryResponseSchema.parse(await res.json());
+  },
+
+  /** GET /weights?from&to — inclusive UTC-day bounds; the dashboard builds the
+      trend series client-side from this journal (ADR-0005). */
+  async list(from?: string, to?: string): Promise<ListWeightsResponse> {
+    const res = await apiFetch(`/api/weights${rangeQuery(from, to)}`);
+    return listWeightsResponseSchema.parse(await res.json());
+  },
+};
+
+export const meals = {
+  /** GET /meals?from&to — inclusive UTC-day bounds. Feeds both the "Logged
+      today" list and the 7-day calorie chart (ADR-0005). */
+  async list(from?: string, to?: string): Promise<ListMealsResponse> {
+    const res = await apiFetch(`/api/meals${rangeQuery(from, to)}`);
+    return listMealsResponseSchema.parse(await res.json());
+  },
+
+  /** POST /meals — totals are the source of truth; the server never sums items. */
+  async create(data: CreateMealRequest): Promise<MealResponse> {
+    const res = await apiFetch('/api/meals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return mealResponseSchema.parse(await res.json());
+  },
+
+  /** DELETE /meals/:id — 204, used by the save toast's Undo action. */
+  async remove(id: string): Promise<void> {
+    await apiFetch(`/api/meals/${id}`, { method: 'DELETE' });
+  },
+};
+
+export const dashboard = {
+  /** GET /dashboard?date — the thin single-day read model (ADR-0005). 404s
+      until onboarding is complete; the (app) OnboardingGuard gates that. */
+  async current(date?: string): Promise<DashboardResponse> {
+    const query = date ? `?date=${date}` : '';
+    const res = await apiFetch(`/api/dashboard${query}`);
+    return dashboardResponseSchema.parse(await res.json());
   },
 };
 
