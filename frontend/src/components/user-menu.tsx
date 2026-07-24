@@ -13,10 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/components/auth-provider';
+import { fullNameOf, initialsOf } from '@/lib/user-display';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const fullName = fullNameOf(user);
 
   async function handleLogout() {
     await logout();
@@ -31,14 +33,21 @@ export function UserMenu() {
       >
         <Avatar>
           <AvatarFallback className="bg-primary text-surface">
-            {user?.email[0]?.toUpperCase() ?? '?'}
+            {initialsOf(user) || user?.email[0]?.toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="max-w-56 truncate font-normal text-text-muted">
-            {user?.email}
+          <DropdownMenuLabel className="max-w-56 font-normal">
+            {fullName && (
+              <span className="block truncate font-medium text-text">
+                {fullName}
+              </span>
+            )}
+            <span className="block truncate font-normal text-text-muted">
+              {user?.email}
+            </span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

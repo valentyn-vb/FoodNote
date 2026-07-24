@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   Res,
@@ -12,11 +13,13 @@ import {
 import {
   loginRequestSchema,
   registerRequestSchema,
+  updateAccountRequestSchema,
   type AuthResponse,
   type AuthUser,
   type LoginRequest,
   type RefreshResponse,
   type RegisterRequest,
+  type UpdateAccountRequest,
 } from '@foodnote/shared';
 import type { Request, Response } from 'express';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
@@ -40,10 +43,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(registerRequestSchema)) body: RegisterRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
-    return this.respondWithTokens(
-      await this.authService.register(body.email, body.password),
-      res,
-    );
+    return this.respondWithTokens(await this.authService.register(body), res);
   }
 
   @Post('login')
@@ -78,8 +78,18 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Req() req: AuthenticatedRequest): AuthUser {
-    return req.user;
+  me(@Req() req: AuthenticatedRequest): Promise<AuthUser> {
+    return this.authService.getUser(req.user.id);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateMe(
+    @Body(new ZodValidationPipe(updateAccountRequestSchema))
+    body: UpdateAccountRequest,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<AuthUser> {
+    return this.authService.updateAccount(req.user.id, body);
   }
 
   private respondWithTokens(pair: TokenPair, res: Response): AuthResponse {

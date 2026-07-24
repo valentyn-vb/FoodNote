@@ -37,7 +37,7 @@ import {
 import { useAuth } from '@/components/auth-provider';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { mockUserProfile } from '@/lib/mock-data';
+import { fullNameOf, initialsOf } from '@/lib/user-display';
 import { notImplemented } from '@/lib/not-implemented';
 
 // Mirrors SidebarMenuButton's look (incl. icon-collapsed mode via the root
@@ -51,14 +51,9 @@ export function AppSidebar() {
   const router = useRouter();
   const { onMealSaved, onMealUndone } = useMeals();
   const { onWeightSaved } = useWeight();
-  // Session identity (email, logout) comes from auth; name/initials are
-  // still the mock profile until the profile API exists.
   const { user: authUser, logout } = useAuth();
-  const user = mockUserProfile;
-  const initials = user.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('');
+  const fullName = fullNameOf(authUser);
+  const initials = initialsOf(authUser);
 
   async function handleLogout() {
     await logout();
@@ -147,7 +142,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="grid flex-1 text-left leading-tight">
                     <span className="truncate font-sans text-label font-semibold">
-                      {user.name}
+                      {fullName}
                     </span>
                     <span className="truncate font-sans text-[11.5px] text-text-muted">
                       {authUser?.email}

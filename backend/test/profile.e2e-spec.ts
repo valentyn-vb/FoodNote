@@ -34,7 +34,12 @@ describe('Profile (e2e)', () => {
 
     const reg = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
     token = (reg.body as { accessToken: string }).accessToken;
   });
@@ -120,7 +125,12 @@ describe('Profile (e2e)', () => {
 
     const reg = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: PATCH_404_EMAIL, password: PATCH_404_PASSWORD })
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: PATCH_404_EMAIL,
+        password: PATCH_404_PASSWORD,
+      })
       .expect(201);
     const patch404Token = (reg.body as { accessToken: string }).accessToken;
 

@@ -1,16 +1,16 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import { NotImplementedButton } from '@/components/not-implemented-button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { profile } from '@/lib/api-client';
-import { mockUserProfile } from '@/lib/mock-data';
+import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CurrentPlanSection } from './current-plan-section';
+import { EditProfileDialog } from './edit-profile-dialog';
 import { LogoutButton } from './logout-button';
 import { PersonalDetailsSection } from './personal-details-section';
 
@@ -18,18 +18,14 @@ import { PersonalDetailsSection } from './personal-details-section';
 // moment that needs guidance, reassurance, or celebration (see H08 in Paper).
 
 export default function ProfilePage() {
-  const user = mockUserProfile;
-  const initials = user.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('');
-
   // Profile is the single source of truth for both sections: a change in one
   // (e.g. editing weight recomputes the calorie target) must re-render the
   // other, so the data and its updater live here and flow down as props.
   const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const { user: authUser } = useAuth();
+  const fullName = fullNameOf(authUser);
+  const initials = initialsOf(authUser);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,29 +62,25 @@ export default function ProfilePage() {
         <h1 className="font-sans text-title font-semibold text-text lg:text-heading-lg">
           Profile
         </h1>
-        <NotImplementedButton
-          action="Edit"
-          variant="ghost"
-          className="h-auto p-0 font-sans text-title font-semibold text-primary-deep hover:bg-transparent"
-        >
-          Edit
-        </NotImplementedButton>
       </div>
 
-      <div className="flex flex-col items-center gap-2.5 pt-7 pb-5 lg:flex-row lg:items-center lg:gap-4 lg:px-4 lg:pt-6">
-        <Avatar className="size-18">
-          <AvatarFallback className="bg-primary text-heading-lg text-surface">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
-          <div className="font-sans text-[17px] font-semibold text-text">
-            {user.name}
-          </div>
-          <div className="font-sans text-caption text-text-muted">
-            {authUser?.email}
+      <div className="pt-7 pb-5 lg:px-4 lg:pt-6 ">
+        <div className="flex flex-col items-center   lg:flex-row lg:items-center lg:gap-4 mb-2.5">
+          <Avatar className="size-18">
+            <AvatarFallback className="bg-primary text-heading-lg text-surface">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
+            <div className="font-sans text-[17px] font-semibold text-text">
+              {fullName}
+            </div>
+            <div className="font-sans text-caption text-text-muted">
+              {authUser?.email}
+            </div>
           </div>
         </div>
+        <EditProfileDialog />
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
