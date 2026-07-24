@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -11,12 +11,44 @@ import {
 } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Asciify } from '@/components/canvasui/Asciify';
-import { DitheredObject } from '@/components/canvasui/DitheredObject';
+import type {
+  DitheredObjectProps,
+  DitheredObject as DitheredObjectComponent,
+} from '@/components/canvasui/DitheredObject';
 import {
   SparklesIcon,
   type SparklesIconHandle,
 } from '@/components/ui/sparkles';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { supportsHover } from '@/lib/utils';
+
+// The mascot drags in three.js (GLTF/DRACO loaders, ~320KB gzipped) plus an
+// 800KB+ .glb model, and only ever renders at lg+ — `hidden lg:block` alone
+// doesn't stop React from mounting it (or the browser from fetching those
+// bytes) below that breakpoint. A plain `import()` inside an effect (rather
+// than a top-level `next/dynamic()`) means the chunk is only requested once
+// this actually mounts: `next/dynamic()` declared at module scope gets
+// preloaded by Next regardless of runtime conditions ("needs to be marked
+// in the top level of the module for preloading to work" — the opposite of
+// what's wanted here), so it still shipped the chunk to phones in testing.
+function LazyMascot(props: DitheredObjectProps) {
+  const [Loaded, setLoaded] = useState<typeof DitheredObjectComponent | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    import('@/components/canvasui/DitheredObject').then((mod) => {
+      if (!cancelled) setLoaded(() => mod.DitheredObject);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!Loaded) return null;
+  return <Loaded {...props} />;
+}
 
 function HeroCopy({ className }: { className?: string }) {
   const sparkleRef = useRef<SparklesIconHandle>(null);
@@ -70,6 +102,10 @@ export function CoverSlide() {
   });
   const rawParallaxY = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const parallaxY = shouldReduceMotion ? 0 : rawParallaxY;
+  // Real breakpoint check, not just the `hidden lg:block` below — that CSS
+  // class hides the mascot visually but doesn't stop it from mounting (or
+  // three.js/the .glb from being fetched) on phones and tablets.
+  const showMascot = useMediaQuery('(min-width: 1024px)');
 
   return (
     <div ref={ref} className="bg-bg pb-16">
@@ -125,73 +161,75 @@ export function CoverSlide() {
             blocks collide. 1024px+ is the first point with confirmed
             clearance (measured 14px+ gap), so the whole group waits for it
             rather than fighting a losing per-value tuning battle. */}
-          <div className="hidden lg:block">
-            {/* Same DitheredObject tuning as previously used on the outro (now
-              moved here) — grayscale off, tight gridSize, modest environment
-              intensity. Don't re-tune blind; those values were hard-won.
-              orbit isn't set explicitly — it defaults to true, so dragging
-              already works; the caption just needs to say so. */}
-            <div className="absolute top-[50%] left-[6%] aspect-square w-[24%]">
-              <DitheredObject
-                src="/mascot/foodnotemascotin3d.glb"
-                className="h-full w-full cursor-grab active:cursor-grabbing"
-                grayscale={false}
-                gridSize={2.5}
-                scale={2.6}
-                autoRotate
-                autoRotateSpeed={0.6}
-                floatIntensity={0.4}
-                floatSpeed={0.8}
-                highlight="#f5a65c"
-                environmentIntensity={0.4}
-                background=""
-              />
-            </div>
-            {/* Same line as the nav tooltip, restated here as a quiet footnote
-              since it's the hamster's own explanation, not the nav's. */}
-            <p className="absolute top-[93%] left-[6%] max-w-[220px] font-sans text-[11px] leading-[1.3] text-text/40 italic">
-              Hamsters hoard food but almost never overeat. Kindred spirits.
-            </p>
-            {/* Positioned beside the mascot's own row (not under the headline)
-              so the two never compete for the same horizontal band. */}
-            <div className="absolute top-[58%] left-[32%] w-[22%] max-w-[200px]">
-              <div className="rounded-2xl bg-white/90 px-3.5 py-2.5 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.25)]">
-                <p className="font-[family-name:var(--font-accent-serif)] text-[14px] leading-[1.3] text-text italic">
-                  Meet Hammy, your new AI calorie-tracking pet.
-                </p>
-                <p className="mt-1 font-sans text-[10.5px] text-text-muted">
-                  Drag him. He doesn&apos;t mind.
-                </p>
+          {showMascot && (
+            <div className="hidden lg:block">
+              {/* Same DitheredObject tuning as previously used on the outro (now
+                moved here) — grayscale off, tight gridSize, modest environment
+                intensity. Don't re-tune blind; those values were hard-won.
+                orbit isn't set explicitly — it defaults to true, so dragging
+                already works; the caption just needs to say so. */}
+              <div className="absolute top-[50%] left-[6%] aspect-square w-[24%]">
+                <LazyMascot
+                  src="/mascot/foodnotemascotin3d.glb"
+                  className="h-full w-full cursor-grab active:cursor-grabbing"
+                  grayscale={false}
+                  gridSize={2.5}
+                  scale={2.6}
+                  autoRotate
+                  autoRotateSpeed={0.6}
+                  floatIntensity={0.4}
+                  floatSpeed={0.8}
+                  highlight="#f5a65c"
+                  environmentIntensity={0.4}
+                  background=""
+                />
               </div>
+              {/* Same line as the nav tooltip, restated here as a quiet footnote
+                since it's the hamster's own explanation, not the nav's. */}
+              <p className="absolute top-[93%] left-[6%] max-w-[220px] font-sans text-[11px] leading-[1.3] text-text/40 italic">
+                Hamsters hoard food but almost never overeat. Kindred spirits.
+              </p>
+              {/* Positioned beside the mascot's own row (not under the headline)
+                so the two never compete for the same horizontal band. */}
+              <div className="absolute top-[58%] left-[32%] w-[22%] max-w-[200px]">
+                <div className="rounded-2xl bg-white/90 px-3.5 py-2.5 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.25)]">
+                  <p className="font-[family-name:var(--font-accent-serif)] text-[14px] leading-[1.3] text-text italic">
+                    Meet Hammy, your new AI calorie-tracking pet.
+                  </p>
+                  <p className="mt-1 font-sans text-[10.5px] text-text-muted">
+                    Drag him. He doesn&apos;t mind.
+                  </p>
+                </div>
+              </div>
+              {/* Every value here is a % of the hero box, same as the mascot and
+                caption above, so the gap between them (and this arrow bridging
+                it) holds at any hero width in the range this group renders at. */}
+              <svg
+                viewBox="0 0 110 50"
+                fill="none"
+                className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-text/35 select-none"
+              >
+                <path
+                  d="M100 8C70 8 35 20 14 32"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeDasharray="1.5 6"
+                />
+                {/* Legs computed from the curve's actual arrival tangent at
+                  (14,32) (derived from its end control point (35,20)), not
+                  eyeballed — that's what was throwing the previous chevron
+                  off-angle from the dots. */}
+                <path
+                  d="M22 21L14 32L28 31"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-            {/* Every value here is a % of the hero box, same as the mascot and
-              caption above, so the gap between them (and this arrow bridging
-              it) holds at any hero width in the range this group renders at. */}
-            <svg
-              viewBox="0 0 110 50"
-              fill="none"
-              className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-text/35 select-none"
-            >
-              <path
-                d="M100 8C70 8 35 20 14 32"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeDasharray="1.5 6"
-              />
-              {/* Legs computed from the curve's actual arrival tangent at
-                (14,32) (derived from its end control point (35,20)), not
-                eyeballed — that's what was throwing the previous chevron
-                off-angle from the dots. */}
-              <path
-                d="M22 21L14 32L28 31"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          )}
         </motion.div>
       </div>
 

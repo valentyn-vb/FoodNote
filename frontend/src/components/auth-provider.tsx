@@ -6,8 +6,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import type { AuthUser, LoginRequest, RegisterRequest } from '@foodnote/shared';
 import { auth, setAccessToken } from '@/lib/api-client';
 
@@ -26,11 +28,21 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
+  const pathname = usePathname();
+  const hasCheckedRef = useRef(false);
 
   // Session restore: the access token never survives a reload (memory only),
   // but auth.me() 401s, api-client silently exchanges the refresh cookie for
   // a new access token and retries — so this resolves the real session state.
+  // Deferred while on the anonymous marketing homepage ('/'): nothing there
+  // reads `status`, so the request (and the bundle weight it drags in) has
+  // no payoff for a page whose only auth-adjacent UI is plain links to
+  // /login and /register. Runs exactly once, the first time the pathname is
+  // anything else — hasCheckedRef (not the `[]` this used to depend on)
+  // keeps it from refiring on every later navigation.
   useEffect(() => {
+    if (hasCheckedRef.current || pathname === '/') return;
+    hasCheckedRef.current = true;
     let cancelled = false;
     auth
       .me()
@@ -47,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const res = await auth.register(data);

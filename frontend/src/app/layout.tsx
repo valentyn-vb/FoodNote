@@ -1,10 +1,5 @@
 import type { Metadata } from 'next';
-import {
-  Figtree,
-  Fredoka,
-  Geist_Mono,
-  Instrument_Serif,
-} from 'next/font/google';
+import { Figtree, Fredoka, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/components/auth-provider';
@@ -14,15 +9,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-display' });
-
-// Homepage only (ticket #58) — a single serif-italic accent font, used
-// sparingly (the quote section), not a wholesale font swap of the brand.
-const instrumentSerif = Instrument_Serif({
-  weight: '400',
-  style: 'italic',
-  subsets: ['latin'],
-  variable: '--font-accent-serif',
-});
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -53,7 +39,6 @@ export default function RootLayout({
         'font-sans',
         figtree.variable,
         fredoka.variable,
-        instrumentSerif.variable,
       )}
     >
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
