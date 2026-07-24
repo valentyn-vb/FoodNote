@@ -35,7 +35,6 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
-import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { mockUserProfile } from '@/lib/mock-data';
 import { notImplemented } from '@/lib/not-implemented';
@@ -49,7 +48,6 @@ const DRAWER_TRIGGER_CLASS =
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { onMealSaved, onMealUndone } = useMeals();
   const { onWeightSaved } = useWeight();
   // Session identity (email, logout) comes from auth; name/initials are
   // still the mock profile until the profile API exists.
@@ -97,11 +95,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <MealLogDrawer
-                    onMealSaved={onMealSaved}
-                    onMealUndone={onMealUndone}
-                    triggerClassName={DRAWER_TRIGGER_CLASS}
-                  >
+                  <MealLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
                     <UtensilsCrossed />
                     <span>Log a meal</span>
                   </MealLogDrawer>
