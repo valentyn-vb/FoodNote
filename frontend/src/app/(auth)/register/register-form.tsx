@@ -26,7 +26,7 @@ export function RegisterForm() {
 
   const form = useForm<RegisterRequest>({
     resolver: zodResolver(registerRequestSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -56,6 +56,20 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+          <AuthTextField
+            control={form.control}
+            name="firstName"
+            label="First name"
+            autoComplete="given-name"
+            placeholder="Jamie"
+          />
+          <AuthTextField
+            control={form.control}
+            name="lastName"
+            label="Last name"
+            autoComplete="family-name"
+            placeholder="Rivera"
+          />
           <AuthTextField
             control={form.control}
             name="email"

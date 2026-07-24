@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
-import type { AuthResponse, AuthUser } from '@foodnote/shared';
+import type { AuthResponse, AuthUser, RegisterRequest } from '@foodnote/shared';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
 import type { StoredUser } from '../users/users.repository';
@@ -37,13 +37,23 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async register(email: string, password: string): Promise<TokenPair> {
+  async register({
+    firstName,
+    lastName,
+    email,
+    password,
+  }: RegisterRequest): Promise<TokenPair> {
     const existing = await this.users.findByEmail(email);
     if (existing) {
       throw new ConflictException('Email is already registered');
     }
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
-    const user = await this.users.create({ email, passwordHash });
+    const user = await this.users.create({
+      firstName,
+      lastName,
+      email,
+      passwordHash,
+    });
     return this.issueTokens(user);
   }
 

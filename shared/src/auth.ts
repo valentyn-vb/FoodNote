@@ -10,8 +10,20 @@ export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters')
   .max(72, 'Password must be at most 72 characters');
+export const firstNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'First name is required')
+  .max(50, 'First name must be at most 50 characters');
+export const lastNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Last name is required')
+  .max(50, 'Last name must be at most 50 characters');
 
 export const registerRequestSchema = z.object({
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
   email: emailSchema,
   password: passwordSchema,
 });

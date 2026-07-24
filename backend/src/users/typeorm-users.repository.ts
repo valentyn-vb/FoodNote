@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { UsersRepository } from './users.repository';
-import type { StoredUser } from './users.repository';
+import type { CreateUserData, StoredUser } from './users.repository';
 
 const PG_UNIQUE_VIOLATION = '23505';
 
@@ -18,10 +18,7 @@ export class TypeormUsersRepository implements UsersRepository {
     return this.repo.findOne({ where: { email } });
   }
 
-  async create(data: {
-    email: string;
-    passwordHash: string;
-  }): Promise<StoredUser> {
+  async create(data: CreateUserData): Promise<StoredUser> {
     try {
       return await this.repo.save(this.repo.create(data));
     } catch (error) {

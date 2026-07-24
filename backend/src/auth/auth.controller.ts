@@ -40,10 +40,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(registerRequestSchema)) body: RegisterRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
-    return this.respondWithTokens(
-      await this.authService.register(body.email, body.password),
-      res,
-    );
+    return this.respondWithTokens(await this.authService.register(body), res);
   }
 
   @Post('login')

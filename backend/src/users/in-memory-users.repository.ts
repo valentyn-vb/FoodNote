@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { UsersRepository } from './users.repository';
-import type { StoredUser } from './users.repository';
+import type { CreateUserData, StoredUser } from './users.repository';
 
 /**
  * Test double for unit tests — production uses TypeormUsersRepository.
@@ -14,11 +14,10 @@ export class InMemoryUsersRepository implements UsersRepository {
     return Promise.resolve(this.byEmail.get(email) ?? null);
   }
 
-  create(data: { email: string; passwordHash: string }): Promise<StoredUser> {
+  create(data: CreateUserData): Promise<StoredUser> {
     const user: StoredUser = {
       id: randomUUID(),
-      email: data.email,
-      passwordHash: data.passwordHash,
+      ...data,
       createdAt: new Date(),
     };
     this.byEmail.set(user.email, user);

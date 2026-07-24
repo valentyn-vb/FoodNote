@@ -1,7 +1,11 @@
+import type { RegisterRequest } from '@foodnote/shared';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import { beforeEach } from 'node:test';
+import { describe } from 'zod';
+import { it } from 'zod/locales';
 import { InMemoryUsersRepository } from '../users/in-memory-users.repository';
 import { UsersRepository } from '../users/users.repository';
 import { AuthService } from './auth.service';
@@ -10,8 +14,20 @@ describe('AuthService', () => {
   let service: AuthService;
   let users: InMemoryUsersRepository;
 
+  const FIRST_NAME = 'Sergio';
+  const LAST_NAME = 'Ramos';
   const EMAIL = 'sergio@example.com';
   const PASSWORD = 'correct horse battery';
+
+  const registration = (
+    overrides: Partial<RegisterRequest> = {},
+  ): RegisterRequest => ({
+    firstName: FIRST_NAME,
+    lastName: LAST_NAME,
+    email: EMAIL,
+    password: PASSWORD,
+    ...overrides,
+  });
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -28,16 +44,18 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('stores a bcrypt hash, never the plain password', async () => {
-      await service.register(EMAIL, PASSWORD);
+      await service.register(registration());
 
       const stored = await users.findByEmail(EMAIL);
       expect(stored).not.toBeNull();
+      expect(stored!.firstName).toBe(FIRST_NAME);
+      expect(stored!.lastName).toBe(LAST_NAME);
       expect(stored!.passwordHash).not.toContain(PASSWORD);
       expect(await bcrypt.compare(PASSWORD, stored!.passwordHash)).toBe(true);
     });
 
     it('returns a token pair and the public user shape', async () => {
-      const result = await service.register(EMAIL, PASSWORD);
+      const result = await service.register(registration());
 
       expect(typeof result.accessToken).toBe('string');
       expect(typeof result.refreshToken).toBe('string');
@@ -46,16 +64,16 @@ describe('AuthService', () => {
     });
 
     it('rejects a duplicate email with ConflictException', async () => {
-      await service.register(EMAIL, PASSWORD);
+      await service.register(registration());
 
-      await expect(service.register(EMAIL, 'other password')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.register(registration({ password: 'other password' })),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('login', () => {
-    beforeEach(() => service.register(EMAIL, PASSWORD));
+    beforeEach(() => service.register(registration()));
 
     it('returns tokens for valid credentials', async () => {
       const result = await service.login(EMAIL, PASSWORD);
@@ -79,7 +97,7 @@ describe('AuthService', () => {
 
   describe('refresh', () => {
     it('issues a new valid access token from a refresh token', async () => {
-      const { refreshToken, user } = await service.register(EMAIL, PASSWORD);
+      const { refreshToken, user } = await service.register(registration());
 
       const { accessToken } = await service.refresh(refreshToken);
 
@@ -93,7 +111,7 @@ describe('AuthService', () => {
     });
 
     it('rejects an access token used as a refresh token', async () => {
-      const { accessToken } = await service.register(EMAIL, PASSWORD);
+      const { accessToken } = await service.register(registration());
 
       await expect(service.refresh(accessToken)).rejects.toThrow(
         UnauthorizedException,

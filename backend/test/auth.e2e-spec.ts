@@ -12,6 +12,8 @@ import { User } from '../src/user/user.entity';
 describe('Auth flow (e2e)', () => {
   let app: INestApplication<App>;
 
+  const FIRST_NAME = 'E2E';
+  const LAST_NAME = 'Tester';
   const EMAIL = 'e2e@example.com';
   const PASSWORD = 'e2e test password';
 
@@ -36,7 +38,12 @@ describe('Auth flow (e2e)', () => {
     // register: returns access token + user, sets refresh cookie
     const registerRes = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: FIRST_NAME,
+        lastName: LAST_NAME,
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
 
     const registerBody = registerRes.body as AuthResponse;
@@ -94,6 +101,8 @@ describe('Auth flow (e2e)', () => {
       .send({ email: 'not-an-email', password: 'short' })
       .expect(400);
     const body = res.body as { errors: Record<string, string[]> };
+    expect(body.errors).toHaveProperty('firstName');
+    expect(body.errors).toHaveProperty('lastName');
     expect(body.errors).toHaveProperty('email');
     expect(body.errors).toHaveProperty('password');
   });
