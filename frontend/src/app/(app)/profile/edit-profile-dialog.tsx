@@ -59,9 +59,9 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        className="h-auto p-0 font-sans text-title font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+        className="h-auto p-0 font-sans  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
       >
-        Edit
+        Edit profile
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

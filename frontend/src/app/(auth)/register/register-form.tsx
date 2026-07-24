@@ -1,12 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,8 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
 import { ApiError } from '@/lib/api-client';
+import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { AuthTextField } from '../auth-text-field';
 
 export function RegisterForm() {
@@ -61,14 +61,14 @@ export function RegisterForm() {
             name="firstName"
             label="First name"
             autoComplete="given-name"
-            placeholder="Jamie"
+            placeholder="Enter your first name"
           />
           <AuthTextField
             control={form.control}
             name="lastName"
             label="Last name"
             autoComplete="family-name"
-            placeholder="Rivera"
+            placeholder="Enter your last name"
           />
           <AuthTextField
             control={form.control}

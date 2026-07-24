@@ -62,23 +62,25 @@ export default function ProfilePage() {
         <h1 className="font-sans text-title font-semibold text-text lg:text-heading-lg">
           Profile
         </h1>
-        <EditProfileDialog />
       </div>
 
-      <div className="flex flex-col items-center gap-2.5 pt-7 pb-5 lg:flex-row lg:items-center lg:gap-4 lg:px-4 lg:pt-6">
-        <Avatar className="size-18">
-          <AvatarFallback className="bg-primary text-heading-lg text-surface">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
-          <div className="font-sans text-[17px] font-semibold text-text">
-            {fullName}
-          </div>
-          <div className="font-sans text-caption text-text-muted">
-            {authUser?.email}
+      <div className="pt-7 pb-5 lg:px-4 lg:pt-6 ">
+        <div className="flex flex-col items-center   lg:flex-row lg:items-center lg:gap-4 mb-2.5">
+          <Avatar className="size-18">
+            <AvatarFallback className="bg-primary text-heading-lg text-surface">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
+            <div className="font-sans text-[17px] font-semibold text-text">
+              {fullName}
+            </div>
+            <div className="font-sans text-caption text-text-muted">
+              {authUser?.email}
+            </div>
           </div>
         </div>
+        <EditProfileDialog />
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
