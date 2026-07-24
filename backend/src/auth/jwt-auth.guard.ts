@@ -4,12 +4,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { AuthUser } from '@foodnote/shared';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
+import type { AuthenticatedUser } from './auth.service';
 
 export interface AuthenticatedRequest extends Request {
-  user: AuthUser;
+  user: AuthenticatedUser;
 }
 
 @Injectable()

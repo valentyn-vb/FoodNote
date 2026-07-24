@@ -1,4 +1,4 @@
-import type { RegisterRequest } from '@foodnote/shared';
+import type { RegisterRequest, UpdateAccountRequest } from '@foodnote/shared';
 
 export type CreateUserData = Omit<RegisterRequest, 'password'> & {
   passwordHash: string;
@@ -15,5 +15,7 @@ export type StoredUser = CreateUserData & {
  */
 export abstract class UsersRepository {
   abstract findByEmail(email: string): Promise<StoredUser | null>;
+  abstract findById(id: string): Promise<StoredUser | null>;
   abstract create(data: CreateUserData): Promise<StoredUser>;
+  abstract update(id: string, data: UpdateAccountRequest): Promise<StoredUser>;
 }

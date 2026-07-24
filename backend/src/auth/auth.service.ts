@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
-import type { AuthResponse, AuthUser, RegisterRequest } from '@foodnote/shared';
+import type {
+  AuthResponse,
+  AuthUser,
+  RegisterRequest,
+  UpdateAccountRequest,
+} from '@foodnote/shared';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
 import type { StoredUser } from '../users/users.repository';
@@ -18,6 +23,16 @@ export interface TokenPair extends AuthResponse {
 
 export interface AccessTokenPayload {
   sub: string;
+  email: string;
+}
+
+/**
+ * The identity carried on the request by the JWT guard — derived from the
+ * access token alone (no DB hit). Distinct from the public `AuthUser`, whose
+ * name fields are read from the database (see `getUser`).
+ */
+export interface AuthenticatedUser {
+  id: string;
   email: string;
 }
 
@@ -82,7 +97,7 @@ export class AuthService {
     return { accessToken: await this.signAccessToken(user) };
   }
 
-  async verifyAccessToken(token: string): Promise<AuthUser> {
+  async verifyAccessToken(token: string): Promise<AuthenticatedUser> {
     try {
       const payload = await this.jwt.verifyAsync<AccessTokenPayload>(token, {
         secret: this.accessSecret,
@@ -91,6 +106,30 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid access token');
     }
+  }
+
+  async getUser(id: string): Promise<AuthUser> {
+    const user = await this.users.findById(id);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return this.toAuthUser(user);
+  }
+
+  async updateAccount(
+    id: string,
+    data: UpdateAccountRequest,
+  ): Promise<AuthUser> {
+    return this.toAuthUser(await this.users.update(id, data));
+  }
+
+  private toAuthUser(user: StoredUser): AuthUser {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 
   private async issueTokens(user: StoredUser): Promise<TokenPair> {
@@ -104,7 +143,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email },
+      user: this.toAuthUser(user),
     };
   }
 
