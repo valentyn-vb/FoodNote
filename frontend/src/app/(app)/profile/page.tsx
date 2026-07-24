@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/components/auth-provider';
 import { NotImplementedButton } from '@/components/not-implemented-button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { profile } from '@/lib/api-client';
@@ -28,6 +29,7 @@ export default function ProfilePage() {
   // other, so the data and its updater live here and flow down as props.
   const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +86,7 @@ export default function ProfilePage() {
             {user.name}
           </div>
           <div className="font-sans text-caption text-text-muted">
-            {user.email}
+            {authUser?.email}
           </div>
         </div>
       </div>
