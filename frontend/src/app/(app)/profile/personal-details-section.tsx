@@ -86,10 +86,8 @@ export function PersonalDetailsSection({
         });
       }
       const updated = await profile.put({
-        age: values.age,
-        sex: values.sex,
-        heightCm: values.heightCm,
-        activityLevel: values.activityLevel,
+        ...previous,
+        ...values,
       });
       onProfileChange({
         ...updated,
