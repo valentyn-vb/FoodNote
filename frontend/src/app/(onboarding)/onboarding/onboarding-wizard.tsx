@@ -1,17 +1,22 @@
 'use client';
 
-import { DetailsForm } from '@/components/onboarding/details-form';
+import { Disclaimer } from '@/components/disclaimer';
+import {
+  DETAILS_FORM_ID,
+  DetailsForm,
+} from '@/components/onboarding/details-form';
 import {
   onboardingFormSchema,
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
+import { Button } from '@/components/ui/button';
 import { goals, profile, weights } from '@/lib/api-client';
+import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { Pace } from '@foodnote/shared';
 
 type Step = 'details' | 'plan';
 
@@ -72,6 +77,29 @@ export function OnboardingWizard() {
       submitError={submitError}
     />
   ) : (
-    <DetailsForm form={form} onContinue={goToPlan} />
+    <div className="mx-auto flex w-full max-w-md flex-col bg-bg pt-1.5 pb-5">
+      <div className="flex flex-col gap-1 px-5 pb-4.5">
+        <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
+          Tell us about you
+        </h1>
+        <p className="font-sans text-label text-text-muted">
+          We&apos;ll use this to calculate your daily calorie target.
+        </p>
+      </div>
+
+      <DetailsForm form={form} onSubmit={goToPlan} />
+
+      <Disclaimer className="px-5 pt-4 pb-1" />
+
+      <div className="flex flex-col gap-2.5 px-5 pt-3">
+        <Button
+          type="submit"
+          form={DETAILS_FORM_ID}
+          className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
+        >
+          Continue
+        </Button>
+      </div>
+    </div>
   );
 }

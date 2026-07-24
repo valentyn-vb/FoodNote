@@ -1,11 +1,18 @@
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
+'use client';
+
+import { useAuth } from '@/components/auth-provider';
 import { NotImplementedButton } from '@/components/not-implemented-button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { profile } from '@/lib/api-client';
 import { mockUserProfile } from '@/lib/mock-data';
-import { DetailRow } from './detail-row';
+import type { ProfileResponse } from '@foodnote/shared';
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { CurrentPlanSection } from './current-plan-section';
 import { LogoutButton } from './logout-button';
+import { PersonalDetailsSection } from './personal-details-section';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
 // moment that needs guidance, reassurance, or celebration (see H08 in Paper).
@@ -16,6 +23,31 @@ export default function ProfilePage() {
     .split(' ')
     .map((part) => part[0])
     .join('');
+
+  // Profile is the single source of truth for both sections: a change in one
+  // (e.g. editing weight recomputes the calorie target) must re-render the
+  // other, so the data and its updater live here and flow down as props.
+  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
+
+  useEffect(() => {
+    let cancelled = false;
+    profile
+      .current()
+      .then((p) => {
+        if (!cancelled) setProfileData(p);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Couldn't load your profile.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex w-full max-w-md flex-col bg-surface lg:mx-14 lg:my-10 lg:max-w-xl">
@@ -54,57 +86,23 @@ export default function ProfilePage() {
             {user.name}
           </div>
           <div className="font-sans text-caption text-text-muted">
-            {user.email}
+            {authUser?.email}
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-4 px-4 pb-5">
-        <section className="flex flex-col gap-2.5">
-          <h2 className="font-sans text-caption text-text-muted">
-            Current plan
-          </h2>
-          <Card className="gap-1 rounded-lg border-[1.5px] border-border bg-surface p-4 py-4 shadow-[0_1px_3px_#0000000a] ring-0">
-            <div className="font-display text-heading font-semibold text-text">
-              {user.plan.kcal.toLocaleString()} kcal / day
-            </div>
-            <div className="font-sans text-caption text-text-muted">
-              {user.plan.label} · {user.plan.protein}g protein ·{' '}
-              {user.plan.carbs}g carbs · {user.plan.fat}g fat
-            </div>
-            <NotImplementedButton
-              action="Change plan"
-              variant="outline"
-              className="mt-1.5 h-9.5 w-fit rounded-sm border-[1.5px] border-primary bg-transparent px-3.5 text-label font-semibold text-primary-deep shadow-none hover:bg-[#FFF3E7]"
-            >
-              Change plan
-            </NotImplementedButton>
-          </Card>
-        </section>
+        <CurrentPlanSection
+          profileData={profileData}
+          loading={loading}
+          onProfileChange={setProfileData}
+        />
 
-        <section className="flex flex-col gap-2.5">
-          <h2 className="font-sans text-caption text-text-muted">
-            Personal details
-          </h2>
-          <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
-            <dl>
-              <DetailRow label="Sex" value={user.sex} />
-              <DetailRow label="Age" value={user.age} />
-              <DetailRow label="Height" value={`${user.heightCm} cm`} />
-              <DetailRow
-                label="Weight goal"
-                value={`${user.weightGoalKg} kg`}
-              />
-            </dl>
-          </Card>
-          <NotImplementedButton
-            action="Editing details"
-            variant="ghost"
-            className="h-auto w-fit p-0 font-sans text-label font-semibold text-primary-deep hover:bg-transparent"
-          >
-            Edit details
-          </NotImplementedButton>
-        </section>
+        <PersonalDetailsSection
+          profileData={profileData}
+          loading={loading}
+          onProfileChange={setProfileData}
+        />
       </div>
 
       <div className="border-t border-border px-4 pt-3 pb-6">
