@@ -11,7 +11,15 @@ import {
 } from 'react';
 import { usePathname } from 'next/navigation';
 import type { AuthUser, LoginRequest, RegisterRequest } from '@foodnote/shared';
-import { auth, setAccessToken } from '@/lib/api-client';
+
+// api-client pulls in the @foodnote/shared zod schemas (~67KB gz) for
+// response validation. This provider sits in the root layout, so a *static*
+// import would force zod into every route's shared bundle — including the
+// anonymous homepage, which never runs an auth op (the session restore below
+// is deferred on '/', and there's nothing to log in/out). Importing it lazily
+// inside each operation keeps zod out of any route that doesn't actually call
+// one; the module is cached after first load, so repeat calls don't re-fetch.
+const apiClient = () => import('@/lib/api-client');
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -44,8 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (hasCheckedRef.current || pathname === '/') return;
     hasCheckedRef.current = true;
     let cancelled = false;
-    auth
-      .me()
+    apiClient()
+      .then(({ auth }) => auth.me())
       .then((me) => {
         if (cancelled) return;
         setUser(me);
@@ -62,18 +70,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const register = useCallback(async (data: RegisterRequest) => {
+    const { auth } = await apiClient();
     const res = await auth.register(data);
     setUser(res.user);
     setStatus('authenticated');
   }, []);
 
   const login = useCallback(async (data: LoginRequest) => {
+    const { auth } = await apiClient();
     const res = await auth.login(data);
     setUser(res.user);
     setStatus('authenticated');
   }, []);
 
   const logout = useCallback(async () => {
+    const { auth, setAccessToken } = await apiClient();
     try {
       await auth.logout();
     } finally {

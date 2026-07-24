@@ -51,7 +51,9 @@ export function MascotPeek({
       className={cn('pointer-events-none absolute', className)}
       style={{ x, opacity, rotate: shouldReduceMotion ? 0 : rotate }}
     >
-      <Image src={src} alt="" fill className="object-contain" />
+      {/* Largest use is size-36 (144px); `fill` with no `sizes` would assume
+          100vw and fetch an oversized candidate for a tiny decorative peek. */}
+      <Image src={src} alt="" fill sizes="144px" className="object-contain" />
     </motion.div>
   );
 }

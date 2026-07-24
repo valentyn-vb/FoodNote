@@ -46,6 +46,9 @@ function Feature({
         alt={alt}
         width={1080}
         height={1350}
+        // Displayed at most 220px wide; without `sizes`, next/image assumes
+        // ~100vw and fetches a needlessly large candidate (measured: w=3840).
+        sizes="220px"
         className="mx-auto h-auto w-full max-w-[220px]"
       />
       <p className="mt-4 font-sans text-[15px] leading-[1.6] text-text/75">
@@ -115,6 +118,9 @@ export function IntroSlide() {
             alt="FoodNote parsing a described meal into calories and macros"
             width={1080}
             height={1350}
+            // Capped at 340px (70vw on mobile); see sizes note above — this
+            // one was measured fetching w=3840 (~62KB) for a ~340px slot.
+            sizes="(min-width: 640px) 340px, 70vw"
             className="h-auto w-full"
           />
         </div>
@@ -126,6 +132,7 @@ export function IntroSlide() {
             alt="FoodNote's weight trend chart with a projected goal date"
             width={1080}
             height={1350}
+            sizes="(min-width: 640px) 340px, 70vw"
             className="h-auto w-full"
           />
         </div>
