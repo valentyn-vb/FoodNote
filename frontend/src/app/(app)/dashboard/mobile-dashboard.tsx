@@ -22,17 +22,15 @@ import { CARD_CLASS, fullnessMascot } from './helpers';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
+import { useDashboardGate } from './use-dashboard-gate';
 
 export function MobileDashboard() {
   const { user } = useAuth();
   const {
-    status,
-    retry,
     eatenKcal,
     remainingKcal,
     progressPct,
     goalKcal,
-    goal,
     todayMeals,
     dailyCalories,
   } = useMeals();
@@ -44,10 +42,7 @@ export function MobileDashboard() {
     onWeightSaved,
   } = useWeight();
 
-  const retryAll = () => {
-    retry();
-    retryWeight();
-  };
+  const gate = useDashboardGate();
   const weightReady = weightStatus === 'ready';
 
   return (
@@ -67,9 +62,9 @@ export function MobileDashboard() {
         </Link>
       </div>
 
-      {status === 'error' ? (
-        <DashboardError onRetry={retryAll} />
-      ) : status === 'loading' || !goal ? (
+      {gate.state === 'error' ? (
+        <DashboardError onRetry={gate.retryAll} />
+      ) : gate.state === 'loading' ? (
         <MobileDashboardSkeleton />
       ) : (
         <>
@@ -106,10 +101,10 @@ export function MobileDashboard() {
 
           <div className="flex items-center gap-2 rounded-sm bg-[#FFF3E7] px-4 py-3">
             <div className="font-sans text-caption font-medium text-primary-deep">
-              {goal.projectedGoalDate
+              {gate.goal.projectedGoalDate
                 ? `Projected goal date: ${formatGoalDate(
-                    goal.projectedGoalDate,
-                  )} · ${weeksUntil(goal.projectedGoalDate, new Date())} weeks left`
+                    gate.goal.projectedGoalDate,
+                  )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} weeks left`
                 : 'Target reached — nice work.'}
             </div>
           </div>

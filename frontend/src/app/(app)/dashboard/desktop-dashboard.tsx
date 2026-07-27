@@ -22,20 +22,13 @@ import {
   InlineError,
   TileSkeleton,
 } from './states';
+import { useDashboardGate } from './use-dashboard-gate';
 
 const WEIGHT_TREND_CARD_CLASS = `${CARD_CLASS} grow-2 basis-0 gap-3 px-6 py-5.5`;
 
 export function DesktopDashboard() {
-  const {
-    status,
-    retry,
-    eatenKcal,
-    remainingKcal,
-    goalKcal,
-    goal,
-    todayMeals,
-    dailyCalories,
-  } = useMeals();
+  const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
+    useMeals();
   const {
     status: weightStatus,
     retry: retryWeight,
@@ -44,10 +37,7 @@ export function DesktopDashboard() {
     weightChangeLastMonthKg,
   } = useWeight();
 
-  const retryAll = () => {
-    retry();
-    retryWeight();
-  };
+  const gate = useDashboardGate();
   // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
   const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
   const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
@@ -61,9 +51,9 @@ export function DesktopDashboard() {
         </h1>
       </div>
 
-      {status === 'error' ? (
-        <DashboardError onRetry={retryAll} />
-      ) : status === 'loading' || !goal ? (
+      {gate.state === 'error' ? (
+        <DashboardError onRetry={gate.retryAll} />
+      ) : gate.state === 'loading' ? (
         <DesktopDashboardSkeleton />
       ) : (
         <>
@@ -102,11 +92,10 @@ export function DesktopDashboard() {
                 Projected goal date
               </h2>
               <div className="font-display text-heading-lg font-semibold text-text">
-                {goal.projectedGoalDate
-                  ? `${formatGoalDate(goal.projectedGoalDate)} · ${weeksUntil(
-                      goal.projectedGoalDate,
-                      new Date(),
-                    )} wks`
+                {gate.goal.projectedGoalDate
+                  ? `${formatGoalDate(
+                      gate.goal.projectedGoalDate,
+                    )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} wks`
                   : 'Target reached'}
               </div>
             </Card>
