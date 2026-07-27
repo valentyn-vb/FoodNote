@@ -12,7 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { activityLevelSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { LABEL_CLASS, NumberField, TOGGLE_ITEM_CLASS } from '../form-fields';
+import { InputField, LABEL_CLASS, TOGGLE_ITEM_CLASS } from '../form-fields';
 import type { OnboardingFormValues } from './form-schema';
 
 // A caller-owned submit button elsewhere on the page reaches this form via
@@ -42,7 +42,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       className="flex flex-col gap-5 px-5 pt-4.5"
     >
       <div className="flex gap-3">
-        <NumberField
+        <InputField
           id="age"
           label="Age"
           type="number"
@@ -50,7 +50,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
           error={errors.age?.message}
           {...register('age', { valueAsNumber: true })}
         />
-        <NumberField
+        <InputField
           id="heightCm"
           label="Height (cm)"
           type="number"
@@ -84,7 +84,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       </Field>
 
       <div className="flex gap-3">
-        <NumberField
+        <InputField
           id="currentWeightKg"
           label="Current weight (kg)"
           type="number"
@@ -92,7 +92,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
           error={errors.currentWeightKg?.message}
           {...register('currentWeightKg', { valueAsNumber: true })}
         />
-        <NumberField
+        <InputField
           id="targetWeightKg"
           label="Target weight (kg)"
           type="number"

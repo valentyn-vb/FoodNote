@@ -8,7 +8,7 @@ export const LABEL_CLASS = 'font-sans text-caption font-medium text-text';
 export const INPUT_CLASS =
   'h-11.5 rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008] focus-visible:border-primary focus-visible:ring-0';
 
-export function NumberField({
+export function InputField({
   id,
   label,
   error,
