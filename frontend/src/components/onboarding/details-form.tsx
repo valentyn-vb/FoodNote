@@ -8,12 +8,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { activityLevelSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { InputField, LABEL_CLASS, TOGGLE_ITEM_CLASS } from '../form-fields';
+import { InputField, LABEL_CLASS } from '../form-fields';
+import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
+
+const SEX_OPTIONS = [
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+];
 
 // A caller-owned submit button elsewhere on the page reaches this form via
 // the `form` attribute, so the same fields work under any surrounding chrome
@@ -60,28 +65,12 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
         />
       </div>
 
-      <Field className="gap-1.75">
-        <FieldLabel className={LABEL_CLASS}>Sex</FieldLabel>
-        <Controller
-          control={control}
-          name="sex"
-          render={({ field }) => (
-            <ToggleGroup
-              value={field.value ? [field.value] : []}
-              onValueChange={(values) => values[0] && field.onChange(values[0])}
-              spacing={2}
-              className="w-full gap-2"
-            >
-              <ToggleGroupItem value="female" className={TOGGLE_ITEM_CLASS}>
-                Female
-              </ToggleGroupItem>
-              <ToggleGroupItem value="male" className={TOGGLE_ITEM_CLASS}>
-                Male
-              </ToggleGroupItem>
-            </ToggleGroup>
-          )}
-        />
-      </Field>
+      <ToggleField
+        control={control}
+        name="sex"
+        label="Sex"
+        options={SEX_OPTIONS}
+      />
 
       <div className="flex gap-3">
         <InputField

@@ -1,15 +1,10 @@
 'use client';
 
-import { Field, FieldLabel } from '@/components/ui/field';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import {
-  createMealRequestSchema,
-  mealTypeSchema,
-  type MealType,
-} from '@foodnote/shared';
-import { Controller, type UseFormReturn } from 'react-hook-form';
+import { createMealRequestSchema, mealTypeSchema } from '@foodnote/shared';
+import { type UseFormReturn } from 'react-hook-form';
 import type { z } from 'zod';
 import { InputField, LABEL_CLASS } from './form-fields';
+import { ToggleField } from './toggle-field';
 
 export const mealFormSchema = createMealRequestSchema.omit({
   recordedAt: true,
@@ -21,12 +16,11 @@ export type MealFormValues = z.infer<typeof mealFormSchema>;
 
 export const MANUAL_MEAL_FORM_ID = 'manual-meal-form';
 
-const MEAL_TYPE_LABELS: Record<MealType, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
-  snack: 'Snack',
-};
+// Derived from the enum so a new meal type can't be missed here.
+const MEAL_TYPE_OPTIONS = mealTypeSchema.options.map((value) => ({
+  value,
+  label: value[0].toUpperCase() + value.slice(1),
+}));
 
 const MACRO_FIELDS = [
   { name: 'proteinGrams', label: 'Protein (g)' },
@@ -64,33 +58,12 @@ export function ManualMealForm({ form, onSubmit }: ManualMealFormProps) {
         />
       </div>
 
-      <Field className="gap-1.75">
-        <FieldLabel className={LABEL_CLASS}>Meal type</FieldLabel>
-        <Controller
-          control={control}
-          name="mealType"
-          render={({ field }) => (
-            <ToggleGroup
-              value={field.value ? [field.value] : []}
-              onValueChange={(values) => values[0] && field.onChange(values[0])}
-              spacing={2}
-              className="w-full gap-2"
-            >
-              {mealTypeSchema.options.map((type) => (
-                <ToggleGroupItem
-                  key={type}
-                  value={type}
-                  className={
-                    'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep px-0 text-[12.5px]'
-                  }
-                >
-                  {MEAL_TYPE_LABELS[type]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          )}
-        />
-      </Field>
+      <ToggleField
+        control={control}
+        name="mealType"
+        label="Meal type"
+        options={MEAL_TYPE_OPTIONS}
+      />
 
       <div className="flex">
         <InputField
