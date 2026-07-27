@@ -1,13 +1,12 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { GoalResponse } from '@foodnote/shared';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Repository } from 'typeorm';
-import { AppModule } from '../src/app.module';
 import { Goal } from '../src/goal/goal.entity';
 import { User } from '../src/user/user.entity';
+import { createTestApp } from './create-test-app';
 
 describe('Goals (e2e)', () => {
   let app: INestApplication<App>;
@@ -19,12 +18,7 @@ describe('Goals (e2e)', () => {
   const auth = () => ({ Authorization: `Bearer ${token}` });
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    await app.init();
+    app = await createTestApp();
 
     const users = app.get<Repository<User>>(getRepositoryToken(User));
     await users.delete({ email: EMAIL });
