@@ -33,7 +33,12 @@ describe('Onboarding flow (e2e)', () => {
   it('register → PUT /profile → POST /weights → POST /goals → computed target', async () => {
     const reg = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
     const token = (reg.body as { accessToken: string }).accessToken;
     const auth = { Authorization: `Bearer ${token}` };

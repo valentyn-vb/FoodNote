@@ -14,6 +14,7 @@ import {
   type ProfileResponse,
   type PutProfileRequest,
   type RegisterRequest,
+  type UpdateAccountRequest,
   type UpdateGoalRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
@@ -116,6 +117,14 @@ export const auth = {
 
   async me(): Promise<AuthUser> {
     const res = await apiFetch('/api/auth/me');
+    return authUserSchema.parse(await res.json());
+  },
+
+  async updateMe(data: UpdateAccountRequest): Promise<AuthUser> {
+    const res = await apiFetch('/api/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
     return authUserSchema.parse(await res.json());
   },
 };

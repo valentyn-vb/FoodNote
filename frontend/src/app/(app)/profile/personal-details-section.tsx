@@ -148,7 +148,7 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+          className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
         >
           {(loading || saving) && <Loader2 className="size-4 animate-spin" />}
           Edit details

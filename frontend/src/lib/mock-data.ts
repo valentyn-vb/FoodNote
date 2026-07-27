@@ -46,26 +46,6 @@ export const mockPlanOptions: Plan[] = [
   },
 ];
 
-export type UserProfile = {
-  name: string;
-  email: string;
-  sex: 'Female' | 'Male';
-  age: number;
-  heightCm: number;
-  weightGoalKg: number;
-  plan: Plan;
-};
-
-export const mockUserProfile: UserProfile = {
-  name: 'Jamie Rivera',
-  email: 'jamie.rivera@email.com',
-  sex: 'Female',
-  age: 29,
-  heightCm: 168,
-  weightGoalKg: 62,
-  plan: mockPlanOptions[1],
-};
-
 export type Meal = {
   id: string;
   name: string;

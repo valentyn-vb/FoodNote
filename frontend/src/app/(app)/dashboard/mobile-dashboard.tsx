@@ -12,15 +12,18 @@ import {
   DailyCaloriesChart,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
-import { mockDashboardStats, mockUserProfile } from '@/lib/mock-data';
+import { useAuth } from '@/components/auth-provider';
+import { mockDashboardStats } from '@/lib/mock-data';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { CARD_CLASS, fullnessMascot, initialsOf } from './helpers';
+import { initialsOf } from '@/lib/user-display';
+import { CARD_CLASS, fullnessMascot } from './helpers';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
 
 export function MobileDashboard() {
   const stats = mockDashboardStats;
+  const { user } = useAuth();
   const {
     meals,
     eatenKcal,
@@ -43,7 +46,7 @@ export function MobileDashboard() {
         <Link href="/profile" aria-label="Open profile">
           <Avatar>
             <AvatarFallback className="bg-primary text-surface">
-              {initialsOf(mockUserProfile.name)}
+              {initialsOf(user)}
             </AvatarFallback>
           </Avatar>
         </Link>

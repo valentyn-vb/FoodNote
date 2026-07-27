@@ -8,7 +8,12 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { AuthUser, LoginRequest, RegisterRequest } from '@foodnote/shared';
+import type {
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
+  UpdateAccountRequest,
+} from '@foodnote/shared';
 
 // api-client pulls in the @foodnote/shared zod schemas (~67KB gz) for
 // response validation. This provider sits in the root layout, so a *static*
@@ -29,6 +34,7 @@ type AuthContextValue = {
   register: (data: RegisterRequest) => Promise<void>;
   login: (data: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
+  updateAccount: (data: UpdateAccountRequest) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -89,9 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const updateAccount = useCallback(async (data: UpdateAccountRequest) => {
+    const { auth } = await apiClient();
+    setUser(await auth.updateMe(data));
+  }, []);
+
   const value = useMemo(
-    () => ({ user, status, register, login, logout }),
-    [user, status, register, login, logout],
+    () => ({ user, status, register, login, logout, updateAccount }),
+    [user, status, register, login, logout, updateAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

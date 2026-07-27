@@ -12,6 +12,8 @@ import { User } from '../src/user/user.entity';
 describe('Auth flow (e2e)', () => {
   let app: INestApplication<App>;
 
+  const FIRST_NAME = 'E2E';
+  const LAST_NAME = 'Tester';
   const EMAIL = 'e2e@example.com';
   const PASSWORD = 'e2e test password';
 
@@ -36,11 +38,18 @@ describe('Auth flow (e2e)', () => {
     // register: returns access token + user, sets refresh cookie
     const registerRes = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: FIRST_NAME,
+        lastName: LAST_NAME,
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
 
     const registerBody = registerRes.body as AuthResponse;
     expect(registerBody.user.email).toBe(EMAIL);
+    expect(registerBody.user.firstName).toBe(FIRST_NAME);
+    expect(registerBody.user.lastName).toBe(LAST_NAME);
     const accessToken = registerBody.accessToken;
     const cookies = registerRes.get('Set-Cookie');
     expect(cookies?.join(';')).toContain('refreshToken=');
@@ -51,7 +60,10 @@ describe('Auth flow (e2e)', () => {
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
-    expect((meRes.body as { email: string }).email).toBe(EMAIL);
+    const meBody = meRes.body as AuthResponse['user'];
+    expect(meBody.email).toBe(EMAIL);
+    expect(meBody.firstName).toBe(FIRST_NAME);
+    expect(meBody.lastName).toBe(LAST_NAME);
 
     // refresh: cookie alone yields a fresh access token
     const refreshRes = await request(app.getHttpServer())
@@ -94,7 +106,58 @@ describe('Auth flow (e2e)', () => {
       .send({ email: 'not-an-email', password: 'short' })
       .expect(400);
     const body = res.body as { errors: Record<string, string[]> };
+    expect(body.errors).toHaveProperty('firstName');
+    expect(body.errors).toHaveProperty('lastName');
     expect(body.errors).toHaveProperty('email');
     expect(body.errors).toHaveProperty('password');
+  });
+
+  it('PATCH /auth/me updates the name (and rejects an empty one)', async () => {
+    const EDIT_EMAIL = 'e2e-edit@example.com';
+    const users = app.get<Repository<User>>(getRepositoryToken(User));
+    await users.delete({ email: EDIT_EMAIL });
+
+    const reg = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        firstName: 'Before',
+        lastName: 'Edit',
+        email: EDIT_EMAIL,
+        password: PASSWORD,
+      })
+      .expect(201);
+    const authHeader = {
+      Authorization: `Bearer ${(reg.body as AuthResponse).accessToken}`,
+    };
+
+    const patched = (
+      await request(app.getHttpServer())
+        .patch('/api/auth/me')
+        .set(authHeader)
+        .send({ firstName: 'After', lastName: 'Edited' })
+        .expect(200)
+    ).body as AuthResponse['user'];
+    expect(patched.firstName).toBe('After');
+    expect(patched.lastName).toBe('Edited');
+    expect(patched.email).toBe(EDIT_EMAIL);
+
+    // GET /auth/me reflects the change (read from the DB, not the token).
+    const meBody = (
+      await request(app.getHttpServer())
+        .get('/api/auth/me')
+        .set(authHeader)
+        .expect(200)
+    ).body as AuthResponse['user'];
+    expect(meBody.firstName).toBe('After');
+    expect(meBody.lastName).toBe('Edited');
+
+    // A blank name is rejected by the shared schema.
+    await request(app.getHttpServer())
+      .patch('/api/auth/me')
+      .set(authHeader)
+      .send({ firstName: '', lastName: '' })
+      .expect(400);
+
+    await users.delete({ email: EDIT_EMAIL });
   });
 });
