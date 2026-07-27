@@ -126,7 +126,11 @@ export function buildOpenApiDocument(): OpenAPIObject {
         'Calorie-tracking API. Every request/response shape is generated from ' +
         'the frozen `@foodnote/shared` Zod schemas (see CONTRACT.md). All routes ' +
         'are under `/api`; everything except `/auth/*` and `/health` requires a ' +
-        'Bearer access token.',
+        'Bearer access token.\n\n' +
+        'Rate limiting: every route except `/health` is limited to 100 requests ' +
+        'per minute per client IP, so any route may answer `429` with the ' +
+        'standard error envelope and a `Retry-After` header. `/auth/register` ' +
+        'and `/auth/login` are limited to 5 per minute per IP.',
     },
     servers: [{ url: '/api' }],
     tags: [
@@ -162,6 +166,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
               ...jsonContent('AuthResponse'),
             },
             409: errorResponse('Email already registered'),
+            429: errorResponse('Rate limit exceeded (5/min per IP)'),
           },
         },
       },
@@ -177,6 +182,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
               ...jsonContent('AuthResponse'),
             },
             401: errorResponse('Invalid credentials'),
+            429: errorResponse('Rate limit exceeded (5/min per IP)'),
           },
         },
       },
