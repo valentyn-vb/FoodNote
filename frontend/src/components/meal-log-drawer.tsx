@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ManualMealDialog } from '@/components/manual-meal-dialog';
 import { useMeals } from '@/lib/meals-context';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { cn } from '@/lib/utils';
@@ -134,17 +135,7 @@ export function MealLogDrawer({
               <Button onClick={handleParse} className={CTA_CLASS}>
                 Parse with AI
               </Button>
-              <Button
-                variant="link"
-                onClick={() =>
-                  toast.info(
-                    "Manual entry isn't wired up yet — this is a rough skeleton.",
-                  )
-                }
-                className="h-auto p-0 text-caption text-text-muted"
-              >
-                Enter manually instead
-              </Button>
+              <ManualMealDialog onSaved={() => setOpen(false)} />
             </DrawerFooter>
           </>
         )}
