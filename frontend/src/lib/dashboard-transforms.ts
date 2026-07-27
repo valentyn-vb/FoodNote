@@ -53,14 +53,6 @@ export function mealTypeForHour(hour: number): MealType {
   return 'snack';
 }
 
-/** Avatar initials from an email local-part: "jamie.rivera@…" → "JR". */
-export function emailInitials(email: string): string {
-  const local = email.split('@')[0] ?? '';
-  const parts = local.split(/[._-]+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map((p) => p[0]);
-  return (initials.join('') || local[0] || '?').toUpperCase();
-}
-
 /** Projected goal date as "Sep 19" (UTC). */
 export function formatGoalDate(date: string): string {
   return new Intl.DateTimeFormat('en-US', {
