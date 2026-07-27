@@ -13,6 +13,7 @@ import {
   mealResponseSchema,
   refreshResponseSchema,
   registerRequestSchema,
+  updateAccountRequestSchema,
   updateMealRequestSchema,
   updateWeightRequestSchema,
   weightEntryResponseSchema,
@@ -63,6 +64,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
   const schemas: Record<string, unknown> = {
     RegisterRequest: schemaObject(registerRequestSchema, 'input'),
     LoginRequest: schemaObject(loginRequestSchema, 'input'),
+    UpdateAccountRequest: schemaObject(updateAccountRequestSchema, 'input'),
     AuthResponse: schemaObject(authResponseSchema, 'output'),
     AuthUser: schemaObject(authUserSchema, 'output'),
     RefreshResponse: schemaObject(refreshResponseSchema, 'output'),
@@ -211,6 +213,19 @@ export function buildOpenApiDocument(): OpenAPIObject {
               description: 'The current user',
               ...jsonContent('AuthUser'),
             },
+            401: unauthorized,
+          },
+        },
+        patch: {
+          tags: ['auth'],
+          summary: "Update the authenticated user's name",
+          requestBody: jsonBody('UpdateAccountRequest'),
+          responses: {
+            200: {
+              description: 'The updated user',
+              ...jsonContent('AuthUser'),
+            },
+            400: errorResponse('Validation failed'),
             401: unauthorized,
           },
         },

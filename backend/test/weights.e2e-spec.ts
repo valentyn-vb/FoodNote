@@ -34,12 +34,22 @@ describe('Weights API (e2e)', () => {
 
     const owner = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: OWNER_EMAIL, password: PASSWORD });
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: OWNER_EMAIL,
+        password: PASSWORD,
+      });
     ownerToken = (owner.body as AuthResponse).accessToken;
 
     const other = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: OTHER_EMAIL, password: PASSWORD });
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: OTHER_EMAIL,
+        password: PASSWORD,
+      });
     otherToken = (other.body as AuthResponse).accessToken;
   });
 

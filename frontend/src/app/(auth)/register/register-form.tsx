@@ -1,12 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,8 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
 import { ApiError } from '@/lib/api-client';
+import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { AuthTextField } from '../auth-text-field';
 
 export function RegisterForm() {
@@ -26,7 +26,7 @@ export function RegisterForm() {
 
   const form = useForm<RegisterRequest>({
     resolver: zodResolver(registerRequestSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -56,6 +56,20 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+          <AuthTextField
+            control={form.control}
+            name="firstName"
+            label="First name"
+            autoComplete="given-name"
+            placeholder="Enter your first name"
+          />
+          <AuthTextField
+            control={form.control}
+            name="lastName"
+            label="Last name"
+            autoComplete="family-name"
+            placeholder="Enter your last name"
+          />
           <AuthTextField
             control={form.control}
             name="email"

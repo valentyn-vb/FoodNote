@@ -61,7 +61,12 @@ describe('Dashboard (e2e)', () => {
 
     const reg = await request(app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: 'Test',
+        lastName: 'User',
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
     token = (reg.body as { accessToken: string }).accessToken;
     userId = (reg.body as { user: { id: string } }).user.id;

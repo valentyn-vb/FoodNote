@@ -14,13 +14,10 @@ import {
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { useAuth } from '@/components/auth-provider';
+import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import {
-  emailInitials,
-  formatGoalDate,
-  weeksUntil,
-} from '@/lib/dashboard-transforms';
+import { initialsOf } from '@/lib/user-display';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
@@ -64,7 +61,7 @@ export function MobileDashboard() {
         <Link href="/profile" aria-label="Open profile">
           <Avatar>
             <AvatarFallback className="bg-primary text-surface">
-              {emailInitials(user?.email ?? '')}
+              {initialsOf(user)}
             </AvatarFallback>
           </Avatar>
         </Link>
