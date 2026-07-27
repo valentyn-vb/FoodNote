@@ -21,7 +21,9 @@ import {
   type RegisterRequest,
   type UpdateAccountRequest,
 } from '@foodnote/shared';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { AUTH_THROTTLE } from '../common/throttle.constants';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { AuthService } from './auth.service';
 import type { TokenPair } from './auth.service';
@@ -38,7 +40,11 @@ const REFRESH_COOKIE_PATH = '/api/auth';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Tightens the global per-IP limit on the two routes that guess-and-retry
+  // attacks target. The guard itself is global (app.module.ts), so these only
+  // override its numbers — no @UseGuards needed.
   @Post('register')
+  @Throttle({ default: AUTH_THROTTLE })
   async register(
     @Body(new ZodValidationPipe(registerRequestSchema)) body: RegisterRequest,
     @Res({ passthrough: true }) res: Response,
@@ -48,6 +54,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @Throttle({ default: AUTH_THROTTLE })
   async login(
     @Body(new ZodValidationPipe(loginRequestSchema)) body: LoginRequest,
     @Res({ passthrough: true }) res: Response,
