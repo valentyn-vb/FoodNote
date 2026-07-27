@@ -1,6 +1,7 @@
-// Stand-in for real API responses (see ticket #10) — shapes mirror what the
-// backend will eventually return, but nothing here is a committed contract.
-// Once the real endpoints exist, replace these with fetches against them.
+// Placeholder profile/plan data for the still-mock profile page and sidebar.
+// The dashboard's mocks were removed in #34 (it now reads the real API); what
+// remains is a stand-in for the profile read model until that endpoint lands.
+// Nothing here is a committed contract.
 
 export type Plan = {
   label: string;
@@ -45,6 +46,26 @@ export const mockPlanOptions: Plan[] = [
     weeksLeft: 6,
   },
 ];
+
+export type UserProfile = {
+  name: string;
+  email: string;
+  sex: 'Female' | 'Male';
+  age: number;
+  heightCm: number;
+  weightGoalKg: number;
+  plan: Plan;
+};
+
+export const mockUserProfile: UserProfile = {
+  name: 'Jamie Rivera',
+  email: 'jamie.rivera@email.com',
+  sex: 'Female',
+  age: 29,
+  heightCm: 168,
+  weightGoalKg: 62,
+  plan: mockPlanOptions[1],
+};
 
 export type Meal = {
   id: string;

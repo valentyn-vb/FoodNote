@@ -17,14 +17,17 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useMeals } from '@/lib/meals-context';
+import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { cn } from '@/lib/utils';
 
 const CTA_CLASS =
   'w-full rounded-sm bg-primary py-3.5 text-surface shadow-[0_2px_8px_#f5a65c59]';
 
-// Mock AI-parse result — stands in for POST /meals/ai-parse (see ticket #10).
+// Mock AI-parse result — stands in for POST /meals/ai-parse (still unbuilt).
 // isFood is a naive heuristic so the not-food edge state (H07, mascot RECOVER)
-// is reachable in this skeleton without a real backend.
+// is reachable in this skeleton without a real backend. #34 wires the *save*
+// (POST /meals) for real using these mock totals — only the parse stays mock.
 const MOCK_PARSED_ITEMS = [
   { name: 'Chicken breast', qty: '180 g', kcal: 300 },
   { name: 'White rice', qty: '150 g', kcal: 195 },
@@ -36,16 +39,15 @@ const MOCK_TOTALS = { kcal: 720, protein: 63, carbs: 78, fat: 22 };
 type Step = 'input' | 'loading' | 'preview' | 'not-food';
 
 export function MealLogDrawer({
-  onMealSaved,
-  onMealUndone,
   triggerClassName,
   children = 'Log a meal',
 }: {
-  onMealSaved?: (kcal: number) => void;
-  onMealUndone?: () => void;
   triggerClassName?: string;
   children?: React.ReactNode;
 }) {
+  // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
+  // since Undo (DELETE) needs the server id and rollback is the provider's job.
+  const { saveMeal } = useMeals();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('input');
   const [description, setDescription] = useState(
@@ -65,13 +67,18 @@ export function MealLogDrawer({
 
   function handleConfirm() {
     setOpen(false);
-    onMealSaved?.(MOCK_TOTALS.kcal);
-    // CELEBRATE mascot moment (design doc: quiet, since it happens every meal)
-    toast.success('Meal saved', {
-      icon: (
-        <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
-      ),
-      action: { label: 'Undo', onClick: () => onMealUndone?.() },
+    // Meal type isn't collected by the drawer — infer it from the local hour.
+    // Items are omitted: the mock parse has no per-item macros and the server
+    // never sums items anyway (totals are the source of truth).
+    saveMeal({
+      mealName: description.trim().slice(0, 200),
+      mealType: mealTypeForHour(new Date().getHours()),
+      recordedAt: new Date().toISOString(),
+      totalCalories: MOCK_TOTALS.kcal,
+      proteinGrams: MOCK_TOTALS.protein,
+      carbsGrams: MOCK_TOTALS.carbs,
+      fatGrams: MOCK_TOTALS.fat,
+      source: 'ai',
     });
     setTimeout(reset, 300);
   }

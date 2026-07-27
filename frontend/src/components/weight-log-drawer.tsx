@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { weightKgSchema } from '@foodnote/shared';
+import { weightKgSchema, type WeightEntryResponse } from '@foodnote/shared';
 import {
   Drawer,
   DrawerClose,
@@ -24,7 +24,7 @@ export function WeightLogDrawer({
   triggerClassName,
   children = 'Log weight',
 }: {
-  onWeightSaved?: (weightKg: number) => void;
+  onWeightSaved?: (entry: WeightEntryResponse) => void;
   triggerClassName?: string;
   children?: React.ReactNode;
 }) {
@@ -52,7 +52,7 @@ export function WeightLogDrawer({
     }
     setSaving(true);
     try {
-      await weights.create({
+      const created = await weights.create({
         weightKg: parsed.data,
         recordedAt: new Date().toISOString(),
       });
@@ -63,7 +63,7 @@ export function WeightLogDrawer({
           <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
         ),
       });
-      onWeightSaved?.(parsed.data);
+      onWeightSaved?.(created);
     } catch {
       toast.error("Couldn't save your weight. Please try again.");
     } finally {
