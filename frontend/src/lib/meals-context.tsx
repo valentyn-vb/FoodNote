@@ -189,7 +189,6 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   const value = useMemo<MealsContextValue>(() => {
     const goalKcal = dashboard?.calorieTarget ?? 0;
     const eatenKcal = dashboard?.today.totalCalories ?? 0;
-    const now = new Date();
     return {
       status,
       retry,
@@ -202,7 +201,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
           : 0,
       goal: dashboard?.goal ?? null,
       todayMeals: dashboard ? todaysMeals(meals, dashboard.date) : [],
-      dailyCalories: bucketDailyCalories(meals, now),
+      dailyCalories: dashboard
+        ? bucketDailyCalories(meals, dashboard.date)
+        : [],
       saveMeal,
       refetchDashboard,
     };

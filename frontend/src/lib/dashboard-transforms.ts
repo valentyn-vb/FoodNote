@@ -87,25 +87,28 @@ export function todaysMeals(
 }
 
 /**
- * Seven daily calorie totals ending today, oldest → newest, labelled by
+ * Seven daily calorie totals ending on `date`, oldest → newest, labelled by
  * weekday. Days with no meals are honest zero bars. "Yesterday" is the
  * second-to-last bucket.
+ *
+ * `date` is the Dashboard's Tracking Day, not the client clock, so the last
+ * bucket is always the same day as the "Logged today" list (see todaysMeals).
  */
 export function bucketDailyCalories(
   meals: MealResponse[],
-  now: Date,
+  date: string,
 ): DailyCaloriePoint[] {
   const weekday = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     timeZone: 'UTC',
   });
-  const baseMs = Date.parse(`${todayUtc(now)}T00:00:00Z`);
+  const baseMs = Date.parse(`${date}T00:00:00Z`);
 
   return Array.from({ length: 7 }, (_, idx) => {
     const dayMs = baseMs - (6 - idx) * DAY_MS;
-    const date = new Date(dayMs).toISOString().slice(0, 10);
+    const bucketDate = new Date(dayMs).toISOString().slice(0, 10);
     const kcal = meals
-      .filter((m) => utcDay(m.recordedAt) === date)
+      .filter((m) => utcDay(m.recordedAt) === bucketDate)
       .reduce((sum, m) => sum + m.totalCalories, 0);
     return { day: weekday.format(new Date(dayMs)), kcal };
   });
