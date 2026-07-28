@@ -9,18 +9,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { activityLevelSchema } from '@foodnote/shared';
+import { activityLevelSchema, sexSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { InputField, LABEL_CLASS } from '../form-fields';
 import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
 
-// Not `sexSchema.options` — the form shows female first.
-const SEX_OPTIONS = ['female', 'male'] as const;
-
-// A caller-owned submit button elsewhere on the page reaches this form via
-// the `form` attribute, so the same fields work under any surrounding chrome
-// (onboarding's own header/footer, a profile-edit dialog's header/footer).
 export const DETAILS_FORM_ID = 'details-form';
 
 type DetailsFormProps = {
@@ -67,8 +61,9 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
         control={control}
         name="sex"
         label="Sex"
-        options={SEX_OPTIONS}
-        defaultValue={SEX_OPTIONS[0]}
+        options={sexSchema.options}
+        defaultValue={sexSchema.options[0]}
+        error={errors.sex?.message}
       />
 
       <div className="flex gap-3">
