@@ -1,11 +1,13 @@
 'use client';
 
 import {
+  Dot,
   EvilLineChart,
   Grid as LineGrid,
   Legend as LineLegend,
   Line,
   Tooltip as LineTooltip,
+  XAxis as LineXAxis,
   YAxis,
 } from '@/components/evilcharts/charts/line-chart';
 import {
@@ -24,21 +26,28 @@ import {
 } from 'recharts';
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
-import type {
-  DailyCaloriePoint,
-  WeightTrendPoint,
+import {
+  formatTrendTick,
+  type DailyCaloriePoint,
+  type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
 // Shared by the mobile and desktop dashboard layouts — same chart, sized by
 // className. Colors come from the FoodNote tokens, not EvilCharts defaults.
 
-// Same metric, same color — solid vs dashed is what tells "actual" from
-// "projected" apart, per the H03 "Weight trend & projection" annotation.
+// One metric, one hue (the H03 "Weight trend & projection" annotation), in two
+// shades: logged weight is the deeper, measured green; the projection is a
+// lighter tint, since a forecast reading lighter than real data is the point.
+// Solid vs dashed still carries the split in the plot, but the legend swatch is
+// a plain filled square (evilcharts/ui/legend LegendIndicator) and cannot show
+// a dash — with one shared color the two keys were indistinguishable there.
 const weightConfig = {
-  actual: { label: 'Actual', colors: { light: ['var(--fn-secondary)'] } },
+  actual: { label: 'Logged', colors: { light: ['var(--fn-secondary-deep)'] } },
   projected: {
     label: 'Projected',
-    colors: { light: ['var(--fn-secondary)'] },
+    colors: {
+      light: ['color-mix(in oklch, var(--fn-secondary), white 38%)'],
+    },
   },
 };
 
@@ -60,19 +69,40 @@ export function WeightTrendChart({
       className={className}
       curveType="monotone"
     >
-      <LineGrid />
-      {/* Fitted domain — kg values sit in a ~1.5 kg band; a zero-based axis
-          would flatten the trend into a straight line. */}
-      <YAxis hide domain={['dataMin - 0.4', 'dataMax + 0.4']} />
-      {/* `projected` starts null/absent until "Now", so it picks up right
-          where `actual` stops without connectNulls. */}
-      <Line dataKey="actual" lineProps={{ strokeWidth: 2.5 }} />
+      {/* Solid hairline: a dashed grid reads as "projection", which is the one
+          thing dashing means in this chart. */}
+      <LineGrid strokeDasharray="0" />
+      {/* Fitted, non-zero domain — body weight sits in a narrow band and a
+          zero-based axis would flatten the trend into a flat line. A truncated
+          scale has to be *labelled* to stay honest, hence no `hide`. */}
+      <YAxis
+        domain={['dataMin - 1', 'dataMax + 1']}
+        tickFormatter={(kg: number) => `${Math.round(kg)}`}
+        width={30}
+      />
+      {/* The whole point of #68: a numeric time axis, so the Now→goal-date leg
+          occupies the months it actually spans instead of one category slot. */}
+      <LineXAxis
+        dataKey="t"
+        type="number"
+        scale="time"
+        domain={['dataMin', 'dataMax']}
+        tickFormatter={formatTrendTick}
+        minTickGap={24}
+      />
+      {/* Markers make a lone weigh-in visible: one measurement cannot stroke a
+          line, so without a dot a new account saw nothing for its own weight.
+          `projected` is absent until the anchor point, so it picks up where
+          `actual` stops without connectNulls. */}
+      <Line dataKey="actual" lineProps={{ strokeWidth: 2 }}>
+        <Dot variant="border" />
+      </Line>
       <Line
         dataKey="projected"
         strokeVariant="dashed"
-        lineProps={{ strokeWidth: 2.5 }}
+        lineProps={{ strokeWidth: 2 }}
       />
-      <LineTooltip />
+      <LineTooltip labelFormatter={(label) => formatTrendTick(Number(label))} />
       <LineLegend />
     </EvilLineChart>
   );

@@ -21,7 +21,6 @@ import {
   DashboardError,
   DesktopDashboardSkeleton,
   InlineError,
-  TileSkeleton,
 } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 
@@ -35,8 +34,6 @@ export function DesktopDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
-    weightChangeLastMonthKg,
     onWeightsChanged,
   } = useWeight();
 
@@ -78,18 +75,17 @@ export function DesktopDashboard() {
               goodIsDown
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
             />
-            {weightStatus === 'ready' ? (
-              <CompareStat
-                label="Weight change"
-                value={weightChangeKg}
-                compareLabel="Last month"
-                compareValue={weightChangeLastMonthKg}
-                suffix=" kg"
-                goodIsDown
-              />
-            ) : (
-              <TileSkeleton />
-            )}
+            {/* Reads the goal block rather than the weight journal, so it needs
+                no weightStatus gate. "Weight change" alone hid where the user
+                started; the onboarding weight is the honest baseline. */}
+            <CompareStat
+              label="Current weight"
+              value={gate.goal.currentWeightKg}
+              compareLabel="Start weight"
+              compareValue={gate.goal.startWeightKg}
+              suffix=" kg"
+              goodIsDown={gate.goal.targetWeightKg < gate.goal.startWeightKg}
+            />
             <Card className={STAT_TILE_CLASS}>
               <h2 className="font-sans text-[12px] text-text-muted">
                 Projected goal date
