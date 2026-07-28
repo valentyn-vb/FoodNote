@@ -85,10 +85,13 @@ export function WeightTrendChart({
       {/* Fitted, non-zero domain — body weight sits in a narrow band and a
           zero-based axis would flatten the trend into a flat line. A truncated
           scale has to be *labelled* to stay honest, hence no `hide`. */}
+      {/* Labels on the right, next to the newest reading — the edge the eye
+          lands on first, and what Apple Health and Withings both do for weight. */}
       <YAxis
+        orientation="right"
         domain={['dataMin - 1', 'dataMax + 1']}
         tickFormatter={(kg: number) => `${Math.round(kg)}`}
-        width={30}
+        width={34}
       />
       {/* The whole point of #68: a numeric time axis, so the Now→goal-date leg
           occupies the months it actually spans instead of one category slot. */}
