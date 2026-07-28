@@ -16,12 +16,6 @@ export type MealFormValues = z.infer<typeof mealFormSchema>;
 
 export const MANUAL_MEAL_FORM_ID = 'manual-meal-form';
 
-// Derived from the enum so a new meal type can't be missed here.
-const MEAL_TYPE_OPTIONS = mealTypeSchema.options.map((value) => ({
-  value,
-  label: value[0].toUpperCase() + value.slice(1),
-}));
-
 const MACRO_FIELDS = [
   { name: 'proteinGrams', label: 'Protein (g)' },
   { name: 'carbsGrams', label: 'Carbs (g)' },
@@ -62,7 +56,7 @@ export function ManualMealForm({ form, onSubmit }: ManualMealFormProps) {
         control={control}
         name="mealType"
         label="Meal type"
-        options={MEAL_TYPE_OPTIONS}
+        options={mealTypeSchema.options}
       />
 
       <div className="flex">

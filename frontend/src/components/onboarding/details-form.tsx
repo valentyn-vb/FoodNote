@@ -15,10 +15,8 @@ import { InputField, LABEL_CLASS } from '../form-fields';
 import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
 
-const SEX_OPTIONS = [
-  { value: 'female', label: 'Female' },
-  { value: 'male', label: 'Male' },
-];
+// Not `sexSchema.options` — the form shows female first.
+const SEX_OPTIONS = ['female', 'male'] as const;
 
 // A caller-owned submit button elsewhere on the page reaches this form via
 // the `form` attribute, so the same fields work under any surrounding chrome
