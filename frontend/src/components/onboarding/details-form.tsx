@@ -68,6 +68,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
         name="sex"
         label="Sex"
         options={SEX_OPTIONS}
+        defaultValue={SEX_OPTIONS[0]}
       />
 
       <div className="flex gap-3">

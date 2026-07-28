@@ -57,6 +57,7 @@ export function ManualMealForm({ form, onSubmit }: ManualMealFormProps) {
         name="mealType"
         label="Meal type"
         options={mealTypeSchema.options}
+        error={errors.mealType?.message}
       />
 
       <div className="flex">

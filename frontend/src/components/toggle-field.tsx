@@ -5,7 +5,7 @@ import {
   type Path,
   type PathValue,
 } from 'react-hook-form';
-import { Field, FieldLabel } from '@/components/ui/field';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import { LABEL_CLASS } from './form-fields';
@@ -16,15 +16,17 @@ export function ToggleField<T extends FieldValues>({
   label,
   options,
   defaultValue,
+  error,
 }: {
   control: Control<T>;
   name: Path<T>;
   label: string;
   options: readonly string[];
   defaultValue?: PathValue<T, Path<T>>;
+  error?: string;
 }) {
   return (
-    <Field className="gap-1.75">
+    <Field className="gap-1.75" data-invalid={!!error || undefined}>
       <FieldLabel className={LABEL_CLASS}>{label}</FieldLabel>
       <Controller
         control={control}
@@ -34,6 +36,7 @@ export function ToggleField<T extends FieldValues>({
           <ToggleGroup
             value={field.value ? [field.value] : []}
             onValueChange={(values) => values[0] && field.onChange(values[0])}
+            aria-invalid={!!error || undefined}
             spacing={2}
             className="w-full gap-2"
           >
@@ -54,6 +57,9 @@ export function ToggleField<T extends FieldValues>({
           </ToggleGroup>
         )}
       />
+      {error && (
+        <FieldError className="font-sans text-[12px]">{error}</FieldError>
+      )}
     </Field>
   );
 }

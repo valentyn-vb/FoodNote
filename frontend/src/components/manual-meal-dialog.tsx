@@ -20,7 +20,6 @@ import {
   mealFormSchema,
   type MealFormValues,
 } from '@/components/manual-meal-form';
-import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 
 export function ManualMealDialog({ onSaved }: { onSaved?: () => void }) {
@@ -34,7 +33,6 @@ export function ManualMealDialog({ onSaved }: { onSaved?: () => void }) {
     if (next)
       form.reset({
         mealName: '',
-        mealType: mealTypeForHour(new Date().getHours()),
         proteinGrams: 0,
         carbsGrams: 0,
         fatGrams: 0,
