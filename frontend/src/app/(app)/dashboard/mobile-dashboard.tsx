@@ -14,12 +14,12 @@ import {
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { useAuth } from '@/components/auth-provider';
-import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { initialsOf } from '@/lib/user-display';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { EmptyMeals } from './empty-meals';
+import { GoalStatusCard } from './goal-status-card';
 import { MealRow } from './meal-row';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -99,15 +99,7 @@ export function MobileDashboard() {
             </div>
           </Card>
 
-          <div className="flex items-center gap-2 rounded-sm bg-[#FFF3E7] px-4 py-3">
-            <div className="font-sans text-caption font-medium text-primary-deep">
-              {gate.goal.projectedGoalDate
-                ? `Projected goal date: ${formatGoalDate(
-                    gate.goal.projectedGoalDate,
-                  )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} weeks left`
-                : 'Target reached — nice work.'}
-            </div>
-          </div>
+          <GoalStatusCard goal={gate.goal} />
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">

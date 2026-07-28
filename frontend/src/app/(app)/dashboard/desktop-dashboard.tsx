@@ -11,9 +11,9 @@ import {
 } from '@/components/dashboard-charts';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
+import { CARD_CLASS, fullnessMascot } from './helpers';
 import { CompareStat } from './compare-stat';
+import { GoalStatusCard } from './goal-status-card';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
 import {
@@ -87,18 +87,7 @@ export function DesktopDashboard() {
             ) : (
               <TileSkeleton />
             )}
-            <Card className={STAT_TILE_CLASS}>
-              <h2 className="font-sans text-[12px] text-text-muted">
-                Projected goal date
-              </h2>
-              <div className="font-display text-heading-lg font-semibold text-text">
-                {gate.goal.projectedGoalDate
-                  ? `${formatGoalDate(
-                      gate.goal.projectedGoalDate,
-                    )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} wks`
-                  : 'Target reached'}
-              </div>
-            </Card>
+            <GoalStatusCard goal={gate.goal} />
           </div>
 
           <div className="flex min-h-0 grow basis-0 gap-3.5">

@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
+import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
 import { MealsProvider } from '@/lib/meals-context';
 import { WeightProvider } from '@/lib/weight-context';
 
@@ -42,6 +43,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <WeightProvider>
             <AppSidebar />
             <SidebarInset className="bg-bg">{children}</SidebarInset>
+            {/* Both "Log weight" triggers live in different trees (sidebar on
+                desktop, dashboard row on mobile), so the celebration is mounted
+                here — the nearest shared ancestor that can see either save. */}
+            <GoalReachedOverlay />
           </WeightProvider>
         </MealsProvider>
       </SidebarProvider>
