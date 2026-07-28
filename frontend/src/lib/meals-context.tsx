@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -20,6 +21,7 @@ import { dashboard as dashboardApi, meals as mealsApi } from '@/lib/api-client';
 import {
   bucketDailyCalories,
   isoDaysAgo,
+  isFutureDay,
   todayUtc,
   todaysMeals,
   type DailyCaloriePoint,
@@ -39,6 +41,11 @@ type GoalBlock = DashboardResponse['goal'];
 type MealsContextValue = {
   status: FetchStatus;
   retry: () => void;
+  /** The tracking day currently displayed, as UTC 'YYYY-MM-DD'. */
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+  /** True when selectedDate equals today UTC — gates meal logging and labels. */
+  isToday: boolean;
   eatenKcal: number;
   remainingKcal: number;
   progressPct: number;
@@ -90,16 +97,31 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   const [meals, setMeals] = useState<MealResponse[]>([]);
   const [status, setStatus] = useState<FetchStatus>('loading');
   const [reloadKey, setReloadKey] = useState(0);
+  const [selectedDate, setSelectedDateState] = useState(() =>
+    todayUtc(new Date()),
+  );
+  // Stable ref so refetchDashboard never has to be recreated when the date
+  // changes (WeightProvider's onWeightSaved holds a reference to it).
+  const selectedDateRef = useRef(selectedDate);
+
+  const setSelectedDate = useCallback((date: string) => {
+    // Reject future dates — the API has no data for them.
+    if (isFutureDay(date, new Date())) return;
+    setStatus('loading');
+    setSelectedDateState(date);
+    selectedDateRef.current = date;
+  }, []);
 
   // Same shape as AuthProvider's session restore: the fetch lives inside the
   // effect as a promise chain with a cancelled flag, so setState only ever
   // runs from the .then/.catch callbacks (not synchronously in the effect).
   useEffect(() => {
     let cancelled = false;
-    const now = new Date();
+    // 7-day window ending at the selected tracking day (UTC).
+    const anchor = new Date(`${selectedDate}T00:00:00Z`);
     Promise.all([
-      dashboardApi.current(),
-      mealsApi.list(isoDaysAgo(6, now), todayUtc(now)),
+      dashboardApi.current(selectedDate),
+      mealsApi.list(isoDaysAgo(6, anchor), selectedDate),
     ])
       .then(([dash, list]) => {
         if (cancelled) return;
@@ -113,7 +135,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, selectedDate]);
 
   const retry = useCallback(() => {
     setStatus('loading');
@@ -122,7 +144,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
   const refetchDashboard = useCallback(async () => {
     try {
-      setDashboard(await dashboardApi.current());
+      setDashboard(await dashboardApi.current(selectedDateRef.current));
     } catch {
       // The weight was still saved; leave the prior goal block until reload.
     }
@@ -142,6 +164,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
   const saveMeal = useCallback(
     (draft: CreateMealRequest) => {
+      // Meal logging is only allowed for today — the drawer is disabled for
+      // past dates, but guard here too for safety.
+      if (selectedDateRef.current !== todayUtc(new Date())) return;
       const tempId = `temp-${crypto.randomUUID()}`;
       const optimistic: MealResponse = {
         id: tempId,
@@ -192,6 +217,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     return {
       status,
       retry,
+      selectedDate,
+      setSelectedDate,
+      isToday: selectedDate === todayUtc(new Date()),
       eatenKcal,
       goalKcal,
       remainingKcal: Math.max(0, goalKcal - eatenKcal),
@@ -207,7 +235,16 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       saveMeal,
       refetchDashboard,
     };
-  }, [dashboard, meals, status, retry, saveMeal, refetchDashboard]);
+  }, [
+    dashboard,
+    meals,
+    status,
+    retry,
+    selectedDate,
+    setSelectedDate,
+    saveMeal,
+    refetchDashboard,
+  ]);
 
   return (
     <MealsContext.Provider value={value}>{children}</MealsContext.Provider>

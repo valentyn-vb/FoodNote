@@ -35,6 +35,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
+import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 import { notImplemented } from '@/lib/not-implemented';
@@ -48,6 +49,7 @@ const DRAWER_TRIGGER_CLASS =
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isToday } = useMeals();
   const { onWeightSaved } = useWeight();
   const { user: authUser, logout } = useAuth();
   const fullName = fullNameOf(authUser);
@@ -89,12 +91,14 @@ export function AppSidebar() {
                     <span>Dashboard</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <MealLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
-                    <UtensilsCrossed />
-                    <span>Log a meal</span>
-                  </MealLogDrawer>
-                </SidebarMenuItem>
+                {isToday && (
+                  <SidebarMenuItem>
+                    <MealLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
+                      <UtensilsCrossed />
+                      <span>Log a meal</span>
+                    </MealLogDrawer>
+                  </SidebarMenuItem>
+                )}
                 <SidebarMenuItem>
                   <WeightLogDrawer
                     onWeightSaved={onWeightSaved}

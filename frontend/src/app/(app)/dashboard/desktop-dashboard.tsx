@@ -13,6 +13,7 @@ import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
+import { DayNav } from './day-nav';
 import { CompareStat } from './compare-stat';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
@@ -27,8 +28,14 @@ import { useDashboardGate } from './use-dashboard-gate';
 const WEIGHT_TREND_CARD_CLASS = `${CARD_CLASS} grow-2 basis-0 gap-3 px-6 py-5.5`;
 
 export function DesktopDashboard() {
-  const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
-    useMeals();
+  const {
+    eatenKcal,
+    remainingKcal,
+    goalKcal,
+    todayMeals,
+    dailyCalories,
+    isToday,
+  } = useMeals();
   const {
     status: weightStatus,
     retry: retryWeight,
@@ -49,6 +56,7 @@ export function DesktopDashboard() {
         <h1 className="font-display text-heading-lg font-semibold text-text">
           Dashboard
         </h1>
+        <DayNav />
       </div>
 
       {gate.state === 'error' ? (
@@ -59,18 +67,18 @@ export function DesktopDashboard() {
         <>
           <div className="flex gap-3.5">
             <CompareStat
-              label="Remaining today"
+              label={isToday ? 'Remaining today' : 'Remaining'}
               value={remainingKcal}
-              compareLabel="Remaining yesterday"
-              compareValue={remainingYesterday}
+              compareLabel={isToday ? 'Remaining yesterday' : 'Goal (current)'}
+              compareValue={isToday ? remainingYesterday : goalKcal}
               suffix=" kcal"
               goodIsDown={false}
             />
             <CompareStat
-              label="Eaten today"
+              label={isToday ? 'Eaten today' : 'Eaten'}
               value={eatenKcal}
-              compareLabel="Eaten yesterday"
-              compareValue={eatenYesterday}
+              compareLabel={isToday ? 'Eaten yesterday' : 'Goal (current)'}
+              compareValue={isToday ? eatenYesterday : goalKcal}
               suffix=" kcal"
               goodIsDown
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
@@ -90,6 +98,11 @@ export function DesktopDashboard() {
             <Card className={STAT_TILE_CLASS}>
               <h2 className="font-sans text-[12px] text-text-muted">
                 Projected goal date
+                {!isToday && (
+                  <span className="ml-1.5 rounded bg-[#FFF3E7] px-1 py-0.5 text-[10px] font-medium text-primary-deep">
+                    current
+                  </span>
+                )}
               </h2>
               <div className="font-display text-heading-lg font-semibold text-text">
                 {gate.goal.projectedGoalDate
@@ -125,7 +138,7 @@ export function DesktopDashboard() {
 
               <div className="flex min-h-0 grow basis-0 flex-col gap-2.5">
                 <h2 className="font-sans text-caption font-semibold text-text">
-                  Logged today
+                  {isToday ? 'Logged today' : 'Logged meals'}
                 </h2>
                 <div className="flex min-h-0 grow basis-0 flex-col gap-2.5 overflow-y-auto">
                   {todayMeals.length === 0 && <EmptyMeals />}
