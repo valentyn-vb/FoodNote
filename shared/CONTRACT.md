@@ -11,12 +11,17 @@ calories are kcal. `recordedAt` is an ISO UTC datetime; daily boundaries
 the NestJS default envelope (`errorResponseSchema`); clients branch on HTTP
 status. Domain vocabulary: see `/CONTEXT.md`.
 
+Rate limiting (#37): every route except `/health` is capped at 100 requests per
+minute per client IP, so **any** route may answer `429` with the standard error
+envelope and a `Retry-After` header — the statuses below list it only where a
+tighter, route-specific limit applies.
+
 ## Routes
 
 | Route                  | Request                          | Response                    | Statuses            |
 | ---------------------- | -------------------------------- | --------------------------- | ------------------- |
-| `POST /auth/register`  | `registerRequestSchema`          | `authResponseSchema`        | 201, 409            |
-| `POST /auth/login`     | `loginRequestSchema`             | `authResponseSchema`        | 200, 401            |
+| `POST /auth/register`  | `registerRequestSchema`          | `authResponseSchema`        | 201, 409, 429⁸      |
+| `POST /auth/login`     | `loginRequestSchema`             | `authResponseSchema`        | 200, 401, 429⁸      |
 | `POST /auth/refresh`   | — (cookie)                       | `refreshResponseSchema`     | 200, 401            |
 | `POST /auth/logout`    | —                                | —                           | 204                 |
 | `GET /auth/me`         | —                                | `authUserSchema`            | 200, 401            |
@@ -50,6 +55,7 @@ with no per-day uniqueness.
 (discriminated union on `parsed`). 400 = bad description, 429 = per-user
 rate limit, 502 = OpenAI failure / invalid model output.
 ⁷ 404 until onboarding is complete (no profile or no active goal).
+⁸ 5 requests per minute per IP, tighter than the API-wide limit above.
 
 ## Semantics worth restating
 

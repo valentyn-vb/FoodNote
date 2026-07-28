@@ -1,11 +1,18 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { configureTrustProxy } from './common/trust-proxy';
 import { buildOpenApiDocument } from './docs/openapi';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Rate limiting tracks clients by req.ip, which is only right once Express
+  // knows the proxy chain — see common/trust-proxy.ts.
+  configureTrustProxy(app);
+
   app.use(cookieParser());
   app.setGlobalPrefix('api');
   app.enableCors({

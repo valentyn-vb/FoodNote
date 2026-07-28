@@ -1,12 +1,11 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { GoalResponse, ProfileResponse } from '@foodnote/shared';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Repository } from 'typeorm';
-import { AppModule } from '../src/app.module';
 import { User } from '../src/user/user.entity';
+import { createTestApp } from './create-test-app';
 
 describe('Onboarding flow (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,12 +13,7 @@ describe('Onboarding flow (e2e)', () => {
   const PASSWORD = 'onboarding e2e password';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    await app.init();
+    app = await createTestApp();
     const users = app.get<Repository<User>>(getRepositoryToken(User));
     await users.delete({ email: EMAIL });
   });
