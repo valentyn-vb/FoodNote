@@ -31,9 +31,11 @@ const MEAL_PARSE_MODEL = 'gpt-5-mini';
 const MAX_OUTPUT_TOKENS = 2000;
 
 /**
- * 'minimal' rather than 'none': the model still has to sum the items into the
- * totals, and arithmetic is where a no-reasoning tier slips. This is the main
- * lever on both cost and latency — drop to 'none' if the bill demands it.
+ * The floor for this model, not a preference: gpt-5-mini rejects 'none' with
+ * "Unsupported value ... Supported values are: 'minimal', 'low', 'medium', and
+ * 'high'", so every request 502s on it. Measured at ~8s for a three-item meal,
+ * which is over half the 15s timeout — if that needs to come down, the lever is
+ * a non-reasoning model (gpt-4o-mini), not this constant.
  */
 const REASONING_EFFORT = 'minimal';
 

@@ -111,6 +111,7 @@ describe('OpenAiMealParser', () => {
       expect.objectContaining({
         model: 'gpt-5-mini',
         max_output_tokens: 2000,
+        // The floor gpt-5-mini accepts; 'none' is rejected outright.
         reasoning: { effort: 'minimal' },
         safety_identifier: USER_ID,
       }),
