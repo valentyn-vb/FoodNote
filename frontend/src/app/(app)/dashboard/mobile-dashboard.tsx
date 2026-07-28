@@ -138,7 +138,7 @@ export function MobileDashboard() {
             {weightReady ? (
               <WeightTrendCard
                 className={`${CARD_CLASS} p-4`}
-                chartClassName="aspect-auto h-[110px] w-full flex-none"
+                chartClassName="aspect-auto h-[136px] w-full flex-none"
                 data={weightTrend}
               />
             ) : (

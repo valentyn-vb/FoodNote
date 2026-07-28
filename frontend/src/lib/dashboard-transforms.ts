@@ -19,7 +19,8 @@ import type {
 const DAY_MS = 86_400_000;
 
 export type WeightTrendPoint = {
-  label: string;
+  /** Epoch ms. A real time axis, so a week of elapsed time reads as a week. */
+  t: number;
   actual?: number;
   projected?: number;
 };
@@ -138,55 +139,53 @@ type GoalBlock = Pick<
 >;
 
 /**
- * Weight-trend series: up to six rolling weekly buckets (latest entry in each
- * 7-day window, gaps allowed) ending at "Now" (the authoritative Current
- * Weight), plus a two-point projection line from Now to the target at the
- * Projected Goal Date. A fresh account (one entry) shows a single actual point
- * and the projection; a reached target (null projectedGoalDate) shows the
- * actual line only.
+ * An x-axis tick for the weight trend: "Jul 27" in UTC, matching Tracking Day.
+ * Recharts calls tick/label formatters with placeholder values during layout,
+ * so a non-finite input renders as empty rather than throwing RangeError and
+ * taking down the dashboard.
+ */
+export function formatTrendTick(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(t));
+}
+
+/**
+ * Weight-trend series on a true time axis: every Weight Entry at its own
+ * recordedAt, plus a two-point projection from the newest entry to the target
+ * at the Projected Goal Date. A reached target (null projectedGoalDate) shows
+ * the logged points only.
+ *
+ * Deliberately not bucketed into "N weeks ago" categories (#68). Even category
+ * spacing drew the Now→goal-date segment — routinely months — as wide as one
+ * week, exaggerating the projected slope into a cliff, and the `1w ago` bucket
+ * spanned `[now-7d, now)` so it re-plotted today's entry as a second point.
  */
 export function buildWeightTrend(
   weights: WeightEntryResponse[],
   goal: GoalBlock,
   now: Date,
 ): WeightTrendPoint[] {
-  const nowMs = now.getTime();
-  const sorted = [...weights].sort((a, b) =>
-    a.recordedAt.localeCompare(b.recordedAt),
-  );
-  const points: WeightTrendPoint[] = [];
+  const points: WeightTrendPoint[] = [...weights]
+    .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt))
+    .map((w) => ({ t: Date.parse(w.recordedAt), actual: w.weightKg }));
 
-  for (let i = 6; i >= 1; i--) {
-    const windowEnd = nowMs - (i - 1) * 7 * DAY_MS;
-    const windowStart = nowMs - i * 7 * DAY_MS;
-    const inWindow = sorted.filter((w) => {
-      const t = Date.parse(w.recordedAt);
-      return t >= windowStart && t < windowEnd;
-    });
-    const latest = inWindow.at(-1);
-    points.push({
-      label: `${i}w ago`,
-      actual: latest?.weightKg,
-    });
-  }
+  if (!goal.projectedGoalDate) return points;
 
-  const nowPoint: WeightTrendPoint = {
-    label: 'Now',
-    actual: goal.currentWeightKg,
-  };
-  if (goal.projectedGoalDate) {
-    // The projection continues from the current weight, so the dashed line
-    // picks up exactly where the solid actual line ends.
-    nowPoint.projected = goal.currentWeightKg;
-  }
-  points.push(nowPoint);
+  // Anchor the projection on the newest logged point so the dashed line
+  // continues the solid one instead of starting beside it. With no entries in
+  // the window, fall back to the server's Current Weight at now.
+  const anchor = points.at(-1);
+  if (anchor) anchor.projected = anchor.actual;
+  else points.push({ t: now.getTime(), projected: goal.currentWeightKg });
 
-  if (goal.projectedGoalDate) {
-    points.push({
-      label: formatGoalDate(goal.projectedGoalDate),
-      projected: goal.targetWeightKg,
-    });
-  }
+  points.push({
+    t: Date.parse(`${goal.projectedGoalDate}T00:00:00Z`),
+    projected: goal.targetWeightKg,
+  });
 
   return points;
 }
