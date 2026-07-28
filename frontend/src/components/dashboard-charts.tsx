@@ -46,6 +46,11 @@ import {
 const weightConfig = {
   actual: { label: 'Logged', colors: { light: ['var(--fn-secondary-deep)'] } },
   projected: {
+    // "Projected" is the user-facing word and matches Projected Goal Date in
+    // CONTEXT.md. The line is remaining weight ÷ Pace, so it is straight by
+    // construction; the lighter tint and dash carry that it is not measured
+    // data. Real variation comes from the logged series, not from wiggling a
+    // forecast we have no model for.
     label: 'Projected',
     colors: {
       light: ['color-mix(in oklch, var(--fn-secondary), white 38%)'],
@@ -69,7 +74,10 @@ export function WeightTrendChart({
       data={data}
       config={weightConfig}
       className={className}
-      curveType="monotone"
+      // Straight segments between weigh-ins. `monotone` smoothed the measured
+      // line into curvature that was never recorded — weight between two
+      // weigh-ins is unknown, not gently curved.
+      curveType="linear"
     >
       {/* Solid hairline: a dashed grid reads as "projection", which is the one
           thing dashing means in this chart. */}
