@@ -38,7 +38,7 @@ import { WeightsModule } from './weights/weights.module';
     // One unnamed ('default') throttler: routes tighten it with @Throttle
     // rather than opting into named ones, so every route is checked against
     // exactly one limit. Tracking is per client IP via req.ip, which is only
-    // correct once 'trust proxy' is set (main.ts).
+    // correct once 'trust proxy' is set (common/trust-proxy.ts).
     //
     // Storage is the built-in in-memory store: counters are per process and
     // reset on deploy. Correct for the single Render instance we run — if the
@@ -59,15 +59,13 @@ import { WeightsModule } from './weights/weights.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Global so every endpoint has a floor, not just the ones #37 names. It
-    // tracks by IP only — global guards run before controller-scoped ones, so
-    // req.user isn't set yet (see PerUserThrottlerGuard).
+    // Global, so every endpoint has a floor and not just the ones #37 names.
     //
     // Bound in two steps on purpose: `{ provide: APP_GUARD, useClass }` makes
     // Nest instantiate the guard anonymously under the APP_GUARD token, where
     // neither overrideGuard() nor overrideProvider() can reach it. Registering
     // the class as a normal provider and aliasing APP_GUARD to it keeps runtime
-    // behaviour identical while letting e2e specs swap the guard itself.
+    // behaviour identical while letting e2e specs swap the guard out.
     ThrottlerGuard,
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
   ],
