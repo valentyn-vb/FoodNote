@@ -21,6 +21,7 @@ import { initialsOf } from '@/lib/user-display';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 
@@ -37,9 +38,12 @@ export function MobileDashboard() {
   const {
     status: weightStatus,
     retry: retryWeight,
+    entries: weightEntries,
     weightTrend,
     weightChangeKg,
     onWeightSaved,
+    onWeightUpdated,
+    onWeightRemoved,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -114,11 +118,24 @@ export function MobileDashboard() {
               <h2 className="font-sans text-caption font-medium text-text">
                 Weight trend
               </h2>
-              {weightReady && (
-                <div className="font-sans text-[12px] font-medium text-secondary-deep">
-                  <NumberFlow value={weightChangeKg} suffix=" kg this month" />
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {weightReady && (
+                  <div className="font-sans text-[12px] font-medium text-secondary-deep">
+                    <NumberFlow
+                      value={weightChangeKg}
+                      suffix=" kg this month"
+                    />
+                  </div>
+                )}
+                {weightReady && (
+                  <WeightHistoryDrawer
+                    entries={weightEntries}
+                    onWeightUpdated={onWeightUpdated}
+                    onWeightRemoved={onWeightRemoved}
+                    triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted"
+                  />
+                )}
+              </div>
             </div>
             {weightReady ? (
               <WeightTrendCard

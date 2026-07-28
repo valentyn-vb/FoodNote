@@ -33,10 +33,13 @@ type FetchStatus = 'loading' | 'error' | 'ready';
 type WeightContextValue = {
   status: FetchStatus;
   retry: () => void;
+  entries: WeightEntryResponse[];
   weightTrend: WeightTrendPoint[];
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
   onWeightSaved: (entry: WeightEntryResponse) => void;
+  onWeightUpdated: (entry: WeightEntryResponse) => void;
+  onWeightRemoved: (id: string) => void;
 };
 
 const WeightContext = createContext<WeightContextValue | null>(null);
@@ -89,6 +92,24 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     [refetchDashboard],
   );
 
+  // Corrects one entry in place (PATCH /weights/:id) — same re-anchor as
+  // onWeightSaved since a corrected weight can shift the trend/goal block too.
+  const onWeightUpdated = useCallback(
+    (entry: WeightEntryResponse) => {
+      setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)));
+      void refetchDashboard();
+    },
+    [refetchDashboard],
+  );
+
+  const onWeightRemoved = useCallback(
+    (id: string) => {
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+      void refetchDashboard();
+    },
+    [refetchDashboard],
+  );
+
   const value = useMemo<WeightContextValue>(() => {
     const change = goal
       ? computeWeightChange(entries, goal.currentWeightKg, new Date())
@@ -96,12 +117,23 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     return {
       status,
       retry,
+      entries,
       weightTrend: goal ? buildWeightTrend(entries, goal, new Date()) : [],
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
       onWeightSaved,
+      onWeightUpdated,
+      onWeightRemoved,
     };
-  }, [entries, goal, status, retry, onWeightSaved]);
+  }, [
+    entries,
+    goal,
+    status,
+    retry,
+    onWeightSaved,
+    onWeightUpdated,
+    onWeightRemoved,
+  ]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>
