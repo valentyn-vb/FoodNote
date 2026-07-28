@@ -36,6 +36,26 @@ An optional line inside a Meal Entry detailing one food ("Chicken breast,
 180 g"). Items illustrate the meal; they are never summed by the server.
 _Avoid_: ingredient, product
 
+**AI Parse**:
+Turning a free-text description ("two eggs on toast") into a candidate meal. It
+never writes: a parse yields either a Parsed Meal or the verdict "not food", and
+both are successful recognitions — only a subsequent Meal Entry persists
+anything. A parse that reaches neither outcome is a failure, not a verdict.
+_Avoid_: analyse, scan, import
+
+**Parsed Meal**:
+What a successful AI Parse yields: a meal name, Meal Items, macro totals and a
+Confidence Note. It is a proposal, not a record — it becomes a Meal Entry only
+when the user confirms it (`source: ai`), and the user may adjust the totals
+first. It carries no meal type; the user chooses that on confirmation.
+_Avoid_: draft, suggestion, prediction
+
+**Confidence Note**:
+The one-sentence statement of the assumption behind a Parsed Meal's numbers —
+typically the portion assumed when the description gave no quantity. It exists
+because the numbers are estimates the user is asked to trust.
+_Avoid_: disclaimer, warning
+
 **Goal**:
 A weight plan: start weight/date, target weight, and Pace. Direction (loss or
 gain) is implied by target vs. Current Weight; target == current is
