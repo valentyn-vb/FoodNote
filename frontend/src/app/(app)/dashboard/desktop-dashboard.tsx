@@ -37,8 +37,7 @@ export function DesktopDashboard() {
     weightTrend,
     weightChangeKg,
     weightChangeLastMonthKg,
-    onWeightUpdated,
-    onWeightRemoved,
+    onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -115,8 +114,7 @@ export function DesktopDashboard() {
                   action={
                     <WeightHistoryDrawer
                       entries={weightEntries}
-                      onWeightUpdated={onWeightUpdated}
-                      onWeightRemoved={onWeightRemoved}
+                      onWeightsChanged={onWeightsChanged}
                       triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9]"
                     />
                   }

@@ -38,8 +38,7 @@ type WeightContextValue = {
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
   onWeightSaved: (entry: WeightEntryResponse) => void;
-  onWeightUpdated: (entry: WeightEntryResponse) => void;
-  onWeightRemoved: (id: string) => void;
+  onWeightsChanged: () => void;
 };
 
 const WeightContext = createContext<WeightContextValue | null>(null);
@@ -92,23 +91,20 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     [refetchDashboard],
   );
 
-  // Corrects one entry in place (PATCH /weights/:id) — same re-anchor as
-  // onWeightSaved since a corrected weight can shift the trend/goal block too.
-  const onWeightUpdated = useCallback(
-    (entry: WeightEntryResponse) => {
-      setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)));
-      void refetchDashboard();
-    },
-    [refetchDashboard],
-  );
-
-  const onWeightRemoved = useCallback(
-    (id: string) => {
-      setEntries((prev) => prev.filter((e) => e.id !== id));
-      void refetchDashboard();
-    },
-    [refetchDashboard],
-  );
+  // Edits and deletes re-list rather than patching locally, so the client
+  // never holds a view the server disagrees with. That also fixes a real bug:
+  // an edit can move an entry's recordedAt outside this provider's 60-day
+  // window, and a local patch would keep showing it while the server-derived
+  // goal block excluded it. Bumping reloadKey refetches without setting
+  // 'loading', so no skeleton flashes.
+  //
+  // onWeightSaved above stays optimistic on purpose: it appends at `now`,
+  // which can never fall outside the window, and the save toast's NumberFlow
+  // animation depends on the number moving immediately.
+  const onWeightsChanged = useCallback(() => {
+    setReloadKey((k) => k + 1);
+    void refetchDashboard();
+  }, [refetchDashboard]);
 
   const value = useMemo<WeightContextValue>(() => {
     const change = goal
@@ -122,18 +118,9 @@ export function WeightProvider({ children }: { children: ReactNode }) {
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
       onWeightSaved,
-      onWeightUpdated,
-      onWeightRemoved,
+      onWeightsChanged,
     };
-  }, [
-    entries,
-    goal,
-    status,
-    retry,
-    onWeightSaved,
-    onWeightUpdated,
-    onWeightRemoved,
-  ]);
+  }, [entries, goal, status, retry, onWeightSaved, onWeightsChanged]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>

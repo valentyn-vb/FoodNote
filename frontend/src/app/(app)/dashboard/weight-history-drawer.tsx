@@ -38,13 +38,11 @@ function toDatetimeLocal(iso: string): string {
 function WeightHistoryRow({
   entry,
   canDelete,
-  onUpdated,
-  onRemoved,
+  onChanged,
 }: {
   entry: WeightEntryResponse;
   canDelete: boolean;
-  onUpdated: (entry: WeightEntryResponse) => void;
-  onRemoved: (id: string) => void;
+  onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(entry.weightKg));
@@ -74,11 +72,11 @@ function WeightHistoryRow({
     }
     setBusy(true);
     try {
-      const updated = await weights.update(entry.id, {
+      await weights.update(entry.id, {
         weightKg: parsed.data,
         recordedAt: new Date(recordedAt).toISOString(),
       });
-      onUpdated(updated);
+      onChanged();
       setEditing(false);
     } catch {
       toast.error("Couldn't save your weight. Please try again.");
@@ -91,7 +89,7 @@ function WeightHistoryRow({
     setBusy(true);
     try {
       await weights.remove(entry.id);
-      onRemoved(entry.id);
+      onChanged();
       toast.success('Entry deleted');
     } catch {
       toast.error("Couldn't delete this entry. Please try again.");
@@ -184,10 +182,12 @@ function WeightHistoryRow({
         <button
           type="button"
           aria-label="Delete entry"
+          // Stated as the constraint, not as a claim about the journal:
+          // `canDelete` is derived from the provider's 60-day window, so an
+          // older entry outside it would make "your only entry" false. The
+          // rule belongs in weights.service.remove() — this only fails closed.
           title={
-            canDelete
-              ? undefined
-              : 'Log a new weight before deleting your only entry'
+            canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
           disabled={busy || !canDelete}
           className="flex size-8 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9] disabled:opacity-40 disabled:hover:bg-transparent"
@@ -209,13 +209,11 @@ function WeightHistoryRow({
 // that the dashboard's fixed h-screen grid has no room for.
 export function WeightHistoryDrawer({
   entries,
-  onWeightUpdated,
-  onWeightRemoved,
+  onWeightsChanged,
   triggerClassName,
 }: {
   entries: WeightEntryResponse[];
-  onWeightUpdated: (entry: WeightEntryResponse) => void;
-  onWeightRemoved: (id: string) => void;
+  onWeightsChanged: () => void;
   triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -254,8 +252,7 @@ export function WeightHistoryDrawer({
               key={entry.id}
               entry={entry}
               canDelete={sorted.length > 1}
-              onUpdated={onWeightUpdated}
-              onRemoved={onWeightRemoved}
+              onChanged={onWeightsChanged}
             />
           ))}
         </div>

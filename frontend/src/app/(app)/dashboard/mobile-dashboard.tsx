@@ -42,8 +42,7 @@ export function MobileDashboard() {
     weightTrend,
     weightChangeKg,
     onWeightSaved,
-    onWeightUpdated,
-    onWeightRemoved,
+    onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -130,8 +129,7 @@ export function MobileDashboard() {
                 {weightReady && (
                   <WeightHistoryDrawer
                     entries={weightEntries}
-                    onWeightUpdated={onWeightUpdated}
-                    onWeightRemoved={onWeightRemoved}
+                    onWeightsChanged={onWeightsChanged}
                     triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted"
                   />
                 )}
