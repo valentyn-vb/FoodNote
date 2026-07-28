@@ -57,7 +57,7 @@ export function DesktopDashboard() {
         <DesktopDashboardSkeleton />
       ) : (
         <>
-          <div className="flex gap-3.5">
+          <div className="flex gap-3.5 [&>*]:grow [&>*]:basis-0">
             <StatWidget
               label="Remaining today"
               value={remainingKcal}

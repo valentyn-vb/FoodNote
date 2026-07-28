@@ -10,16 +10,14 @@ export function StatWidget({
   value,
   suffix = '',
   mascotSrc,
-  className,
 }: {
   label: string;
   value: string | number;
   suffix?: string;
   mascotSrc?: string;
-  className?: string;
 }) {
   return (
-    <Card className={`${STAT_TILE_CLASS} relative ${className || ''}`}>
+    <Card className={`${STAT_TILE_CLASS} relative`}>
       <div className="relative z-10 font-sans text-[12px] text-text-muted">
         {label}
       </div>

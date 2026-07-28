@@ -1,27 +1,27 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import NumberFlow from '@number-flow/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Disclaimer } from '@/components/disclaimer';
-import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { useAuth } from '@/components/auth-provider';
 import {
   DailyCaloriesChart,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
-import { useAuth } from '@/components/auth-provider';
-import { useMeals } from '@/lib/meals-context';
-import { useWeight } from '@/lib/weight-context';
-import { initialsOf } from '@/lib/user-display';
+import { Disclaimer } from '@/components/disclaimer';
+import { MealLogDrawer } from '@/components/meal-log-drawer';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, fullnessMascot } from './helpers';
-import { StatWidget } from './stat-widget';
+import { useMeals } from '@/lib/meals-context';
+import { initialsOf } from '@/lib/user-display';
+import { useWeight } from '@/lib/weight-context';
+import NumberFlow from '@number-flow/react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
+import { CARD_CLASS, fullnessMascot } from './helpers';
 import { MealRow } from './meal-row';
+import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 
@@ -118,7 +118,6 @@ export function MobileDashboard() {
                       new Date(),
                     )} wks`
             }
-            className="h-fit"
           />
 
           <div className="flex flex-col gap-2.5">
