@@ -4,6 +4,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { MealParser } from '../src/meals/meal-parser';
 
 type TestAppOptions = {
   /**
@@ -17,6 +18,22 @@ type TestAppOptions = {
    * grew a fifth auth call. Only throttle.e2e-spec.ts turns this on.
    */
   throttling?: boolean;
+  /**
+   * Stubs the AI Parse port. Always overridden, even when a spec has nothing to
+   * do with parsing: it keeps the suite off the network and means e2e needs no
+   * OPENAI_API_KEY, since replacing the provider skips the factory that reads it.
+   */
+  mealParser?: Pick<MealParser, 'parse'>;
+};
+
+/** Fails loudly rather than letting a spec silently exercise a dummy parse. */
+const unstubbedParser: Pick<MealParser, 'parse'> = {
+  parse: () =>
+    Promise.reject(
+      new Error(
+        'MealParser was called but no stub was provided to createTestApp',
+      ),
+    ),
 };
 
 /**
@@ -26,8 +43,11 @@ type TestAppOptions = {
 export async function createTestApp({
   prefix = true,
   throttling = false,
+  mealParser = unstubbedParser,
 }: TestAppOptions = {}): Promise<INestApplication<App>> {
   const builder = Test.createTestingModule({ imports: [AppModule] });
+
+  builder.overrideProvider(MealParser).useValue(mealParser);
 
   if (!throttling) {
     // Works because app.module.ts registers ThrottlerGuard as a normal
