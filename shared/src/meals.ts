@@ -5,6 +5,7 @@ import {
   idSchema,
   macroGramsSchema,
   macroTotalsSchema,
+  mealNameSchema,
   mealSourceSchema,
   mealTypeSchema,
   recordedAtSchema,
@@ -30,7 +31,7 @@ export const mealItemSchema = z.object({
 });
 
 export const createMealRequestSchema = z.object({
-  mealName: z.string().trim().min(1).max(200),
+  mealName: mealNameSchema,
   mealType: mealTypeSchema,
   recordedAt: recordedAtSchema,
   ...macroTotalsSchema.shape,
@@ -83,10 +84,9 @@ export const aiParseRequestSchema = z.object({
 });
 
 export const aiParsedMealSchema = z.object({
-  // Bounded like createMealRequestSchema.mealName: a Parsed Meal is confirmed by
-  // posting it straight to POST /meals, so an unbounded name here would preview
-  // fine at 200 and then 400 on confirm.
-  mealName: z.string().trim().min(1).max(200),
+  // The same schema createMealRequestSchema uses, not a matching copy — see
+  // mealNameSchema for why they must not drift apart.
+  mealName: mealNameSchema,
   items: z.array(mealItemSchema).min(1),
   ...macroTotalsSchema.shape,
   // Non-empty: we are the only producer, and a Parsed Meal whose note states no
