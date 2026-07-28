@@ -17,9 +17,10 @@ import { useAuth } from '@/components/auth-provider';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { initialsOf } from '@/lib/user-display';
+import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { CARD_CLASS, fullnessMascot } from './helpers';
+import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
-import { GoalStatusCard } from './goal-status-card';
 import { MealRow } from './meal-row';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -99,7 +100,26 @@ export function MobileDashboard() {
             </div>
           </Card>
 
-          <GoalStatusCard goal={gate.goal} />
+          <StatWidget
+            label={
+              gate.goal.reachedTarget
+                ? 'Goal'
+                : gate.goal.projectedGoalDate === null
+                  ? 'Goal'
+                  : 'Projected goal date'
+            }
+            value={
+              gate.goal.reachedTarget
+                ? 'You hit your target'
+                : !gate.goal.projectedGoalDate
+                  ? 'Maintaining your weight'
+                  : `${formatGoalDate(gate.goal.projectedGoalDate)} · ${weeksUntil(
+                      gate.goal.projectedGoalDate,
+                      new Date(),
+                    )} wks`
+            }
+            className="h-fit"
+          />
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">
