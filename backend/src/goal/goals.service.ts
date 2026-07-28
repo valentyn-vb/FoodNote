@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { projectedDate } from '@foodnote/shared';
+import { hasReachedTarget, projectedDate } from '@foodnote/shared';
 import type {
   CreateGoalRequest,
   GoalResponse,
@@ -56,24 +56,36 @@ export class GoalsService {
   }
 
   private toResponse(goal: Goal, currentWeightKg: number | null): GoalResponse {
-    const remainingKg =
-      currentWeightKg === null
-        ? 0
-        : Math.abs(currentWeightKg - goal.targetWeightKg);
+    const pace = goal.preferredWeeklyChangeKg as Pace;
+    // With an empty weight journal there is nothing to compare against, so
+    // neither the projection nor the reached test can say anything.
+    const reachedTarget =
+      currentWeightKg !== null &&
+      hasReachedTarget({
+        startWeightKg: goal.startWeightKg,
+        targetWeightKg: goal.targetWeightKg,
+        preferredWeeklyChangeKg: pace,
+        currentWeightKg,
+      });
+
     return {
       id: goal.id,
       startWeightKg: goal.startWeightKg,
       targetWeightKg: goal.targetWeightKg,
-      preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg as Pace,
+      preferredWeeklyChangeKg: pace,
       startDate: goal.startDate,
+      // A reached goal projects nothing. projectedDate takes a magnitude, so
+      // past the target it would otherwise return a date for a weight the user
+      // has already gone by; pace 0 (maintenance) it rules out itself.
       projectedGoalDate:
-        currentWeightKg === null
+        currentWeightKg === null || reachedTarget
           ? null
           : projectedDate(
-              remainingKg,
-              goal.preferredWeeklyChangeKg,
+              Math.abs(currentWeightKg - goal.targetWeightKg),
+              pace,
               this.today(),
             ),
+      reachedTarget,
       status: goal.status,
     };
   }
@@ -88,11 +100,25 @@ export class GoalsService {
     // Replace the previous active goal and insert the new one atomically.
     // The partial unique index (ADR-0003) is the backstop.
     return this.goals.manager.transaction(async (manager) => {
-      await manager.update(
-        Goal,
-        { userId, status: 'active' },
-        { status: 'replaced' },
-      );
+      // The outgoing goal is `completed` only if its target was actually met;
+      // otherwise the user abandoned it, which is `replaced`. This is the only
+      // place the status is ever set to `completed` — reaching a target must not
+      // touch it, or GET /goals/current would 404 and the OnboardingGuard would
+      // bounce the user into the wizard (see docs/adr/0006).
+      const previous = await manager.findOne(Goal, {
+        where: { userId, status: 'active' },
+      });
+      if (previous) {
+        previous.status = hasReachedTarget({
+          startWeightKg: previous.startWeightKg,
+          targetWeightKg: previous.targetWeightKg,
+          preferredWeeklyChangeKg: previous.preferredWeeklyChangeKg as Pace,
+          currentWeightKg: latest.weightKg,
+        })
+          ? 'completed'
+          : 'replaced';
+        await manager.save(previous);
+      }
       const goal = manager.create(Goal, {
         userId,
         startWeightKg: latest.weightKg,
