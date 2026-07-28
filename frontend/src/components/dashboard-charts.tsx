@@ -27,7 +27,9 @@ import {
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import {
+  formatTrendDate,
   formatTrendTick,
+  monthTicks,
   type DailyCaloriePoint,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
@@ -87,8 +89,8 @@ export function WeightTrendChart({
         type="number"
         scale="time"
         domain={['dataMin', 'dataMax']}
+        ticks={monthTicks(data)}
         tickFormatter={formatTrendTick}
-        minTickGap={24}
       />
       {/* Markers make a lone weigh-in visible: one measurement cannot stroke a
           line, so without a dot a new account saw nothing for its own weight.
@@ -102,7 +104,9 @@ export function WeightTrendChart({
         strokeVariant="dashed"
         lineProps={{ strokeWidth: 2 }}
       />
-      <LineTooltip labelFormatter={(label) => formatTrendTick(Number(label))} />
+      {/* The tooltip keeps day precision — months are the axis unit, not the
+          resolution the data was recorded at. */}
+      <LineTooltip labelFormatter={(label) => formatTrendDate(Number(label))} />
       <LineLegend />
     </EvilLineChart>
   );

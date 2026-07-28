@@ -138,13 +138,21 @@ type GoalBlock = Pick<
   'currentWeightKg' | 'targetWeightKg' | 'projectedGoalDate'
 >;
 
-/**
- * An x-axis tick for the weight trend: "Jul 27" in UTC, matching Tracking Day.
- * Recharts calls tick/label formatters with placeholder values during layout,
- * so a non-finite input renders as empty rather than throwing RangeError and
- * taking down the dashboard.
- */
+// Recharts calls tick/label formatters with placeholder values during layout,
+// so both of these render a non-finite input as empty rather than throwing
+// RangeError and taking the dashboard down with it.
+
+/** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
 export function formatTrendTick(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(t));
+}
+
+/** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */
+export function formatTrendDate(t: number): string {
   if (!Number.isFinite(t)) return '';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -154,24 +162,66 @@ export function formatTrendTick(t: number): string {
 }
 
 /**
- * Weight-trend series on a true time axis: every Weight Entry at its own
- * recordedAt, plus a two-point projection from the newest entry to the target
- * at the Projected Goal Date. A reached target (null projectedGoalDate) shows
- * the logged points only.
+ * First-of-month tick positions across a series' span.
+ *
+ * Letting Recharts auto-tick a time axis puts ticks at arbitrary epochs, so the
+ * labels landed on whatever dates entries happened to exist ("Jun 20", "Jul 28")
+ * — a tick position that encodes nothing. Month boundaries are regular and
+ * mean something. Falls back to the endpoints when a span is too short to
+ * contain two boundaries (a reached target with under a month of entries).
+ */
+export function monthTicks(points: WeightTrendPoint[]): number[] {
+  const first = points.at(0)?.t;
+  const last = points.at(-1)?.t;
+  if (first === undefined || last === undefined) return [];
+
+  const ticks: number[] = [];
+  const start = new Date(first);
+  let t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1);
+  if (t < first) {
+    t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1);
+  }
+  while (t <= last) {
+    ticks.push(t);
+    const cursor = new Date(t);
+    t = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1);
+  }
+
+  return ticks.length >= 2 ? ticks : [first, last];
+}
+
+/**
+ * Weight-trend series on a true time axis: one point per Tracking Day, plus a
+ * two-point projection from the newest entry to the target at the Projected
+ * Goal Date. A reached target (null projectedGoalDate) shows logged points only.
  *
  * Deliberately not bucketed into "N weeks ago" categories (#68). Even category
  * spacing drew the Now→goal-date segment — routinely months — as wide as one
  * week, exaggerating the projected slope into a cliff, and the `1w ago` bucket
  * spanned `[now-7d, now)` so it re-plotted today's entry as a second point.
+ *
+ * One point per day matters because the journal is append-only and allows any
+ * number of entries per day (ADR-0004). Plotting each of them put two weights
+ * at effectively one instant, drawing a vertical segment — a claim that the
+ * user weighed two things at once. The day's *last* entry wins, so the final
+ * point equals Current Weight and the chart agrees with the tile above it.
  */
 export function buildWeightTrend(
   weights: WeightEntryResponse[],
   goal: GoalBlock,
   now: Date,
 ): WeightTrendPoint[] {
-  const points: WeightTrendPoint[] = [...weights]
-    .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt))
-    .map((w) => ({ t: Date.parse(w.recordedAt), actual: w.weightKg }));
+  const latestPerDay = new Map<string, WeightEntryResponse>();
+  for (const w of [...weights].sort((a, b) =>
+    a.recordedAt.localeCompare(b.recordedAt),
+  )) {
+    latestPerDay.set(utcDay(w.recordedAt), w); // ascending, so the last wins
+  }
+
+  const points: WeightTrendPoint[] = [...latestPerDay.values()].map((w) => ({
+    t: Date.parse(w.recordedAt),
+    actual: w.weightKg,
+  }));
 
   if (!goal.projectedGoalDate) return points;
 
