@@ -47,10 +47,13 @@ type MealsContextValue = {
   todayMeals: MealResponse[];
   dailyCalories: DailyCaloriePoint[];
   saveMeal: (draft: CreateMealRequest) => void;
-  // Weight saves recompute the goal block server-side (projected date depends
-  // on the new weight), so WeightProvider — nested inside this one — calls this
-  // after POST /weights to refresh the goal tile and the chart's projection.
-  refetchDashboard: () => Promise<void>;
+  // Weight saves recompute the goal block server-side (projected date and
+  // reachedTarget both depend on the new weight), so WeightProvider — nested
+  // inside this one — calls this after POST /weights to refresh the goal tile
+  // and the chart's projection. It resolves with the fresh response (null if the
+  // refetch failed) so the caller can compare against the pre-save goal block
+  // instead of racing this provider's state.
+  refetchDashboard: () => Promise<DashboardResponse | null>;
 };
 
 const MealsContext = createContext<MealsContextValue | null>(null);
@@ -122,9 +125,12 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
   const refetchDashboard = useCallback(async () => {
     try {
-      setDashboard(await dashboardApi.current());
+      const next = await dashboardApi.current();
+      setDashboard(next);
+      return next;
     } catch {
       // The weight was still saved; leave the prior goal block until reload.
+      return null;
     }
   }, []);
 

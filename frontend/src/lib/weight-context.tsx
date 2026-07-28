@@ -37,6 +37,11 @@ type WeightContextValue = {
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
   onWeightSaved: (entry: WeightEntryResponse) => void;
+  // True for the one render pass after a logged weight met the goal. Drives the
+  // celebration overlay mounted in the (app) layout, which is the only place
+  // both "Log weight" triggers (sidebar on desktop, dashboard on mobile) share.
+  celebrating: boolean;
+  dismissCelebration: () => void;
 };
 
 const WeightContext = createContext<WeightContextValue | null>(null);
@@ -52,6 +57,7 @@ export function WeightProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<WeightEntryResponse[]>([]);
   const [status, setStatus] = useState<FetchStatus>('loading');
   const [reloadKey, setReloadKey] = useState(0);
+  const [celebrating, setCelebrating] = useState(false);
 
   // Fetch as a promise chain inside the effect (cancelled flag), matching
   // AuthProvider — setState runs only from the .then/.catch callbacks.
@@ -84,10 +90,21 @@ export function WeightProvider({ children }: { children: ReactNode }) {
       // projection line + goal tile re-anchor once the server recomputes the
       // projected date (POST /weights doesn't return it).
       setEntries((prev) => [...prev, entry]);
-      void refetchDashboard();
+
+      // Celebrate the transition, not the state: the goal block we already hold
+      // is the "before", the refetch is the "after". That makes this fire once —
+      // logging again while still at target sees reachedTarget already true — and
+      // it needs nothing stored server-side. Defaulting the unknown case to true
+      // means a cold or failed read stays quiet rather than firing spuriously.
+      const wasReached = goal?.reachedTarget ?? true;
+      void refetchDashboard().then((next) => {
+        if (!wasReached && next?.goal.reachedTarget) setCelebrating(true);
+      });
     },
-    [refetchDashboard],
+    [goal, refetchDashboard],
   );
+
+  const dismissCelebration = useCallback(() => setCelebrating(false), []);
 
   const value = useMemo<WeightContextValue>(() => {
     const change = goal
@@ -100,8 +117,18 @@ export function WeightProvider({ children }: { children: ReactNode }) {
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
       onWeightSaved,
+      celebrating,
+      dismissCelebration,
     };
-  }, [entries, goal, status, retry, onWeightSaved]);
+  }, [
+    entries,
+    goal,
+    status,
+    retry,
+    onWeightSaved,
+    celebrating,
+    dismissCelebration,
+  ]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>
