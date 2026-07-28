@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import type OpenAI from 'openai';
+import type { AiParseResponse } from '@foodnote/shared';
 import { MealParseFailedError } from './meal-parser';
 import { OpenAiMealParser } from './openai-meal-parser';
 
@@ -8,18 +9,17 @@ import { OpenAiMealParser } from './openai-meal-parser';
  * `responses.parse`, so the prompt, the mapping onto the frozen contract and
  * the failure taxonomy are all covered without a network call.
  */
-type FakeParse = jest.Mock;
-
 const USER_ID = 'user-1';
 
-/** Binds the caller's id so each test reads as one description in, one out. */
-function makeParser(parse: FakeParse): {
-  parse: (d: string) => Promise<unknown>;
-} {
+/** One description in, one contract response out — the caller id is fixed. */
+function parseWith(
+  parse: jest.Mock,
+  description: string,
+): Promise<AiParseResponse> {
   const adapter = new OpenAiMealParser({
     responses: { parse },
   } as unknown as OpenAI);
-  return { parse: (description) => adapter.parse(description, USER_ID) };
+  return adapter.parse(description, USER_ID);
 }
 
 /** A completed response carrying the model-facing `result` union. */
@@ -66,7 +66,7 @@ describe('OpenAiMealParser', () => {
   it('maps a recognised meal onto the contract as parsed: true', async () => {
     const parse = jest.fn().mockResolvedValue(completed(PARSED_MEAL));
 
-    const result = await makeParser(parse).parse('two eggs on toast');
+    const result = await parseWith(parse, 'two eggs on toast');
 
     expect(result).toEqual({
       parsed: true,
@@ -105,7 +105,7 @@ describe('OpenAiMealParser', () => {
   it('issues the request with the pinned model and cost envelope', async () => {
     const parse = jest.fn().mockResolvedValue(completed(PARSED_MEAL));
 
-    await makeParser(parse).parse('two eggs on toast');
+    await parseWith(parse, 'two eggs on toast');
 
     expect(parse).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -129,7 +129,7 @@ describe('OpenAiMealParser', () => {
       .spyOn(Logger.prototype, 'log')
       .mockImplementation((message) => logged.push(String(message)));
 
-    await makeParser(parse).parse('two eggs on toast and a flat white');
+    await parseWith(parse, 'two eggs on toast and a flat white');
 
     expect(log).toHaveBeenCalled();
     const line = logged.join(' ');
@@ -155,7 +155,7 @@ describe('OpenAiMealParser', () => {
       }),
     );
 
-    const result = await makeParser(parse).parse('my bicycle');
+    const result = await parseWith(parse, 'my bicycle');
 
     expect(result).toEqual({
       parsed: false,
@@ -183,7 +183,7 @@ describe('OpenAiMealParser', () => {
     });
 
     await expect(
-      makeParser(parse).parse('something the model will refuse'),
+      parseWith(parse, 'something the model will refuse'),
     ).rejects.toMatchObject({ kind: 'refusal' });
   });
 
@@ -204,9 +204,9 @@ describe('OpenAiMealParser', () => {
         usage: { input_tokens: 300, output_tokens: 2000 },
       });
 
-      await expect(
-        makeParser(parse).parse('two eggs on toast'),
-      ).rejects.toMatchObject({ kind });
+      await expect(parseWith(parse, 'two eggs on toast')).rejects.toMatchObject(
+        { kind },
+      );
     },
   );
 
@@ -216,9 +216,7 @@ describe('OpenAiMealParser', () => {
   it('fails as transport when the SDK throws', async () => {
     const parse = jest.fn().mockRejectedValue(new Error('socket hang up'));
 
-    await expect(
-      makeParser(parse).parse('two eggs on toast'),
-    ).rejects.toMatchObject({
+    await expect(parseWith(parse, 'two eggs on toast')).rejects.toMatchObject({
       kind: 'transport',
       name: 'MealParseFailedError',
     });
@@ -233,9 +231,9 @@ describe('OpenAiMealParser', () => {
       .fn()
       .mockResolvedValue(completed({ ...PARSED_MEAL, confidenceNote: '' }));
 
-    await expect(
-      makeParser(parse).parse('two eggs on toast'),
-    ).rejects.toMatchObject({ kind: 'invalidOutput' });
+    await expect(parseWith(parse, 'two eggs on toast')).rejects.toMatchObject({
+      kind: 'invalidOutput',
+    });
   });
 
   // Strict decoding makes this near-impossible, so it is a backstop rather than
@@ -247,7 +245,7 @@ describe('OpenAiMealParser', () => {
       output_parsed: null,
     });
 
-    await expect(makeParser(parse).parse('two eggs on toast')).rejects.toThrow(
+    await expect(parseWith(parse, 'two eggs on toast')).rejects.toThrow(
       MealParseFailedError,
     );
   });

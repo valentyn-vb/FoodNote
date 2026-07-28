@@ -1,14 +1,11 @@
 import { INestApplication } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import type { AiParseResponse, AuthResponse } from '@foodnote/shared';
+import type { AiParseResponse } from '@foodnote/shared';
 import { errorResponseSchema, aiParseResponseSchema } from '@foodnote/shared';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { Repository } from 'typeorm';
 import { AI_PARSE_THROTTLE } from '../src/common/throttle.constants';
 import { MealParseFailedError } from '../src/meals/meal-parser';
-import { User } from '../src/user/user.entity';
-import { createTestApp } from './create-test-app';
+import { createTestApp, registerTestUser } from './create-test-app';
 
 const PARSED: AiParseResponse = {
   parsed: true,
@@ -38,24 +35,11 @@ describe('AI meal parse (e2e)', () => {
   let parse: jest.Mock;
 
   const EMAIL = 'e2e-ai-parse@example.com';
-  const PASSWORD = 'e2e test password';
 
   beforeAll(async () => {
     parse = jest.fn();
     app = await createTestApp({ mealParser: { parse } });
-
-    const users = app.get<Repository<User>>(getRepositoryToken(User));
-    await users.delete({ email: EMAIL });
-
-    const registered = await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        firstName: 'Test',
-        lastName: 'User',
-        email: EMAIL,
-        password: PASSWORD,
-      });
-    token = (registered.body as AuthResponse).accessToken;
+    token = await registerTestUser(app, EMAIL);
   });
 
   afterAll(() => app.close());
@@ -140,43 +124,29 @@ describe('AI meal parse rate limit (e2e)', () => {
   let token: string;
 
   const EMAIL = 'e2e-ai-parse-throttle@example.com';
-  const PASSWORD = 'e2e test password';
 
   beforeAll(async () => {
     app = await createTestApp({
       throttling: true,
       mealParser: { parse: () => Promise.resolve(PARSED) },
     });
-
-    const users = app.get<Repository<User>>(getRepositoryToken(User));
-    await users.delete({ email: EMAIL });
-
-    const registered = await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        firstName: 'Test',
-        lastName: 'User',
-        email: EMAIL,
-        password: PASSWORD,
-      });
-    token = (registered.body as AuthResponse).accessToken;
+    token = await registerTestUser(app, EMAIL);
   });
 
   afterAll(() => app.close());
 
-  it(`429s after ${AI_PARSE_THROTTLE.limit} parses`, async () => {
-    for (let i = 0; i < AI_PARSE_THROTTLE.limit; i++) {
-      await request(app.getHttpServer())
-        .post('/api/meals/ai-parse')
-        .set({ Authorization: `Bearer ${token}` })
-        .send({ description: 'two eggs on toast' })
-        .expect(200);
-    }
-
-    await request(app.getHttpServer())
+  function aiParse() {
+    return request(app.getHttpServer())
       .post('/api/meals/ai-parse')
       .set({ Authorization: `Bearer ${token}` })
-      .send({ description: 'two eggs on toast' })
-      .expect(429);
+      .send({ description: 'two eggs on toast' });
+  }
+
+  it(`429s after ${AI_PARSE_THROTTLE.limit} parses`, async () => {
+    for (let i = 0; i < AI_PARSE_THROTTLE.limit; i++) {
+      await aiParse().expect(200);
+    }
+
+    await aiParse().expect(429);
   });
 });

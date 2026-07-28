@@ -71,8 +71,13 @@ const modelOutputSchema = z.object({
   result: z.discriminatedUnion('kind', [
     z.object({
       kind: z.literal('meal'),
+      // Unbounded on purpose: strict mode rejects minLength/maxLength, so the
+      // contract's bound is enforced by the re-validation in toResult.
       mealName: z.string(),
       items: z.array(modelItemSchema).min(1),
+      // Spelled out rather than spreading macroTotalsSchema.shape: the spread
+      // widens this branch to Record<string, unknown>, which costs the union its
+      // narrowing and forces casts back into toResult.
       totalCalories: wholeCaloriesSchema,
       proteinGrams: macroGramsSchema,
       carbsGrams: macroGramsSchema,
@@ -103,7 +108,34 @@ For a meal:
 Write mealName, confidenceNote and reason in the same language as the
 description.`;
 
+/**
+ * Derived once at import. zodTextFormat walks the whole schema, rewrites it to
+ * strict JSON Schema and builds a parser closure — all of it identical on every
+ * request, so doing it per call would be pure event-loop tax.
+ */
+const MEAL_PARSE_FORMAT = zodTextFormat(modelOutputSchema, 'meal_parse');
+
 type ParsedModelResponse = ParsedResponse<z.infer<typeof modelOutputSchema>>;
+
+type ParseLogFields = {
+  outcome: 'meal' | 'notFood' | 'failed';
+  failureKind?: MealParseFailureKind;
+  userId: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  openaiRequestId?: string;
+};
+
+/** Empty until a response exists, so failed requests log no token counts. */
+function usageOf(response: ParsedModelResponse | undefined) {
+  return response
+    ? {
+        inputTokens: response.usage?.input_tokens,
+        outputTokens: response.usage?.output_tokens,
+        openaiRequestId: response.id,
+      }
+    : {};
+}
 
 /**
  * A refusal arrives as a content part inside an output message rather than a
@@ -135,33 +167,26 @@ export class OpenAiMealParser implements MealParser {
 
   async parse(description: string, userId: string): Promise<AiParseResponse> {
     const startedAt = process.hrtime.bigint();
-    // Stays empty when the request itself fails, so a transport failure logs no
+    // Undefined while the request is in flight, so a transport failure logs no
     // token counts rather than zeroes that would skew the cost view.
-    let usage: Record<string, unknown> = {};
+    let response: ParsedModelResponse | undefined;
 
     try {
-      const response = await this.request(description, userId);
-      usage = {
-        inputTokens: response.usage?.input_tokens,
-        outputTokens: response.usage?.output_tokens,
-        openaiRequestId: response.id,
-      };
+      response = await this.request(description, userId);
       const result = this.toResult(response);
-      this.logParse({
+      this.logParse(startedAt, {
         outcome: result.parsed ? 'meal' : 'notFood',
         userId,
-        startedAt,
-        ...usage,
+        ...usageOf(response),
       });
       return result;
     } catch (error) {
-      this.logParse({
+      this.logParse(startedAt, {
         outcome: 'failed',
         failureKind:
           error instanceof MealParseFailedError ? error.kind : 'transport',
         userId,
-        startedAt,
-        ...usage,
+        ...usageOf(response),
       });
       throw error;
     }
@@ -233,7 +258,7 @@ export class OpenAiMealParser implements MealParser {
         reasoning: { effort: REASONING_EFFORT },
         // OpenAI's abuse-detection field. Not part of the prompt.
         safety_identifier: userId,
-        text: { format: zodTextFormat(modelOutputSchema, 'meal_parse') },
+        text: { format: MEAL_PARSE_FORMAT },
         input: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: description },
@@ -248,18 +273,7 @@ export class OpenAiMealParser implements MealParser {
     }
   }
 
-  private logParse({
-    startedAt,
-    ...fields
-  }: {
-    outcome: 'meal' | 'notFood' | 'failed';
-    failureKind?: MealParseFailureKind;
-    userId: string;
-    startedAt: bigint;
-    inputTokens?: number;
-    outputTokens?: number;
-    openaiRequestId?: string;
-  }): void {
+  private logParse(startedAt: bigint, fields: ParseLogFields): void {
     this.logger.log(
       JSON.stringify({
         ...fields,

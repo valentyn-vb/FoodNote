@@ -3,7 +3,12 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { App } from 'supertest/types';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import type { AuthResponse } from '@foodnote/shared';
+import request from 'supertest';
+import { Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { User } from '../src/user/user.entity';
 import { MealParser } from '../src/meals/meal-parser';
 
 type TestAppOptions = {
@@ -15,7 +20,7 @@ type TestAppOptions = {
   /**
    * Keep the real ThrottlerGuard. Off by default: every spec shares one client
    * IP, so real limits would make unrelated suites fail as soon as one of them
-   * grew a fifth auth call. Only throttle.e2e-spec.ts turns this on.
+   * grew a fifth auth call. Only the specs that assert a limit turn this on.
    */
   throttling?: boolean;
   /**
@@ -63,4 +68,24 @@ export async function createTestApp({
   if (prefix) app.setGlobalPrefix('api');
   await app.init();
   return app;
+}
+
+/**
+ * Clears any leftover user with this email, registers it fresh, and returns the
+ * access token. Every resource spec needs exactly this; keeping it here means a
+ * change to registration is one edit rather than one per suite.
+ */
+export async function registerTestUser(
+  app: INestApplication<App>,
+  email: string,
+  password = 'e2e test password',
+): Promise<string> {
+  const users = app.get<Repository<User>>(getRepositoryToken(User));
+  await users.delete({ email });
+
+  const registered = await request(app.getHttpServer())
+    .post('/api/auth/register')
+    .send({ firstName: 'Test', lastName: 'User', email, password });
+
+  return (registered.body as AuthResponse).accessToken;
 }
