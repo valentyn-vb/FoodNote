@@ -8,16 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { activityLevelSchema } from '@foodnote/shared';
+import { activityLevelSchema, sexSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { LABEL_CLASS, NumberField, TOGGLE_ITEM_CLASS } from '../form-fields';
+import { InputField, LABEL_CLASS } from '../form-fields';
+import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
 
-// A caller-owned submit button elsewhere on the page reaches this form via
-// the `form` attribute, so the same fields work under any surrounding chrome
-// (onboarding's own header/footer, a profile-edit dialog's header/footer).
 export const DETAILS_FORM_ID = 'details-form';
 
 type DetailsFormProps = {
@@ -42,7 +39,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       className="flex flex-col gap-5 px-5 pt-4.5"
     >
       <div className="flex gap-3">
-        <NumberField
+        <InputField
           id="age"
           label="Age"
           type="number"
@@ -50,7 +47,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
           error={errors.age?.message}
           {...register('age', { valueAsNumber: true })}
         />
-        <NumberField
+        <InputField
           id="heightCm"
           label="Height (cm)"
           type="number"
@@ -60,31 +57,17 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
         />
       </div>
 
-      <Field className="gap-1.75">
-        <FieldLabel className={LABEL_CLASS}>Sex</FieldLabel>
-        <Controller
-          control={control}
-          name="sex"
-          render={({ field }) => (
-            <ToggleGroup
-              value={field.value ? [field.value] : []}
-              onValueChange={(values) => values[0] && field.onChange(values[0])}
-              spacing={2}
-              className="w-full gap-2"
-            >
-              <ToggleGroupItem value="female" className={TOGGLE_ITEM_CLASS}>
-                Female
-              </ToggleGroupItem>
-              <ToggleGroupItem value="male" className={TOGGLE_ITEM_CLASS}>
-                Male
-              </ToggleGroupItem>
-            </ToggleGroup>
-          )}
-        />
-      </Field>
+      <ToggleField
+        control={control}
+        name="sex"
+        label="Sex"
+        options={sexSchema.options}
+        defaultValue={sexSchema.options[0]}
+        error={errors.sex?.message}
+      />
 
       <div className="flex gap-3">
-        <NumberField
+        <InputField
           id="currentWeightKg"
           label="Current weight (kg)"
           type="number"
@@ -92,7 +75,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
           error={errors.currentWeightKg?.message}
           {...register('currentWeightKg', { valueAsNumber: true })}
         />
-        <NumberField
+        <InputField
           id="targetWeightKg"
           label="Target weight (kg)"
           type="number"
