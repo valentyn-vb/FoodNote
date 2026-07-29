@@ -32,10 +32,13 @@ export function DesktopDashboard() {
     retry: retryWeight,
     weightTrend,
     weightChangeKg,
+    weightChangeLastMonthKg,
   } = useWeight();
 
   const gate = useDashboardGate();
   // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
+  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
+  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
