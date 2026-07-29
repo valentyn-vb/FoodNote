@@ -37,6 +37,9 @@
   --shadow-selected: 0 4px 14px #f5a65c29;
   --shadow-focus-primary: 0 0 0 3px var(--fn-primary-ring);
 
+  /* Indeterminate progress: a fill that sweeps because the wait has no known
+     duration. Exempt from the reduced-motion collapse — see the note there. */
+  --animate-indeterminate: indeterminate-sweep 1.4s ease-in-out infinite;
   --text-caption: 13px;
   --text-label: 14px;
   --text-title: 15px;
@@ -224,6 +227,18 @@
   }
 }
 
+@keyframes indeterminate-sweep {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(20%) scaleX(0.7);
+  }
+  100% {
+    transform: translateX(250%) scaleX(0.4);
+  }
+}
+
 @keyframes gradient-mesh-drift {
   0%,
   100% {
@@ -261,5 +276,37 @@
 @media (prefers-reduced-motion: reduce) {
   .gradient-mesh {
     animation: none;
+  }
+}
+
+/* The app-wide reduced-motion rule. Decorative motion is collapsed rather
+   than removed, so anything that animates *into* view (a drawer sliding up,
+   a Base UI popup fading in) still arrives — it just arrives at once instead
+   of travelling. Removing the animation outright would strand elements that
+   start at opacity 0.
+   JS-driven motion is out of CSS's reach and is handled at its source:
+   NumberFlow honours the preference itself, ScrollReveal via motion/react's
+   useReducedMotion, and the three Canvas UI surfaces query the media feature
+   directly to damp or stop their render loops.
+   New components should rely on this rule rather than re-implementing it;
+   only add an exemption for motion that *is* the information. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* Exempt: a busy indicator that stops moving reads as a frozen app, not as
+     a calm one. WCAG 2.3.3 targets non-essential motion; progress feedback is
+     essential. Slowed well below the "distracting" threshold instead. */
+  .animate-spin,
+  .animate-indeterminate {
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
   }
 }
