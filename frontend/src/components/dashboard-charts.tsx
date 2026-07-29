@@ -110,7 +110,7 @@ export function WeightTrendCard({
   data: WeightTrendPoint[];
 }) {
   return (
-    <Card className={className}>
+    <Card variant="panel" className={className}>
       {title && (
         <div className="font-sans text-label font-semibold text-text">
           {title}
@@ -131,7 +131,7 @@ export function RemainingTodayRingCard({
   goalKcal: number;
 }) {
   return (
-    <Card className={className}>
+    <Card variant="panel" className={className}>
       <h2 className="self-start font-sans text-caption font-semibold text-text">
         Remaining today
       </h2>

@@ -18,7 +18,11 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
-        cta: 'rounded-sm bg-primary text-surface shadow-[0_2px_8px_#f5a65c59]',
+        cta: 'rounded-sm bg-primary text-surface shadow-cta',
+        // The quiet secondary action beneath a CTA ("Cancel", "Enter manually
+        // instead") — present but never competing with the primary button.
+        quiet:
+          'text-caption text-text-muted underline-offset-4 hover:underline',
       },
       size: {
         default:
@@ -32,6 +36,10 @@ const buttonVariants = cva(
         'icon-sm':
           'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
         'icon-lg': 'size-10',
+        // The full-width primary action that ends a sheet or a wizard step.
+        cta: 'h-12.5 w-full gap-1.5 px-6',
+        // Sits in a line of text or under a CTA — no box, no reserved height.
+        inline: 'h-auto gap-1 p-0',
       },
     },
     defaultVariants: {

@@ -4,13 +4,13 @@ import NumberFlow from '@number-flow/react';
 import type { MealResponse } from '@foodnote/shared';
 import { Card } from '@/components/ui/card';
 import { formatMealTime } from '@/lib/dashboard-transforms';
-import { CARD_CLASS } from './helpers';
 
 // Shared by the mobile "Logged today" list and the desktop meals column.
 export function MealRow({ meal }: { meal: MealResponse }) {
   return (
     <Card
-      className={`${CARD_CLASS} flex-row items-center justify-between px-4 py-3.5`}
+      variant="panel"
+      className="flex-row items-center justify-between px-4 py-3.5"
     >
       <div className="flex flex-col gap-0.5">
         <div className="font-sans text-label font-semibold text-text">

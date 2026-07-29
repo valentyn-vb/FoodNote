@@ -23,6 +23,20 @@
   --color-tertiary: var(--fn-tertiary);
   --color-error: var(--destructive);
   --color-error-bg: var(--fn-error-bg);
+  --color-primary-tint: var(--fn-primary-tint);
+  --color-primary-tint-soft: var(--fn-primary-tint-soft);
+  --color-track: var(--fn-track);
+  --color-text-soft: var(--fn-text-soft);
+  --color-text-warm: var(--fn-text-warm);
+
+  /* Elevation. The only place a shadow is defined — a raw shadow-[…] utility
+     hardcodes a colour that can't be themed or contrast-audited. */
+  --shadow-card: 0 1px 3px #0000000a;
+  --shadow-hairline: 0 1px 2px #00000008;
+  --shadow-cta: 0 2px 8px #f5a65c59;
+  --shadow-selected: 0 4px 14px #f5a65c29;
+  --shadow-focus-primary: 0 0 0 3px var(--fn-primary-ring);
+
   --text-caption: 13px;
   --text-label: 14px;
   --text-title: 15px;
@@ -60,6 +74,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -79,6 +94,16 @@
   --fn-tertiary: #f4907e;
   --fn-error-bg: #fbe9e7;
   --fn-text-muted: #6b6b6b;
+  /* Warm primary tints: the selected/hover wash (tint), the calmer callout
+     background (tint-soft) and the focus halo (ring). */
+  --fn-primary-tint: #fff3e7;
+  --fn-primary-tint-soft: #fff9f3;
+  --fn-primary-ring: #fdebd6;
+  /* Neutral progress-bar track, and the two body-copy weights that sit
+     between --foreground and --muted-foreground. */
+  --fn-track: #f0eee9;
+  --fn-text-soft: #333333;
+  --fn-text-warm: #6b5843;
   /* --font-display comes from next/font/google (Fredoka) on <html>, see layout.tsx */
 
   --background: #fdfdfb;
@@ -109,7 +134,7 @@
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--fn-primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fff3e7;
+  --sidebar-accent: var(--fn-primary-tint);
   --sidebar-accent-foreground: var(--fn-primary-deep);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--fn-primary);

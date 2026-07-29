@@ -1,6 +1,6 @@
 'use client';
 
-import { Field, FieldLabel } from '@/components/ui/field';
+import { Field } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { activityLevelSchema, sexSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { InputField, LABEL_CLASS } from '../form-fields';
+import { FormLabel, InputField } from '../form-fields';
 import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
 
@@ -86,7 +86,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       </div>
 
       <Field className="gap-1.75">
-        <FieldLabel className={LABEL_CLASS}>Activity level</FieldLabel>
+        <FormLabel>Activity level</FormLabel>
         <Controller
           control={control}
           name="activityLevel"
@@ -96,7 +96,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
               onValueChange={field.onChange}
               items={ACTIVITY_LEVEL_LABELS}
             >
-              <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008]">
+              <SelectTrigger className="h-11.5 w-full rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline">
                 <SelectValue placeholder="Select activity level" />
               </SelectTrigger>
               <SelectContent>

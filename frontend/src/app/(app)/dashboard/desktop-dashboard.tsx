@@ -12,7 +12,7 @@ import {
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, fullnessMascot } from './helpers';
+import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
@@ -24,8 +24,6 @@ import {
 } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 
-const WEIGHT_TREND_CARD_CLASS = `${CARD_CLASS} grow-2 basis-0 gap-3 px-6 py-5.5`;
-
 export function DesktopDashboard() {
   const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
     useMeals();
@@ -34,13 +32,10 @@ export function DesktopDashboard() {
     retry: retryWeight,
     weightTrend,
     weightChangeKg,
-    weightChangeLastMonthKg,
   } = useWeight();
 
   const gate = useDashboardGate();
   // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
-  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
-  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
@@ -57,7 +52,7 @@ export function DesktopDashboard() {
         <DesktopDashboardSkeleton />
       ) : (
         <>
-          <div className="flex gap-3.5 [&>*]:grow [&>*]:basis-0">
+          <div className="flex gap-3.5 *:grow *:basis-0">
             <StatWidget
               label="Remaining today"
               value={remainingKcal}
@@ -103,13 +98,16 @@ export function DesktopDashboard() {
             <div className="flex min-h-0 grow-2 basis-0 flex-col gap-3.5">
               {weightStatus === 'ready' ? (
                 <WeightTrendCard
-                  className={WEIGHT_TREND_CARD_CLASS}
+                  className="grow-2 basis-0 gap-3 px-6 py-5.5"
                   chartClassName="aspect-auto min-h-0 w-full grow basis-0"
                   title="Weight trend"
                   data={weightTrend}
                 />
               ) : (
-                <Card className={WEIGHT_TREND_CARD_CLASS}>
+                <Card
+                  variant="panel"
+                  className="grow-2 basis-0 gap-3 px-6 py-5.5"
+                >
                   <div className="font-sans text-label font-semibold text-text">
                     Weight trend
                   </div>
@@ -136,11 +134,11 @@ export function DesktopDashboard() {
 
             <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
               <RemainingTodayRingCard
-                className={`${CARD_CLASS} shrink-0 items-center gap-2 p-5`}
+                className="shrink-0 items-center gap-2 p-5"
                 remainingKcal={remainingKcal}
                 goalKcal={goalKcal}
               />
-              <Card className={`${CARD_CLASS} grow basis-0 gap-2.5 p-5`}>
+              <Card variant="panel" className="grow basis-0 gap-2.5 p-5">
                 <h2 className="font-sans text-caption font-semibold text-text">
                   7-day calories
                 </h2>

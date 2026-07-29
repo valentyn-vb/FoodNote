@@ -3,7 +3,7 @@
 import { createMealRequestSchema, mealTypeSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
 import type { z } from 'zod';
-import { InputField, LABEL_CLASS } from './form-fields';
+import { FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
 export const mealFormSchema = createMealRequestSchema.omit({
@@ -73,7 +73,7 @@ export function ManualMealForm({ form, onSubmit }: ManualMealFormProps) {
       </div>
 
       <div className="flex flex-col gap-1.75">
-        <div className={LABEL_CLASS}>Macros (optional)</div>
+        <FormGroupLabel>Macros (optional)</FormGroupLabel>
         <div className="flex gap-3">
           {MACRO_FIELDS.map(({ name, label }) => (
             <InputField

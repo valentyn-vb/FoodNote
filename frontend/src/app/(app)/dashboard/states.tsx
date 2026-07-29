@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CARD_CLASS, STAT_TILE_CLASS } from './helpers';
 
 // Shown when GET /dashboard fails — the tiles are the backbone, so without
 // them the whole view is unusable. Retry re-runs both the dashboard and the
@@ -23,7 +22,7 @@ export function DashboardError({ onRetry }: { onRetry: () => void }) {
 
 export function TileSkeleton() {
   return (
-    <Card className={STAT_TILE_CLASS}>
+    <Card variant="tile">
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-7 w-20" />
     </Card>
@@ -56,18 +55,18 @@ export function DesktopDashboardSkeleton() {
       </div>
       <div className="flex min-h-0 grow basis-0 gap-3.5">
         <div className="flex min-h-0 grow-2 basis-0 flex-col gap-3.5">
-          <Card className={`${CARD_CLASS} grow-2 basis-0 p-6`}>
+          <Card variant="panel" className="grow-2 basis-0 p-6">
             <Skeleton className="h-full w-full" />
           </Card>
-          <Card className={`${CARD_CLASS} grow basis-0 p-6`}>
+          <Card variant="panel" className="grow basis-0 p-6">
             <Skeleton className="h-full w-full" />
           </Card>
         </div>
         <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
-          <Card className={`${CARD_CLASS} h-44 shrink-0 p-5`}>
+          <Card variant="panel" className="h-44 shrink-0 p-5">
             <Skeleton className="mx-auto size-28 rounded-full" />
           </Card>
-          <Card className={`${CARD_CLASS} grow basis-0 p-5`}>
+          <Card variant="panel" className="grow basis-0 p-5">
             <Skeleton className="h-full w-full" />
           </Card>
         </div>
@@ -79,7 +78,7 @@ export function DesktopDashboardSkeleton() {
 export function MobileDashboardSkeleton() {
   return (
     <>
-      <Card className={`${CARD_CLASS} gap-3 p-5`}>
+      <Card variant="panel" className="gap-3 p-5">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-9 w-40" />
         <Skeleton className="h-2 w-full rounded-full" />
