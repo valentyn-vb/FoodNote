@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeightEntryResponse } from '@foodnote/shared';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
@@ -55,8 +56,10 @@ export function WeightHistoryRow({
         >
           <Pencil size={16} />
         </WeightDrawer>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           aria-label="Delete entry"
           // Stated as the constraint, not as a claim about the journal:
           // `canDelete` is derived from the provider's 60-day window, so an
@@ -66,7 +69,7 @@ export function WeightHistoryRow({
             canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
           disabled={busy || !canDelete}
-          className="flex size-8 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9] disabled:opacity-40 disabled:hover:bg-transparent"
+          className="text-text-muted"
           onClick={handleDelete}
         >
           {busy ? (
@@ -74,7 +77,7 @@ export function WeightHistoryRow({
           ) : (
             <Trash2 size={16} />
           )}
-        </button>
+        </Button>
       </div>
     </Card>
   );
