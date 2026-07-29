@@ -173,7 +173,7 @@ export function MobileDashboard() {
           </div>
 
           <div className="flex gap-2.5 border-t border-border pt-3">
-            <MealLogDrawer />
+            <MealLogDrawer>Log a meal</MealLogDrawer>
             <WeightLogDrawer
               onWeightSaved={onWeightSaved}
               triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"

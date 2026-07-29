@@ -2,33 +2,46 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { weightKgSchema, type WeightEntryResponse } from '@foodnote/shared';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
+  DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { weights } from '@/lib/api-client';
+import { useControllableState } from '@/hooks/use-controllable-state';
 
+/**
+ * Renders its own trigger when given `children`, or runs controlled via
+ * `open`/`onOpenChange` so a caller can supply a trigger of its own — which is
+ * how the sidebar uses a real SidebarMenuButton instead of restating its
+ * classes.
+ */
 export function WeightLogDrawer({
   onWeightSaved,
+  open: controlledOpen,
+  onOpenChange,
   triggerClassName,
-  children = 'Log weight',
+  children,
 }: {
   onWeightSaved?: (entry: WeightEntryResponse) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   triggerClassName?: string;
   children?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControllableState(
+    controlledOpen,
+    onOpenChange,
+    false,
+  );
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -72,20 +85,17 @@ export function WeightLogDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
-      <DrawerTrigger className={triggerClassName}>{children}</DrawerTrigger>
-      <DrawerContent className="lg:mx-auto lg:max-w-lg">
-        <DrawerHeader className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
-            Log weight
-          </DrawerTitle>
-          <DrawerClose
-            aria-label="Close drawer"
-            className="col-start-3 flex size-5 items-center justify-self-end justify-center"
-          >
-            <X size={20} className="text-[#333333]" strokeWidth={2} />
-          </DrawerClose>
-        </DrawerHeader>
+    <Drawer
+      open={open}
+      onOpenChange={handleOpenChange}
+      responsiveSide
+      showSwipeHandle
+    >
+      {children && (
+        <DrawerTrigger className={triggerClassName}>{children}</DrawerTrigger>
+      )}
+      <DrawerContent>
+        <DrawerTitleBar>Log weight</DrawerTitleBar>
         <form onSubmit={handleSave}>
           <div className="flex flex-col gap-3 px-5 pt-2">
             <DrawerDescription className="font-sans text-caption font-medium text-text">
@@ -117,12 +127,7 @@ export function WeightLogDrawer({
             </div>
           </div>
           <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
-            <Button
-              type="submit"
-              disabled={saving}
-              variant="cta"
-              className="w-full py-3.5"
-            >
+            <Button type="submit" disabled={saving} variant="cta" size="cta">
               {saving && <Loader2 className="size-4 animate-spin" />}
               Save weight
             </Button>

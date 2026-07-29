@@ -2,14 +2,17 @@
 
 import * as React from 'react';
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
+import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 type DrawerContextProps = {
   hasSnapPoints: boolean;
   modal: DrawerPrimitive.Root.Props['modal'];
   showSwipeHandle: boolean;
   swipeDirection: NonNullable<DrawerPrimitive.Root.Props['swipeDirection']>;
+  responsiveSide: boolean;
 };
 
 const DrawerContext = React.createContext<DrawerContextProps | null>(null);
@@ -24,19 +27,38 @@ function useDrawer() {
   return context;
 }
 
+/**
+ * `responsiveSide` is the app's drawer shape: a bottom sheet in the thumb zone
+ * on mobile, a right-hand panel on desktop where the page stays visible
+ * alongside it. It lives here rather than in each caller so every drawer
+ * agrees, and so the breakpoint is stated once.
+ */
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
 function Drawer({
   modal = true,
   showSwipeHandle = false,
+  responsiveSide = false,
   snapPoints,
-  swipeDirection = 'down',
+  swipeDirection: swipeDirectionProp = 'down',
   ...props
 }: DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
+  responsiveSide?: boolean;
 }) {
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const swipeDirection =
+    responsiveSide && isDesktop ? 'right' : swipeDirectionProp;
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
   const contextValue = React.useMemo(
-    () => ({ hasSnapPoints, modal, showSwipeHandle, swipeDirection }),
-    [hasSnapPoints, modal, showSwipeHandle, swipeDirection],
+    () => ({
+      hasSnapPoints,
+      modal,
+      showSwipeHandle,
+      swipeDirection,
+      responsiveSide,
+    }),
+    [hasSnapPoints, modal, showSwipeHandle, swipeDirection, responsiveSide],
   );
 
   return (
@@ -102,7 +124,13 @@ function DrawerContent({
   children,
   ...props
 }: DrawerPrimitive.Popup.Props) {
-  const { hasSnapPoints, modal, showSwipeHandle, swipeDirection } = useDrawer();
+  const {
+    hasSnapPoints,
+    modal,
+    showSwipeHandle,
+    swipeDirection,
+    responsiveSide,
+  } = useDrawer();
   const swipeAxis =
     swipeDirection === 'down' || swipeDirection === 'up' ? 'y' : 'x';
 
@@ -145,6 +173,10 @@ function DrawerContent({
             'data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:origin-left data-[swipe-direction=left]:[--closed-transform:translate3d(calc(-100%-var(--drawer-inset,0px)-2px),0,0)] data-[swipe-direction=left]:[--translate-x:calc(var(--drawer-swipe-movement-x)+var(--stack-peek-offset)+(var(--stack-shrink)*100%))]',
             // Direction: right.
             'data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:origin-right data-[swipe-direction=right]:[--closed-transform:translate3d(calc(100%+var(--drawer-inset,0px)+2px),0,0)] data-[swipe-direction=right]:[--translate-x:calc(var(--drawer-swipe-movement-x)-var(--stack-peek-offset)-(var(--stack-shrink)*100%))]',
+            // Responsive side: full-bleed sheet on mobile, a fixed-width panel
+            // once it anchors to the edge. Set here so the width travels with
+            // the shape instead of being poked in per call site.
+            responsiveSide && 'lg:[--drawer-content-width:31.25rem]',
             className,
           )}
           {...props}
@@ -174,6 +206,40 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
       )}
       {...props}
     />
+  );
+}
+
+/**
+ * A header with the title optically centred and a close button on the right,
+ * plus an optional leading slot (a back link). Shared so the close
+ * affordance — including its accessible name — has one definition.
+ */
+function DrawerTitleBar({
+  children,
+  leading,
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerHeader> & { leading?: React.ReactNode }) {
+  return (
+    <DrawerHeader
+      className={cn('grid grid-cols-[1fr_auto_1fr] items-center', className)}
+      {...props}
+    >
+      {leading ? (
+        <div className="col-start-1 justify-self-start">{leading}</div>
+      ) : (
+        <div />
+      )}
+      <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
+        {children}
+      </DrawerTitle>
+      <DrawerClose
+        aria-label="Close drawer"
+        className="col-start-3 flex size-5 items-center justify-self-end justify-center"
+      >
+        <XIcon size={20} className="text-text-soft" strokeWidth={2} />
+      </DrawerClose>
+    </DrawerHeader>
   );
 }
 
@@ -219,6 +285,7 @@ export {
   DrawerClose,
   DrawerContent,
   DrawerHeader,
+  DrawerTitleBar,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
