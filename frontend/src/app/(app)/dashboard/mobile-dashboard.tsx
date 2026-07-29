@@ -6,6 +6,7 @@ import {
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { Disclaimer } from '@/components/disclaimer';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -20,7 +21,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
 import { CARD_CLASS, fullnessMascot } from './helpers';
-import { MealRow } from './meal-row';
 import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -181,10 +181,11 @@ export function MobileDashboard() {
             <h2 className="font-sans text-caption font-medium text-text">
               Logged today
             </h2>
-            {todayMeals.length === 0 && <EmptyMeals />}
-            {todayMeals.map((meal) => (
-              <MealRow key={meal.id} meal={meal} />
-            ))}
+            {todayMeals.length === 0 ? (
+              <EmptyMeals />
+            ) : (
+              <MealGroupsAccordion meals={todayMeals} />
+            )}
           </div>
 
           <div className="flex gap-2.5 border-t border-border pt-3">

@@ -6,6 +6,7 @@ import {
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { Disclaimer } from '@/components/disclaimer';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Card } from '@/components/ui/card';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -15,7 +16,6 @@ import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { EmptyMeals } from './empty-meals';
 import { CARD_CLASS, fullnessMascot } from './helpers';
-import { MealRow } from './meal-row';
 import { StatWidget } from './stat-widget';
 import {
   DashboardError,
@@ -137,10 +137,11 @@ export function DesktopDashboard() {
                   Logged today
                 </h2>
                 <div className="flex min-h-0 grow basis-0 flex-col gap-2.5 overflow-y-auto">
-                  {todayMeals.length === 0 && <EmptyMeals />}
-                  {todayMeals.map((meal) => (
-                    <MealRow key={meal.id} meal={meal} />
-                  ))}
+                  {todayMeals.length === 0 ? (
+                    <EmptyMeals />
+                  ) : (
+                    <MealGroupsAccordion meals={todayMeals} />
+                  )}
                   <MealLogDrawer triggerClassName="ml-auto h-10 text-label font-semibold" />
                 </div>
               </div>

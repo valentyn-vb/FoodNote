@@ -1,12 +1,21 @@
+import type { MealResponse } from '@foodnote/shared';
 import { Card } from '@/components/ui/card';
-import { EmptyGroupLine, MealLine } from './meal-line';
-import { formatGroupSummary, type MealGroup } from './helpers';
+import { EmptyGroupLine, MealLine } from '@/components/meal-line';
+import {
+  formatGroupSummary,
+  groupMealsByType,
+} from '@/lib/dashboard-transforms';
 
-// Desktop shows all four meal times side by side, always expanded: a day's
-// meals fit easily and there is room for them, so collapsing would hide data
-// for nothing. Two columns at lg, four at xl — four across a narrow desktop
-// window crushes the meal names.
-export function DesktopMealGroups({ groups }: { groups: MealGroup[] }) {
+// The /meals page at desktop width shows all four meal times side by side,
+// always expanded: a day's meals fit easily and there is room for them, so
+// collapsing would hide data for nothing. Two columns at lg, four at xl — four
+// across a narrow desktop window crushes the meal names.
+//
+// The dashboard uses MealGroupsAccordion at every width instead; its "Logged
+// today" column is too narrow for a four-column grid.
+export function DesktopMealGroups({ meals }: { meals: MealResponse[] }) {
+  const groups = groupMealsByType(meals);
+
   return (
     <div className="hidden grid-cols-2 gap-3.5 lg:grid xl:grid-cols-4">
       {groups.map((group) => (

@@ -5,11 +5,10 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/empty-state';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { useMeals } from '@/lib/meals-context';
 import { DesktopMealGroups } from './desktop-meal-groups';
-import { MobileMealGroups } from './mobile-meal-groups';
-import { groupMealsByType } from './helpers';
 
 // Today's meals, grouped by meal time. Read-only: logging still happens through
 // the drawer, and editing a past meal isn't wired up yet (PATCH /meals/:id
@@ -22,7 +21,6 @@ import { groupMealsByType } from './helpers';
 // neither of which this page renders.
 export default function MealsPage() {
   const { status, retry, todayMeals } = useMeals();
-  const groups = groupMealsByType(todayMeals);
 
   return (
     <div className="flex w-full flex-col gap-5 px-5 pt-6 pb-8 lg:mx-14 lg:my-10 lg:max-w-6xl lg:px-0 lg:py-0">
@@ -62,8 +60,12 @@ export default function MealsPage() {
         />
       ) : (
         <>
-          <MobileMealGroups groups={groups} />
-          <DesktopMealGroups groups={groups} />
+          {/* The accordion owns no breakpoint of its own (the dashboards use it
+              at every width), so the mobile-only scoping lives here. */}
+          <div className="lg:hidden">
+            <MealGroupsAccordion meals={todayMeals} />
+          </div>
+          <DesktopMealGroups meals={todayMeals} />
         </>
       )}
     </div>

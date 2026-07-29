@@ -1,5 +1,6 @@
 'use client';
 
+import type { MealResponse } from '@foodnote/shared';
 import {
   Accordion,
   AccordionContent,
@@ -7,16 +8,27 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
-import { EmptyGroupLine, MealLine } from './meal-line';
-import { formatGroupSummary, type MealGroup } from './helpers';
+import { EmptyGroupLine, MealLine } from '@/components/meal-line';
+import {
+  formatGroupSummary,
+  groupMealsByType,
+} from '@/lib/dashboard-transforms';
 
-// Mobile collapses each meal time behind its subtotal, so the screen opens as a
-// four-row summary of where the day's calories went and you drill into the one
-// you care about. All four start closed (Base UI defaults `value` to []).
-// `multiple` so opening dinner doesn't collapse breakfast.
-export function MobileMealGroups({ groups }: { groups: MealGroup[] }) {
+// One day's meals collapsed behind their meal-time subtotals, so the list reads
+// as a four-row summary of where the day's calories went and you drill into the
+// one you care about. Shared by /meals and both dashboards' "Logged today".
+//
+// Breakpoint-agnostic on purpose: every caller either already sits inside a
+// container scoped to one breakpoint (the dashboards) or wraps it in one
+// (/meals), so owning an `lg:hidden` here would fight them.
+//
+// All four groups start closed (Base UI defaults `value` to []). `multiple` so
+// opening dinner doesn't collapse breakfast.
+export function MealGroupsAccordion({ meals }: { meals: MealResponse[] }) {
+  const groups = groupMealsByType(meals);
+
   return (
-    <Card className="gap-0 rounded-lg border border-border py-0 ring-0 lg:hidden">
+    <Card className="gap-0 rounded-lg border border-border py-0 ring-0">
       <Accordion multiple>
         {groups.map((group) => (
           <AccordionItem key={group.mealType} value={group.mealType}>

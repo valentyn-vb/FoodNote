@@ -1,11 +1,11 @@
 import type { MealResponse } from '@foodnote/shared';
 import { formatMealTime } from '@/lib/dashboard-transforms';
 
-// A meal inside a meal-time group. Deliberately not the dashboard's MealRow:
-// that one is a Card because it sits directly on the page background, whereas
-// these sit inside the group's own card, where a nested card would read wrong.
-// No NumberFlow either — nothing on this page animates, so the calorie figure
-// is plain text.
+// A meal inside a meal-time group. A flat row, not a Card: these sit inside the
+// group's own card, where a nested card reads heavy. (It replaced the former
+// dashboard MealRow, which was a Card because it sat directly on the page
+// background.) No NumberFlow either — these lists don't animate, so the calorie
+// figure is plain text.
 export function MealLine({ meal }: { meal: MealResponse }) {
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-t-0">
