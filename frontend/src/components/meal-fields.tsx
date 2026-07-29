@@ -316,13 +316,13 @@ export function MealItemsFields({
           // appearance reads as a repaint. Capped so a ten-item parse doesn't
           // turn into a queue.
           style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
-          className="motion-keep-fade gap-2.5 p-3 bg-background rounded-md transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
+          className="@container motion-keep-fade gap-2.5 p-3 bg-background rounded-md transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
         >
           <div className="flex items-center gap-2">
             <Input
               variant="bare"
               aria-label={`Item ${index + 1} name`}
-              className="grow-2 basis-0"
+              className="min-w-24 grow-2 basis-0"
               {...form.register(`items.${index}.name`, {
                 onChange: onItemsChange,
               })}
@@ -330,7 +330,10 @@ export function MealItemsFields({
             {/* Read-only: it is what makes the calorie figure checkable
                 ("Rice — 196 kcal" can't be judged, "Rice, 150 g — 196 kcal"
                 can), but the totals are what the user actually corrects. */}
-            <span className="shrink-0 font-sans text-[12.5px] text-text-muted tabular-nums">
+            <span
+              title={field.quantityDescription}
+              className="min-w-0 shrink truncate text-right font-sans text-[12.5px] text-text-muted tabular-nums"
+            >
               {field.quantityDescription}
             </span>
             <Button
@@ -350,13 +353,9 @@ export function MealItemsFields({
           {/* All four figures on one line, each labelled by its addon:
               units go after a number, nutrient names before it, so kcal reads
               as the marker for this box rather than a stray unit. */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
             {ITEM_NUTRIENTS.map(({ name, label }) => (
-              <InputGroup
-                key={name}
-                variant="cell"
-                className={cn('basis-0 h-9 grow')}
-              >
+              <InputGroup key={name} variant="cell" className="h-9 min-w-0">
                 <InputGroupAddon
                   align="inline-end"
                   className="text-[12px] font-normal text-text-muted"

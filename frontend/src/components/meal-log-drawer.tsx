@@ -331,10 +331,15 @@ export function MealLogDrawer({
 
         {step === 'loading' && (
           <StepPanel key="loading">
+            {/* flex-1 + justify-center so the wait sits in the middle of a
+                full-height desktop panel; on mobile the sheet is content-sized
+                and there is no slack to centre in, so it just stacks. Cancel
+                lives in here rather than in the footer — pinned to the bottom
+                it ended up a screen away from the thing it cancels. */}
             <div
               aria-busy="true"
               aria-live="polite"
-              className="flex flex-col items-center justify-center gap-5 px-6 pt-16 pb-8"
+              className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-12"
             >
               <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-primary-tint">
                 <Image
@@ -351,12 +356,15 @@ export function MealLogDrawer({
               <div className="h-1.5 w-40 shrink-0 overflow-hidden rounded-full bg-track">
                 <div className="h-full w-full origin-left rounded-full bg-primary animate-indeterminate" />
               </div>
-            </div>
-            <DrawerFooter className="items-center pt-2 pb-5">
-              <Button variant="quiet" size="inline" onClick={handleCancelParse}>
+              <Button
+                variant="quiet"
+                size="inline"
+                onClick={handleCancelParse}
+                className="mt-1"
+              >
                 Cancel
               </Button>
-            </DrawerFooter>
+            </div>
           </StepPanel>
         )}
 
