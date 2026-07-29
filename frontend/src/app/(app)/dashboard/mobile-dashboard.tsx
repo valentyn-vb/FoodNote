@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { WeightDrawer } from '@/components/weight-drawer';
 import {
   DailyCaloriesChart,
   WeightTrendCard,
@@ -178,12 +178,13 @@ export function MobileDashboard() {
 
           <div className="flex gap-2.5 border-t border-border pt-3">
             <MealLogDrawer />
-            <WeightLogDrawer
+            <WeightDrawer
+              mode="create"
               onWeightSaved={onWeightSaved}
               triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
             >
               Log weight
-            </WeightLogDrawer>
+            </WeightDrawer>
           </div>
         </>
       )}
