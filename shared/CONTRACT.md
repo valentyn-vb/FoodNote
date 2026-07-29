@@ -52,8 +52,12 @@ replay-safe.
 ⁵ POST always creates a new entry (201); the weight journal is a plain list
 with no per-day uniqueness.
 ⁶ "Not food" is **not** an error: 200 with `{ parsed: false, reason }`
-(discriminated union on `parsed`). 400 = bad description, 429 = per-user
-rate limit, 502 = OpenAI failure / invalid model output.
+(discriminated union on `parsed`). 400 = bad description (empty, under 3 or over
+500 characters — never reaches the model), 429 = 10 requests per minute per
+authenticated user, and additionally 10/min per IP, since the global IP-tracked
+guard reads the same limit (so users behind one NAT share a bucket — see
+`backend/src/common/per-user-throttler.guard.ts`). 502 = OpenAI failure /
+invalid model output; terminal, not retried server-side (ADR-0006).
 ⁷ 404 until onboarding is complete (no profile or no active goal).
 ⁸ 5 requests per minute per IP, tighter than the API-wide limit above.
 
