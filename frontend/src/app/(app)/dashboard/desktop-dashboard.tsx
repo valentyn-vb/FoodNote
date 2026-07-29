@@ -16,6 +16,7 @@ import { CARD_CLASS, fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 import {
   DashboardError,
   DesktopDashboardSkeleton,
@@ -32,9 +33,11 @@ export function DesktopDashboard() {
   const {
     status: weightStatus,
     retry: retryWeight,
+    entries: weightEntries,
     weightTrend,
     weightChangeKg,
     weightChangeLastMonthKg,
+    onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -106,6 +109,13 @@ export function DesktopDashboard() {
                   className={WEIGHT_TREND_CARD_CLASS}
                   chartClassName="aspect-auto min-h-0 w-full grow basis-0"
                   title="Weight trend"
+                  action={
+                    <WeightHistoryDrawer
+                      entries={weightEntries}
+                      onWeightsChanged={onWeightsChanged}
+                      triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9]"
+                    />
+                  }
                   data={weightTrend}
                 />
               ) : (

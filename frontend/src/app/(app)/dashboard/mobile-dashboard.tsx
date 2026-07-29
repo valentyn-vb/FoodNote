@@ -10,7 +10,7 @@ import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { WeightDrawer } from '@/components/weight-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { initialsOf } from '@/lib/user-display';
@@ -24,6 +24,7 @@ import { MealRow } from './meal-row';
 import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 
 export function MobileDashboard() {
   const { user } = useAuth();
@@ -38,9 +39,11 @@ export function MobileDashboard() {
   const {
     status: weightStatus,
     retry: retryWeight,
+    entries: weightEntries,
     weightTrend,
     weightChangeKg,
     onWeightSaved,
+    onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -125,11 +128,23 @@ export function MobileDashboard() {
               <h2 className="font-sans text-caption font-medium text-text">
                 Weight trend
               </h2>
-              {weightReady && (
-                <div className="font-sans text-[12px] font-medium text-secondary-deep">
-                  <NumberFlow value={weightChangeKg} suffix=" kg this month" />
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {weightReady && (
+                  <div className="font-sans text-[12px] font-medium text-secondary-deep">
+                    <NumberFlow
+                      value={weightChangeKg}
+                      suffix=" kg this month"
+                    />
+                  </div>
+                )}
+                {weightReady && (
+                  <WeightHistoryDrawer
+                    entries={weightEntries}
+                    onWeightsChanged={onWeightsChanged}
+                    triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted"
+                  />
+                )}
+              </div>
             </div>
             {weightReady ? (
               <WeightTrendCard
@@ -174,12 +189,13 @@ export function MobileDashboard() {
 
           <div className="flex gap-2.5 border-t border-border pt-3">
             <MealLogDrawer />
-            <WeightLogDrawer
+            <WeightDrawer
+              mode="create"
               onWeightSaved={onWeightSaved}
               triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
             >
               Log weight
-            </WeightLogDrawer>
+            </WeightDrawer>
           </div>
         </>
       )}
