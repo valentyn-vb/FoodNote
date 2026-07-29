@@ -5,6 +5,7 @@ import {
   idSchema,
   macroGramsSchema,
   macroTotalsSchema,
+  mealNameSchema,
   mealSourceSchema,
   mealTypeSchema,
   recordedAtSchema,
@@ -30,7 +31,7 @@ export const mealItemSchema = z.object({
 });
 
 export const createMealRequestSchema = z.object({
-  mealName: z.string().trim().min(1).max(200),
+  mealName: mealNameSchema,
   mealType: mealTypeSchema,
   recordedAt: recordedAtSchema,
   ...macroTotalsSchema.shape,
@@ -69,7 +70,9 @@ export type ListMealsResponse = z.infer<typeof listMealsResponseSchema>;
  * POST /meals/ai-parse. "Not food" is a successful recognition outcome, not
  * an error: the response is a discriminated union on `parsed`. Real failures
  * stay HTTP errors — 400 (bad description), 429 (rate limit), 502 (OpenAI
- * failure / invalid JSON after retry).
+ * failure / invalid model output). Those 502s are terminal: strict structured
+ * output only breaks on a refusal, truncation or the content filter, none of
+ * which a retry of the same request would fix (see ADR-0006).
  *
  * The parsed meal deliberately reuses the meal field names
  * (quantityDescription, proteinGrams, …) so a confirmed preview passes
@@ -81,10 +84,14 @@ export const aiParseRequestSchema = z.object({
 });
 
 export const aiParsedMealSchema = z.object({
-  mealName: z.string(),
+  // The same schema createMealRequestSchema uses, not a matching copy — see
+  // mealNameSchema for why they must not drift apart.
+  mealName: mealNameSchema,
   items: z.array(mealItemSchema).min(1),
   ...macroTotalsSchema.shape,
-  confidenceNote: z.string(),
+  // Non-empty: we are the only producer, and a Parsed Meal whose note states no
+  // assumption tells the user nothing about numbers they are asked to trust.
+  confidenceNote: z.string().min(1),
 });
 
 export const aiParseResponseSchema = z.discriminatedUnion('parsed', [

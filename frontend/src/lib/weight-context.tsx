@@ -84,7 +84,9 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     (entry: WeightEntryResponse) => {
       // The new entry updates the actual line + change stat immediately; the
       // projection line + goal tile re-anchor once the server recomputes the
-      // projected date (POST /weights doesn't return it).
+      // projected date (POST /weights doesn't return it). The reached-goal
+      // overlay is triggered by reachedTarget on the dashboard and is
+      // non-dismissable, so no client state needed.
       setEntries((prev) => [...prev, entry]);
       void refetchDashboard();
     },

@@ -36,18 +36,52 @@ An optional line inside a Meal Entry detailing one food ("Chicken breast,
 180 g"). Items illustrate the meal; they are never summed by the server.
 _Avoid_: ingredient, product
 
+**AI Parse**:
+Turning a free-text description ("two eggs on toast") into a candidate meal. It
+never writes: a parse yields either a Parsed Meal or the verdict "not food", and
+both are successful recognitions — only a subsequent Meal Entry persists
+anything. A parse that reaches neither outcome is a failure, not a verdict.
+_Avoid_: analyse, scan, import
+
+**Parsed Meal**:
+What a successful AI Parse yields: a meal name, Meal Items, macro totals and a
+Confidence Note. It is a proposal, not a record — it becomes a Meal Entry only
+when the user confirms it (`source: ai`), and the user may adjust the totals
+first. It carries no meal type; the user chooses that on confirmation.
+_Avoid_: draft, suggestion, prediction
+
+**Confidence Note**:
+The one-sentence statement of the assumption behind a Parsed Meal's numbers —
+typically the portion assumed when the description gave no quantity. It exists
+because the numbers are estimates the user is asked to trust.
+_Avoid_: disclaimer, warning
+
 **Goal**:
 A weight plan: start weight/date, target weight, and Pace. Direction (loss or
-gain) is implied by target vs. Current Weight; target == current is
-maintenance. At most one is active per user; creating a new Goal marks the
-previous active one `replaced`. Statuses: `active`, `completed`, `replaced`.
+gain) comes from target vs. **start** weight, so it survives overshooting the
+target; a Pace of 0 makes it a maintenance plan instead. At most one is active
+per user. Creating a new Goal marks the previous active one `completed` when its
+target had been reached and `replaced` when it hadn't — those are the only ways
+the status ever changes. Statuses: `active`, `completed`, `replaced`.
 _Avoid_: plan, target (alone)
 
 **Pace**:
-The Goal's chosen weekly weight-change rate (kg/week) — always a positive
-magnitude (0.25 / 0.5 / 0.75 / 1.0), never above the 1.0 kg/week safety
-ceiling. Implies the daily calorie deficit or surplus (~7700 kcal per kg).
+The Goal's chosen weekly weight-change rate (kg/week): 0 / 0.25 / 0.5 / 0.75 /
+1.0, never above the 1.0 kg/week safety ceiling. The non-zero values are
+magnitudes — direction belongs to the Goal, not the Pace — and imply the daily
+calorie deficit or surplus (~7700 kcal per kg). A Pace of 0 is the single thing
+that makes a Goal a maintenance plan: no destination, no deadline, Calorie
+Target equal to Maintenance Calories. Moving a plan to or from maintenance is a
+Pace change on the same Goal, not a new one.
 _Avoid_: speed, rate, weekly change
+
+**Target Reached**:
+Current Weight has met or passed the active Goal's target, measured in that
+Goal's own direction so an overshoot still counts. Derived on every read, never
+stored, and always false on a maintenance plan — there is nothing to reach when
+you are holding. It nulls the Projected Goal Date and holds the Calorie Target
+at Maintenance Calories, so passing a loss target can never prescribe a surplus.
+_Avoid_: goal achieved, completed (that is a Goal status, set only on replacement)
 
 **Maintenance Calories**:
 The daily energy (kcal) that keeps Current Weight unchanged: BMR
@@ -87,7 +121,9 @@ _Avoid_: exercise level, lifestyle
 
 **Projected Goal Date**:
 The date the active Goal should be reached at its Pace: remaining weight ÷
-Pace, added to today. Derived on read from Current Weight.
+Pace, added to today. Derived on read from Current Weight. Null once Target
+Reached, and always null on a maintenance plan — read it together with Target
+Reached to tell those two apart.
 _Avoid_: ETA, deadline
 
 **Dashboard**:

@@ -1,5 +1,5 @@
 import type { ActivityLevel, Sex } from './common';
-import type { BodyMetrics, PlanInput } from './calc.types';
+import type { BodyMetrics, GoalProgress, PlanInput } from './calc.types';
 import type { Pace, PlanOption } from './goals';
 import { PACE_OPTIONS } from './goals';
 
@@ -94,17 +94,47 @@ export function calorieTargetForPace(input: PlanInput, pace: Pace): number {
  * days). `remainingKg` is a magnitude (direction-agnostic); returns null when
  * nothing remains. Uses UTC throughout so the result never depends on a client
  * timezone — the same rule the rest of the contract follows.
+ *
+ * A pace of 0 is a maintenance plan and has no projected date. The guard is
+ * load-bearing, not defensive: dividing by 0 gives Infinity days, which makes
+ * an Invalid Date whose toISOString() throws RangeError.
  */
 export function projectedDate(
   remainingKg: number,
   weeklyPaceKg: number,
   fromDate: string,
 ): string | null {
+  if (weeklyPaceKg <= 0) return null;
   if (remainingKg <= 0) return null;
   const days = Math.ceil((remainingKg / weeklyPaceKg) * 7);
   const from = new Date(`${fromDate}T00:00:00.000Z`);
   from.setUTCDate(from.getUTCDate() + days);
   return from.toISOString().slice(0, 10);
+}
+
+/**
+ * Whether the Goal's target has been met at `currentWeightKg`.
+ *
+ * Direction comes from target vs **start** weight, never vs current: once the
+ * user overshoots, the current weight sits on the far side of the target, so
+ * comparing against current would read a passed loss goal as a gain goal still
+ * to come. `projectedDate` works on a magnitude and cannot make that
+ * distinction, which is why this is its own test and not
+ * `projectedGoalDate === null`.
+ *
+ * Always false on a maintenance plan (pace 0) — there is no target to reach, and
+ * a permanently-true flag would pin the dashboard's reached prompt open forever.
+ */
+export function hasReachedTarget({
+  startWeightKg,
+  targetWeightKg,
+  currentWeightKg,
+  preferredWeeklyChangeKg,
+}: GoalProgress): boolean {
+  if (preferredWeeklyChangeKg === 0) return false;
+  return targetWeightKg < startWeightKg
+    ? currentWeightKg <= targetWeightKg
+    : currentWeightKg >= targetWeightKg;
 }
 
 /**

@@ -26,3 +26,4 @@ shadcn/ui is the component vocabulary. Nothing below gets installed up front —
 ## Added
 
 - **EvilCharts** (`evilcharts.com` shadcn registry, recharts-based, MIT) — dashboard weight-trend line + 7-day calorie bars, themed with FoodNote tokens. Chosen by Jerry 2026-07-14; components land as reviewable source in `frontend/src/components/evilcharts/`.
+- **canvas-confetti** (~2.5 kB gzip, ISC) — the goal-reached overlay, and only that. This is the one moment in the app worth a full-screen celebration: it happens once per goal, unlike the per-meal "CELEBRATE" mascot the design summary deliberately keeps quiet. Two bursts angled in from the lower corners in the `--fn-*` palette, honouring `prefers-reduced-motion` (`disableForReducedMotion`, plus a `useReducedMotion()` check that keeps the overlay and drops the confetti). Not a general-purpose animation dependency — `motion` remains that.
