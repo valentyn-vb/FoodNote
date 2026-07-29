@@ -40,6 +40,13 @@
   /* Indeterminate progress: a fill that sweeps because the wait has no known
      duration. Exempt from the reduced-motion collapse — see the note there. */
   --animate-indeterminate: indeterminate-sweep 1.4s ease-in-out infinite;
+
+  /* Easing. The stock CSS curves are too soft to read as intentional: at the
+     same duration a strong ease-out feels faster than ease, because the eye is
+     watching hardest at the first frame. ease-in is never right for UI — it
+     withholds exactly that frame. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
   --text-caption: 13px;
   --text-label: 14px;
   --text-title: 15px;
@@ -308,5 +315,13 @@
   .animate-indeterminate {
     animation-duration: 2s !important;
     animation-iteration-count: infinite !important;
+  }
+
+  /* Reduced motion means less movement, not no transitions. A cross-fade
+     still tells you one thing replaced another; it is the travel that causes
+     trouble. Elements marked this way keep the fade and lose the motion. */
+  .motion-keep-fade {
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
   }
 }
