@@ -33,3 +33,12 @@ The frontend is shadcn `base-vega` on Base UI (`frontend/components.json`; check
 - `FieldSet` + `FieldLegend` for a group that reads as one question (radio/checkbox sets), not a bare `FieldLabel` over loose inputs
 - invalid state is declared twice, by design: `data-invalid` on the `Field` (drives `data-[invalid=true]:text-destructive` across label and message) and `aria-invalid` on the control itself (drives the control's own ring). Setting only one gives a half-styled error
 - controls that aren't native inputs — `ToggleGroup`, `Select`, `RadioGroup` — bind through `Controller`, never `register()`
+- styling follows **Styling** below
+
+## Styling
+
+Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. The theme is the source of truth for colour, elevation, radius and type — a utility class is how you _use_ it, never where you _define_ it.
+
+- **Never export a className string.** A look shared by two call sites is a `cva` variant on the `ui/` component (as `Button` already does — `variant="cta"`), so callers write `<Card variant="tile">`. `CARD_CLASS` / `STAT_TILE_CLASS` in `app/(app)/dashboard/helpers.ts` are the pattern to delete, not to copy: a class-string constant is a component variant that never got written, and `cn()` merge order makes it silently overridable at every call site.
+- **Cancelling a `ui/` component's own defaults is the tell.** `ring-0 py-0` exists in `CARD_CLASS` only to undo `Card`'s `ring-1 ring-foreground/10` and `py-(--card-spacing)`. When a call site fights the component, the variant belongs _in_ the component.
+- **No arbitrary value that hardcodes a color or an elevation** — `shadow-[0_1px_3px_#0000000a]`, `bg-[#F0EEE9]`, `text-[#333333]` all bypass the theme and can't be themed, audited for contrast, or changed in one place. If the value is missing, add the token to `@theme` and use the generated utility (`shadow-card`). Note there are **no `--shadow-*` tokens yet** — the first change that needs one adds it.

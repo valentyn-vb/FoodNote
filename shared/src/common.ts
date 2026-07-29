@@ -34,6 +34,12 @@ export const idSchema = z.uuid();
 export const ageSchema = z.number().int().min(13).max(100);
 export const heightCmSchema = z.number().min(100).max(250);
 export const weightKgSchema = z.number().min(30).max(300);
+/**
+ * A meal's display name. Shared by the create request and the AI Parse preview
+ * on purpose: a Parsed Meal is confirmed by posting it to POST /meals, so if the
+ * two bounds diverge a preview can succeed and then fail on confirm.
+ */
+export const mealNameSchema = z.string().trim().min(1).max(200);
 export const caloriesSchema = z.number().min(0).max(10000);
 export const macroGramsSchema = z.number().min(0).max(1000);
 export const recordedAtSchema = z.iso.datetime();

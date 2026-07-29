@@ -12,8 +12,8 @@ import {
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
-import { CompareStat } from './compare-stat';
+import { CARD_CLASS, fullnessMascot } from './helpers';
+import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
 import { WeightHistoryDrawer } from './weight-history-drawer';
@@ -57,47 +57,46 @@ export function DesktopDashboard() {
         <DesktopDashboardSkeleton />
       ) : (
         <>
-          <div className="flex gap-3.5">
-            <CompareStat
+          <div className="flex gap-3.5 [&>*]:grow [&>*]:basis-0">
+            <StatWidget
               label="Remaining today"
               value={remainingKcal}
-              compareLabel="Remaining yesterday"
-              compareValue={remainingYesterday}
               suffix=" kcal"
-              goodIsDown={false}
             />
-            <CompareStat
+            <StatWidget
               label="Eaten today"
               value={eatenKcal}
-              compareLabel="Eaten yesterday"
-              compareValue={eatenYesterday}
               suffix=" kcal"
-              goodIsDown
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
             />
-            {/* Reads the goal block rather than the weight journal, so it needs
-                no weightStatus gate. "Weight change" alone hid where the user
-                started; the onboarding weight is the honest baseline. */}
-            <CompareStat
-              label="Current weight"
-              value={gate.goal.currentWeightKg}
-              compareLabel="Start weight"
-              compareValue={gate.goal.startWeightKg}
-              suffix=" kg"
-              goodIsDown={gate.goal.targetWeightKg < gate.goal.startWeightKg}
+            {weightStatus === 'ready' ? (
+              <StatWidget
+                label="Weight change"
+                value={weightChangeKg}
+                suffix=" kg"
+              />
+            ) : (
+              <TileSkeleton />
+            )}
+            <StatWidget
+              label={
+                gate.goal.reachedTarget
+                  ? 'Goal'
+                  : gate.goal.projectedGoalDate === null
+                    ? 'Goal'
+                    : 'Projected goal date'
+              }
+              value={
+                gate.goal.reachedTarget
+                  ? 'You hit your target'
+                  : !gate.goal.projectedGoalDate
+                    ? 'Maintaining your weight'
+                    : `${formatGoalDate(gate.goal.projectedGoalDate)} · ${weeksUntil(
+                        gate.goal.projectedGoalDate,
+                        new Date(),
+                      )} wks`
+              }
             />
-            <Card className={STAT_TILE_CLASS}>
-              <h2 className="font-sans text-[12px] text-text-muted">
-                Projected goal date
-              </h2>
-              <div className="font-display text-heading-lg font-semibold text-text">
-                {gate.goal.projectedGoalDate
-                  ? `${formatGoalDate(
-                      gate.goal.projectedGoalDate,
-                    )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} wks`
-                  : 'Target reached'}
-              </div>
-            </Card>
           </div>
 
           <div className="flex min-h-0 grow basis-0 gap-3.5">

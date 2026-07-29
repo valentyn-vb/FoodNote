@@ -12,6 +12,11 @@ type PlanOptionCardProps = {
 // A single selectable plan option (pace · daily calories · goal date). Must be
 // rendered inside a RadioGroup — it owns a RadioGroupItem keyed by option.pace.
 export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
+  // Pace 0 is the maintenance plan: "0 kg / week" is technically true but reads
+  // like a broken value, and there is no goal date to show — formatGoalDate(null)
+  // would print "Target already reached" on a plan just being started.
+  const isMaintenance = option.pace === 0;
+
   return (
     <label
       className={cn(
@@ -28,7 +33,7 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
             selected ? 'text-primary-deep' : 'text-text-muted',
           )}
         >
-          {option.pace} kg / week
+          {isMaintenance ? 'Maintain your weight' : `${option.pace} kg / week`}
         </div>
         <RadioGroupItem
           value={String(option.pace)}
@@ -44,7 +49,9 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
           selected ? 'text-primary-deep' : 'text-text-muted',
         )}
       >
-        Goal date ~ {formatGoalDate(option.projectedGoalDate)}
+        {isMaintenance
+          ? 'Holds your current weight'
+          : `Goal date ~ ${formatGoalDate(option.projectedGoalDate)}`}
       </div>
     </label>
   );

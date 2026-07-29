@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { calorieTargetForPace, tdee } from '@foodnote/shared';
+import { calorieTargetForPace, hasReachedTarget, tdee } from '@foodnote/shared';
 import type {
   Pace,
   PatchProfileRequest,
@@ -73,6 +73,17 @@ export class ProfileService {
         ),
       );
       if (goal) {
+        // A reached goal must never prescribe a surplus. Past a loss target the
+        // stored target sits *above* the current weight, which calorieTargetForPace
+        // reads as a gain plan — so it would tell someone who overshot to eat
+        // more. Feeding the current weight as the target makes it return plain
+        // maintenance instead, which is what a met goal deserves.
+        const reached = hasReachedTarget({
+          startWeightKg: goal.startWeightKg,
+          targetWeightKg: goal.targetWeightKg,
+          preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg as Pace,
+          currentWeightKg,
+        });
         calorieTarget = calorieTargetForPace(
           {
             age: profile.age,
@@ -80,7 +91,7 @@ export class ProfileService {
             heightCm: profile.heightCm,
             activityLevel: profile.activityLevel,
             currentWeightKg,
-            targetWeightKg: goal.targetWeightKg,
+            targetWeightKg: reached ? currentWeightKg : goal.targetWeightKg,
           },
           goal.preferredWeeklyChangeKg as Pace,
         );

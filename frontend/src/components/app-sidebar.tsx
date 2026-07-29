@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   LogOut,
   Scale,
-  Settings,
   UserRoundPen,
   UtensilsCrossed,
 } from 'lucide-react';
@@ -104,15 +103,6 @@ export function AppSidebar() {
                     <Scale />
                     <span>Log weight</span>
                   </WeightDrawer>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Settings"
-                    onClick={() => notImplemented('Settings')}
-                  >
-                    <Settings />
-                    <span>Settings</span>
-                  </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>

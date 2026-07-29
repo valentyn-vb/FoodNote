@@ -3,6 +3,7 @@ import {
   buildPlanOptions,
   calorieTargetForPace,
   dailyEnergyDeltaForPace,
+  hasReachedTarget,
   MAX_SAFE_PACE_KG,
   projectedDate,
   tdee,
@@ -47,6 +48,7 @@ describe('tdee (BMR × activity factor)', () => {
 
 describe('dailyEnergyDeltaForPace (~7700 kcal/kg)', () => {
   it.each([
+    [0, 0], // maintenance: no deficit, no surplus
     [0.25, 275],
     [0.5, 550],
     [0.75, 825],
@@ -142,6 +144,65 @@ describe('projectedDate (remaining ÷ weekly pace, ceil to whole days)', () => {
     expect(projectedDate(0, 0.5, '2026-01-01')).toBeNull();
     expect(projectedDate(-2, 0.5, '2026-01-01')).toBeNull();
   });
+
+  it('returns null at pace 0 instead of dividing by zero', () => {
+    // A maintenance plan has no projected date. Without the guard, 5 ÷ 0 is
+    // Infinity days → Invalid Date → toISOString() throws RangeError.
+    expect(projectedDate(5, 0, '2026-01-01')).toBeNull();
+  });
+});
+
+describe('hasReachedTarget (direction from start, not from current)', () => {
+  // A loss plan: started at 85, aiming for 78.
+  const loss = {
+    startWeightKg: 85,
+    targetWeightKg: 78,
+    preferredWeeklyChangeKg: 0.5 as Pace,
+  };
+
+  it('is false while the target is still ahead', () => {
+    expect(hasReachedTarget({ ...loss, currentWeightKg: 80 })).toBe(false);
+  });
+
+  it('is true exactly at the target', () => {
+    expect(hasReachedTarget({ ...loss, currentWeightKg: 78 })).toBe(true);
+  });
+
+  it('is true past the target, where a magnitude test fails', () => {
+    // 77 kg is 1 kg *beyond* 78. Comparing target to CURRENT weight would read
+    // 78 > 77 as a gain goal still to come — the bug this replaces.
+    expect(hasReachedTarget({ ...loss, currentWeightKg: 77 })).toBe(true);
+  });
+
+  it('mirrors for a gain plan', () => {
+    const gain = {
+      startWeightKg: 60,
+      targetWeightKg: 65,
+      preferredWeeklyChangeKg: 0.5 as Pace,
+    };
+    expect(hasReachedTarget({ ...gain, currentWeightKg: 63 })).toBe(false);
+    expect(hasReachedTarget({ ...gain, currentWeightKg: 65 })).toBe(true);
+    expect(hasReachedTarget({ ...gain, currentWeightKg: 66 })).toBe(true);
+  });
+
+  it('is always false on a maintenance plan, whatever the weights say', () => {
+    // Pace 0 is the only thing that makes a plan maintenance, so a stale target
+    // left over from a patched-away diet must not report an achievement.
+    expect(
+      hasReachedTarget({
+        ...loss,
+        preferredWeeklyChangeKg: 0,
+        currentWeightKg: 78,
+      }),
+    ).toBe(false);
+    expect(
+      hasReachedTarget({
+        ...loss,
+        preferredWeeklyChangeKg: 0,
+        currentWeightKg: 70,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe('buildPlanOptions (viable options only, one per pace)', () => {
@@ -158,6 +219,14 @@ describe('buildPlanOptions (viable options only, one per pace)', () => {
       fromDate: '2026-01-01',
     });
     expect(options).toEqual([
+      {
+        // Maintenance is never hidden — it is the one option that always clears
+        // the floor, so the picker is never a dead end.
+        pace: 0,
+        dailyCalorieTarget: 1584, // TDEE untouched
+        dailyEnergyDelta: 0,
+        projectedGoalDate: null,
+      },
       {
         pace: 0.25,
         dailyCalorieTarget: 1309,
@@ -177,7 +246,7 @@ describe('buildPlanOptions (viable options only, one per pace)', () => {
       targetWeightKg: 65,
       fromDate: '2026-01-01',
     });
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(5); // four gain paces + maintenance
     expect(options.find((o) => o.pace === 1.0)).toEqual({
       pace: 1.0,
       dailyCalorieTarget: 2684, // 1584.3 + 1100 = 2684.3
@@ -186,7 +255,7 @@ describe('buildPlanOptions (viable options only, one per pace)', () => {
     });
   });
 
-  it('returns all four options when even the fastest loss pace clears the floor', () => {
+  it('returns every pace when even the fastest loss pace clears the floor', () => {
     // Male, moderate, 80 kg → TDEE 2759, floor 1500. 1.0 → 1659 ≥ 1500.
     const options = buildPlanOptions({
       age: 30,
@@ -197,6 +266,6 @@ describe('buildPlanOptions (viable options only, one per pace)', () => {
       targetWeightKg: 75,
       fromDate: '2026-01-01',
     });
-    expect(options.map((o) => o.pace)).toEqual([0.25, 0.5, 0.75, 1.0]);
+    expect(options.map((o) => o.pace)).toEqual([0, 0.25, 0.5, 0.75, 1.0]);
   });
 });

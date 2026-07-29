@@ -18,6 +18,14 @@ export const GLOBAL_THROTTLE = { ttl: MINUTE_MS, limit: 100 };
 export const AUTH_THROTTLE = { ttl: MINUTE_MS, limit: 5 };
 
 /**
+ * POST /meals/ai-parse, per authenticated user — applied with
+ * PerUserThrottlerGuard, which also documents why the route is additionally
+ * capped per IP at this same number. Tighter than the API-wide limit because
+ * every call costs money at OpenAI (#38).
+ */
+export const AI_PARSE_THROTTLE = { ttl: MINUTE_MS, limit: 10 };
+
+/**
  * Replaces the library default ("ThrottlerException: Too Many Requests"), which
  * reaches users verbatim — the frontend's ApiError surfaces `message` straight
  * into form errors.

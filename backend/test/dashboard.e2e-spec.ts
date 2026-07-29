@@ -173,7 +173,32 @@ describe('Dashboard (e2e)', () => {
       currentWeightKg: 78,
       targetWeightKg: goal.targetWeightKg,
       projectedGoalDate: goal.projectedGoalDate,
+      reachedTarget: goal.reachedTarget,
     });
+    // 78 kg against a 68 kg target: still to go.
+    expect(body.goal.reachedTarget).toBe(false);
+    expect(body.goal.projectedGoalDate).not.toBeNull();
+  });
+
+  it('reports reachedTarget on the goal block once the target is met', async () => {
+    await request(app.getHttpServer())
+      .post('/api/weights')
+      .set(auth())
+      .send({ weightKg: 67, recordedAt: `${DAY}T19:00:00.000Z` })
+      .expect(201);
+
+    const body = (
+      await request(app.getHttpServer())
+        .get(`/api/dashboard?date=${DAY}`)
+        .set(auth())
+        .expect(200)
+    ).body as DashboardResponse;
+
+    expect(body.goal.currentWeightKg).toBe(67);
+    expect(body.goal.reachedTarget).toBe(true);
+    // Reached and maintaining are both projectedGoalDate === null; reachedTarget
+    // is what tells the dashboard which banner to show.
+    expect(body.goal.projectedGoalDate).toBeNull();
   });
 
   it('scopes today totals to the requested day', async () => {
