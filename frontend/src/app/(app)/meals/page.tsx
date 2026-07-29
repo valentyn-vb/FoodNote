@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/empty-state';
+import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { useMeals } from '@/lib/meals-context';
 import { DesktopMealGroups } from './desktop-meal-groups';
 import { MobileMealGroups } from './mobile-meal-groups';
@@ -42,6 +43,11 @@ export default function MealsPage() {
         <h1 className="font-display text-heading-lg font-semibold text-text">
           Meals
         </h1>
+        {/* Logging is reachable from here too, not just the dashboard — this is
+            the page you land on to review the day. The drawer's own trigger
+            defaults stretch to fill a mobile action bar, so the grow/basis
+            reset keeps it a compact header button on both breakpoints. */}
+        <MealLogDrawer triggerClassName="ml-auto h-10 grow-0 basis-auto px-5 text-label font-semibold" />
       </div>
 
       {status === 'error' ? (

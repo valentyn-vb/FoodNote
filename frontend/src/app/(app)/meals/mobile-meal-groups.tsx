@@ -16,7 +16,7 @@ import { formatGroupSummary, type MealGroup } from './helpers';
 // `multiple` so opening dinner doesn't collapse breakfast.
 export function MobileMealGroups({ groups }: { groups: MealGroup[] }) {
   return (
-    <Card variant="tile" className="gap-0 lg:hidden">
+    <Card className="gap-0 rounded-lg border border-border py-0 ring-0 lg:hidden">
       <Accordion multiple>
         {groups.map((group) => (
           <AccordionItem key={group.mealType} value={group.mealType}>
