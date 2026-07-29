@@ -22,9 +22,6 @@ const inputVariants = cva(
           'h-11.5 rounded-sm border border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline focus-visible:border-primary',
         // A compact cell inside a denser row — a parsed meal item.
         cell: 'h-8.5 rounded-xs border border-border px-2 text-center font-sans text-[12.5px] text-text tabular-nums focus-visible:border-primary',
-        // The same cell one step smaller: the per-item macro boxes.
-        'cell-sm':
-          'h-7 rounded-xs border border-border px-1.5 text-center font-sans text-[12px] text-text tabular-nums focus-visible:border-primary',
         // Reads as text until focused — an item's name.
         bare: 'font-sans text-label font-medium text-text focus-visible:underline',
       },

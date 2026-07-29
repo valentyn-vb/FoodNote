@@ -4,13 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Pencil } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
-import { useForm, useWatch, type Control } from 'react-hook-form';
+import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  aiParseRequestSchema,
-  type AiParsedMeal,
-  type MacroTotals,
-} from '@foodnote/shared';
+import { aiParseRequestSchema, type AiParsedMeal } from '@foodnote/shared';
 import {
   Drawer,
   DrawerContent,
@@ -26,8 +22,10 @@ import {
   MealItemsFields,
   MealNameField,
   MealTotalsFields,
+  MealTotalsSummary,
   MealTypeField,
   mealDraftSchema,
+  useMealTotals,
   type MealDraftValues,
 } from '@/components/meal-fields';
 import { useMeals } from '@/lib/meals-context';
@@ -269,7 +267,7 @@ export function MealLogDrawer({
         </DrawerTitleBar>
 
         {step === 'input' && (
-          <>
+          <StepPanel key="input">
             <div className="flex flex-col gap-3 px-5 pt-2">
               <DrawerDescription className="font-sans text-caption font-medium text-text">
                 Describe what you ate
@@ -328,11 +326,11 @@ export function MealLogDrawer({
                 Enter manually instead
               </Button>
             </DrawerFooter>
-          </>
+          </StepPanel>
         )}
 
         {step === 'loading' && (
-          <>
+          <StepPanel key="loading">
             <div
               aria-busy="true"
               aria-live="polite"
@@ -359,11 +357,11 @@ export function MealLogDrawer({
                 Cancel
               </Button>
             </DrawerFooter>
-          </>
+          </StepPanel>
         )}
 
         {(step === 'preview' || step === 'manual') && (
-          <>
+          <StepPanel key="form">
             <form
               id={MEAL_FORM_ID}
               onSubmit={form.handleSubmit(handleSave)}
@@ -396,15 +394,30 @@ export function MealLogDrawer({
                 />
               )}
 
-              <MealTotalsFields
-                form={form}
-                onUserEdit={() => setTotalsOverridden(true)}
-              />
-
-              {totalsOverridden && step === 'preview' && (
-                <div className="font-sans text-[11.5px] text-text-muted">
-                  Totals set by hand — they no longer follow the items.
+              {step === 'preview' && !totalsOverridden ? (
+                <div className="flex flex-col items-center gap-1.5">
+                  <MealTotalsSummary control={form.control} />
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    size="inline"
+                    onClick={() => setTotalsOverridden(true)}
+                  >
+                    Set totals manually
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <MealTotalsFields
+                    form={form}
+                    onUserEdit={() => setTotalsOverridden(true)}
+                  />
+                  {step === 'preview' && (
+                    <div className="font-sans text-[11.5px] text-text-muted">
+                      Totals set by hand — they no longer follow the items.
+                    </div>
+                  )}
+                </>
               )}
 
               <MacroSuggestion
@@ -439,7 +452,7 @@ export function MealLogDrawer({
             <DrawerFooter className="pt-4 pb-5">
               <SaveButton control={form.control} />
             </DrawerFooter>
-          </>
+          </StepPanel>
         )}
 
         {step === 'not-food' && (
@@ -490,6 +503,23 @@ export function MealLogDrawer({
   );
 }
 
+/**
+ * Wraps a step so it fades and rises into place instead of blinking in.
+ * Keyed on the step in the caller, so React remounts it and @starting-style
+ * has something to start from.
+ *
+ * The purpose is not decoration: swapping a whole panel with no transition
+ * reads as a glitch, especially here where the drawer's height changes at the
+ * same moment. Under reduced motion the fade stays and the travel goes.
+ */
+function StepPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="motion-keep-fade flex min-h-0 flex-1 flex-col transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0">
+      {children}
+    </div>
+  );
+}
+
 /** The RECOVER mascot state: something went wrong, here is the way out. */
 function RecoverStep({
   message,
@@ -536,27 +566,9 @@ function RecoverStep({
   );
 }
 
-/**
- * The totals are watched in the two leaves that show them, not at the top of
- * the drawer — subscribing at the root would re-render every item input on
- * each keystroke.
- */
-function useTotals(control: Control<MealDraftValues>): MacroTotals {
-  const [totalCalories, proteinGrams, carbsGrams, fatGrams] = useWatch({
-    control,
-    name: ['totalCalories', 'proteinGrams', 'carbsGrams', 'fatGrams'],
-  });
-  return {
-    totalCalories: totalCalories || 0,
-    proteinGrams: proteinGrams || 0,
-    carbsGrams: carbsGrams || 0,
-    fatGrams: fatGrams || 0,
-  };
-}
-
 /** Carries the running total, which is the flow's main trust signal. */
 function SaveButton({ control }: { control: Control<MealDraftValues> }) {
-  const { totalCalories } = useTotals(control);
+  const { totalCalories } = useMealTotals(control);
   return (
     <>
       {/* A total recomputed from an item edit changes away from the field
@@ -586,7 +598,7 @@ function MacroSuggestion({
   control: Control<MealDraftValues>;
   onUse: (kcal: number) => void;
 }) {
-  const suggestion = macroCalorieSuggestion(useTotals(control));
+  const suggestion = macroCalorieSuggestion(useMealTotals(control));
   if (suggestion === null) return null;
   return (
     <div className="flex items-center gap-2 font-sans text-[12px] text-text-muted">
