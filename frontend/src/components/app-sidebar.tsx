@@ -99,15 +99,17 @@ export function AppSidebar() {
                     </MealLogDrawer>
                   </SidebarMenuItem>
                 )}
-                <SidebarMenuItem>
-                  <WeightLogDrawer
-                    onWeightSaved={onWeightSaved}
-                    triggerClassName={DRAWER_TRIGGER_CLASS}
-                  >
-                    <Scale />
-                    <span>Log weight</span>
-                  </WeightLogDrawer>
-                </SidebarMenuItem>
+                {isToday && (
+                  <SidebarMenuItem>
+                    <WeightLogDrawer
+                      onWeightSaved={onWeightSaved}
+                      triggerClassName={DRAWER_TRIGGER_CLASS}
+                    >
+                      <Scale />
+                      <span>Log weight</span>
+                    </WeightLogDrawer>
+                  </SidebarMenuItem>
+                )}
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     tooltip="Settings"

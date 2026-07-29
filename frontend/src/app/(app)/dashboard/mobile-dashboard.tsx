@@ -166,15 +166,17 @@ export function MobileDashboard() {
             ))}
           </div>
 
-          <div className="flex gap-2.5 border-t border-border pt-3">
-            {isToday && <MealLogDrawer />}
-            <WeightLogDrawer
-              onWeightSaved={onWeightSaved}
-              triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
-            >
-              Log weight
-            </WeightLogDrawer>
-          </div>
+          {isToday && (
+            <div className="flex gap-2.5 border-t border-border pt-3">
+              <MealLogDrawer />
+              <WeightLogDrawer
+                onWeightSaved={onWeightSaved}
+                triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
+              >
+                Log weight
+              </WeightLogDrawer>
+            </div>
+          )}
         </>
       )}
     </div>
