@@ -135,4 +135,91 @@ describe('Goals (e2e)', () => {
       }),
     ).rejects.toThrow();
   });
+
+  // From here the active goal is start 85 → target 70 at pace 0.25, and the
+  // only weight entry is 85 kg. These cases walk it to reached and beyond.
+  const current = async (): Promise<GoalResponse> =>
+    (
+      await request(app.getHttpServer())
+        .get('/api/goals/current')
+        .set(auth())
+        .expect(200)
+    ).body as GoalResponse;
+
+  it('reachedTarget is false while the target is still ahead', async () => {
+    const goal = await current();
+    expect(goal.reachedTarget).toBe(false);
+    expect(goal.projectedGoalDate).not.toBeNull();
+  });
+
+  it('a weight past the target reads as reached and drops the projection', async () => {
+    // 68 kg overshoots the 70 kg target. A magnitude test would see 2 kg still
+    // "remaining" and hand back a projected date; direction from startWeightKg
+    // is what makes this reached.
+    await request(app.getHttpServer())
+      .post('/api/weights')
+      .set(auth())
+      .send({ weightKg: 68, recordedAt: '2026-07-21T08:00:00.000Z' })
+      .expect(201);
+
+    const goal = await current();
+    expect(goal.reachedTarget).toBe(true);
+    expect(goal.projectedGoalDate).toBeNull();
+  });
+
+  it('pace 0 is a maintenance plan — accepted, and never reached', async () => {
+    const before = await current();
+    const patched = (
+      await request(app.getHttpServer())
+        .patch('/api/goals/current')
+        .set(auth())
+        .send({ preferredWeeklyChangeKg: 0 })
+        .expect(200)
+    ).body as GoalResponse;
+
+    expect(patched.id).toBe(before.id); // a pace switch, not a new goal
+    expect(patched.preferredWeeklyChangeKg).toBe(0);
+    // The stale 70 kg target is still stored and the user is at 68 kg, but pace
+    // is the only thing that decides what kind of plan this is.
+    expect(patched.targetWeightKg).toBe(70);
+    expect(patched.reachedTarget).toBe(false);
+    expect(patched.projectedGoalDate).toBeNull();
+  });
+
+  it('POST /goals marks a reached outgoing goal completed', async () => {
+    // Patch the diet back on: at 68 kg against a 70 kg target it is reached.
+    await request(app.getHttpServer())
+      .patch('/api/goals/current')
+      .set(auth())
+      .send({ preferredWeeklyChangeKg: 0.25 })
+      .expect(200);
+    const reached = await current();
+    expect(reached.reachedTarget).toBe(true);
+
+    await request(app.getHttpServer())
+      .post('/api/goals')
+      .set(auth())
+      .send({ targetWeightKg: 65, preferredWeeklyChangeKg: 0.5 })
+      .expect(201);
+
+    const repo = app.get<Repository<Goal>>(getRepositoryToken(Goal));
+    const outgoing = await repo.findOne({ where: { id: reached.id } });
+    expect(outgoing?.status).toBe('completed');
+  });
+
+  it('POST /goals marks an unreached outgoing goal replaced', async () => {
+    // The goal just created is start 68 → target 65, so it is not reached.
+    const abandoned = await current();
+    expect(abandoned.reachedTarget).toBe(false);
+
+    await request(app.getHttpServer())
+      .post('/api/goals')
+      .set(auth())
+      .send({ targetWeightKg: 62, preferredWeeklyChangeKg: 0.5 })
+      .expect(201);
+
+    const repo = app.get<Repository<Goal>>(getRepositoryToken(Goal));
+    const outgoing = await repo.findOne({ where: { id: abandoned.id } });
+    expect(outgoing?.status).toBe('replaced');
+  });
 });

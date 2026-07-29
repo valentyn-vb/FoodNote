@@ -13,6 +13,8 @@
     "@foodnote/shared": "*",
     "@hookform/resolvers": "^5.4.0",
     "@number-flow/react": "^0.6.1",
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.24.0",

@@ -1,26 +1,27 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import NumberFlow from '@number-flow/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Disclaimer } from '@/components/disclaimer';
-import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { useAuth } from '@/components/auth-provider';
 import {
   DailyCaloriesChart,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
-import { useAuth } from '@/components/auth-provider';
+import { Disclaimer } from '@/components/disclaimer';
+import { MealLogDrawer } from '@/components/meal-log-drawer';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
-import { useWeight } from '@/lib/weight-context';
 import { initialsOf } from '@/lib/user-display';
-import { CARD_CLASS, fullnessMascot } from './helpers';
+import { useWeight } from '@/lib/weight-context';
+import NumberFlow from '@number-flow/react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
+import { CARD_CLASS, fullnessMascot } from './helpers';
 import { MealRow } from './meal-row';
+import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 
@@ -99,15 +100,25 @@ export function MobileDashboard() {
             </div>
           </Card>
 
-          <div className="flex items-center gap-2 rounded-sm bg-[#FFF3E7] px-4 py-3">
-            <div className="font-sans text-caption font-medium text-primary-deep">
-              {gate.goal.projectedGoalDate
-                ? `Projected goal date: ${formatGoalDate(
-                    gate.goal.projectedGoalDate,
-                  )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} weeks left`
-                : 'Target reached — nice work.'}
-            </div>
-          </div>
+          <StatWidget
+            label={
+              gate.goal.reachedTarget
+                ? 'Goal'
+                : gate.goal.projectedGoalDate === null
+                  ? 'Goal'
+                  : 'Projected goal date'
+            }
+            value={
+              gate.goal.reachedTarget
+                ? 'You hit your target'
+                : !gate.goal.projectedGoalDate
+                  ? 'Maintaining your weight'
+                  : `${formatGoalDate(gate.goal.projectedGoalDate)} · ${weeksUntil(
+                      gate.goal.projectedGoalDate,
+                      new Date(),
+                    )} wks`
+            }
+          />
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">

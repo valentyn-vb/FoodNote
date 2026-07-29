@@ -164,4 +164,40 @@ describe('Profile (e2e)', () => {
     expect(getBody.age).toBe(31);
     expect(getBody.heightCm).toBe(182);
   });
+
+  const profileNow = async (): Promise<ProfileResponse> =>
+    (
+      await request(app.getHttpServer())
+        .get('/api/profile')
+        .set(auth())
+        .expect(200)
+    ).body as ProfileResponse;
+
+  it('a reached goal clamps calorieTarget to maintenance, never a surplus', async () => {
+    // 73 kg overshoots the 75 kg target, so the stored target now sits *above*
+    // the current weight — which calorieTargetForPace reads as a gain plan.
+    // Without the reached clamp this returns maintenance + a surplus, i.e. the
+    // app tells someone who just hit their goal to eat more.
+    await request(app.getHttpServer())
+      .post('/api/weights')
+      .set(auth())
+      .send({ weightKg: 73, recordedAt: '2026-07-22T08:00:00.000Z' })
+      .expect(201);
+
+    const body = await profileNow();
+    expect(body.currentWeightKg).toBe(73);
+    expect(body.calorieTarget).toBe(body.maintenanceCalories);
+  });
+
+  it('a maintenance plan (pace 0) targets maintenance calories', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/goals/current')
+      .set(auth())
+      .send({ preferredWeeklyChangeKg: 0 })
+      .expect(200);
+
+    const body = await profileNow();
+    expect(body.preferredWeeklyChangeKg).toBe(0);
+    expect(body.calorieTarget).toBe(body.maintenanceCalories);
+  });
 });
