@@ -1,14 +1,17 @@
 import { z } from 'zod';
-import { weightKgSchema } from '@foodnote/shared';
+import { createWeightRequestSchema, weightKgSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
 import { InputField } from './form-fields';
 
-// weightKg stays a string end to end (not a transform to number) so the
-// component never needs a manual parse: the comma-decimal check ("71,4",
-// common on EU keyboards) lives in the schema, and the caller converts to a
-// number only in the already-validated submit handler, via parsedWeightKg.
-export const weightFormSchema = z.object({
+// Extends the shared request schema rather than a from-scratch object, per
+// review — same two fields as createWeightRequestSchema, but the browser can
+// only give us strings: a text input for weightKg, a `datetime-local` string
+// for recordedAt. Neither matches the wire schema (weightKgSchema wants a
+// number; recordedAtSchema wants a full ISO datetime), so both are
+// overridden here with string equivalents. weightKgSchema itself is still
+// reused, inside the refine below.
+export const weightFormSchema = createWeightRequestSchema.extend({
   weightKg: z
     .string()
     .refine(
