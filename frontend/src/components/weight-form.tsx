@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { weightKgSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
+import { toDatetimeLocal } from '@/lib/dashboard-transforms';
 import { InputField } from './form-fields';
 
 // weightKg stays a string end to end (not a transform to number) so the
@@ -14,7 +15,16 @@ export const weightFormSchema = z.object({
       (v) => weightKgSchema.safeParse(Number(v.replace(',', '.'))).success,
       'Enter a weight between 30 and 300 kg.',
     ),
-  recordedAt: z.string().min(1, 'Pick a date and time.'),
+  recordedAt: z
+    .string()
+    .min(1, 'Pick a date and time.')
+    // The form has noValidate — Zod owns validation, not the browser — so the
+    // datetime-local input's `max` alone doesn't stop a typed-in future date
+    // from submitting. Skipped when empty; .min(1) above already covers that.
+    .refine(
+      (v) => !v || new Date(v).getTime() <= Date.now(),
+      "Weight can't be logged for a future date.",
+    ),
 });
 
 export type WeightFormValues = z.infer<typeof weightFormSchema>;
@@ -63,6 +73,7 @@ export function WeightForm({
           id="recordedAt"
           label="Date and time"
           type="datetime-local"
+          max={toDatetimeLocal(new Date().toISOString())}
           error={errors.recordedAt?.message}
           {...register('recordedAt')}
         />
