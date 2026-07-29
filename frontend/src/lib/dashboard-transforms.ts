@@ -54,13 +54,40 @@ export function mealTypeForHour(hour: number): MealType {
   return 'snack';
 }
 
+/**
+ * The four label shapes this module formats dates in. Built once at module
+ * scope: `Intl.DateTimeFormat` construction is the expensive half of formatting,
+ * and the trend formatters run per axis tick and per tooltip render.
+ *
+ * The UTC pair is deliberate, not incidental — a Tracking Day is a UTC calendar
+ * day (see the module header), so a date-only label has to be read in UTC or it
+ * shifts by one day either side of midnight. The local pair is equally
+ * deliberate: a *logged-at* timestamp is an instant, and the reader wants it in
+ * the clock they were holding when they logged it.
+ */
+const utcMonth = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  timeZone: 'UTC',
+});
+const utcMonthDay = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const localTime = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const localMonthDayTime = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
 /** Projected goal date as "Sep 19" (UTC). */
 export function formatGoalDate(date: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`));
+  return utcMonthDay.format(new Date(`${date}T00:00:00Z`));
 }
 
 /** Whole weeks from `now` until a goal date (never negative). */
@@ -71,20 +98,12 @@ export function weeksUntil(date: string, now: Date): number {
 
 /** A logged-at label for a meal row, in the viewer's local time ("12:40 PM"). */
 export function formatMealTime(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(iso));
+  return localTime.format(new Date(iso));
 }
 
 /** A weight entry's logged-at label, in the viewer's local time ("Jul 27, 3:06 PM"). */
 export function formatEntryDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(iso));
+  return localMonthDayTime.format(new Date(iso));
 }
 
 // <input type="datetime-local"> has no timezone of its own — it's read/written
@@ -145,20 +164,13 @@ type GoalBlock = Pick<
 /** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
 export function formatTrendTick(t: number): string {
   if (!Number.isFinite(t)) return '';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(t));
+  return utcMonth.format(new Date(t));
 }
 
 /** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */
 export function formatTrendDate(t: number): string {
   if (!Number.isFinite(t)) return '';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(t));
+  return utcMonthDay.format(new Date(t));
 }
 
 /**

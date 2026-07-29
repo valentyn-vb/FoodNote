@@ -1,16 +1,6 @@
 'use client';
 
 import {
-  Dot,
-  EvilLineChart,
-  Grid as LineGrid,
-  Legend as LineLegend,
-  Line,
-  Tooltip as LineTooltip,
-  XAxis as LineXAxis,
-  YAxis,
-} from '@/components/evilcharts/charts/line-chart';
-import {
   Bar,
   EvilBarChart,
   Grid as BarGrid,
@@ -26,102 +16,15 @@ import {
 } from 'recharts';
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
-import {
-  formatTrendDate,
-  formatTrendTick,
-  monthTicks,
-  type DailyCaloriePoint,
-  type WeightTrendPoint,
+import { WeightTrendChart } from '@/components/weight-trend-chart';
+import { calorieConfig } from '@/lib/chart-config';
+import type {
+  DailyCaloriePoint,
+  WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
 // Shared by the mobile and desktop dashboard layouts — same chart, sized by
-// className. Colors come from the FoodNote tokens, not EvilCharts defaults.
-
-// One metric, one hue (the H03 "Weight trend & projection" annotation), in two
-// shades: logged weight is the deeper, measured green; the projection is a
-// lighter tint, since a forecast reading lighter than real data is the point.
-// Solid vs dashed still carries the split in the plot, but the legend swatch is
-// a plain filled square (evilcharts/ui/legend LegendIndicator) and cannot show
-// a dash — with one shared color the two keys were indistinguishable there.
-const weightConfig = {
-  actual: { label: 'Logged', colors: { light: ['var(--fn-secondary-deep)'] } },
-  projected: {
-    // "Projected" is the user-facing word and matches Projected Goal Date in
-    // CONTEXT.md. The line is remaining weight ÷ Pace, so it is straight by
-    // construction; the lighter tint and dash carry that it is not measured
-    // data. Real variation comes from the logged series, not from wiggling a
-    // forecast we have no model for.
-    label: 'Projected',
-    colors: {
-      light: ['color-mix(in oklch, var(--fn-secondary), white 38%)'],
-    },
-  },
-};
-
-const calorieConfig = {
-  kcal: { label: 'kcal', colors: { light: ['var(--fn-primary)'] } },
-};
-
-export function WeightTrendChart({
-  className,
-  data,
-}: {
-  className?: string;
-  data: WeightTrendPoint[];
-}) {
-  return (
-    <EvilLineChart
-      data={data}
-      config={weightConfig}
-      className={className}
-      // Straight segments between weigh-ins. `monotone` smoothed the measured
-      // line into curvature that was never recorded — weight between two
-      // weigh-ins is unknown, not gently curved.
-      curveType="linear"
-    >
-      {/* Solid hairline: a dashed grid reads as "projection", which is the one
-          thing dashing means in this chart. */}
-      <LineGrid strokeDasharray="0" />
-      {/* Fitted, non-zero domain — body weight sits in a narrow band and a
-          zero-based axis would flatten the trend into a flat line. A truncated
-          scale has to be *labelled* to stay honest, hence no `hide`. */}
-      {/* Labels on the right, next to the newest reading — the edge the eye
-          lands on first, and what Apple Health and Withings both do for weight. */}
-      <YAxis
-        orientation="right"
-        domain={['dataMin - 1', 'dataMax + 1']}
-        tickFormatter={(kg: number) => `${Math.round(kg)}`}
-        width={34}
-      />
-      {/* The whole point of #68: a numeric time axis, so the Now→goal-date leg
-          occupies the months it actually spans instead of one category slot. */}
-      <LineXAxis
-        dataKey="t"
-        type="number"
-        scale="time"
-        domain={['dataMin', 'dataMax']}
-        ticks={monthTicks(data)}
-        tickFormatter={formatTrendTick}
-      />
-      {/* Markers make a lone weigh-in visible: one measurement cannot stroke a
-          line, so without a dot a new account saw nothing for its own weight.
-          `projected` is absent until the anchor point, so it picks up where
-          `actual` stops without connectNulls. */}
-      <Line dataKey="actual" lineProps={{ strokeWidth: 2 }}>
-        <Dot variant="border" />
-      </Line>
-      <Line
-        dataKey="projected"
-        strokeVariant="dashed"
-        lineProps={{ strokeWidth: 2 }}
-      />
-      {/* The tooltip keeps day precision — months are the axis unit, not the
-          resolution the data was recorded at. */}
-      <LineTooltip labelFormatter={(label) => formatTrendDate(Number(label))} />
-      <LineLegend />
-    </EvilLineChart>
-  );
-}
+// className. Series colors and labels live in lib/chart-config.ts.
 
 export function DailyCaloriesChart({
   className,
