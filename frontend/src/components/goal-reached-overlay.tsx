@@ -25,7 +25,7 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
 import { goals, profile } from '@/lib/api-client';
 import { useMeals } from '@/lib/meals-context';
-import type { DialogPrimitive } from '@base-ui/react/dialog';
+import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
 const CONFETTI_COLORS = ['#f5a65c', '#e08a3c', '#5bb98c', '#f4907e'];
 
@@ -41,10 +41,6 @@ function fireConfetti() {
   void confetti({ ...shared, angle: 60, origin: { x: 0, y: 0.7 } });
   void confetti({ ...shared, angle: 120, origin: { x: 1, y: 0.7 } });
 }
-
-type DialogEventDetails = Parameters<
-  NonNullable<DialogPrimitive.Root.Props['onOpenChange']>
->[1];
 
 const targetWeightSchema = z.object({
   targetWeightKg: weightKgSchema,
@@ -88,7 +84,7 @@ export function GoalReachedOverlay() {
 
   const handleOpenChange = (
     newOpen: boolean,
-    eventDetails: DialogEventDetails,
+    eventDetails: DialogRootChangeEventDetails,
   ) => {
     if (!newOpen) {
       eventDetails.cancel();
