@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   LogOut,
+  NotebookText,
   Scale,
   UserRoundPen,
   UtensilsCrossed,
@@ -86,6 +87,16 @@ export function AppSidebar() {
                   >
                     <LayoutDashboard />
                     <span>Dashboard</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === '/meals'}
+                    tooltip="Meals"
+                    render={<Link href="/meals" />}
+                  >
+                    <NotebookText />
+                    <span>Meals</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
