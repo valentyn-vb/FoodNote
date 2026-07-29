@@ -43,6 +43,9 @@ type MealsContextValue = {
   remainingKcal: number;
   progressPct: number;
   goalKcal: number;
+  // Maintenance energy at the current weight — what the target becomes on a
+  // maintenance plan. Null until the dashboard has loaded.
+  maintenanceKcal: number | null;
   goal: GoalBlock | null;
   todayMeals: MealResponse[];
   dailyCalories: DailyCaloriePoint[];
@@ -200,6 +203,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       retry,
       eatenKcal,
       goalKcal,
+      maintenanceKcal: dashboard?.maintenanceCalories ?? null,
       remainingKcal: Math.max(0, goalKcal - eatenKcal),
       progressPct:
         goalKcal > 0

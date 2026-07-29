@@ -66,7 +66,7 @@ type DialogView = 'choice' | 'target-input' | 'target-plan';
  * action result.
  */
 export function GoalReachedOverlay() {
-  const { goal, refetchDashboard } = useMeals();
+  const { goal, maintenanceKcal, refetchDashboard } = useMeals();
   const shouldReduceMotion = useReducedMotion();
   const [view, setView] = useState<DialogView>('choice');
   const [switchingMaintenance, setSwitchingMaintenance] = useState(false);
@@ -164,31 +164,47 @@ export function GoalReachedOverlay() {
               </DialogTitle>
               <DialogDescription className="font-sans text-caption text-text-muted">
                 {goal
-                  ? `You reached ${goal.targetWeightKg} kg. Your daily calories now hold you there — switch to maintenance or set a new target.`
+                  ? `You reached ${goal.targetWeightKg} kg. Pick where to go from here.`
                   : 'You reached your target weight.'}
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex flex-col gap-3 pt-2">
-              <Button
-                type="button"
-                variant="cta"
-                onClick={handleSwitchMaintenance}
-                disabled={switchingMaintenance}
-              >
-                {switchingMaintenance ? '...' : 'Switch to maintenance'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setView('target-input');
-                  form.reset({ targetWeightKg: goal?.currentWeightKg });
-                }}
-                disabled={switchingMaintenance}
-              >
-                Set a new target
-              </Button>
+              <div className="flex flex-col gap-1.5">
+                <Button
+                  type="button"
+                  variant="cta"
+                  onClick={handleSwitchMaintenance}
+                  disabled={switchingMaintenance}
+                >
+                  {switchingMaintenance ? '...' : 'Switch to maintenance'}
+                </Button>
+                <p className="text-center font-sans text-caption text-text-muted">
+                  {/* maintenanceKcal is energy at the current weight, which is
+                      exactly what the target becomes at pace 0 — so it is the
+                      number this button will set, not an estimate. */}
+                  Keep your weight stable
+                  {maintenanceKcal != null
+                    ? ` on ${maintenanceKcal.toLocaleString()} kcal / day.`
+                    : ' where it is now.'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setView('target-input');
+                    form.reset({ targetWeightKg: goal?.currentWeightKg });
+                  }}
+                  disabled={switchingMaintenance}
+                >
+                  Set a new target
+                </Button>
+                <p className="text-center font-sans text-caption text-text-muted">
+                  Choose another plan — a new goal weight and pace.
+                </p>
+              </div>
             </div>
           </>
         )}
