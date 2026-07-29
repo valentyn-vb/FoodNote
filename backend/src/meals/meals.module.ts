@@ -9,12 +9,11 @@ import { MealItem } from '../meal/meal-item.entity';
 import { MealParser } from './meal-parser';
 import { MealsController } from './meals.controller';
 import { MealsService } from './meals.service';
-import { OpenAiMealParser } from './openai-meal-parser';
+import { OpenAiMealParser } from './openai/parser';
 
 /**
- * The SDK's defaults are wrong for a request a user is waiting on: a 10-minute
- * timeout would pin the connection open, and worst-case wall time is
- * (1 + maxRetries) x timeout. One retry still covers a genuine blip.
+ * The SDK default is a 10-minute timeout, and worst-case wall time is
+ * (1 + maxRetries) x timeout — too long for a request a user is waiting on.
  */
 const OPENAI_TIMEOUT_MS = 15_000;
 const OPENAI_MAX_RETRIES = 1;
@@ -26,15 +25,13 @@ const OPENAI_MAX_RETRIES = 1;
     MealsService,
     PerUserThrottlerGuard,
     {
-      // Constructed here rather than injected as a client, so the OpenAI SDK
-      // appears in exactly one wiring site and one adapter.
+      // Constructed here so the OpenAI SDK appears in one wiring site.
       provide: MealParser,
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
         new OpenAiMealParser(
           new OpenAI({
-            // getOrThrow: a missing key is a deploy misconfiguration, and a boot
-            // crash is louder than 502ing every parse until someone notices.
+            // getOrThrow: a boot crash is louder than 502ing every parse.
             apiKey: config.getOrThrow<string>('OPENAI_API_KEY'),
             timeout: OPENAI_TIMEOUT_MS,
             maxRetries: OPENAI_MAX_RETRIES,

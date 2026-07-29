@@ -1,17 +1,15 @@
 import { Logger } from '@nestjs/common';
 import type OpenAI from 'openai';
 import type { AiParseResponse } from '@foodnote/shared';
-import { MealParseFailedError } from './meal-parser';
-import { OpenAiMealParser } from './openai-meal-parser';
+import { MealParseFailedError } from '../meal-parser';
+import { OpenAiMealParser } from './parser';
 
 /**
  * The seam is the OpenAI SDK: every test drives the adapter through a fake
- * `responses.parse`, so the prompt, the mapping onto the frozen contract and
- * the failure taxonomy are all covered without a network call.
+ * `responses.parse`, so nothing here touches the network.
  */
 const USER_ID = 'user-1';
 
-/** One description in, one contract response out — the caller id is fixed. */
 function parseWith(
   parse: jest.Mock,
   description: string,
@@ -99,9 +97,6 @@ describe('OpenAiMealParser', () => {
     });
   });
 
-  // Pins the cost/latency envelope: a generous token ceiling (truncation is
-  // terminal, so it must not happen), the cheapest reasoning tier, and the
-  // pinned model the prompt was written against.
   it('issues the request with the pinned model and cost envelope', async () => {
     const parse = jest.fn().mockResolvedValue(completed(PARSED_MEAL));
 
@@ -120,8 +115,7 @@ describe('OpenAiMealParser', () => {
     expect(body.input[1].content).toBe('two eggs on toast');
   });
 
-  // Meal descriptions are dietary data about an identified user, so the cost log
-  // carries metadata only. This test is the guarantee, not a nicety.
+  // A description is dietary data about an identified user — metadata only.
   it('logs parse metadata without the description', async () => {
     const parse = jest.fn().mockResolvedValue(completed(PARSED_MEAL));
     const logged: string[] = [];
@@ -163,9 +157,7 @@ describe('OpenAiMealParser', () => {
     });
   });
 
-  // A safety refusal is input-deterministic, so it is terminal: retrying would
-  // be refused again for double the money (ADR-0006). It needs its own kind so
-  // the logs can tell it apart from a decoding failure.
+  // Input-deterministic, so terminal: a retry is refused again (ADR-0006).
   it('fails as refusal when the model refuses', async () => {
     const parse = jest.fn().mockResolvedValue({
       id: 'resp_1',
@@ -187,8 +179,7 @@ describe('OpenAiMealParser', () => {
     ).rejects.toMatchObject({ kind: 'refusal' });
   });
 
-  // Truncation recurs identically at the same max_output_tokens, so it is
-  // terminal too — the fix is a bigger ceiling, not another attempt (ADR-0006).
+  // Also terminal: the fix is a bigger ceiling, not another attempt (ADR-0006).
   it.each([
     ['max_output_tokens', 'truncated'],
     ['content_filter', 'contentFilter'],
@@ -210,9 +201,7 @@ describe('OpenAiMealParser', () => {
     },
   );
 
-  // The SDK already retried connection errors, 429s and 5xx below this seam, so
-  // reaching here means it gave up. The raw APIError must not escape the port —
-  // callers only know MealParseFailedError.
+  // The SDK's retries are spent by here, and no APIError may escape the port.
   it('fails as transport when the SDK throws', async () => {
     const parse = jest.fn().mockRejectedValue(new Error('socket hang up'));
 
@@ -222,10 +211,7 @@ describe('OpenAiMealParser', () => {
     });
   });
 
-  // The model-facing schema and the wire contract are separate (the wire union
-  // cannot be a strict output schema), so the mapped result is re-validated
-  // against shared/ before it leaves. An empty confidenceNote satisfies the
-  // model schema but not the contract.
+  // An empty confidenceNote passes the model schema but not the contract.
   it('fails as invalidOutput when the mapped meal breaks the shared contract', async () => {
     const parse = jest
       .fn()
@@ -236,9 +222,7 @@ describe('OpenAiMealParser', () => {
     });
   });
 
-  // Strict decoding makes this near-impossible, so it is a backstop rather than
-  // the primary guard — but `output_parsed` is typed nullable and a silent
-  // crash here would surface as a 500, not the contract's 502.
+  // A backstop: `output_parsed` is nullable, and a crash here would be a 500.
   it('fails as invalidOutput when the model output could not be parsed', async () => {
     const parse = jest.fn().mockResolvedValue({
       ...completed(PARSED_MEAL),
