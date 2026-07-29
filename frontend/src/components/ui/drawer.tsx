@@ -176,7 +176,15 @@ function DrawerContent({
             // Responsive side: full-bleed sheet on mobile, a fixed-width panel
             // once it anchors to the edge. Set here so the width travels with
             // the shape instead of being poked in per call site.
-            responsiveSide && 'lg:[--drawer-content-width:31.25rem]',
+            // Must carry the same data-attribute as the sizing rule above, or
+            // it loses on specificity rather than order and silently does
+            // nothing — the base `data-[swipe-axis=x]:sm:` is (0,2,0).
+            responsiveSide &&
+              'lg:data-[swipe-axis=x]:[--drawer-content-width:37.5rem]',
+            // A side panel runs to the top of the viewport, where a bottom
+            // sheet has the swipe handle and the page edge giving it room.
+            // Buy that room back on desktop.
+            responsiveSide && 'lg:data-[swipe-axis=x]:pt-4',
             className,
           )}
           {...props}
