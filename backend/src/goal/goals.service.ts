@@ -104,7 +104,7 @@ export class GoalsService {
       // otherwise the user abandoned it, which is `replaced`. This is the only
       // place the status is ever set to `completed` — reaching a target must not
       // touch it, or GET /goals/current would 404 and the OnboardingGuard would
-      // bounce the user into the wizard (see docs/adr/0006).
+      // bounce the user into the wizard (see docs/adr/0007).
       const previous = await manager.findOne(Goal, {
         where: { userId, status: 'active' },
       });
