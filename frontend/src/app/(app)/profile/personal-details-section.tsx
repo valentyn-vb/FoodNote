@@ -98,10 +98,12 @@ export function PersonalDetailsSection({
         targetWeightKg: values.targetWeightKg,
       });
       if (weightChanged || targetWeightChanged) {
-        toast.warning('Details updated successfully', {
-          description: 'Your changed your weight, consider updating your plan.',
+        toast.warning('Details saved — check your plan', {
+          description:
+            'Your daily target was recalculated. The pace behind it may no longer fit — review it under Current plan.',
           position: 'top-center',
           closeButton: true,
+          duration: Infinity,
         });
         return;
       }
