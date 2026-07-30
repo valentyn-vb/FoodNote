@@ -25,6 +25,11 @@ const cardVariants = cva(
         panel: 'rounded-xl border border-border bg-card shadow-card',
         // A compact stat tile — self-padding, tighter radius and gap.
         tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline',
+        // One line of a list: a fixed-height surface that never flexes, because
+        // inside a bounded scrolling column a row would squash before the column
+        // scrolled. Tighter radius than `panel` — 20px on a 64px row reads as a
+        // pill.
+        row: 'shrink-0 flex-row items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3.5 shadow-card',
         // A tile you choose between: same surface, plus a selected state driven
         // by `data-selected` on the call site. The border keeps its width and
         // only changes colour — thickening it on selection shifts the content

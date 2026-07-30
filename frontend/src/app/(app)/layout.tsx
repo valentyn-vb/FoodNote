@@ -42,7 +42,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <MealsProvider>
           <WeightProvider>
             <AppSidebar />
-            <SidebarInset className="bg-bg">{children}</SidebarInset>
+            <SidebarInset>{children}</SidebarInset>
             {/* Both "Log weight" triggers live in different trees (sidebar on
                 desktop, dashboard row on mobile), so the celebration is mounted
                 here — the nearest shared ancestor that can see either save. */}

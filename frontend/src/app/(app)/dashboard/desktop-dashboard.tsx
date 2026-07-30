@@ -1,14 +1,17 @@
 'use client';
 
+import { History } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Disclaimer } from '@/components/disclaimer';
 import {
   DailyCaloriesChart,
-  RemainingTodayRingCard,
-  WeightTrendCard,
-} from '@/components/dashboard-charts';
+  RemainingTodayRing,
+  WeightTrendChart,
+} from '@/components/ui/charts';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
@@ -47,12 +50,12 @@ export function DesktopDashboard() {
     // Grows with its content and lets the page scroll. Pinned to `h-screen`
     // with `overflow-clip` it could not: the meal list is the only part that
     // grows, so every row shrank to keep the layout inside one viewport.
-    <div className="hidden flex-col gap-5.5 bg-bg px-10 py-8 lg:flex lg:min-h-screen">
+    <div className="hidden flex-col gap-5.5 px-10 py-8 lg:flex lg:min-h-screen">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="text-text-muted" />
-        <h1 className="font-display text-heading-lg font-semibold text-text">
+        <SidebarTrigger />
+        <Text variant="heading" render={<h1 />}>
           Dashboard
-        </h1>
+        </Text>
       </div>
 
       {gate.state === 'error' ? (
@@ -107,37 +110,37 @@ export function DesktopDashboard() {
               stretching the charts beside it. */}
           <div className="flex items-start gap-3.5">
             <div className="flex grow-2 basis-0 flex-col gap-3.5">
-              {weightStatus === 'ready' ? (
-                <WeightTrendCard
-                  className="h-96 gap-3 px-6 py-5.5"
-                  chartClassName="aspect-auto min-h-0 w-full grow basis-0"
-                  title="Weight trend"
-                  action={
+              <Card variant="panel" className="h-96 gap-3 px-6 py-5.5">
+                <div className="flex items-center justify-between">
+                  <Text variant="label">Weight trend</Text>
+                  {weightStatus === 'ready' && (
                     <WeightHistoryDrawer
                       entries={weightEntries}
                       onWeightsChanged={onWeightsChanged}
-                      triggerClassName="flex size-6 items-center justify-center rounded-md text-text-muted hover:bg-track"
+                      trigger={
+                        <Button variant="ghost" size="icon-sm">
+                          <History />
+                        </Button>
+                      }
                     />
-                  }
-                  data={weightTrend}
-                />
-              ) : (
-                <Card variant="panel" className="h-96 gap-3 px-6 py-5.5">
-                  <div className="font-sans text-label font-semibold text-text">
-                    Weight trend
-                  </div>
-                  {weightStatus === 'error' ? (
-                    <InlineError onRetry={retryWeight} />
-                  ) : (
-                    <Skeleton className="min-h-0 w-full grow basis-0" />
                   )}
-                </Card>
-              )}
+                </div>
+                {weightStatus === 'ready' ? (
+                  <WeightTrendChart
+                    className="aspect-auto min-h-0 w-full grow basis-0"
+                    data={weightTrend}
+                  />
+                ) : weightStatus === 'error' ? (
+                  <InlineError onRetry={retryWeight} />
+                ) : (
+                  <Skeleton className="min-h-0 w-full grow basis-0" />
+                )}
+              </Card>
 
               <div className="flex flex-col gap-2.5">
-                <h2 className="font-sans text-caption font-semibold text-text">
+                <Text variant="label" render={<h2 />}>
                   Logged today
-                </h2>
+                </Text>
                 <div className="flex flex-col gap-2.5">
                   {todayMeals.length === 0 && <EmptyMeals />}
                   {todayMeals.map((meal) => (
@@ -148,15 +151,19 @@ export function DesktopDashboard() {
             </div>
 
             <div className="flex grow basis-0 flex-col gap-3.5">
-              <RemainingTodayRingCard
-                className="shrink-0 items-center gap-2 p-5"
-                remainingKcal={remainingKcal}
-                goalKcal={goalKcal}
-              />
+              <Card variant="panel" className="shrink-0 items-center gap-2 p-5">
+                <Text variant="label" className="self-start" render={<h2 />}>
+                  Remaining today
+                </Text>
+                <RemainingTodayRing
+                  remainingKcal={remainingKcal}
+                  goalKcal={goalKcal}
+                />
+              </Card>
               <Card variant="panel" className="h-72 gap-2.5 p-5">
-                <h2 className="font-sans text-caption font-semibold text-text">
+                <Text variant="label" render={<h2 />}>
                   7-day calories
-                </h2>
+                </Text>
                 <DailyCaloriesChart
                   className="aspect-auto min-h-0 w-full grow basis-0"
                   data={dailyCalories}

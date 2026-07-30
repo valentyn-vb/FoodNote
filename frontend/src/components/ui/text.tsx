@@ -29,7 +29,13 @@ const textVariants = cva('', {
       default: 'text-foreground',
       muted: 'text-muted-foreground',
       onFill: 'text-primary-foreground',
-      danger: 'text-destructive',
+      danger: 'text-destructive-text',
+      // The brand hue dark enough to read as text — an emphasized figure, a
+      // link, the active item. Anything lighter measured under 3:1.
+      brand: 'text-brand-ink',
+      // "On plan" and "over target": the wash's own text weights, which clear
+      // 4.5:1 where the fill colours reach only ~3:1.
+      success: 'text-success-text',
     },
     // Proportional digits jitter as a counter animates; every NumberFlow value
     // and every figure in a stat column wants this.

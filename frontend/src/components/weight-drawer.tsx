@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -35,7 +35,12 @@ import {
 // how the sidebar uses a real SidebarMenuButton (tooltip in the collapsed rail
 // included) instead of restating that button's classes (#39).
 type WeightDrawerTrigger = {
-  triggerClassName?: string;
+  /**
+   * The element the drawer opens from. Passing the element rather than a class
+   * string keeps the trigger's look inside a `ui/` component — a
+   * `triggerClassName` prop is a hole in that boundary, and it had 10 of them.
+   */
+  trigger?: ReactElement;
   triggerLabel?: string;
   children?: ReactNode;
   open?: boolean;
@@ -58,7 +63,7 @@ type WeightDrawerProps = WeightDrawerTrigger &
 export function WeightDrawer(props: WeightDrawerProps) {
   const {
     mode,
-    triggerClassName,
+    trigger,
     triggerLabel,
     children,
     open: controlledOpen,
@@ -136,7 +141,7 @@ export function WeightDrawer(props: WeightDrawerProps) {
       {/* Nothing to render when the caller drives `open` itself: it brought its
           own trigger, and an empty one here would sit in the tab order. */}
       {controlledOpen === undefined && (
-        <DrawerTrigger aria-label={triggerLabel} className={triggerClassName}>
+        <DrawerTrigger aria-label={triggerLabel} render={trigger}>
           {children ?? (mode === 'create' ? 'Log weight' : undefined)}
         </DrawerTrigger>
       )}

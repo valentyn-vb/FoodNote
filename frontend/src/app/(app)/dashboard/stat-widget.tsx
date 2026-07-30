@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import NumberFlow from '@number-flow/react';
 import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 
 export function StatWidget({
   label,
@@ -17,21 +18,20 @@ export function StatWidget({
 }) {
   return (
     <Card variant="tile" className="relative">
-      <div className="relative z-10 font-sans text-[12px] text-text-muted">
+      <Text variant="caption" tone="muted" className="relative z-10">
         {label}
-      </div>
-      {typeof value === 'string' ? (
-        <div className="font-display text-heading-lg font-semibold text-text">
-          {value}
-        </div>
-      ) : (
-        <NumberFlow
-          value={value}
-          suffix={suffix}
-          format={{ maximumFractionDigits: 1 }}
-          className="font-display text-heading-lg font-semibold text-text"
-        />
-      )}
+      </Text>
+      <Text variant="heading" numeric>
+        {typeof value === 'string' ? (
+          value
+        ) : (
+          <NumberFlow
+            value={value}
+            suffix={suffix}
+            format={{ maximumFractionDigits: 1 }}
+          />
+        )}
+      </Text>
       {mascotSrc && (
         <Image
           src={mascotSrc}
