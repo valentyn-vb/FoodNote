@@ -15,7 +15,8 @@
     "db:logs": "docker compose logs -f db",
     "test": "npm test -w shared && npm test -w backend",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint": "npm run lint -w backend && npm run lint -w frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

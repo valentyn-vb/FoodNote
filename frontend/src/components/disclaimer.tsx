@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import { Text } from '@/components/ui/text';
 
 // Ticket #41: shared copy for every estimate-showing surface.

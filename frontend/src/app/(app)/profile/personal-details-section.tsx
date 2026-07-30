@@ -129,7 +129,7 @@ export function PersonalDetailsSection({
         Personal details
       </Text>
       <Card variant="panel" className="gap-0 overflow-hidden py-0">
-        <dl>
+        <DetailList>
           <DetailRow
             label="Sex"
             value={profileData ? SEX_LABELS[profileData.sex] : '—'}
@@ -157,7 +157,7 @@ export function PersonalDetailsSection({
                 : '—'
             }
           />
-        </dl>
+        </DetailList>
       </Card>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>

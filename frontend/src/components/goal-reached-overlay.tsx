@@ -226,7 +226,7 @@ export function GoalReachedOverlay() {
           <>
             <DialogHeader className="gap-2">
               <DialogTitle variant="heading">
-                What's your new target?
+                What&apos;s your new target?
               </DialogTitle>
             </DialogHeader>
 

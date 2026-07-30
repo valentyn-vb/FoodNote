@@ -25,7 +25,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { cn } from '@/lib/utils';
 import { FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
@@ -193,7 +192,7 @@ function NutrientField({
         <InputGroupInput
           id={id}
           aria-invalid={!!error || undefined}
-          className="px-2.5 text-center tabular-nums"
+          className="px-2.5 text-center"
           {...(fractional ? decimalProps : integerProps)}
           {...props}
         />
@@ -385,7 +384,7 @@ export function MealItemsFields({
                 <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
                 <InputGroupInput
                   aria-label={`Item ${index + 1} ${label}`}
-                  className="px-1 text-center tabular-nums"
+                  className="px-1 text-center"
                   {...(name === 'calories' ? integerProps : decimalProps)}
                   {...form.register(`items.${index}.${name}`, {
                     valueAsNumber: true,
