@@ -6,6 +6,7 @@ import {
   WeightTrendCard,
 } from '@/components/dashboard-charts';
 import { Disclaimer } from '@/components/disclaimer';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -186,10 +187,11 @@ export function MobileDashboard() {
             <h2 className="font-sans text-caption font-medium text-text">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {todayMeals.length === 0 && <EmptyMeals />}
-            {todayMeals.map((meal) => (
-              <MealRow key={meal.id} meal={meal} />
-            ))}
+            {todayMeals.length === 0 ? (
+              <EmptyMeals />
+            ) : (
+              <MealGroupsAccordion meals={todayMeals} />
+            )}
           </div>
 
           {isToday && (

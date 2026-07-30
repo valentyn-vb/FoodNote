@@ -199,6 +199,29 @@
   }
 }
 
+/* tw-animate-css ships accordion-down/up, but its keyframes interpolate to
+   var(--radix-accordion-content-height, … auto) — Radix's variable. Base UI
+   exposes the measured height as --accordion-panel-height instead, so the
+   imported keyframes resolve to `auto` and the panel snaps open. Redefining
+   them here (after the @import) points them at Base UI's variable. */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--accordion-panel-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--accordion-panel-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
 @keyframes gradient-mesh-drift {
   0%,
   100% {
