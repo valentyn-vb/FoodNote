@@ -1,7 +1,7 @@
 'use client';
 
 import { InputField } from '@/components/form-fields';
-import { formatGoalDate } from '@/lib/utils';
+import { formatGoalDate, formatPace } from '@/lib/utils';
 import {
   caloriesSchema,
   manualCalorieRange,
@@ -86,7 +86,7 @@ export function ManualPlanForm({
       ? `Anything from ${range.min.toLocaleString()} to ${range.max.toLocaleString()} kcal.`
       : pace === 0
         ? 'Holds your current weight — no goal date.'
-        : `${pace} kg / week · goal date ~ ${formatGoalDate(goalDate)}`;
+        : `${formatPace(pace)} kg / week · goal date ~ ${formatGoalDate(goalDate)}`;
 
   return (
     <form

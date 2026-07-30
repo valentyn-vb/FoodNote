@@ -25,6 +25,7 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
 import { goals, profile } from '@/lib/api-client';
 import { useMeals } from '@/lib/meals-context';
+import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
 const CONFETTI_COLORS = ['#f5a65c', '#e08a3c', '#5bb98c', '#f4907e'];
@@ -130,7 +131,7 @@ export function GoalReachedOverlay() {
       });
       await refetchDashboard();
       toast.success('New target set', {
-        description: `Target: ${targetWeightValue} kg · ${pace} kg/week`,
+        description: `Target: ${targetWeightValue} kg · ${formatPace(pace)} kg/week`,
       });
     } catch {
       toast.error("Couldn't set your new target. Please try again.");
@@ -209,7 +210,7 @@ export function GoalReachedOverlay() {
           <>
             <DialogHeader className="gap-2">
               <DialogTitle className="font-display text-heading font-semibold text-text">
-                What's your new target?
+                What&apos;s your new target?
               </DialogTitle>
             </DialogHeader>
 

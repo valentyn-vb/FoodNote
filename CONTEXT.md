@@ -113,10 +113,13 @@ The lowest Calorie Target ever offered — 1200 kcal (female) / 1500 kcal
 _Avoid_: minimum, lower bound
 
 **Plan Option**:
-One viable plan for a given preset Pace, shown wherever a plan is picked: its
-Calorie Target, daily deficit/surplus, and Projected Goal Date. An option whose
-unclamped loss target falls below the Safety Floor is hidden (omitted entirely),
-not shown disabled — a Manual Plan is what remains when every preset is hidden.
+One plan offered wherever a plan is picked: its Pace, Calorie Target, daily
+deficit/surplus, and Projected Goal Date. One per preset Pace, plus the active
+Goal's own Pace — which always earns an option, so the picker can show the plan
+the user actually chose even when it is a Manual Plan's derived rate. A preset
+whose unclamped loss target falls below the Safety Floor is hidden (omitted
+entirely), not shown disabled; a Manual Plan is what remains when every preset is
+hidden.
 _Avoid_: plan choice, tier
 
 **Sex**:

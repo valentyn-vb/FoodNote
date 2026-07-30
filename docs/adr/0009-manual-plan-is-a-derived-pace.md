@@ -39,8 +39,8 @@ field that already exists.
 
 ```
 user types 1,750 kcal/day
-  maintenance 2,400  ->  deficit 650/day  ->  650 x 7 / 7700 = 0.59 kg/week
-  goals.preferredWeeklyChangeKg = 0.59
+  maintenance 2,400  ->  deficit 650/day  ->  650 x 7 / 7700 = 0.5909 kg/week
+  goals.preferredWeeklyChangeKg = 0.5909      (displayed as 0.59)
 ```
 
 `paceForCalorieTarget` in `shared/src/calc.ts` is the inverse of
@@ -61,10 +61,13 @@ The cost is one contract change: `paceSchema` widens from
 
 **This amends ADR-0002**, which re-froze the pace set. The presets survive as
 `PACE_OPTIONS` — now an explicit array, since `paceSchema.values` no longer
-exists — and they are still the only thing the picker offers. What changes is
+exists — and they are still the only rates the picker _proposes_. What changes is
 that presets stop being the _domain_ of Pace and become a shortcut within it.
 ADR-0002's actual reasoning is untouched: 1.0 is still the ceiling, still the top
 preset, and still the value that makes the Safety Floor bind on real bodies.
+
+A rate carries four decimals rather than two, for a reason that is about calories
+rather than about Pace — see below.
 
 `MAX_SAFE_PACE_KG` moved from `calc.ts` to `goals.ts` in the process. It is a
 property of the value, not of the arithmetic, and `paceSchema` needs it as a
@@ -106,14 +109,23 @@ all get it from one place. It owns its own form state and derived preview, and
 saves through the same `onConfirm(pace)` callback a preset card does — the three
 call sites did not change.
 
-Re-opening the picker on a manual plan needs two different paces, and conflating
-them was a bug: the cards fall back to the default preset, because a derived rate
-matches none of them and would leave every card unchecked, but the **dialog** must
-open on the rate actually saved. Feeding it the card selection instead showed the
-default plan's calories in place of the user's own. `PlanSelection` therefore
-computes `manualStartPace` separately from `selectedPace`, and the trigger reads
-"Edit your custom plan" rather than "Create your own plan" so it does not look
-like the current plan is about to be discarded.
+Re-opening the picker on a manual plan is where the first cut went wrong, twice,
+and both mistakes had the same root: a derived rate matches no preset card, so the
+picker had nothing to select. Substituting the default preset made the cards
+misreport the user's pace _and_ their calories, and threading a second "start
+from" rate to the dialog only papered over the display while leaving the visible
+screen wrong.
+
+The fix is that **the plan the user is on is one of the options.**
+`buildPlanOptions` takes a `currentPace` and always gives it a card — sorted in
+among the presets, exempt from the floor's hide rule, a full option with its own
+calories and projected date. It then arrives selected like anything else, and
+`PlanSelection` needs no substitute pace and no second rate: `selectedPace` is
+just `pickedPace ?? initialPace ?? default`, as it was before any of this.
+
+The one thing that still asks whether the plan is custom is the dialog's wording —
+"Edit your custom plan" rather than "Create your own plan", so it does not read as
+if the current plan is about to be discarded.
 
 Being a sibling also matters at the dead end: when the Safety Floor hides every
 loss preset, "no safe plan reaches this target" used to be the end of the

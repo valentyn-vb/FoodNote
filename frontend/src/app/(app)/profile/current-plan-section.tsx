@@ -5,6 +5,7 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
+import { formatPace } from '@/lib/utils';
 import { type Pace, type ProfileResponse } from '@foodnote/shared';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -72,7 +73,7 @@ export function CurrentPlanSection({
               ? // Pace 0 is maintenance: "0 kg / week" reads as a broken value,
                 // and the stored target is parked and irrelevant here.
                 'Maintaining your weight'
-              : `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`}
+              : `${formatPace(pace)} kg / week${target != null ? ` · target ${target} kg` : ''}`}
         </div>
 
         <Dialog open={open} onOpenChange={handleOpenChange}>

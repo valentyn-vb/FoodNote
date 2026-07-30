@@ -49,23 +49,25 @@ export function PlanSelection({
 
   const effectiveFromDate = fromDate ?? new Date().toISOString().slice(0, 10);
 
+  // The user's own plan is one of the options, so a manual rate gets a card like
+  // any preset and arrives already selected. That is what keeps this component
+  // free of special cases: no substitute pace, no second "start from" rate.
   const options = useMemo(
-    () => buildPlanOptions({ ...input, fromDate: effectiveFromDate }),
-    [input, effectiveFromDate],
+    () =>
+      buildPlanOptions({
+        ...input,
+        fromDate: effectiveFromDate,
+        currentPace: initialPace ?? undefined,
+      }),
+    [input, effectiveFromDate, initialPace],
   );
 
-  // A manual plan's rate is derived from calories, so it is almost never one of
-  // the presets — carrying it into the cards would leave them all unchecked.
-  const isCustomPlan = initialPace != null && !PACE_OPTIONS.includes(initialPace);
-  const selectedPace =
-    pickedPace ??
-    (isCustomPlan ? null : initialPace) ??
-    defaultPlanPace(options);
+  const selectedPace = pickedPace ?? initialPace ?? defaultPlanPace(options);
 
-  // ...but the dialog must still open on the plan the user actually saved, so it
-  // gets the real rate rather than the preset card standing in for it. Passing
-  // selectedPace here is what made "edit" show the default plan's calories.
-  const manualStartPace = isCustomPlan ? initialPace : selectedPace;
+  // Only decides the manual dialog's wording — an existing manual plan is edited,
+  // not created.
+  const isCustomPlan =
+    initialPace != null && !PACE_OPTIONS.includes(initialPace);
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
@@ -103,7 +105,7 @@ export function PlanSelection({
         <ManualPlanDialog
           input={input}
           fromDate={effectiveFromDate}
-          startFromPace={manualStartPace}
+          startFromPace={selectedPace}
           isCustomPlan={isCustomPlan}
           onConfirm={onConfirm}
         />

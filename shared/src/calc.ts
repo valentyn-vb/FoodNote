@@ -216,14 +216,20 @@ export function hasReachedTarget({
 }
 
 /**
- * Every viable plan option for a goal, one per preset Pace. Loss options whose
- * target would fall below the safety floor are omitted entirely (not clamped),
- * so every returned option's target is honest at its nominal pace. Gain and
- * maintenance options are never hidden. Used by onboarding to preview plans
- * before a Goal is saved.
+ * Every plan worth offering, ascending by Pace: one per preset, plus the plan the
+ * user is already on. Loss options whose target would fall below the safety floor
+ * are omitted entirely (not clamped), so every returned option's target is honest
+ * at its nominal pace. Gain and maintenance options are never hidden.
+ *
+ * `currentPace` is the active Goal's rate, and it always earns an option — even
+ * when it is a derived manual rate rather than a preset, and even when the floor
+ * would have hidden a preset at that rate. Without it the picker cannot show the
+ * plan the user chose: nothing is selected when it opens, and the caller is left
+ * substituting a preset that misreports both the pace and the calories. Omit it
+ * during onboarding, where no Goal exists yet.
  */
 export function buildPlanOptions(
-  input: PlanInput & { fromDate: string },
+  input: PlanInput & { fromDate: string; currentPace?: number },
 ): PlanOption[] {
   const maintenance = tdee(
     {
@@ -244,10 +250,17 @@ export function buildPlanOptions(
     !isLoss ||
     maintenance - dailyEnergyDeltaForPace(pace) >= SAFETY_FLOOR[input.sex];
 
-  return PACE_OPTIONS.filter(isViable).map((pace) => ({
-    pace,
-    dailyCalorieTarget: calorieTargetForPace(input, pace),
-    dailyEnergyDelta: Math.round(dailyEnergyDeltaForPace(pace)),
-    projectedGoalDate: projectedDate(remainingKg, pace, input.fromDate),
-  }));
+  const paces = PACE_OPTIONS.filter(isViable);
+  if (input.currentPace != null && !paces.includes(input.currentPace)) {
+    paces.push(input.currentPace);
+  }
+
+  return paces
+    .sort((a, b) => a - b)
+    .map((pace) => ({
+      pace,
+      dailyCalorieTarget: calorieTargetForPace(input, pace),
+      dailyEnergyDelta: Math.round(dailyEnergyDeltaForPace(pace)),
+      projectedGoalDate: projectedDate(remainingKg, pace, input.fromDate),
+    }));
 }

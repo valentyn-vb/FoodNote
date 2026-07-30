@@ -352,6 +352,46 @@ describe('buildPlanOptions (viable options only, one per pace)', () => {
     });
   });
 
+  it('includes the plan the user is on, sorted in among the presets', () => {
+    // A manual plan's rate is derived from calories, so it is not a preset. It
+    // still needs a card, or the picker opens with nothing selected and has to
+    // substitute a preset that misreports the pace and the calories.
+    const options = buildPlanOptions({
+      age: 30,
+      sex: 'male',
+      heightCm: 180,
+      activityLevel: 'moderate',
+      currentWeightKg: 80,
+      targetWeightKg: 75,
+      fromDate: '2026-01-01',
+      currentPace: 0.6855,
+    });
+    expect(options.map((o) => o.pace)).toEqual([
+      0, 0.25, 0.5, 0.6855, 0.75, 1.0,
+    ]);
+    // And it is a full option, not a stub: 2759 − 0.6855 × 1100 = 2004.95.
+    expect(options.find((o) => o.pace === 0.6855)).toEqual({
+      pace: 0.6855,
+      dailyCalorieTarget: 2005,
+      dailyEnergyDelta: 754, // 0.6855 × 7700 ÷ 7 = 754.05
+      projectedGoalDate: '2026-02-22', // 5 kg ÷ 0.6855 = 7.29 wk → 52 days
+    });
+  });
+
+  it('does not duplicate a current pace that is already a preset', () => {
+    const options = buildPlanOptions({
+      age: 30,
+      sex: 'male',
+      heightCm: 180,
+      activityLevel: 'moderate',
+      currentWeightKg: 80,
+      targetWeightKg: 75,
+      fromDate: '2026-01-01',
+      currentPace: 0.5,
+    });
+    expect(options.map((o) => o.pace)).toEqual([0, 0.25, 0.5, 0.75, 1.0]);
+  });
+
   it('returns every pace when even the fastest loss pace clears the floor', () => {
     // Male, moderate, 80 kg → TDEE 2759, floor 1500. 1.0 → 1659 ≥ 1500.
     const options = buildPlanOptions({
