@@ -33,8 +33,10 @@ export function WeightHistoryRow({
   }
 
   return (
-    // Same object as MealRow, so the same variant and radius: CARD_CLASS,
-    // which main still used here, was deleted on this branch (14edc01).
+    // The same kind of object as the dashboard's former MealRow (now
+    // MealLine inside MealGroupsAccordion), so the same variant and radius:
+    // CARD_CLASS, which main still used here, was deleted on this branch
+    // (14edc01).
     <Card
       variant="panel"
       className="shrink-0 flex-row items-center justify-between rounded-md px-4 py-3"

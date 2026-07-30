@@ -28,6 +28,7 @@ import {
   useMealTotals,
   type MealDraftValues,
 } from '@/components/meal-fields';
+import { cn } from '@/lib/utils';
 import { useMeals } from '@/lib/meals-context';
 import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
@@ -70,10 +71,14 @@ const emptyDraft = (): MealDraftValues => ({
 export function MealLogDrawer({
   open: controlledOpen,
   onOpenChange,
+  triggerClassName,
   children,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  // Layout only — the trigger's own look stays in the component. `/meals` and
+  // the desktop dashboard need it to sit right in their columns.
+  triggerClassName?: string;
   children?: React.ReactNode;
 }) {
   // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
@@ -240,7 +245,12 @@ export function MealLogDrawer({
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
       {children && (
-        <DrawerTrigger className="h-12.5 grow-2 basis-0 rounded-md bg-primary text-surface shadow-cta lg:grow-0 lg:px-6">
+        <DrawerTrigger
+          className={cn(
+            'h-12.5 grow-2 basis-0 rounded-md bg-primary text-surface shadow-cta lg:grow-0 lg:px-6',
+            triggerClassName,
+          )}
+        >
           {children}
         </DrawerTrigger>
       )}

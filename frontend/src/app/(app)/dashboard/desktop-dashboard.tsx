@@ -1,22 +1,22 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Disclaimer } from '@/components/disclaimer';
 import {
   DailyCaloriesChart,
   RemainingTodayRingCard,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
+import { Disclaimer } from '@/components/disclaimer';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
+import { MealLogDrawer } from '@/components/meal-log-drawer';
+import { Card } from '@/components/ui/card';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
+import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
-import { EmptyMeals } from './empty-meals';
-import { MealRow } from './meal-row';
-import { WeightHistoryDrawer } from './weight-history-drawer';
 import {
   DashboardError,
   DesktopDashboardSkeleton,
@@ -24,6 +24,7 @@ import {
   TileSkeleton,
 } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 
 export function DesktopDashboard() {
   const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
@@ -139,10 +140,14 @@ export function DesktopDashboard() {
                   Logged today
                 </h2>
                 <div className="flex flex-col gap-2.5">
-                  {todayMeals.length === 0 && <EmptyMeals />}
-                  {todayMeals.map((meal) => (
-                    <MealRow key={meal.id} meal={meal} />
-                  ))}
+                  {todayMeals.length === 0 ? (
+                    <EmptyMeals />
+                  ) : (
+                    <MealGroupsAccordion meals={todayMeals} />
+                  )}
+                  <MealLogDrawer triggerClassName="ml-auto h-10 text-label font-semibold">
+                    Log a meal
+                  </MealLogDrawer>
                 </div>
               </div>
             </div>
