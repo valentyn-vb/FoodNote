@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const toggleVariants = cva(
   // The pressed look lives in the variants, not the base, so `option` can
   // state its own without fighting a neutral one it inherited.
-  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] outline-none focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -22,7 +22,7 @@ const toggleVariants = cva(
         // border keeps its width and only changes colour, so choosing an option
         // doesn't nudge it half a pixel in every direction.
         option:
-          'border border-border bg-card text-muted-foreground hover:border-brand/60 data-pressed:border-brand data-pressed:bg-brand-soft data-pressed:font-semibold data-pressed:text-foreground',
+          'border border-border bg-card text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
       },
       size: {
         default:

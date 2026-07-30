@@ -44,14 +44,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Matches a stat tile or a meal row rather than a popover: a toast is
           // a small surface, and 20px on one reads as a pill.
           '--border-radius': 'var(--radius-md)',
-          '--success-bg': 'var(--success-surface)',
-          '--success-border': 'var(--success-border)',
+          '--success-bg': 'color-mix(in oklch, var(--success), var(--card) 90%)',
+          '--success-border': 'color-mix(in oklch, var(--success), var(--card) 70%)',
           '--success-text': 'var(--success-text)',
-          '--error-bg': 'var(--destructive-surface)',
-          '--error-border': 'var(--destructive-border)',
+          '--error-bg': 'color-mix(in oklch, var(--destructive), var(--card) 90%)',
+          '--error-border': 'color-mix(in oklch, var(--destructive), var(--card) 70%)',
           '--error-text': 'var(--destructive-text)',
-          '--warning-bg': 'var(--warning-surface)',
-          '--warning-border': 'var(--warning-border)',
+          '--warning-bg': 'color-mix(in oklch, var(--warning), var(--card) 90%)',
+          '--warning-border': 'color-mix(in oklch, var(--warning), var(--card) 70%)',
           '--warning-text': 'var(--warning-text)',
           // Nothing in the app raises an info toast yet; keep it neutral so one
           // added later inherits the app's surface instead of sonner's blue.
@@ -62,7 +62,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: 'shadow-card',
+          toast: 'shadow-xs',
           title: 'text-label font-semibold',
           description: 'text-caption',
           // Sonner fills the action button by inverting the toast's own colours

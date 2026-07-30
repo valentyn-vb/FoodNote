@@ -130,7 +130,7 @@ export function RemainingTodayRing({
               dataKey="value"
               cornerRadius={10}
               fill="var(--primary)"
-              background={{ fill: 'var(--track)' }}
+              background={{ fill: 'var(--border)' }}
             />
           </RadialBarChart>
         </ResponsiveContainer>

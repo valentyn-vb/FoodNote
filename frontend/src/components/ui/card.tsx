@@ -22,26 +22,26 @@ const cardVariants = cva(
           'rounded-xl border border-border bg-card py-(--card-spacing) shadow-xs',
         // The app's standard content surface: hairline border and padding
         // supplied by the call site.
-        panel: 'rounded-xl border border-border bg-card shadow-card',
+        panel: 'rounded-xl border border-border bg-card shadow-xs',
         // A compact stat tile — self-padding, tighter radius and gap.
-        tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline',
+        tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-xs',
         // One line of a list: a fixed-height surface that never flexes, because
         // inside a bounded scrolling column a row would squash before the column
         // scrolled. Tighter radius than `panel` — 20px on a 64px row reads as a
         // pill.
-        row: 'shrink-0 flex-row items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3.5 shadow-card',
+        row: 'shrink-0 flex-row items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3.5 shadow-xs',
         // A quiet aside on a warm wash — a confidence note, a parsed summary.
-        note: 'gap-1 rounded-md bg-brand-softer px-3.5 py-2.5',
+        note: 'gap-1 rounded-md bg-accent px-3.5 py-2.5',
         // The same shape, carrying a failure. Bordered, because a wash alone
         // doesn't say "this went wrong" on a warm page.
         alert:
-          'gap-1 rounded-md border border-destructive-border bg-destructive-surface px-3.5 py-3',
+          'gap-1 rounded-md border border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)] px-3.5 py-3',
         // A tile you choose between: same surface, plus a selected state driven
         // by `data-selected` on the call site. The border keeps its width and
         // only changes colour — thickening it on selection shifts the content
         // half a pixel in every direction, which reads as a twitch.
         option:
-          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline transition-colors duration-150 data-selected:border-brand data-selected:bg-brand-softer',
+          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-xs transition-colors duration-150 data-selected:border-primary data-selected:bg-accent',
       },
     },
     defaultVariants: {

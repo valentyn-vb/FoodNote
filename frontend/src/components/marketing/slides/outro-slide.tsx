@@ -27,7 +27,7 @@ export function OutroSlide() {
           className="overflow-hidden rounded-[32px]"
           color={[0.357, 0.725, 0.549]}
         >
-          <div className="flex flex-col items-center gap-6 bg-brand-mint px-8 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-14">
+          <div className="flex flex-col items-center gap-6 bg-chart-2 px-8 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-14">
             <div className="flex flex-col items-center gap-2 text-center sm:items-start sm:text-left">
               <h2 className="font-[family-name:var(--font-accent-serif)] text-balance text-[clamp(30px,4vw,40px)] text-white italic">
                 Ready to stop guessing?

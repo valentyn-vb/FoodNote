@@ -22,7 +22,7 @@ const buttonVariants = cva(
         // rather than urgent — logging out, deleting one entry. The filled
         // `destructive` above is for the confirmation itself.
         destructiveOutline:
-          'border-destructive-border bg-card text-destructive-text hover:bg-destructive-surface',
+          'border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-card text-destructive-text hover:bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]',
         // Deprecated, removed with its last call site: without the orange glow
         // and with the size ladder back to shadcn's, this is `default`.
         cta: 'bg-primary text-primary-foreground active:scale-[0.98]',

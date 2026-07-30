@@ -12,8 +12,8 @@ const medallionVariants = cva(
   {
     variants: {
       tone: {
-        brand: 'bg-brand-soft',
-        danger: 'bg-destructive-surface',
+        brand: 'bg-accent',
+        danger: 'bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]',
       },
       size: {
         default: 'size-30',

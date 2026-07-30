@@ -19,17 +19,17 @@ const inputVariants = cva(
     variants: {
       variant: {
         default:
-          'h-11 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm',
+          'h-11 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm',
         // The app's standard form field: hairline lift and a border-only focus
         // treatment instead of a ring.
         field:
-          'h-11 rounded-md border border-border px-3.5 text-base shadow-hairline focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset md:text-sm',
+          'h-11 rounded-md border border-border px-3.5 text-base shadow-xs focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset md:text-sm',
         // A compact cell inside a denser row — a parsed meal item.
-        cell: 'h-9 rounded-sm border border-border px-2 text-center text-base tabular-nums focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset md:text-caption',
+        cell: 'h-9 rounded-sm border border-border px-2 text-center text-base tabular-nums focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset md:text-caption',
         // One big figure, centred: the weight or calorie value a screen is
         // entirely about. Fredoka, because it reads as a headline number.
         figure:
-          'h-12 rounded-md border border-border px-3.5 text-center font-heading text-title tabular-nums shadow-hairline focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset',
+          'h-12 rounded-md border border-border px-3.5 text-center font-heading text-title tabular-nums shadow-xs focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
         // Reads as text until focused — an item's name.
         bare: 'bg-transparent text-base font-medium focus-visible:underline md:text-label',
       },

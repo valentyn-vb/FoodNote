@@ -33,7 +33,7 @@ import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 // fourth copy of the brand palette in the codebase.
 function confettiColors() {
   const style = getComputedStyle(document.documentElement);
-  return ['--brand', '--brand-ink', '--brand-mint', '--brand-coral']
+  return ['--primary', '--brand-ink', '--chart-2', '--chart-3']
     .map((token) => style.getPropertyValue(token).trim())
     .filter(Boolean);
 }

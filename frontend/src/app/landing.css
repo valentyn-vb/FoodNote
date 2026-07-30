@@ -66,14 +66,14 @@
    which pulled three.js + @react-three/fiber (~295KB gz) and ran a live WebGL
    context on every viewport including mobile, for what is a decorative
    background.
-   The three hues are the decorative brand tokens, not the semantic ones:
+   The three hues are --primary and the chart tokens, not the semantic ones:
    --success and --warning are darkened to clear contrast thresholds, and using
    them here would dim the mesh. Decoration keeps the original brand hues. */
 .gradient-mesh {
   background-image:
-    radial-gradient(circle at 20% 20%, var(--brand) 0%, transparent 45%),
-    radial-gradient(circle at 85% 80%, var(--brand-coral) 0%, transparent 50%),
-    radial-gradient(circle at 55% 62%, var(--brand-mint) 0%, transparent 48%);
+    radial-gradient(circle at 20% 20%, var(--primary) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, var(--chart-3) 0%, transparent 50%),
+    radial-gradient(circle at 55% 62%, var(--chart-2) 0%, transparent 48%);
   background-color: var(--background);
   background-size: 150% 150%;
   opacity: 0.3;

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Figtree, Fredoka, Geist_Mono } from 'next/font/google';
+import { Figtree, Fredoka } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/components/auth-provider';
@@ -9,11 +9,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-display' });
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: 'FoodNote',
@@ -35,12 +30,7 @@ export default function RootLayout({
       // Only the font-face variables and the layout height: `font-sans` and
       // `antialiased` live in @layer base in globals.css, so no element has to
       // restate them.
-      className={cn(
-        'h-full',
-        geistMono.variable,
-        figtree.variable,
-        fredoka.variable,
-      )}
+      className={cn('h-full', figtree.variable, fredoka.variable)}
     >
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
           attributes into <body> before hydration — harmless, but noisy in dev. */}

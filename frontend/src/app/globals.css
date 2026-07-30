@@ -27,50 +27,41 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Brand — decoration only. Measured on white: the brand orange carries white
-     text at 2.0:1 and reads as text at 2.67:1, the brand green at 3.46:1,
-     against a 4.5:1 threshold. So brand colours live in fills, borders and
-     icons (3:1), and text is always neutral: --foreground or
-     --muted-foreground.
-     --brand fills (the CTA, the mascot, the mesh) and carries dark text at
-     7.3:1; --brand-ink is dark enough to *write* with — links, an active nav
-     item, an emphasized number — at 4.9:1, which is the one thing the earlier
-     `#e08a3c` (2.67:1) could not do and why brand text was banned outright;
-     --brand-line draws a warm hairline where a border should read as accent
-     rather than structure; --brand-soft/-softer are washes to sit on.
-     Focus is deliberately *not* brand-coloured. Two reasons, and the second is
-     the one that settled it: a brand line on white reaches 2.0:1 where WCAG 2.2
-     wants 3:1, and darkening the hue enough to pass turns it muddy brown. So
-     focus is neutral and sharp, selection is warm and branded — two different
-     meanings that now look different. */
-  --color-brand: var(--brand);
+  /* The one addition to the stock roles that is not a status colour.
+     The handoff has two oranges doing different jobs: a fill (`#F5A65C`, now
+     --primary) and a text weight (`#A85517`, here). One value cannot do both —
+     the fill reads at 2.0:1 as text, and the text weight makes a muddy brown
+     button. So brand colour fills through --primary and writes through
+     --brand-ink: links, an active nav item, an emphasized figure, at 4.9:1.
+     The warm washes that used to be --brand-soft/-softer are --accent, the
+     warm hairline that was --brand-line is --border, and the focus colour that
+     was --brand-focus is --ring. */
   --color-brand-ink: var(--brand-ink);
-  --color-brand-line: var(--brand-line);
-  --color-brand-focus: var(--brand-focus);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-softer: var(--brand-softer);
-  --color-brand-mint: var(--brand-mint);
-  --color-brand-coral: var(--brand-coral);
 
-  /* Status. --success and --warning are the fill/border/icon weights; the
-     surface/border/text triplets are feedback washes (toasts), where the text
-     weight is dark enough to clear 4.5:1 on its own wash — 5.5:1, 4.8:1 and
-     5.4:1 respectively. The brand hues can't do that job, which is why these
-     are separate values and not opacities of --success. */
+  /* Charts. Stock shadcn names, carrying the decorative hues that used to be
+     --brand-mint and --brand-coral — the gradient mesh and the goal overlay
+     are exactly what these are for. */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Status. Two fill/border/icon weights beside the stock --destructive, and
+     the three text weights.
+     The `-surface` and `-border` washes are gone: a component derives them
+     with color-mix from the base colour, which measures 5.98:1 (success),
+     5.63:1 (warning) and 8.29:1 (destructive) for text on its own wash,
+     against a 4.5:1 threshold.
+     The `-text` weights stayed tokens, though, and that is not an oversight:
+     with <Text tone="success"> deleted, a bare call site has no component to
+     derive a colour inside, and `text-[color-mix(in_oklch,…)]` in the markup
+     is worse than a name. */
   --color-success: var(--success);
-  --color-success-surface: var(--success-surface);
-  --color-success-border: var(--success-border);
   --color-success-text: var(--success-text);
   --color-warning: var(--warning);
-  --color-warning-surface: var(--warning-surface);
-  --color-warning-border: var(--warning-border);
   --color-warning-text: var(--warning-text);
-  --color-destructive-surface: var(--destructive-surface);
-  --color-destructive-border: var(--destructive-border);
   --color-destructive-text: var(--destructive-text);
-
-  /* Neutral progress-bar track. */
-  --color-track: var(--track);
 
   /* Sidebar. Compatibility shims: `shadcn add sidebar` greps for these names,
      so they keep them, but they resolve to base roles rather than holding
@@ -123,22 +114,25 @@
   --text-display--letter-spacing: -0.015em;
 
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  /* A system stack, not a downloaded face. Two call sites want monospace — a
+     tooltip figure in the vendored charts and one filename on the landing —
+     and neither justifies shipping a font for it. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   /* Fredoka, under the name the shadcn CLI greps for. Both families come from
      next/font/google on <html> — see layout.tsx. */
   --font-heading: var(--font-display);
 
   /* ── Elevation ───────────────────────────────────────────────────────────
-     Two levels, and the only place a shadow is defined — a raw shadow-[…]
-     utility hardcodes a colour that can't be themed or contrast-audited.
-     Popovers and drawers keep tailwind's own shadow-md/shadow-lg.
+     None of our own. The two that were here — 0 1px 3px #0000000a and
+     0 1px 2px #00000008 — were two names for an effect
+     nobody could tell apart on screen; tailwind's own `shadow-xs/sm/md/lg`
+     cover the same ground, and the heaviest thing the handoff asks for — the
+     popover's `0 12px 32px rgba(59,35,20,.14)` — is roughly `shadow-lg`.
      There is deliberately no brand glow: the orange `0 2px 8px #f5a65c59`
      under the CTA is dropped as a device rather than tokenised. A CTA holds
      attention with its fill, not with light. Nor is there a focus halo — a soft
      wash under a focused field reads as a smudge, and the border says it
      already. */
-  --shadow-card: 0 1px 3px #0000000a;
-  --shadow-hairline: 0 1px 2px #00000008;
 
   /* ── Radius ──────────────────────────────────────────────────────────────
      One number, and shadcn's own formula off it: sm/md/lg/xl are −4/−2/0/+4.
@@ -180,45 +174,46 @@
   --popover-foreground: var(--foreground);
   /* The fill is the brand hue; the label on it is the app's own ink, which
      measures 7.3:1 — better than white on any orange dark enough to take it. */
-  --primary: var(--brand);
+  --primary: oklch(0.788 0.13 62.2);
   --primary-foreground: var(--foreground);
   --secondary: oklch(0.986 0.006 75.4);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.968 0.015 70.9);
   --muted-foreground: oklch(0.515 0.04 55.3);
+  /* Was --brand-softer, and --brand-soft resolved here too: two warm washes a
+     tenth of a lightness step apart, which nothing on screen distinguished. */
   --accent: oklch(0.966 0.023 65.5);
   --accent-foreground: var(--foreground);
+  /* Absorbs the old --track (0.933 0.02 70), which sat a hair off it and was
+     used for one progress bar. */
   --border: oklch(0.925 0.021 67.6);
   --input: oklch(0.915 0.025 65.6);
-  --ring: var(--brand-focus);
+  /* Was --brand-focus. Focus is warm but not the fill orange: the fill reaches
+     2.0:1 against white where WCAG 2.2 wants 3:1. */
+  --ring: oklch(0.798 0.122 58.7);
 
-  --brand: oklch(0.788 0.13 62.2);
   --brand-ink: oklch(0.541 0.129 51.5);
-  --brand-soft: oklch(0.949 0.035 66);
-  --brand-softer: oklch(0.966 0.023 65.5);
-  --brand-line: oklch(0.906 0.051 61.4);
-  --brand-focus: oklch(0.798 0.122 58.7);
-  --brand-mint: oklch(0.716 0.112 160.8);
-  --brand-coral: oklch(0.755 0.125 31.1);
+
+  /* The decorative hues, under the stock chart names. 1 is the brand orange, 2
+     the mint and 3 the coral that the gradient mesh and the goal overlay use;
+     4 and 5 extend the same warm-to-cool run for a chart that needs five
+     series, which none does yet. */
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.716 0.112 160.8);
+  --chart-3: oklch(0.755 0.125 31.1);
+  --chart-4: oklch(0.723 0.106 96.4);
+  --chart-5: oklch(0.681 0.098 232.7);
 
   --success: oklch(0.622 0.117 148.6);
-  --success-surface: oklch(0.966 0.016 148.4);
-  --success-border: oklch(0.905 0.037 150.2);
   --success-text: oklch(0.438 0.08 149.1);
   --warning: oklch(0.67 0.13 31);
-  --warning-surface: var(--brand-soft);
-  --warning-border: oklch(0.911 0.052 64.3);
   --warning-text: oklch(0.511 0.089 62.8);
   --destructive: oklch(0.543 0.174 29.7);
-  --destructive-surface: oklch(0.948 0.02 25.2);
-  --destructive-border: oklch(0.868 0.05 18.2);
   --destructive-text: oklch(0.533 0.162 24.5);
-
-  --track: oklch(0.933 0.02 70);
 
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--brand-softer);
+  --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);

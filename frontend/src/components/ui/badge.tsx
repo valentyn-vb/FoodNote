@@ -15,14 +15,14 @@ const badgeVariants = cva(
         secondary:
           'bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80',
         destructive:
-          'bg-destructive-surface text-destructive-text focus-visible:ring-destructive/20 [a]:hover:bg-destructive-border',
+          'bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)] text-destructive-text focus-visible:ring-destructive/20 [a]:hover:bg-[color-mix(in_oklch,var(--destructive),var(--card)_70%)]',
         // The two states the product actually labels: on plan, and worth a
         // second look. Text is the wash's own dark weight, not the brand hue —
         // the brand greens and oranges don't clear 4.5:1 as text.
         success:
-          'bg-success-surface text-success-text [a]:hover:bg-success-border',
+          'bg-[color-mix(in_oklch,var(--success),var(--card)_90%)] text-success-text [a]:hover:bg-[color-mix(in_oklch,var(--success),var(--card)_70%)]',
         warning:
-          'bg-warning-surface text-warning-text [a]:hover:bg-warning-border',
+          'bg-[color-mix(in_oklch,var(--warning),var(--card)_90%)] text-warning-text [a]:hover:bg-[color-mix(in_oklch,var(--warning),var(--card)_70%)]',
         outline:
           'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
         ghost: 'hover:bg-muted hover:text-muted-foreground',

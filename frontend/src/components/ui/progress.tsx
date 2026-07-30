@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils';
 /**
  * A determinate bar: how much of the day's budget is gone. The track and the
  * fill are both roles, so a call site passes a number and nothing else — the
- * five hand-built `h-2 bg-track` + `bg-primary` pairs it replaces each picked
+ * five hand-built `h-2 bg-border` + `bg-primary` pairs it replaces each picked
  * their own height.
  */
-const progressVariants = cva('shrink-0 overflow-hidden rounded-full bg-track', {
+const progressVariants = cva('shrink-0 overflow-hidden rounded-full bg-border', {
   variants: {
     size: {
       default: 'h-2',
