@@ -14,7 +14,7 @@ import { caloriesSchema, dateSchema, idSchema, weightKgSchema } from './common';
 /**
  * Weekly weight-change rate. `0` is the maintenance plan — Pace is the single
  * thing that says what kind of plan a Goal is, so a Goal is maintenance when,
- * and only when, its pace is 0 (see docs/adr/0006). The non-zero values are
+ * and only when, its pace is 0 (see docs/adr/0007). The non-zero values are
  * magnitudes; direction comes from targetWeightKg vs startWeightKg.
  */
 export const paceSchema = z.literal([0, 0.25, 0.5, 0.75, 1.0]);

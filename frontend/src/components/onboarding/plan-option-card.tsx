@@ -22,8 +22,8 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
       className={cn(
         'flex cursor-pointer flex-col gap-1.5 rounded-md px-4.5 py-4 transition-colors duration-150',
         selected
-          ? 'border-2 border-primary bg-[#FFF9F3] shadow-[0_4px_14px_#f5a65c29]'
-          : 'border border-border bg-surface shadow-[0_1px_2px_#00000008]',
+          ? 'border-2 border-primary bg-primary-tint-soft shadow-selected'
+          : 'border border-border bg-surface shadow-hairline',
       )}
     >
       <div className="flex items-center justify-between">

@@ -20,7 +20,7 @@ import NumberFlow from '@number-flow/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
-import { CARD_CLASS, fullnessMascot } from './helpers';
+import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -72,7 +72,7 @@ export function MobileDashboard() {
         <MobileDashboardSkeleton />
       ) : (
         <>
-          <Card className={`${CARD_CLASS} gap-2.5 p-5`}>
+          <Card variant="panel" className="gap-2.5 p-5">
             <h2 className="font-sans text-caption text-text-muted">
               Remaining today
             </h2>
@@ -81,7 +81,7 @@ export function MobileDashboard() {
               suffix=" kcal"
               className="font-display text-[38px] font-semibold text-text"
             />
-            <div className="h-2 shrink-0 overflow-hidden rounded-full bg-[#F0EEE9]">
+            <div className="h-2 shrink-0 overflow-hidden rounded-full bg-track">
               <div
                 className="h-full rounded-full bg-primary transition-[width] duration-500"
                 style={{ width: `${progressPct}%` }}
@@ -141,23 +141,23 @@ export function MobileDashboard() {
                   <WeightHistoryDrawer
                     entries={weightEntries}
                     onWeightsChanged={onWeightsChanged}
-                    triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted"
+                    triggerClassName="flex size-6 items-center justify-center rounded-md text-text-muted"
                   />
                 )}
               </div>
             </div>
             {weightReady ? (
               <WeightTrendCard
-                className={`${CARD_CLASS} p-4`}
+                className="p-4"
                 chartClassName="aspect-auto h-[110px] w-full flex-none"
                 data={weightTrend}
               />
             ) : (
-              <Card className={`${CARD_CLASS} p-4`}>
+              <Card variant="panel" className="p-4">
                 {weightStatus === 'error' ? (
                   <InlineError onRetry={retryWeight} />
                 ) : (
-                  <Skeleton className="h-[110px] w-full" />
+                  <Skeleton className="h-27.5 w-full" />
                 )}
               </Card>
             )}
@@ -167,9 +167,9 @@ export function MobileDashboard() {
             <h2 className="font-sans text-caption font-medium text-text">
               Daily calories (7 days)
             </h2>
-            <Card className={`${CARD_CLASS} shrink-0 px-4 pt-4 pb-3`}>
+            <Card variant="panel" className="shrink-0 px-4 pt-4 pb-3">
               <DailyCaloriesChart
-                className="aspect-auto h-[120px] w-full flex-none"
+                className="aspect-auto h-30 w-full flex-none"
                 data={dailyCalories}
               />
             </Card>
@@ -189,11 +189,11 @@ export function MobileDashboard() {
           </div>
 
           <div className="flex gap-2.5 border-t border-border pt-3">
-            <MealLogDrawer />
+            <MealLogDrawer>Log a meal</MealLogDrawer>
             <WeightDrawer
               mode="create"
               onWeightSaved={onWeightSaved}
-              triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
+              triggerClassName="h-12.5 grow basis-0 rounded-md border border-border text-[13.5px] font-medium text-text"
             >
               Log weight
             </WeightDrawer>

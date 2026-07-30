@@ -45,7 +45,9 @@ export default function MealsPage() {
             the page you land on to review the day. The drawer's own trigger
             defaults stretch to fill a mobile action bar, so the grow/basis
             reset keeps it a compact header button on both breakpoints. */}
-        <MealLogDrawer triggerClassName="ml-auto h-10 grow-0 basis-auto px-5 text-label font-semibold" />
+        <MealLogDrawer triggerClassName="ml-auto h-10 grow-0 basis-auto px-5 text-label font-semibold">
+          Log a meal
+        </MealLogDrawer>
       </div>
 
       {status === 'error' ? (
