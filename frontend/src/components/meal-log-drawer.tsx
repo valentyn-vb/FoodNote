@@ -49,11 +49,46 @@ type Step = 'input' | 'manual' | 'loading' | 'preview' | 'not-food' | 'error';
 /** The AI call is a live model round-trip; past this it isn't coming. */
 const PARSE_TIMEOUT_MS = 15_000;
 
+/** The pool the input step's chips are drawn from. Deliberately longer than
+    what's shown: a fixed trio reads as *the* three things the parser accepts,
+    while a rotating sample reads as examples of a much wider range — which is
+    what the free-text parser actually is. Keep them short and portion-bearing,
+    since they double as a hint about how much detail helps. */
 const EXAMPLES = [
   'Two eggs and toast',
   'Oatmeal 60 g with banana',
   'Chicken breast 200 g and rice',
+  'Greek yoghurt 150 g with honey',
+  'Tuna salad and a slice of bread',
+  'Cappuccino and a croissant',
+  'Salmon 180 g with potatoes',
+  'Pasta bolognese, a large plate',
+  'Protein shake with milk',
+  'Turkey sandwich and an apple',
+  'Scrambled eggs, bacon and coffee',
+  'Lentil soup and rye bread',
+  'Beef steak 250 g with vegetables',
+  'Cottage cheese 200 g with berries',
+  'Chicken caesar salad',
+  'Sushi, eight pieces',
+  'Banana and a handful of almonds',
+  'Pepperoni pizza, three slices',
+  'Buckwheat 150 g with a fried egg',
+  'Latte and a chocolate bar',
 ];
+
+const EXAMPLE_CHIPS = 3;
+
+/** A sample without replacement, so the three chips are never duplicates.
+    Called on open and never during render: picking while rendering would give
+    the server and the hydrating client different chips. */
+function pickExamples() {
+  const pool = [...EXAMPLES];
+  return Array.from(
+    { length: EXAMPLE_CHIPS },
+    () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0],
+  );
+}
 
 // Static, so building it per render only allocates a closure useForm drops.
 const mealDraftResolver = zodResolver(mealDraftSchema);
@@ -281,23 +316,10 @@ export function MealLogDrawer({
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
                 className="min-h-32.5 rounded-md border-[1.5px] border-primary bg-surface p-3.5 font-sans text-[14.5px] text-text shadow-focus-primary focus:outline-none"
               />
-              {/* Full-height chips: at `size="xs"` (24px) these were a
-                  thumb-sized miss on a phone, and they are the fastest way into
-                  the flow. */}
-              {description.length === 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {EXAMPLES.map((example) => (
-                    <Button
-                      key={example}
-                      variant="outline"
-                      onClick={() => setDescription(example)}
-                      className="rounded-full px-4 h-8 font-sans text-caption text-text-muted"
-                    >
-                      {example}
-                    </Button>
-                  ))}
-                </div>
-              )}
+              <ExampleChips
+                show={description.length === 0}
+                onPick={setDescription}
+              />
               <div className="font-sans text-[12px] text-text-muted">
                 One meal at a time. Portions can be approximate — you&apos;ll
                 review before saving.
@@ -516,6 +538,53 @@ export function MealLogDrawer({
         )}
       </DrawerContent>
     </Drawer>
+  );
+}
+
+/**
+ * The example chips under the textarea, and the one place the sample is drawn.
+ *
+ * Its own component so the pick happens in a `useState` initialiser — once per
+ * mount, and the drawer's content mounts fresh on every opening: Base UI's
+ * portal defaults to `keepMounted={false}` and renders nothing while closed, so
+ * this unmounts on close and re-runs the initialiser on the next open.
+ *
+ * That buys a new trio per opening without an effect (`setState` in an effect
+ * is what `react-hooks/set-state-in-effect` rejects, and rightly) and without
+ * calling `Math.random()` during a render — a closed drawer renders no content
+ * on the server either, so there is nothing to hydrate and nothing to mismatch.
+ *
+ * `show` is a prop rather than a guard at the call site on purpose — guarding
+ * outside would unmount this on the first keystroke and redraw the chips when
+ * the field is cleared, which reads as a glitch mid-edit.
+ *
+ * Full-height chips: at `size="xs"` (24px) these were a thumb-sized miss on a
+ * phone, and they are the fastest way into the flow.
+ */
+function ExampleChips({
+  show,
+  onPick,
+}: {
+  show: boolean;
+  onPick: (example: string) => void;
+}) {
+  const [examples] = useState(pickExamples);
+
+  if (!show) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {examples.map((example) => (
+        <Button
+          key={example}
+          variant="outline"
+          onClick={() => onPick(example)}
+          className="rounded-full px-4 h-8 font-sans text-caption text-text-muted"
+        >
+          {example}
+        </Button>
+      ))}
+    </div>
   );
 }
 
