@@ -16,6 +16,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Disclaimer } from '@/components/disclaimer';
 import {
   MEAL_FORM_ID,
@@ -260,7 +261,7 @@ export function MealLogDrawer({
               <DrawerDescription className="font-sans text-caption font-medium text-text">
                 Describe what you ate
               </DrawerDescription>
-              <textarea
+              <Textarea
                 autoFocus
                 value={description}
                 onChange={(e) => {
@@ -269,7 +270,7 @@ export function MealLogDrawer({
                 }}
                 rows={4}
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
-                className="min-h-32.5 rounded-md border-[1.5px] border-primary bg-surface p-3.5 font-sans text-[14.5px] text-text shadow-focus-primary focus:outline-none"
+                className="min-h-32.5"
               />
               {/* Full-height chips: at `size="xs"` (24px) these were a
                   thumb-sized miss on a phone, and they are the fastest way into
@@ -481,12 +482,16 @@ export function MealLogDrawer({
               <div className="font-sans text-caption font-medium text-text">
                 Describe what you ate
               </div>
-              <textarea
+              <Textarea
                 autoFocus
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="min-h-22.5 rounded-md border-[1.5px] border-error bg-surface p-3.5 font-sans text-[14.5px] text-text focus:outline-none"
+                // The invalid look is the component's, driven by the attribute
+                // that also tells a screen reader — not a red border painted on
+                // from here.
+                aria-invalid
+                className="min-h-22.5"
               />
             </div>
           </RecoverStep>

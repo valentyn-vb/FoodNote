@@ -37,13 +37,14 @@
      against a 4.5:1 threshold. So brand colours live in fills, borders and
      icons (3:1), and text is always neutral: --foreground or
      --muted-foreground.
-     The brand comes in three weights, because one hue can't do three jobs:
      --brand fills (the CTA, the mascot, the mesh) and carries dark text at
-     8.0:1; --brand-ink draws lines — focus rings, a selected border, an icon —
-     where WCAG 2.2 wants 3:1 against the page and the brand hue itself reaches
-     only 2.0:1; --brand-soft/-softer are washes to sit on. */
+     8.0:1; --brand-soft/-softer are washes to sit on.
+     Focus is deliberately *not* brand-coloured. Two reasons, and the second is
+     the one that settled it: a brand line on white reaches 2.0:1 where WCAG 2.2
+     wants 3:1, and darkening the hue enough to pass turns it muddy brown. So
+     focus is neutral and sharp, selection is warm and branded — two different
+     meanings that now look different. */
   --color-brand: var(--brand);
-  --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
   --color-brand-softer: var(--brand-softer);
   --color-brand-mint: var(--brand-mint);
@@ -146,11 +147,11 @@
      Popovers and drawers keep tailwind's own shadow-md/shadow-lg.
      There is deliberately no brand glow: the orange `0 2px 8px #f5a65c59`
      under the CTA is dropped as a device rather than tokenised. A CTA holds
-     attention with its fill, not with light. */
+     attention with its fill, not with light. Nor is there a focus halo — a soft
+     wash under a focused field reads as a smudge, and the border says it
+     already. */
   --shadow-card: 0 1px 3px #0000000a;
   --shadow-hairline: 0 1px 2px #00000008;
-  --shadow-focus-primary: 0 0 0 3px
-    color-mix(in oklch, var(--brand-ink) 25%, var(--card));
 
   /* ── Radius ──────────────────────────────────────────────────────────────
      Explicit px and monotonic. It was neither: sm/md/lg were px (8/12/20)
@@ -204,10 +205,9 @@
   --accent-foreground: oklch(0.205 0 0);
   --border: oklch(0.913 0.009 85);
   --input: oklch(0.913 0.009 85);
-  --ring: var(--brand-ink);
+  --ring: var(--foreground);
 
   --brand: oklch(0.788 0.13 62);
-  --brand-ink: oklch(0.56 0.14 62);
   --brand-soft: oklch(0.97 0.021 68);
   --brand-softer: oklch(0.985 0.01 68);
   --brand-mint: oklch(0.716 0.112 160.8);
@@ -238,7 +238,6 @@
   /* Transitional: the raw --fn-* hex layer, a third name for colours the roles
      above already hold. Deleted in this PR (#85) with its last reader. */
   --fn-primary: var(--brand);
-  --fn-primary-ring: color-mix(in oklch, var(--brand-ink) 25%, var(--card));
   --fn-primary-deep: #e08a3c;
   --fn-secondary: var(--brand-mint);
   --fn-secondary-deep: #3e9a70;
