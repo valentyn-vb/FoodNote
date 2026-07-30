@@ -70,8 +70,8 @@ export function PlanSelection({
     initialPace != null && !PACE_OPTIONS.includes(initialPace);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
-      <div className="flex flex-col gap-1 px-5 pb-3.5">
+    <div className="mx-auto flex max-h-[85dvh] w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
+      <div className="flex shrink-0 flex-col gap-1 px-5 pb-3.5">
         {onBack && (
           <button
             type="button"
@@ -90,30 +90,27 @@ export function PlanSelection({
         </p>
       </div>
 
-      <div className="px-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5">
         <PlanOptions
           options={options}
           value={selectedPace}
           onValueChange={setPickedPace}
         />
+
+        <div className="pt-3.5">
+          <ManualPlanDialog
+            input={input}
+            fromDate={effectiveFromDate}
+            startFromPace={selectedPace}
+            isCustomPlan={isCustomPlan}
+            onConfirm={onConfirm}
+          />
+        </div>
       </div>
 
-      {/* A sibling of the cards, not one of them, so it is still offered when the
-          safety floor hid every preset — that dead end is exactly where naming
-          your own calories helps. */}
-      <div className="px-5 pt-3.5">
-        <ManualPlanDialog
-          input={input}
-          fromDate={effectiveFromDate}
-          startFromPace={selectedPace}
-          isCustomPlan={isCustomPlan}
-          onConfirm={onConfirm}
-        />
-      </div>
+      <Disclaimer className="shrink-0 px-5 pt-3.5" />
 
-      <Disclaimer className="px-5 pt-3.5" />
-
-      <div className="flex flex-col gap-2.5 px-5 pt-3">
+      <div className="flex shrink-0 flex-col gap-2.5 px-5 pt-3">
         {submitError && (
           <p role="alert" className="font-sans text-[12px] text-destructive">
             {submitError}

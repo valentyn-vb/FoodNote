@@ -84,7 +84,7 @@ export function CurrentPlanSection({
             {loading && <Loader2 className="size-4 animate-spin" />}
             Change plan
           </DialogTrigger>
-          <DialogContent className="p-0">
+          <DialogContent className="overflow-hidden p-0">
             {profileData && (
               <PlanSelection
                 input={profileData as OnboardingFormValues}
