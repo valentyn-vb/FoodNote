@@ -110,7 +110,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
           />
         )}
       </div>
-      <h3 className="font-display text-pretty text-[19px] font-semibold text-foreground">
+      <h3 className="font-heading text-pretty text-[19px] font-semibold text-foreground">
         {feature.title}
       </h3>
       <p className="font-sans text-[14px] leading-[1.4] text-foreground/70">
@@ -140,7 +140,7 @@ export function AnalyticsSlide() {
         style={{ scale }}
         className="relative overflow-visible rounded-[32px] border border-black/[0.03] bg-[#fafaf7] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-10"
       >
-        <h2 className="max-w-md font-display text-pretty text-[clamp(26px,4vw,34px)] font-semibold text-foreground">
+        <h2 className="max-w-md font-heading text-pretty text-[clamp(26px,4vw,34px)] font-semibold text-foreground">
           Everything you need, nothing you don&apos;t
         </h2>
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

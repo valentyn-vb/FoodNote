@@ -109,7 +109,7 @@ function HeroCopy({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <h1 className="font-display text-pretty text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-foreground">
+      <h1 className="font-heading text-pretty text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-foreground">
         Your calories,
         <br />
         actually tracked.

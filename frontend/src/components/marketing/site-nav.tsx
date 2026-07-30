@@ -38,7 +38,7 @@ export function SiteNav() {
             height={28}
             className="rounded-full"
           />
-          <span className="font-display text-[17px] font-semibold text-foreground">
+          <span className="font-heading text-[17px] font-semibold text-foreground">
             FoodNote
           </span>
         </TooltipTrigger>

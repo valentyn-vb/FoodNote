@@ -2,11 +2,6 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Removed once the last `dark:` variant is gone — the variant has to outlive the
-   classes that use it, or they compile to nothing on the way. There is no
-   ThemeProvider in the app, so nothing sets `.dark` and none of it applies. */
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   /* ── Colour ──────────────────────────────────────────────────────────────
      shadcn's own names, kept deliberately: a freshly pulled `shadcn add`
@@ -87,24 +82,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* ── Transitional ────────────────────────────────────────────────────────
-     The Paper alias layer: a second name for a role that already has one.
-     Kept only so the call sites still compile mid-migration; every entry here
-     is deleted in this same PR (#85) once its call sites move to variants. Do
-     not add to this block. */
-  --color-text: var(--foreground);
-  --color-text-muted: var(--muted-foreground);
-  --color-bg: var(--background);
-  --color-surface: var(--card);
-  --color-primary-tint: var(--brand-soft);
-  --color-primary-tint-soft: var(--brand-softer);
-  --color-error: var(--destructive);
-  --color-error-bg: var(--destructive-surface);
-  --color-primary-deep: #e08a3c;
-  --color-secondary-deep: #3e9a70;
-  --color-text-soft: #333333;
-  --color-text-warm: #6b5843;
-
   /* ── Type ────────────────────────────────────────────────────────────────
      One scale, six levels. A level sets size, line-height and weight at once —
      a level is not a size. Family comes with it for the two display levels
@@ -144,16 +121,12 @@
   --text-display--line-height: 1.05;
   --text-display--font-weight: 600;
   --text-display--letter-spacing: -0.015em;
-  /* Transitional: collapsed into --text-heading, deleted with its call sites. */
-  --text-heading-lg: 26px;
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   /* Fredoka, under the name the shadcn CLI greps for. Both families come from
      next/font/google on <html> — see layout.tsx. */
   --font-heading: var(--font-display);
-  /* Transitional: --font-heading is the one name; deleted with its call sites. */
-  --font-display: var(--font-display);
 
   /* ── Elevation ───────────────────────────────────────────────────────────
      Three levels, and the only place a shadow is defined — a raw shadow-[…]
@@ -179,10 +152,6 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-xl: 20px;
-  /* Transitional: only badge's rounded-4xl uses these; deleted with it. */
-  --radius-2xl: 24px;
-  --radius-3xl: 28px;
-  --radius-4xl: 32px;
 
   /* ── Motion ──────────────────────────────────────────────────────────────
      Indeterminate progress: a fill that sweeps because the wait has no known
@@ -251,50 +220,6 @@
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
-
-  /* Transitional: the raw --fn-* hex layer, a third name for colours the roles
-     above already hold. Deleted in this PR (#85) with its last reader. */
-  --fn-primary: var(--brand);
-  --fn-primary-deep: #e08a3c;
-  --fn-secondary: var(--brand-mint);
-  --fn-secondary-deep: #3e9a70;
-  --fn-tertiary: var(--brand-coral);
-  --fn-primary-tint: var(--brand-soft);
-  --fn-primary-tint-soft: var(--brand-softer);
-  --fn-track: var(--track);
-  --fn-text-soft: #333333;
-  --fn-text-warm: #6b5843;
-  --fn-success-bg: var(--success-surface);
-  --fn-success-border: var(--success-border);
-  --fn-success-text: var(--success-text);
-  --fn-error-bg: var(--destructive-surface);
-  --fn-error-border: var(--destructive-border);
-  --fn-error-text: var(--destructive-text);
-  --fn-warning-bg: var(--warning-surface);
-  --fn-warning-border: var(--warning-border);
-  --fn-warning-text: var(--warning-text);
-}
-
-.dark {
-  /* Dead: nothing sets this class. Deleted with the last `dark:` variant. */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
 }
 
 @layer base {
