@@ -71,14 +71,17 @@ export function PersonalDetailsSection({
 
     setOpen(false);
     setSaving(true);
+    const weightChanged = values.currentWeightKg !== previous.currentWeightKg;
+    const targetWeightChanged =
+      values.targetWeightKg !== previous.targetWeightKg;
     try {
-      if (values.currentWeightKg !== previous.currentWeightKg) {
+      if (weightChanged) {
         await weights.create({
           weightKg: values.currentWeightKg,
           recordedAt: new Date().toISOString(),
         });
       }
-      if (values.targetWeightKg !== previous.targetWeightKg) {
+      if (targetWeightChanged) {
         await goals.create({
           targetWeightKg: values.targetWeightKg,
           preferredWeeklyChangeKg:
@@ -94,6 +97,17 @@ export function PersonalDetailsSection({
         currentWeightKg: values.currentWeightKg,
         targetWeightKg: values.targetWeightKg,
       });
+      if (weightChanged || targetWeightChanged) {
+        toast.warning('Details saved — check your plan', {
+          description:
+            'Your daily target was recalculated. The pace behind it may no longer fit — review it under Current plan.',
+          position: 'top-center',
+          closeButton: true,
+          duration: Infinity,
+        });
+        return;
+      }
+
       toast.success('Details updated', {
         description:
           updated.calorieTarget &&

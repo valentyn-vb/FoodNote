@@ -11,11 +11,17 @@ import { caloriesSchema, dateSchema, idSchema, weightKgSchema } from './common';
  * projectedGoalDate is derived on read (remaining weight ÷ pace).
  */
 
-export const paceSchema = z.literal([0.25, 0.5, 0.75, 1.0]);
+/**
+ * Weekly weight-change rate. `0` is the maintenance plan — Pace is the single
+ * thing that says what kind of plan a Goal is, so a Goal is maintenance when,
+ * and only when, its pace is 0 (see docs/adr/0006). The non-zero values are
+ * magnitudes; direction comes from targetWeightKg vs startWeightKg.
+ */
+export const paceSchema = z.literal([0, 0.25, 0.5, 0.75, 1.0]);
 
-// The four preset paces, derived from the schema so the values live in one
-// place. Used by both apps to render the pace picker. 1.0 is also the safety
-// ceiling (MAX_SAFE_PACE_KG in calc) — see docs/adr/0002.
+// The preset paces, derived from the schema so the values live in one place.
+// Used by both apps to render the pace picker — 0 is what puts "maintain" in it.
+// 1.0 is also the safety ceiling (MAX_SAFE_PACE_KG in calc) — see docs/adr/0002.
 export const PACE_OPTIONS = [...paceSchema.values];
 
 export const goalStatusSchema = z.enum(['active', 'completed', 'replaced']);
@@ -33,8 +39,12 @@ export const goalResponseSchema = z.object({
   targetWeightKg: weightKgSchema,
   preferredWeeklyChangeKg: paceSchema,
   startDate: dateSchema,
-  // Null when the target is already reached at the current weight.
+  // Null once the target is reached, and always null on a maintenance plan
+  // (pace 0) — there is no date to project when there is nowhere to go.
   projectedGoalDate: dateSchema.nullable(),
+  // Derived on read: the target has been met. Always false on a maintenance
+  // plan. See hasReachedTarget in calc.
+  reachedTarget: z.boolean(),
   status: goalStatusSchema,
 });
 

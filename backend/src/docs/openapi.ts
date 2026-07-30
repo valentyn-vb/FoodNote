@@ -1,4 +1,6 @@
 import {
+  aiParseRequestSchema,
+  aiParseResponseSchema,
   authResponseSchema,
   authUserSchema,
   createMealRequestSchema,
@@ -76,6 +78,8 @@ export function buildOpenApiDocument(): OpenAPIObject {
     UpdateMealRequest: schemaObject(updateMealRequestSchema, 'input'),
     MealResponse: schemaObject(mealResponseSchema, 'output'),
     ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
+    AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
+    AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
     HealthResponse: schemaObject(healthResponseSchema, 'output'),
     ErrorResponse: schemaObject(errorResponseSchema, 'output'),
   };
@@ -323,6 +327,33 @@ export function buildOpenApiDocument(): OpenAPIObject {
               ...jsonContent('ListMealsResponse'),
             },
             401: unauthorized,
+          },
+        },
+      },
+      '/meals/ai-parse': {
+        post: {
+          tags: ['meals'],
+          summary: 'Estimate a meal from a free-text description',
+          description:
+            'Stores nothing: the response is a preview the client confirms by ' +
+            'posting to `/meals` with source: ai. `200` covers **both** ' +
+            'outcomes — a Parsed Meal (`parsed: true`) and "not food" ' +
+            '(`parsed: false`), which is a successful recognition rather than ' +
+            'a client error (ADR-0006). `502` means the model failed or ' +
+            'returned output the contract rejects; it is terminal, not ' +
+            'retried server-side.',
+          requestBody: jsonBody('AiParseRequest'),
+          responses: {
+            200: {
+              description: 'A Parsed Meal, or a "not food" verdict',
+              ...jsonContent('AiParseResponse'),
+            },
+            400: errorResponse('Description missing, too short or too long'),
+            401: unauthorized,
+            429: errorResponse(
+              'Rate limit exceeded (10/min per user, and 10/min per IP)',
+            ),
+            502: errorResponse('The model failed or returned invalid output'),
           },
         },
       },

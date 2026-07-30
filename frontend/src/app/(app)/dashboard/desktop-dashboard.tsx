@@ -15,8 +15,11 @@ import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
 import { DayNav } from './day-nav';
 import { CompareStat } from './compare-stat';
+import { CARD_CLASS, fullnessMascot } from './helpers';
+import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
 import { MealRow } from './meal-row';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 import {
   DashboardError,
   DesktopDashboardSkeleton,
@@ -39,9 +42,11 @@ export function DesktopDashboard() {
   const {
     status: weightStatus,
     retry: retryWeight,
+    entries: weightEntries,
     weightTrend,
     weightChangeKg,
     weightChangeLastMonthKg,
+    onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
@@ -65,53 +70,46 @@ export function DesktopDashboard() {
         <DesktopDashboardSkeleton />
       ) : (
         <>
-          <div className="flex gap-3.5">
-            <CompareStat
+          <div className="flex gap-3.5 [&>*]:grow [&>*]:basis-0">
+            <StatWidget
               label={isToday ? 'Remaining today' : 'Remaining'}
               value={remainingKcal}
-              compareLabel={isToday ? 'Remaining yesterday' : 'Goal (current)'}
-              compareValue={isToday ? remainingYesterday : goalKcal}
               suffix=" kcal"
-              goodIsDown={false}
             />
-            <CompareStat
+            <StatWidget
               label={isToday ? 'Eaten today' : 'Eaten'}
               value={eatenKcal}
-              compareLabel={isToday ? 'Eaten yesterday' : 'Goal (current)'}
-              compareValue={isToday ? eatenYesterday : goalKcal}
               suffix=" kcal"
-              goodIsDown
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
             />
             {weightStatus === 'ready' ? (
-              <CompareStat
+              <StatWidget
                 label="Weight change"
                 value={weightChangeKg}
-                compareLabel="Last month"
-                compareValue={weightChangeLastMonthKg}
                 suffix=" kg"
-                goodIsDown
               />
             ) : (
               <TileSkeleton />
             )}
-            <Card className={STAT_TILE_CLASS}>
-              <h2 className="font-sans text-[12px] text-text-muted">
-                Projected goal date
-                {!isToday && (
-                  <span className="ml-1.5 rounded bg-[#FFF3E7] px-1 py-0.5 text-[10px] font-medium text-primary-deep">
-                    current
-                  </span>
-                )}
-              </h2>
-              <div className="font-display text-heading-lg font-semibold text-text">
-                {gate.goal.projectedGoalDate
-                  ? `${formatGoalDate(
-                      gate.goal.projectedGoalDate,
-                    )} · ${weeksUntil(gate.goal.projectedGoalDate, new Date())} wks`
-                  : 'Target reached'}
-              </div>
-            </Card>
+            <StatWidget
+              label={
+                gate.goal.reachedTarget
+                  ? 'Goal'
+                  : gate.goal.projectedGoalDate === null
+                    ? 'Goal'
+                    : 'Projected goal date'
+              }
+              value={
+                gate.goal.reachedTarget
+                  ? 'You hit your target'
+                  : !gate.goal.projectedGoalDate
+                    ? 'Maintaining your weight'
+                    : `${formatGoalDate(gate.goal.projectedGoalDate)} · ${weeksUntil(
+                        gate.goal.projectedGoalDate,
+                        new Date(),
+                      )} wks`
+              }
+            />
           </div>
 
           <div className="flex min-h-0 grow basis-0 gap-3.5">
@@ -121,6 +119,13 @@ export function DesktopDashboard() {
                   className={WEIGHT_TREND_CARD_CLASS}
                   chartClassName="aspect-auto min-h-0 w-full grow basis-0"
                   title="Weight trend"
+                  action={
+                    <WeightHistoryDrawer
+                      entries={weightEntries}
+                      onWeightsChanged={onWeightsChanged}
+                      triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9]"
+                    />
+                  }
                   data={weightTrend}
                 />
               ) : (

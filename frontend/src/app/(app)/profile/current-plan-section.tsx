@@ -66,9 +66,13 @@ export function CurrentPlanSection({
             : '—'}
         </div>
         <div className="font-sans text-caption text-text-muted">
-          {pace != null
-            ? `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`
-            : 'No active plan yet'}
+          {pace == null
+            ? 'No active plan yet'
+            : pace === 0
+              ? // Pace 0 is maintenance: "0 kg / week" reads as a broken value,
+                // and the stored target is parked and irrelevant here.
+                'Maintaining your weight'
+              : `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`}
         </div>
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
