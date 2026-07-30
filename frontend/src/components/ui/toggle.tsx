@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const toggleVariants = cva(
   // The pressed look lives in the variants, not the base, so `option` can
   // state its own without fighting a neutral one it inherited.
-  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] outline-none focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] outline-none focus-visible:border-brand-focus focus-visible:ring-1 focus-visible:ring-brand-focus focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {

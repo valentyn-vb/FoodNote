@@ -19,15 +19,15 @@ const inputGroupVariants = cva(
     variants: {
       variant: {
         default:
-          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-foreground has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20',
+          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-brand-focus has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20',
         // The app's form look, shared with Input's `field`.
         field:
-          'h-11 border-border bg-card shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-foreground',
+          'h-11 border-border bg-card shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-brand-focus',
         // A compact cell in a dense row — the per-item macro boxes.
-        cell: 'h-8 rounded-sm border-border bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground',
+        cell: 'h-8 rounded-sm border-border bg-card has-[[data-slot=input-group-control]:focus-visible]:border-brand-focus',
         // Same, for the one field in a group that carries the most weight.
         'field-primary':
-          'h-11 border-brand bg-brand-softer shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-foreground',
+          'h-11 border-brand bg-brand-softer shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-brand-focus',
       },
     },
     defaultVariants: {

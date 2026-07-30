@@ -51,6 +51,7 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-line: var(--brand-line);
+  --color-brand-focus: var(--brand-focus);
   --color-brand-soft: var(--brand-soft);
   --color-brand-softer: var(--brand-softer);
   --color-brand-mint: var(--brand-mint);
@@ -211,13 +212,14 @@
   --accent-foreground: var(--foreground);
   --border: oklch(0.925 0.021 67.6);
   --input: oklch(0.915 0.025 65.6);
-  --ring: var(--foreground);
+  --ring: var(--brand-focus);
 
   --brand: oklch(0.788 0.13 62.2);
   --brand-ink: oklch(0.541 0.129 51.5);
   --brand-soft: oklch(0.949 0.035 66);
   --brand-softer: oklch(0.966 0.023 65.5);
   --brand-line: oklch(0.906 0.051 61.4);
+  --brand-focus: oklch(0.798 0.122 58.7);
   --brand-mint: oklch(0.716 0.112 160.8);
   --brand-coral: oklch(0.755 0.125 31.1);
 
