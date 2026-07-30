@@ -114,6 +114,19 @@
   --fn-track: #f0eee9;
   --fn-text-soft: #333333;
   --fn-text-warm: #6b5843;
+  /* Status washes for feedback surfaces (toasts today). Each is the brand hue
+     over white, with a text weight dark enough to clear 4.5:1 on its own wash —
+     the brand colours themselves reach only ~3:1 as text (#3e9a70 is 3.15 on
+     the green wash), which is why these are separate values rather than
+     `--fn-secondary` reused. */
+  --fn-success-bg: #ebf7f1;
+  --fn-success-border: #c6e6d7;
+  --fn-success-text: #2c6e4f;
+  --fn-error-border: #f3c7c7;
+  --fn-error-text: #b83a3a;
+  --fn-warning-bg: var(--fn-primary-tint);
+  --fn-warning-border: #fbdbbe;
+  --fn-warning-text: #8a5a2b;
   /* --font-display comes from next/font/google (Fredoka) on <html>, see layout.tsx */
 
   --background: #fdfdfb;
