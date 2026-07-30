@@ -30,6 +30,12 @@ const cardVariants = cva(
         // scrolled. Tighter radius than `panel` — 20px on a 64px row reads as a
         // pill.
         row: 'shrink-0 flex-row items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3.5 shadow-card',
+        // A quiet aside on a warm wash — a confidence note, a parsed summary.
+        note: 'gap-1 rounded-md bg-brand-softer px-3.5 py-2.5',
+        // The same shape, carrying a failure. Bordered, because a wash alone
+        // doesn't say "this went wrong" on a warm page.
+        alert:
+          'gap-1 rounded-md border border-destructive-border bg-destructive-surface px-3.5 py-3',
         // A tile you choose between: same surface, plus a selected state driven
         // by `data-selected` on the call site. The border keeps its width and
         // only changes colour — thickening it on selection shifts the content

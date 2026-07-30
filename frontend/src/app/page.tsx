@@ -22,9 +22,7 @@ const instrumentSerif = Instrument_Serif({
 
 export default function Home() {
   return (
-    <main
-      className={cn('overflow-x-clip bg-background', instrumentSerif.variable)}
-    >
+    <main className={cn('overflow-x-clip', instrumentSerif.variable)}>
       <SiteNav />
       <CoverSlide />
       <ScrollReveal>

@@ -101,12 +101,9 @@ export function RegisterForm() {
           render={<p />}
         >
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-semibold text-brand-ink hover:underline"
-          >
+          <Button variant="link" size="inline" render={<Link href="/login" />}>
             Log in
-          </Link>
+          </Button>
         </Text>
       </CardFooter>
     </Card>

@@ -280,12 +280,17 @@ function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
 
 function DrawerDescription({
   className,
+  tone = 'muted',
   ...props
-}: DrawerPrimitive.Description.Props) {
+}: DrawerPrimitive.Description.Props & { tone?: 'muted' | 'default' }) {
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn('text-sm text-balance text-muted-foreground', className)}
+      className={cn(
+        textVariants({ variant: 'caption', tone }),
+        'text-balance',
+        className,
+      )}
       {...props}
     />
   );

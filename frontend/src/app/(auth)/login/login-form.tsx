@@ -92,12 +92,13 @@ export function LoginForm() {
           render={<p />}
         >
           No account yet?{' '}
-          <Link
-            href="/register"
-            className="font-semibold text-brand-ink hover:underline"
+          <Button
+            variant="link"
+            size="inline"
+            render={<Link href="/register" />}
           >
             Register
-          </Link>
+          </Button>
         </Text>
       </CardFooter>
     </Card>

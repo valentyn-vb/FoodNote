@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Text } from '@/components/ui/text';
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -27,27 +28,24 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Account menu"
-        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
+      <DropdownMenuTrigger aria-label="Account menu">
         <Avatar>
-          <AvatarFallback className="bg-primary text-surface">
+          <AvatarFallback>
             {initialsOf(user) || user?.email[0]?.toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="max-w-56 font-normal">
+          <DropdownMenuLabel className="max-w-56">
             {fullName && (
-              <span className="block truncate font-medium text-text">
+              <Text variant="label" className="block truncate">
                 {fullName}
-              </span>
+              </Text>
             )}
-            <span className="block truncate font-normal text-text-muted">
+            <Text variant="caption" tone="muted" className="block truncate">
               {user?.email}
-            </span>
+            </Text>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

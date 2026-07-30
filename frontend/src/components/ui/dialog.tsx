@@ -117,11 +117,15 @@ function DialogFooter({
   );
 }
 
-function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
+function DialogTitle({
+  className,
+  variant = 'title',
+  ...props
+}: DialogPrimitive.Title.Props & { variant?: 'title' | 'heading' }) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(textVariants({ variant: 'title' }), className)}
+      className={cn(textVariants({ variant }), className)}
       {...props}
     />
   );

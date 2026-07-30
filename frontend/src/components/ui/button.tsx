@@ -31,6 +31,12 @@ const buttonVariants = cva(
         quiet:
           'text-caption text-muted-foreground underline-offset-4 hover:underline',
       },
+      // A chip reads as a suggestion rather than as a control, and the shape is
+      // the whole difference — so it is a shape, not six variants over again.
+      shape: {
+        default: '',
+        pill: 'rounded-full',
+      },
       size: {
         default:
           'h-9 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
@@ -50,6 +56,7 @@ const buttonVariants = cva(
     },
     defaultVariants: {
       variant: 'default',
+      shape: 'default',
       size: 'default',
     },
   },
@@ -58,13 +65,14 @@ const buttonVariants = cva(
 function Button({
   className,
   variant = 'default',
+  shape = 'default',
   size = 'default',
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, shape, size, className }))}
       {...props}
     />
   );

@@ -20,15 +20,18 @@ const progressVariants = cva('shrink-0 overflow-hidden rounded-full bg-track', {
 
 function Progress({
   value,
+  indeterminate,
   size,
   className,
   ...props
 }: React.ComponentProps<'div'> &
   VariantProps<typeof progressVariants> & {
     /** 0–100. Clamped, because a day over budget still fills the bar once. */
-    value: number;
+    value?: number;
+    /** A wait with no known duration — the bar sweeps instead of filling. */
+    indeterminate?: boolean;
   }) {
-  const pct = Math.max(0, Math.min(100, value));
+  const pct = Math.max(0, Math.min(100, value ?? 0));
 
   return (
     <div
@@ -36,14 +39,18 @@ function Progress({
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(pct)}
+      aria-valuenow={indeterminate ? undefined : Math.round(pct)}
       className={cn(progressVariants({ size }), className)}
       {...props}
     >
-      <div
-        className="h-full rounded-full bg-primary transition-[width] duration-500"
-        style={{ width: `${pct}%` }}
-      />
+      {indeterminate ? (
+        <div className="animate-indeterminate h-full w-full origin-left rounded-full bg-primary" />
+      ) : (
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      )}
     </div>
   );
 }

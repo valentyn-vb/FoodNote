@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 const textVariants = cva('', {
   variants: {
     variant: {
+      overline: 'text-overline uppercase',
       caption: 'text-caption',
       body: 'text-body',
       label: 'text-label',
