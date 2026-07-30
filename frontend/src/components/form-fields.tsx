@@ -1,4 +1,9 @@
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 export const LABEL_CLASS = 'font-sans text-caption font-medium text-text';
@@ -9,10 +14,15 @@ export function InputField({
   id,
   label,
   error,
+  description,
   ...props
-}: { id: string; label: string; error?: string } & React.ComponentProps<
-  typeof Input
->) {
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  /** Helper text under the control — e.g. a value derived from what was typed. */
+  description?: React.ReactNode;
+} & React.ComponentProps<typeof Input>) {
   return (
     <Field
       className="grow basis-0 gap-1.75"
@@ -27,6 +37,11 @@ export function InputField({
         className={INPUT_CLASS}
         {...props}
       />
+      {description && (
+        <FieldDescription className="font-sans text-[12.5px]">
+          {description}
+        </FieldDescription>
+      )}
       {error && (
         <FieldError className="font-sans text-[12px]">{error}</FieldError>
       )}

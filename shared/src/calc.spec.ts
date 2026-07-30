@@ -4,10 +4,12 @@ import {
   calorieTargetForPace,
   dailyEnergyDeltaForPace,
   hasReachedTarget,
-  MAX_SAFE_PACE_KG,
+  manualCalorieRange,
+  paceForCalorieTarget,
   projectedDate,
   tdee,
 } from './calc';
+import { MAX_SAFE_PACE_KG } from './goals';
 import type { Pace } from './goals';
 
 describe('bmr (Mifflin-St Jeor)', () => {
@@ -62,9 +64,9 @@ describe('dailyEnergyDeltaForPace (~7700 kcal/kg)', () => {
   });
 
   it('rejects a pace above the safety ceiling', () => {
-    // Guards the one invariant no contract schema enforces (a caller bypassing
-    // paceSchema). 1.5 is not a valid Pace — cast to reach the runtime guard.
-    expect(() => dailyEnergyDeltaForPace(1.5 as Pace)).toThrow(/pace/i);
+    // paceSchema bounds the contract at the ceiling; this is the runtime
+    // backstop for a caller that reached the math without going through it.
+    expect(() => dailyEnergyDeltaForPace(1.5)).toThrow(/pace/i);
   });
 });
 
@@ -124,6 +126,101 @@ describe('calorieTargetForPace (direction + safety floor, rounded)', () => {
     expect(
       calorieTargetForPace({ ...smallMale, targetWeightKg: 50 }, 0.25),
     ).toBe(1500);
+  });
+});
+
+describe('paceForCalorieTarget (calories → weekly rate, the manual plan)', () => {
+  // Male, moderate (1.55), 80 kg → TDEE 2759.
+  const male = {
+    age: 30,
+    sex: 'male' as const,
+    heightCm: 180,
+    activityLevel: 'moderate' as const,
+    currentWeightKg: 80,
+  };
+
+  it('derives the rate from a loss budget', () => {
+    // 2759 − 1750 = 1009 deficit; 1009 × 7 ÷ 7700 = 0.917272… → 0.9173 (4dp)
+    expect(paceForCalorieTarget({ ...male, targetWeightKg: 70 }, 1750)).toBe(
+      0.9173,
+    );
+  });
+
+  it('measures a gain budget in the gain direction', () => {
+    // Target above current, so the surplus is what counts:
+    // 3200 − 2759 = 441; 441 × 7 ÷ 7700 = 0.400909… → 0.4009
+    expect(paceForCalorieTarget({ ...male, targetWeightKg: 90 }, 3200)).toBe(
+      0.4009,
+    );
+  });
+
+  it('is 0 when the budget would not move the user toward the target', () => {
+    // A loss goal eating at or above maintenance. Pace 0 is already a
+    // maintenance plan with no projected date (ADR-0006), so the honest answer
+    // needs no new branch downstream.
+    expect(paceForCalorieTarget({ ...male, targetWeightKg: 70 }, 2759)).toBe(0);
+    expect(paceForCalorieTarget({ ...male, targetWeightKg: 70 }, 3000)).toBe(0);
+  });
+
+  it('caps at the safety ceiling however low the budget', () => {
+    // 2759 − 500 = 2259 → 2.05 kg/week, well past the ceiling.
+    expect(paceForCalorieTarget({ ...male, targetWeightKg: 70 }, 500)).toBe(
+      MAX_SAFE_PACE_KG,
+    );
+  });
+
+  it('round-trips a manual budget back to the exact number typed', () => {
+    // The reason the rate carries four decimals and not two. One step of Pace is
+    // worth `step × 7700 ÷ 7` kcal/day, so at 2dp the achievable targets sat on
+    // an 11 kcal grid and a typed 1,600 came back as 1,596. At 4dp the step is
+    // 0.11 kcal, inside what whole-kcal rounding absorbs.
+    const plan = { ...male, targetWeightKg: 70 } as const;
+    for (const budget of [1659, 1700, 1750, 1913, 2100, 2758]) {
+      expect(
+        calorieTargetForPace(plan, paceForCalorieTarget(plan, budget)),
+      ).toBe(budget);
+    }
+  });
+});
+
+describe('manualCalorieRange (what a manual plan may name)', () => {
+  const male = {
+    age: 30,
+    sex: 'male' as const,
+    heightCm: 180,
+    activityLevel: 'moderate' as const,
+    currentWeightKg: 80,
+  };
+
+  it('spans the ceiling deficit up to maintenance for a loss goal', () => {
+    // TDEE 2759, ceiling delta 1100 → 1659; floor 1500 does not bind.
+    expect(manualCalorieRange({ ...male, targetWeightKg: 70 })).toEqual({
+      min: 1659,
+      max: 2759,
+    });
+  });
+
+  it('spans maintenance up to the ceiling surplus for a gain goal', () => {
+    expect(manualCalorieRange({ ...male, targetWeightKg: 90 })).toEqual({
+      min: 2759,
+      max: 3859,
+    });
+  });
+
+  it('never offers a budget below the Safety Floor', () => {
+    // Female sedentary 60 kg → 1584; 1584 − 1100 = 484, lifted to 1200. Without
+    // this the form would accept a number the read-time clamp then overrules.
+    const female = {
+      age: 30,
+      sex: 'female' as const,
+      heightCm: 165,
+      activityLevel: 'sedentary' as const,
+      currentWeightKg: 60,
+    };
+    expect(manualCalorieRange({ ...female, targetWeightKg: 55 })).toEqual({
+      min: 1200,
+      max: 1584,
+    });
   });
 });
 

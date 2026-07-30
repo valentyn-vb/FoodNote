@@ -1,7 +1,7 @@
 import type { ActivityLevel, Sex } from './common';
 import type { BodyMetrics, GoalProgress, PlanInput } from './calc.types';
 import type { Pace, PlanOption } from './goals';
-import { PACE_OPTIONS } from './goals';
+import { MAX_SAFE_PACE_KG, PACE_OPTIONS } from './goals';
 
 /**
  * Pure calorie-planning math — Mifflin-St Jeor BMR, TDEE, pace deficits, the
@@ -41,9 +41,6 @@ export function tdee(
 
 /** Energy density of body mass, kcal per kg. */
 export const KCAL_PER_KG = 7700;
-
-/** Medical ceiling on weekly weight change — also the top preset (see ADR-0002). */
-export const MAX_SAFE_PACE_KG = 1.0;
 
 /**
  * Daily kcal to add/subtract from maintenance to move at `pace` kg/week.
@@ -87,6 +84,87 @@ export function calorieTargetForPace(input: PlanInput, pace: Pace): number {
     return Math.round(maintenance + delta);
   }
   return Math.round(maintenance);
+}
+
+/**
+ * The weekly rate a chosen daily calorie budget implies — the inverse of
+ * `calorieTargetForPace`, for a manual plan where the user names the calories
+ * and the rate, and so the Projected Goal Date, follows from them.
+ *
+ * Returns a magnitude, like Pace itself: direction stays with the Goal, so the
+ * distance from Maintenance Calories is measured in the goal's own direction.
+ * Eating on the wrong side of maintenance for that direction gives 0, which is
+ * the honest reading of "these calories will not move you toward your target" —
+ * and pace 0 is already a maintenance plan with no projected date (ADR-0006), so
+ * no new branch is needed anywhere downstream.
+ *
+ * Rounded to the four decimals the `goals` column stores, so the rate previewed
+ * next to the input is the one saved and served back — and so the budget the user
+ * typed comes back as itself.
+ *
+ * Four is not cosmetic. One step of Pace is worth `step × 7700 ÷ 7` kcal/day, so
+ * 2dp put the achievable targets on an 11 kcal grid and a typed 1,600 came back as
+ * 1,596. 4dp makes the step 0.11 kcal, well inside the ±0.5 that whole-kcal
+ * rounding absorbs, so `calorieTargetForPace` round-trips a manual budget exactly.
+ */
+export function paceForCalorieTarget(
+  input: PlanInput,
+  dailyKcal: number,
+): number {
+  const maintenance = tdee(
+    {
+      age: input.age,
+      sex: input.sex,
+      heightCm: input.heightCm,
+      weightKg: input.currentWeightKg,
+    },
+    input.activityLevel,
+  );
+  const towardTarget =
+    input.targetWeightKg > input.currentWeightKg
+      ? dailyKcal - maintenance // gain: the surplus
+      : maintenance - dailyKcal; // loss, or equal weights: the deficit
+  const pace = (towardTarget * 7) / KCAL_PER_KG;
+
+  return (
+    Math.round(Math.min(Math.max(pace, 0), MAX_SAFE_PACE_KG) * 10000) / 10000
+  );
+}
+
+/**
+ * The daily calorie budgets a manual plan may name, in the goal's own direction:
+ * never below the Safety Floor, never further from Maintenance Calories than the
+ * safety ceiling allows, and never past maintenance on the wrong side — that
+ * would be a plan moving away from its own target.
+ *
+ * Shared so the form's field bounds and the plan it saves come from one place,
+ * and so a user can never ask for a number the floor would silently overrule.
+ * Both bounds are floored, so the range is never inverted even for a body whose
+ * bare maintenance already sits under the floor.
+ */
+export function manualCalorieRange(input: PlanInput): {
+  min: number;
+  max: number;
+} {
+  const maintenance = Math.round(
+    tdee(
+      {
+        age: input.age,
+        sex: input.sex,
+        heightCm: input.heightCm,
+        weightKg: input.currentWeightKg,
+      },
+      input.activityLevel,
+    ),
+  );
+  const ceiling = Math.round(dailyEnergyDeltaForPace(MAX_SAFE_PACE_KG));
+  const floor = SAFETY_FLOOR[input.sex];
+  const isGain = input.targetWeightKg > input.currentWeightKg;
+
+  return {
+    min: Math.max(isGain ? maintenance : maintenance - ceiling, floor),
+    max: Math.max(isGain ? maintenance + ceiling : maintenance, floor),
+  };
 }
 
 /**

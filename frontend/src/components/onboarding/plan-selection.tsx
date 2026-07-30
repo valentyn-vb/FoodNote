@@ -2,10 +2,16 @@
 
 import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
-import { buildPlanOptions, PlanOption, type Pace } from '@foodnote/shared';
+import {
+  buildPlanOptions,
+  PACE_OPTIONS,
+  PlanOption,
+  type Pace,
+} from '@foodnote/shared';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DEFAULT_PLAN_PACE, type OnboardingFormValues } from './form-schema';
+import { ManualPlanDialog } from './manual-plan-dialog';
 import { PlanOptions } from './plan-options';
 
 type PlanSelectionProps = {
@@ -48,7 +54,18 @@ export function PlanSelection({
     [input, effectiveFromDate],
   );
 
-  const selectedPace = pickedPace ?? initialPace ?? defaultPlanPace(options);
+  // A manual plan's rate is derived from calories, so it is almost never one of
+  // the presets — carrying it into the cards would leave them all unchecked.
+  const isCustomPlan = initialPace != null && !PACE_OPTIONS.includes(initialPace);
+  const selectedPace =
+    pickedPace ??
+    (isCustomPlan ? null : initialPace) ??
+    defaultPlanPace(options);
+
+  // ...but the dialog must still open on the plan the user actually saved, so it
+  // gets the real rate rather than the preset card standing in for it. Passing
+  // selectedPace here is what made "edit" show the default plan's calories.
+  const manualStartPace = isCustomPlan ? initialPace : selectedPace;
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
@@ -76,6 +93,19 @@ export function PlanSelection({
           options={options}
           value={selectedPace}
           onValueChange={setPickedPace}
+        />
+      </div>
+
+      {/* A sibling of the cards, not one of them, so it is still offered when the
+          safety floor hid every preset — that dead end is exactly where naming
+          your own calories helps. */}
+      <div className="px-5 pt-3.5">
+        <ManualPlanDialog
+          input={input}
+          fromDate={effectiveFromDate}
+          startFromPace={manualStartPace}
+          isCustomPlan={isCustomPlan}
+          onConfirm={onConfirm}
         />
       </div>
 

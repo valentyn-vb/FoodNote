@@ -44,10 +44,13 @@ export class Goal {
   })
   targetWeightKg: number;
 
+  // numeric(6,4), not (4,2): one step of Pace is worth ~11 kcal/day at two
+  // decimals, which is enough to hand a manual plan back a few kcal off the
+  // budget the user typed. Four decimals put the step at 0.11 kcal (#82).
   @Column({
     type: 'numeric',
-    precision: 4,
-    scale: 2,
+    precision: 6,
+    scale: 4,
     transformer: numericTransformer,
   })
   preferredWeeklyChangeKg: number;
