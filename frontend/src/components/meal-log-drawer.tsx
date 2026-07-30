@@ -49,11 +49,6 @@ type Step = 'input' | 'manual' | 'loading' | 'preview' | 'not-food' | 'error';
 /** The AI call is a live model round-trip; past this it isn't coming. */
 const PARSE_TIMEOUT_MS = 15_000;
 
-/** The pool the input step's chips are drawn from. Deliberately longer than
-    what's shown: a fixed trio reads as *the* three things the parser accepts,
-    while a rotating sample reads as examples of a much wider range — which is
-    what the free-text parser actually is. Keep them short and portion-bearing,
-    since they double as a hint about how much detail helps. */
 const EXAMPLES = [
   'Two eggs and toast',
   'Oatmeal 60 g with banana',
@@ -541,26 +536,6 @@ export function MealLogDrawer({
   );
 }
 
-/**
- * The example chips under the textarea, and the one place the sample is drawn.
- *
- * Its own component so the pick happens in a `useState` initialiser — once per
- * mount, and the drawer's content mounts fresh on every opening: Base UI's
- * portal defaults to `keepMounted={false}` and renders nothing while closed, so
- * this unmounts on close and re-runs the initialiser on the next open.
- *
- * That buys a new trio per opening without an effect (`setState` in an effect
- * is what `react-hooks/set-state-in-effect` rejects, and rightly) and without
- * calling `Math.random()` during a render — a closed drawer renders no content
- * on the server either, so there is nothing to hydrate and nothing to mismatch.
- *
- * `show` is a prop rather than a guard at the call site on purpose — guarding
- * outside would unmount this on the first keystroke and redraw the chips when
- * the field is cleared, which reads as a glitch mid-edit.
- *
- * Full-height chips: at `size="xs"` (24px) these were a thumb-sized miss on a
- * phone, and they are the fastest way into the flow.
- */
 function ExampleChips({
   show,
   onPick,
