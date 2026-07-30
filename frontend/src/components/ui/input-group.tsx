@@ -19,15 +19,15 @@ const inputGroupVariants = cva(
     variants: {
       variant: {
         default:
-          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20',
+          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-brand-ink has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20',
         // The app's form look, shared with Input's `field`.
         field:
-          'h-9 border-border bg-card shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
+          'h-11 border-border bg-card shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-brand-ink has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
         // A compact cell in a dense row — the per-item macro boxes.
-        cell: 'h-8 rounded-sm border-border bg-card has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
+        cell: 'h-8 rounded-sm border-border bg-card has-[[data-slot=input-group-control]:focus-visible]:border-brand-ink has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
         // Same, for the one field in a group that carries the most weight.
         'field-primary':
-          'h-9 border-primary bg-brand-softer shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
+          'h-11 border-brand-ink bg-brand-softer shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-brand-ink has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
       },
     },
     defaultVariants: {

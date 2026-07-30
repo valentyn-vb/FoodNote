@@ -30,7 +30,7 @@ const cardVariants = cva(
         // only changes colour — thickening it on selection shifts the content
         // half a pixel in every direction, which reads as a twitch.
         option:
-          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline transition-colors duration-150 data-selected:border-primary data-selected:bg-brand-softer',
+          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline transition-colors duration-150 data-selected:border-brand-ink data-selected:bg-brand-softer',
       },
     },
     defaultVariants: {
