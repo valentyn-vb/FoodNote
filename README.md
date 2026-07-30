@@ -91,7 +91,7 @@ without them (`ConfigService.getOrThrow`).
 
 ## Deploy topology
 
-Verified against `Dockerfile` and `.github/workflows/cd.yaml`, not assumed:
+**Backend** — verified against `Dockerfile` and `.github/workflows/cd.yaml`:
 
 ```
 push to main ──► GitHub Actions ──► docker build (backend + shared only)
@@ -111,10 +111,12 @@ Migrations do **not** auto-run in production on every boot — only the deploy
 step above runs them, once, before the new container starts serving traffic
 (`backend/README.md` has the full migration workflow).
 
-**Frontend deployment is not wired into this repository** — no workflow step
-builds or ships `frontend/`, and CI doesn't lint or test it (it has no test
-suite). If a production frontend exists, it's deployed outside this repo
-(e.g. a platform's own GitHub integration) and its URL isn't recorded here.
+**Frontend** — deployed to Vercel via its own GitHub App integration, which is
+why there's no workflow file or `vercel.json` in this repo for it (checked
+GitHub's Deployments API, not just repo files, after first wrongly assuming
+"no file = no deploy"). Live at **https://food-note-frontend.vercel.app**
+(confirmed: serves the real app, and `/api/health` on that domain proxies
+through to the Render backend successfully).
 
 ## Working rules
 

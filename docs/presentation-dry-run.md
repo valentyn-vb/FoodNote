@@ -5,9 +5,10 @@ presenting. It exists to catch the gap between "the code is correct" and "the
 live deploy actually works" — a green CI run and a working demo are different
 claims. Terms below match `CONTEXT.md`.
 
-**Production frontend URL:** _______________ ← not recorded anywhere in this
-repo (see Deploy topology in the root README) — fill in before using this
-checklist.
+**Production frontend URL:** https://food-note-frontend.vercel.app
+(Vercel, deployed via GitHub App integration — see Deploy topology in the
+root README. Confirmed live: serves the app and `/api/health` proxies
+through to the Render backend.)
 
 ## Before the room fills up
 
