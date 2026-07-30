@@ -7,9 +7,9 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   LogOut,
+  NotebookText,
   Scale,
   UserRoundPen,
-  UtensilsCrossed,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { WeightDrawer } from '@/components/weight-drawer';
 import {
   Sidebar,
@@ -89,10 +88,14 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <MealLogDrawer triggerClassName={DRAWER_TRIGGER_CLASS}>
-                    <UtensilsCrossed />
-                    <span>Log a meal</span>
-                  </MealLogDrawer>
+                  <SidebarMenuButton
+                    isActive={pathname === '/meals'}
+                    tooltip="Meals"
+                    render={<Link href="/meals" />}
+                  >
+                    <NotebookText />
+                    <span>Meals</span>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <WeightDrawer
