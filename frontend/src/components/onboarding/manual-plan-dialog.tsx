@@ -17,7 +17,9 @@ import {
   paceForCalorieTarget,
   type Pace,
 } from '@foodnote/shared';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { OnboardingFormValues } from './form-schema';
@@ -45,6 +47,12 @@ type ManualPlanDialogProps = {
    */
   isCustomPlan?: boolean;
   onConfirm: (pace: Pace) => void | Promise<void>;
+  /**
+   * Drop the custom plan and fall back to a preset. Omitted when there is nothing
+   * to drop, or when no preset is viable to fall back to — the button then simply
+   * does not render, rather than being present and doing nothing.
+   */
+  onRemove?: () => void;
 };
 
 /**
@@ -63,6 +71,7 @@ export function ManualPlanDialog({
   startFromPace,
   isCustomPlan = false,
   onConfirm,
+  onRemove,
 }: ManualPlanDialogProps) {
   const [open, setOpen] = useState(false);
   const range = manualCalorieRange(input);
@@ -87,6 +96,11 @@ export function ManualPlanDialog({
     // it already renders its own submitting and error states behind this.
     setOpen(false);
     void onConfirm(paceForCalorieTarget(input, dailyCalories));
+  }
+
+  function handleRemove() {
+    setOpen(false);
+    onRemove?.();
   }
 
   return (
@@ -120,13 +134,31 @@ export function ManualPlanDialog({
           fromDate={fromDate}
         />
 
-        <DialogFooter className="flex-row justify-end gap-2.5">
-          <DialogClose render={<Button type="button" variant="outline" />}>
-            Cancel
-          </DialogClose>
-          <Button type="submit" form={MANUAL_PLAN_FORM_ID} variant="cta">
-            Use this plan
-          </Button>
+        {/* Three buttons will not sit in a row on a phone, so this keeps
+            DialogFooter's own responsive stacking (flex-col-reverse below sm) and
+            only pushes Remove to the far side once there is room. col-reverse also
+            lands the destructive action at the bottom on mobile, under the two it
+            should not be confused with. */}
+        <DialogFooter
+          className={cn(
+            'gap-2.5 sm:items-center',
+            onRemove ? 'sm:justify-between' : 'sm:justify-end',
+          )}
+        >
+          {onRemove && (
+            <Button type="button" variant="destructive" onClick={handleRemove}>
+              <Trash2 size={16} />
+              Remove custom plan
+            </Button>
+          )}
+          <div className="flex flex-col-reverse gap-2.5 sm:flex-row">
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button type="submit" form={MANUAL_PLAN_FORM_ID} variant="cta">
+              Use this plan
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

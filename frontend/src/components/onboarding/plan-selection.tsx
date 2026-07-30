@@ -69,6 +69,16 @@ export function PlanSelection({
   const isCustomPlan =
     initialPace != null && !PACE_OPTIONS.includes(initialPace);
 
+  // Where "remove my custom plan" lands. Chosen from the presets only, so the
+  // fallback can never be the custom rate we are trying to drop — which is what
+  // it would be for a body whose maintenance sits under the safety floor, since
+  // then even the maintenance preset is hidden and the custom card is options[0].
+  // Null there means no preset is viable, so the dialog omits the button rather
+  // than offering one that does nothing.
+  const presetFallbackPace = defaultPlanPace(
+    options.filter((option) => PACE_OPTIONS.includes(option.pace)),
+  );
+
   return (
     <div className="mx-auto flex max-h-[85dvh] w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
       <div className="flex shrink-0 flex-col gap-1 px-5 pb-3.5">
@@ -104,6 +114,11 @@ export function PlanSelection({
             startFromPace={selectedPace}
             isCustomPlan={isCustomPlan}
             onConfirm={onConfirm}
+            onRemove={
+              isCustomPlan && presetFallbackPace !== null
+                ? () => void onConfirm(presetFallbackPace)
+                : undefined
+            }
           />
         </div>
       </div>
