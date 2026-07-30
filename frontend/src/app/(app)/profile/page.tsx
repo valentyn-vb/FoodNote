@@ -2,6 +2,8 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Text } from '@/components/ui/text';
 import { profile } from '@/lib/api-client';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
@@ -46,38 +48,31 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-md flex-col bg-surface lg:mx-14 lg:my-10 lg:max-w-xl">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className="flex w-full max-w-md flex-col lg:mx-14 lg:my-10 lg:max-w-xl">
+      <div className="flex items-center justify-between px-4 py-3">
         <Link
           href="/dashboard"
           aria-label="Back to dashboard"
           className="lg:hidden"
         >
-          <ChevronLeft
-            size={20}
-            className="shrink-0 text-text"
-            strokeWidth={1.8}
-          />
+          <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
         </Link>
-        <h1 className="font-sans text-title font-semibold text-text lg:text-heading-lg">
+        <Text variant="title" render={<h1 />}>
           Profile
-        </h1>
+        </Text>
       </div>
+      <Separator />
 
-      <div className="pt-7 pb-5 lg:px-4 lg:pt-6 ">
-        <div className="flex flex-col items-center   lg:flex-row lg:items-center lg:gap-4 mb-2.5">
-          <Avatar className="size-18">
-            <AvatarFallback className="bg-primary text-heading-lg text-surface">
-              {initials}
-            </AvatarFallback>
+      <div className="pt-7 pb-5 lg:px-4 lg:pt-6">
+        <div className="mb-2.5 flex flex-col items-center lg:flex-row lg:items-center lg:gap-4">
+          <Avatar size="xl">
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
-            <div className="font-sans text-[17px] font-semibold text-text">
-              {fullName}
-            </div>
-            <div className="font-sans text-caption text-text-muted">
+            <Text variant="title">{fullName}</Text>
+            <Text variant="caption" tone="muted">
               {authUser?.email}
-            </div>
+            </Text>
           </div>
         </div>
         <EditProfileDialog />
@@ -97,11 +92,9 @@ export default function ProfilePage() {
         />
       </div>
 
-      <div className="border-t border-border px-4 pt-3 pb-6">
-        <LogoutButton
-          variant="outline"
-          className="h-12 w-full border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
-        >
+      <Separator />
+      <div className="px-4 pt-3 pb-6">
+        <LogoutButton variant="destructiveOutline" size="lg" className="w-full">
           Log out
         </LogoutButton>
       </div>

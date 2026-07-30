@@ -59,16 +59,14 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        className="h-auto p-0 font-sans  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+        render={<Button variant="link" size="inline" />}
       >
         Edit profile
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-sans text-title font-semibold text-text">
-            Edit profile
-          </DialogTitle>
-          <DialogDescription className="font-sans text-caption text-text-muted">
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
             Update the name shown across your account.
           </DialogDescription>
         </DialogHeader>

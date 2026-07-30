@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import {
   Dialog,
   DialogClose,
@@ -29,7 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { DetailRow } from './detail-row';
+import { DetailList, DetailRow } from '@/components/ui/detail-list';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
 
@@ -124,10 +125,10 @@ export function PersonalDetailsSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-sans text-caption text-text-muted">
+      <Text variant="caption" tone="muted" render={<h2 />}>
         Personal details
-      </h2>
-      <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
+      </Text>
+      <Card variant="panel" className="gap-0 overflow-hidden py-0">
         <dl>
           <DetailRow
             label="Sex"
@@ -162,17 +163,15 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+          render={<Button variant="link" size="inline" />}
         >
           {(loading || saving) && <Spinner />}
           Edit details
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-sans text-title font-semibold text-text">
-              Edit details
-            </DialogTitle>
-            <DialogDescription className="font-sans text-caption text-text-muted">
+            <DialogTitle>Edit details</DialogTitle>
+            <DialogDescription>
               We&apos;ll use this to recalculate your daily calorie target.
             </DialogDescription>
           </DialogHeader>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
+import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -93,15 +94,20 @@ export function RegisterForm() {
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted text-center w-full">
+        <Text
+          variant="caption"
+          tone="muted"
+          className="w-full text-center"
+          render={<p />}
+        >
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-primary-deep hover:underline"
+            className="font-semibold text-brand-ink hover:underline"
           >
             Log in
           </Link>
-        </p>
+        </Text>
       </CardFooter>
     </Card>
   );

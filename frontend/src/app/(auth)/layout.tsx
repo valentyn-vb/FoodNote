@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
@@ -24,7 +25,7 @@ export default function AuthLayout({
   }, [status, router]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="flex flex-col items-center gap-3">
         <Image
           src="/mascot/guide.webp"
@@ -33,9 +34,7 @@ export default function AuthLayout({
           height={112}
           priority
         />
-        <div className="font-display text-2xl font-semibold text-text">
-          FoodNote
-        </div>
+        <Text variant="heading">FoodNote</Text>
       </div>
       <div className="w-full max-w-sm">
         {status === 'unauthenticated' ? children : <AuthFormSkeleton />}

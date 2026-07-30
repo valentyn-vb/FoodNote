@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 
 import { cn } from '@/lib/utils';
+import { textVariants } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { XIcon } from 'lucide-react';
 
@@ -120,7 +121,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('leading-none font-medium', className)}
+      className={cn(textVariants({ variant: 'title' }), className)}
       {...props}
     />
   );
@@ -134,7 +135,8 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
+        textVariants({ variant: 'caption', tone: 'muted' }),
+        '*:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
         className,
       )}
       {...props}

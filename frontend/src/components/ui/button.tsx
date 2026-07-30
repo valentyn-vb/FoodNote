@@ -17,7 +17,12 @@ const buttonVariants = cva(
           'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground',
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20',
-        link: 'text-primary underline-offset-4 hover:underline',
+        link: 'text-brand-ink underline-offset-4 hover:underline',
+        // Outlined rather than filled: a destructive action that is *available*
+        // rather than urgent — logging out, deleting one entry. The filled
+        // `destructive` above is for the confirmation itself.
+        destructiveOutline:
+          'border-destructive-border bg-card text-destructive-text hover:bg-destructive-surface',
         // Deprecated, removed with its last call site: without the orange glow
         // and with the size ladder back to shadcn's, this is `default`.
         cta: 'bg-primary text-primary-foreground active:scale-[0.98]',

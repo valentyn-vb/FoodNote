@@ -1,10 +1,11 @@
 import { cn } from '@/lib/utils';
+import { Text } from '@/components/ui/text';
 
 // Ticket #41: shared copy for every estimate-showing surface.
 export function Disclaimer({ className }: { className?: string }) {
   return (
-    <div className={cn('font-sans text-[11.5px] text-text-muted', className)}>
+    <Text variant="caption" tone="muted" className={className}>
       This is an estimate, not medical advice. Actual results vary.
-    </div>
+    </Text>
   );
 }
