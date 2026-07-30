@@ -129,7 +129,7 @@
   --font-heading: var(--font-display);
 
   /* ── Elevation ───────────────────────────────────────────────────────────
-     Three levels, and the only place a shadow is defined — a raw shadow-[…]
+     Two levels, and the only place a shadow is defined — a raw shadow-[…]
      utility hardcodes a colour that can't be themed or contrast-audited.
      Popovers and drawers keep tailwind's own shadow-md/shadow-lg.
      There is deliberately no brand glow: the orange `0 2px 8px #f5a65c59`
