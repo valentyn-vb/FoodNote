@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { History } from 'lucide-react';
+import { useState, type ReactElement } from 'react';
 import type { WeightEntryResponse } from '@foodnote/shared';
 import {
   Drawer,
@@ -9,6 +8,7 @@ import {
   DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Text } from '@/components/ui/text';
 import { WeightHistoryRow } from '@/components/weight-history-row';
 
 // Reuses the Drawer primitive from WeightDrawer — "edit/delete from the
@@ -17,11 +17,12 @@ import { WeightHistoryRow } from '@/components/weight-history-row';
 export function WeightHistoryDrawer({
   entries,
   onWeightsChanged,
-  triggerClassName,
+  trigger,
 }: {
   entries: WeightEntryResponse[];
   onWeightsChanged: () => void;
-  triggerClassName?: string;
+  /** The element the drawer opens from, so its look stays in a ui/ component. */
+  trigger: ReactElement;
 }) {
   const [open, setOpen] = useState(false);
   const sorted = [...entries].sort((a, b) =>
@@ -30,21 +31,16 @@ export function WeightHistoryDrawer({
 
   return (
     <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
-      <DrawerTrigger
-        aria-label="Edit weight history"
-        className={triggerClassName}
-      >
-        <History size={16} />
-      </DrawerTrigger>
+      <DrawerTrigger aria-label="Edit weight history" render={trigger} />
       <DrawerContent className="lg:mx-auto lg:max-w-lg">
         {/* DrawerTitleBar (#39) is this exact header; main restated it inline,
             hardcoded icon colour included. */}
         <DrawerTitleBar>Weight history</DrawerTitleBar>
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto px-5 py-4">
           {sorted.length === 0 && (
-            <p className="font-sans text-caption text-text-muted">
+            <Text variant="caption" tone="muted" render={<p />}>
               No entries yet.
-            </p>
+            </Text>
           )}
           {sorted.map((entry) => (
             <WeightHistoryRow

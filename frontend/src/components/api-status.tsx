@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Text } from '@/components/ui/text';
 import { healthResponseSchema, type HealthResponse } from '@foodnote/shared';
 
 export function ApiStatus() {
@@ -15,14 +16,22 @@ export function ApiStatus() {
   }, []);
 
   if (error) {
-    return <p className="text-red-500">Backend: {error}</p>;
+    return (
+      <Text tone="danger" render={<p />}>
+        Backend: {error}
+      </Text>
+    );
   }
   if (!health) {
-    return <p className="text-neutral-400">Backend: checking…</p>;
+    return (
+      <Text tone="muted" render={<p />}>
+        Backend: checking…
+      </Text>
+    );
   }
   return (
-    <p className="text-green-600">
+    <Text tone="success" render={<p />}>
       Backend: {health.service} is {health.status} ({health.timestamp})
-    </p>
+    </Text>
   );
 }

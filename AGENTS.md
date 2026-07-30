@@ -37,9 +37,46 @@ The frontend is shadcn `base-vega` on Base UI (`frontend/components.json`; check
 
 ## Styling
 
-Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. The theme is the source of truth for colour, elevation, radius and type — a utility class is how you _use_ it, never where you _define_ it.
+Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. **All visual
+style lives inside `frontend/src/components/ui/**` as component variants.
+Outside it, only layout.** See
+[ADR 0009](docs/adr/0009-visual-style-lives-in-components.md) for why, and
+[the spec](docs/design/styling-rewrite-spec.md) for the tokens, the levels and
+the component APIs.
 
-- **Never export a className string.** A look shared by two call sites is a `cva` variant on the `ui/` component (as `Button` already does — `variant="cta"`), so callers write `<Card variant="tile">`. `CARD_CLASS` / `STAT_TILE_CLASS` in `app/(app)/dashboard/helpers.ts` are the pattern to delete, not to copy: a class-string constant is a component variant that never got written, and `cn()` merge order makes it silently overridable at every call site.
-- **Cancelling a `ui/` component's own defaults is the tell.** `ring-0 py-0` exists in `CARD_CLASS` only to undo `Card`'s `ring-1 ring-foreground/10` and `py-(--card-spacing)`. When a call site fights the component, the variant belongs _in_ the component.
-- **Don't re-implement reduced motion.** `globals.css` collapses every CSS animation and transition under `prefers-reduced-motion: reduce`, app-wide. Write normal transitions and let the rule handle it. Two exceptions: motion driven from JS (a render loop, an animation library) must check the preference at its source, and motion that _is_ the information — a busy indicator — needs an explicit exemption alongside the existing ones.
-- **No arbitrary value that hardcodes a color or an elevation** — `shadow-[0_1px_3px_#0000000a]`, `bg-[#F0EEE9]`, `text-[#333333]` all bypass the theme and can't be themed, audited for contrast, or changed in one place. If the value is missing, add the token to `@theme` and use the generated utility (`shadow-card`). Note there are **no `--shadow-*` tokens yet** — the first change that needs one adds it.
+- **Forbidden outside `ui/**`:** colour, background, font size and weight,
+  radius, shadow, border. **Allowed:** layout, sizing, alignment and wrapping,
+  casing, figure style, motion. `frontend/eslint-rules/no-visual-classes.js`
+  enforces this at `error` and names the replacement in the message. It is an
+  allow-list, so a tailwind utility nobody has classified yet is forbidden by
+  default — that is deliberate, and widening it is a decision, not a fix.
+- **Text gets its type from a level, never a class:** `<Text variant="label"
+tone="muted">`. A level sets size, line-height, weight and family at once, so
+  there is no `size` prop to combine with it. `render` swaps the element when the
+  level and the heading rank disagree.
+- **Never export a className string.** A look shared by two call sites is a `cva`
+  variant on the `ui/` component, so callers write `<Card variant="tile">`. Five
+  such constants have been deleted from this repo, one of them written a day
+  after four others were — the lint rule now rejects any `*_CLASS` identifier.
+- **A `*ClassName` prop is the same hole with a different name.** A component
+  that needs a styled trigger takes the element: `trigger={<Button …/>}`.
+- **Cancelling a `ui/` component's own defaults is the tell.** When a call site
+  fights the component, the variant belongs _in_ the component.
+- **No arbitrary value that hardcodes a colour or an elevation.** If the value is
+  missing, add the token to `@theme` and use the generated utility. Note that a
+  _missing_ token yields no CSS at all rather than a default, so deleting one
+  silently removes the rule that used it.
+- **Register any new type level with `tailwind-merge`** in `frontend/src/lib/utils.ts`.
+  `text-*` is both a size and a colour group; an unregistered level is treated as
+  a colour, collides with the colour beside it, and is dropped. This silently ate
+  the previous type scale.
+- **Don't re-implement reduced motion.** `globals.css` collapses every CSS
+  animation and transition under `prefers-reduced-motion: reduce`, app-wide. Two
+  exceptions: motion driven from JS must check the preference at its source, and
+  motion that _is_ the information — a busy indicator — needs an explicit
+  exemption alongside the existing ones.
+- **There is no dark mode.** It was removed, not disabled: no `.dark`, no
+  `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
+- **After changing `@theme`, `rm -rf frontend/.next`.** Turbopack serves stale
+  token CSS even across a dev-server restart, and a colour that "didn't arrive"
+  is the cache far more often than the code.

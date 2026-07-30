@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +13,7 @@ import {
   DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { weights } from '@/lib/api-client';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -35,7 +35,12 @@ import {
 // how the sidebar uses a real SidebarMenuButton (tooltip in the collapsed rail
 // included) instead of restating that button's classes (#39).
 type WeightDrawerTrigger = {
-  triggerClassName?: string;
+  /**
+   * The element the drawer opens from. Passing the element rather than a class
+   * string keeps the trigger's look inside a `ui/` component — a
+   * `triggerClassName` prop is a hole in that boundary, and it had 10 of them.
+   */
+  trigger?: ReactElement;
   triggerLabel?: string;
   children?: ReactNode;
   open?: boolean;
@@ -58,7 +63,7 @@ type WeightDrawerProps = WeightDrawerTrigger &
 export function WeightDrawer(props: WeightDrawerProps) {
   const {
     mode,
-    triggerClassName,
+    trigger,
     triggerLabel,
     children,
     open: controlledOpen,
@@ -136,7 +141,7 @@ export function WeightDrawer(props: WeightDrawerProps) {
       {/* Nothing to render when the caller drives `open` itself: it brought its
           own trigger, and an empty one here would sit in the tab order. */}
       {controlledOpen === undefined && (
-        <DrawerTrigger aria-label={triggerLabel} className={triggerClassName}>
+        <DrawerTrigger aria-label={triggerLabel} render={trigger}>
           {children ?? (mode === 'create' ? 'Log weight' : undefined)}
         </DrawerTrigger>
       )}
@@ -160,7 +165,7 @@ export function WeightDrawer(props: WeightDrawerProps) {
             variant="cta"
             className="w-full py-3.5"
           >
-            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving && <Spinner />}
             {mode === 'create' ? 'Save weight' : 'Save'}
           </Button>
         </DrawerFooter>

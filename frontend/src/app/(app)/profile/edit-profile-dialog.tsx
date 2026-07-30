@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogClose,
@@ -17,7 +18,6 @@ import {
   type UpdateAccountRequest,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -59,16 +59,14 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        className="h-auto p-0 font-sans  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+        render={<Button variant="link" size="inline" />}
       >
         Edit profile
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-sans text-title font-semibold text-text">
-            Edit profile
-          </DialogTitle>
-          <DialogDescription className="font-sans text-caption text-text-muted">
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
             Update the name shown across your account.
           </DialogDescription>
         </DialogHeader>
@@ -103,7 +101,7 @@ export function EditProfileDialog() {
             variant="cta"
             disabled={saving}
           >
-            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving && <Spinner />}
             Save
           </Button>
         </DialogFooter>

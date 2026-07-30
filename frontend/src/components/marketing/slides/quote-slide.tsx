@@ -10,7 +10,7 @@ export function QuoteSlide() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="relative flex flex-col items-center gap-4 bg-bg px-6 py-28 sm:py-36">
+    <div className="relative flex flex-col items-center gap-4 bg-background px-6 py-28 sm:py-36">
       <GradientMesh />
       <motion.p
         initial={
@@ -21,7 +21,7 @@ export function QuoteSlide() {
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 0.7, ease: EASE_OUT }}
-        className="relative z-10 max-w-2xl text-center text-balance font-[family-name:var(--font-accent-serif)] text-[clamp(28px,4.6vw,48px)] leading-[1.2] text-text italic"
+        className="relative z-10 max-w-2xl text-center text-balance font-[family-name:var(--font-accent-serif)] text-[clamp(28px,4.6vw,48px)] leading-[1.2] text-foreground italic"
       >
         &ldquo;Those are cute. Good idea! But please give the files descriptive
         names, like{' '}
@@ -33,7 +33,7 @@ export function QuoteSlide() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.2 }}
-        className="relative z-10 font-sans text-[14px] text-text-muted"
+        className="relative z-10 font-sans text-[14px] text-muted-foreground"
       >
         An actual PR review comment by Sergey R.
       </motion.p>

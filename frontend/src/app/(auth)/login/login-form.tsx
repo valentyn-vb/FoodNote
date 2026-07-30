@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { Text } from '@/components/ui/text';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginRequestSchema, type LoginRequest } from '@foodnote/shared';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -73,26 +74,32 @@ export function LoginForm() {
             autoComplete="current-password"
           />
           {formError && (
-            <p role="alert" className="text-sm text-destructive">
+            <Text variant="caption" tone="danger" render={<p role="alert" />}>
               {formError}
-            </p>
+            </Text>
           )}
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+            {isSubmitting && <Spinner />}
             Log in
           </Button>
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted text-center w-full">
+        <Text
+          variant="caption"
+          tone="muted"
+          className="w-full text-center"
+          render={<p />}
+        >
           No account yet?{' '}
-          <Link
-            href="/register"
-            className="font-medium text-primary-deep hover:underline"
+          <Button
+            variant="link"
+            size="inline"
+            render={<Link href="/register" />}
           >
             Register
-          </Link>
-        </p>
+          </Button>
+        </Text>
       </CardFooter>
     </Card>
   );

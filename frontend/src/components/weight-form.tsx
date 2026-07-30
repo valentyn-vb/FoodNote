@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Text } from '@/components/ui/text';
 import { weightKgSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
@@ -65,7 +66,7 @@ export function WeightForm({
         autoFocus
         placeholder="e.g. 71.4"
         error={errors.weightKg?.message}
-        className="h-12 text-center font-display text-[22px] font-semibold [font-variant-numeric:tabular-nums]"
+        variant="figure"
         {...register('weightKg')}
       />
       {showDate ? (
@@ -78,9 +79,9 @@ export function WeightForm({
           {...register('recordedAt')}
         />
       ) : (
-        <div className="font-sans text-[12px] text-text-muted">
+        <Text variant="caption" tone="muted">
           Each save adds a new entry to your weight journal.
-        </div>
+        </Text>
       )}
     </form>
   );

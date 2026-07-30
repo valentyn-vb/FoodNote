@@ -2,11 +2,13 @@
 
 import { OnboardingFormValues } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
+import { Spinner } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
 import { type Pace, type ProfileResponse } from '@foodnote/shared';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -58,14 +60,16 @@ export function CurrentPlanSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-sans text-caption text-text-muted">Current plan</h2>
-      <Card variant="panel" className="gap-1 border-[1.5px] p-4">
-        <div className="font-display text-heading font-semibold text-text">
+      <Text variant="caption" tone="muted" render={<h2 />}>
+        Current plan
+      </Text>
+      <Card variant="panel" className="gap-1 p-4">
+        <Text variant="heading" numeric>
           {profileData?.calorieTarget != null
             ? `${profileData.calorieTarget.toLocaleString()} kcal / day`
             : '—'}
-        </div>
-        <div className="font-sans text-caption text-text-muted">
+        </Text>
+        <Text variant="caption" tone="muted">
           {pace == null
             ? 'No active plan yet'
             : pace === 0
@@ -73,16 +77,17 @@ export function CurrentPlanSection({
                 // and the stored target is parked and irrelevant here.
                 'Maintaining your weight'
               : `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`}
-        </div>
+        </Text>
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger
             disabled={loading}
-            // DialogTrigger is an unstyled primitive, so unlike a Button it has
-            // no radius of its own to inherit — this one is explicit on purpose.
-            className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-md border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-primary-tint disabled:opacity-50"
+            // An unstyled primitive, so it renders *as* a Button rather than
+            // restating a button's look.
+            render={<Button variant="outline" size="sm" />}
+            className="mt-1.5 w-fit"
           >
-            {loading && <Loader2 className="size-4 animate-spin" />}
+            {loading && <Spinner />}
             Change plan
           </DialogTrigger>
           <DialogContent className="p-0">

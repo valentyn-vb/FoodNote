@@ -2,9 +2,9 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/components/auth-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
 import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
@@ -31,7 +31,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (status !== 'authenticated') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-text-muted" />
+        <Spinner size="lg" tone="muted" />
       </div>
     );
   }
@@ -42,7 +42,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <MealsProvider>
           <WeightProvider>
             <AppSidebar />
-            <SidebarInset className="bg-bg">{children}</SidebarInset>
+            <SidebarInset>{children}</SidebarInset>
             {/* Both "Log weight" triggers live in different trees (sidebar on
                 desktop, dashboard row on mobile), so the celebration is mounted
                 here — the nearest shared ancestor that can see either save. */}

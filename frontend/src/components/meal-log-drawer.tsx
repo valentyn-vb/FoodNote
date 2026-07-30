@@ -1,6 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Text } from '@/components/ui/text';
+import { Progress } from '@/components/ui/progress';
+import { Medallion } from '@/components/ui/medallion';
+import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { Pencil, TriangleAlert } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
@@ -16,6 +20,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Disclaimer } from '@/components/disclaimer';
 import {
   MEAL_FORM_ID,
@@ -246,10 +251,8 @@ export function MealLogDrawer({
     <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
       {children && (
         <DrawerTrigger
-          className={cn(
-            'h-12.5 grow-2 basis-0 rounded-md bg-primary text-surface shadow-cta lg:grow-0 lg:px-6',
-            triggerClassName,
-          )}
+          render={<Button size="lg" />}
+          className={cn('grow-2 basis-0 lg:grow-0', triggerClassName)}
         >
           {children}
         </DrawerTrigger>
@@ -267,10 +270,10 @@ export function MealLogDrawer({
         {step === 'input' && (
           <StepPanel key="input">
             <div className="flex flex-col gap-3 px-5 pt-5">
-              <DrawerDescription className="font-sans text-caption font-medium text-text">
+              <DrawerDescription tone="default">
                 Describe what you ate
               </DrawerDescription>
-              <textarea
+              <Textarea
                 autoFocus
                 value={description}
                 onChange={(e) => {
@@ -279,7 +282,7 @@ export function MealLogDrawer({
                 }}
                 rows={4}
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
-                className="min-h-32.5 rounded-md border-[1.5px] border-primary bg-surface p-3.5 font-sans text-[14.5px] text-text shadow-focus-primary focus:outline-none"
+                className="min-h-32.5"
               />
               {/* Full-height chips: at `size="xs"` (24px) these were a
                   thumb-sized miss on a phone, and they are the fastest way into
@@ -291,22 +294,26 @@ export function MealLogDrawer({
                       key={example}
                       variant="outline"
                       onClick={() => setDescription(example)}
-                      className="rounded-full px-4 h-8 font-sans text-caption text-text-muted"
+                      shape="pill"
                     >
                       {example}
                     </Button>
                   ))}
                 </div>
               )}
-              <div className="font-sans text-[12px] text-text-muted">
+              <Text variant="caption" tone="muted">
                 One meal at a time. Portions can be approximate — you&apos;ll
                 review before saving.
-              </div>
+              </Text>
               {rateLimited && (
-                <p role="alert" className="font-sans text-[12px] text-error">
+                <Text
+                  variant="caption"
+                  tone="danger"
+                  render={<p role="alert" />}
+                >
                   That&apos;s a lot of parsing at once — give it a few seconds
                   and try again.
-                </p>
+                </Text>
               )}
             </div>
             <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
@@ -341,7 +348,7 @@ export function MealLogDrawer({
               aria-live="polite"
               className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-12"
             >
-              <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-primary-tint">
+              <Medallion size="lg">
                 <Image
                   src="/mascot/defaultlogo.png"
                   alt=""
@@ -349,13 +356,9 @@ export function MealLogDrawer({
                   height={104}
                   className="size-26"
                 />
-              </div>
-              <div className="font-sans text-[14.5px] font-medium text-text">
-                Reading your meal…
-              </div>
-              <div className="h-1.5 w-40 shrink-0 overflow-hidden rounded-full bg-track">
-                <div className="h-full w-full origin-left rounded-full bg-primary animate-indeterminate" />
-              </div>
+              </Medallion>
+              <Text variant="label">Reading your meal…</Text>
+              <Progress indeterminate size="sm" className="w-40" />
               <Button
                 variant="quiet"
                 size="inline"
@@ -391,20 +394,24 @@ export function MealLogDrawer({
               )}
 
               {step === 'preview' && (
-                <div className="flex items-center gap-2 rounded-md bg-primary-tint-soft px-3.5 py-2.5">
-                  <span className="min-w-0 grow basis-0 truncate font-sans text-[12.5px] text-text-warm">
+                <Card variant="note" className="flex-row items-center gap-2">
+                  <Text
+                    variant="caption"
+                    className="min-w-0 grow basis-0 truncate"
+                  >
                     “{description}”
-                  </span>
+                  </Text>
                   <Button
                     type="button"
                     variant="link"
+                    size="inline"
                     onClick={() => setStep('input')}
-                    className="h-auto shrink-0 gap-1 p-0 text-[12px] text-primary-deep no-underline"
+                    className="shrink-0"
                   >
                     <Pencil className="size-3" />
                     Edit &amp; re-parse
                   </Button>
-                </div>
+                </Card>
               )}
 
               <MealNameField form={form} />
@@ -429,9 +436,9 @@ export function MealLogDrawer({
                     onUserEdit={() => setTotalsOverridden(true)}
                   />
                   {step === 'preview' && (
-                    <div className="font-sans text-[11.5px] text-text-muted">
+                    <Text variant="caption" tone="muted">
                       Totals set by hand — they no longer follow the items.
-                    </div>
+                    </Text>
                   )}
                 </>
               )}
@@ -447,7 +454,7 @@ export function MealLogDrawer({
               <MealTypeField form={form} />
 
               {step === 'preview' && confidenceNote && (
-                <div className="flex flex-col gap-2 rounded-md bg-primary-tint-soft px-3.5 py-3">
+                <Card variant="note" className="gap-2">
                   <div className="flex items-center gap-2.5">
                     <Image
                       src="/mascot/reassure.webp"
@@ -456,12 +463,10 @@ export function MealLogDrawer({
                       height={40}
                       className="size-10 shrink-0"
                     />
-                    <div className="font-sans text-[12.5px] text-text-warm">
-                      {confidenceNote}
-                    </div>
+                    <Text variant="caption">{confidenceNote}</Text>
                   </div>
                   <Disclaimer />
-                </div>
+                </Card>
               )}
             </form>
 
@@ -488,15 +493,17 @@ export function MealLogDrawer({
             }}
           >
             <div className="flex flex-col gap-2.5 px-5 pt-3.5">
-              <div className="font-sans text-caption font-medium text-text">
-                Describe what you ate
-              </div>
-              <textarea
+              <Text variant="label">Describe what you ate</Text>
+              <Textarea
                 autoFocus
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="min-h-22.5 rounded-md border-[1.5px] border-error bg-surface p-3.5 font-sans text-[14.5px] text-text focus:outline-none"
+                // The invalid look is the component's, driven by the attribute
+                // that also tells a screen reader — not a red border painted on
+                // from here.
+                aria-invalid
+                className="min-h-22.5"
               />
             </div>
           </RecoverStep>
@@ -551,7 +558,7 @@ function RecoverStep({
   return (
     <>
       <div className="flex flex-col items-center gap-3.5 px-6 pt-9 pb-2">
-        <div className="flex size-30 shrink-0 items-center justify-center rounded-full bg-error-bg">
+        <Medallion tone="danger">
           <Image
             src="/mascot/recover.webp"
             alt=""
@@ -559,23 +566,21 @@ function RecoverStep({
             height={96}
             className="size-24"
           />
-        </div>
+        </Medallion>
         {/* Announced and framed as a failure: the mascot alone reads as a
             friendly illustration, so nothing told the user the parse had not
             worked. The tinted panel and the icon carry that, and `role=alert`
             makes a screen reader say it. */}
-        <div
+        <Card
           role="alert"
-          className="flex max-w-4/5 items-start gap-2.5 rounded-md border border-error/45 bg-error-bg px-3.5 py-3"
+          variant="alert"
+          className="max-w-4/5 flex-row items-start gap-2.5"
         >
-          <TriangleAlert
-            aria-hidden
-            className="mt-px size-4 shrink-0 text-error"
-          />
-          <div className="font-sans text-[14.5px] text-text text-pretty">
+          <TriangleAlert aria-hidden className="mt-px size-4 shrink-0" />
+          <Text variant="label" className="text-pretty">
             {message}
-          </div>
-        </div>
+          </Text>
+        </Card>
       </div>
       {children}
       <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
@@ -630,17 +635,16 @@ function MacroSuggestion({
   const suggestion = macroCalorieSuggestion(useMealTotals(control));
   if (suggestion === null) return null;
   return (
-    <div className="flex items-center gap-2 font-sans text-[12px] text-text-muted">
+    <Text variant="caption" tone="muted" className="flex items-center gap-2">
       <span>By macros that&apos;s {suggestion} kcal.</span>
       <Button
         type="button"
         variant="link"
         size="inline"
         onClick={() => onUse(suggestion)}
-        className="text-[12px] text-primary-deep"
       >
         Use it
       </Button>
-    </div>
+    </Text>
   );
 }

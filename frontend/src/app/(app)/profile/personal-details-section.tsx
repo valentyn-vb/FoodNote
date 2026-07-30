@@ -10,7 +10,9 @@ import {
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import {
   Dialog,
   DialogClose,
@@ -25,11 +27,10 @@ import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { DetailRow } from './detail-row';
+import { DetailList, DetailRow } from '@/components/ui/detail-list';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
 
@@ -124,11 +125,11 @@ export function PersonalDetailsSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-sans text-caption text-text-muted">
+      <Text variant="caption" tone="muted" render={<h2 />}>
         Personal details
-      </h2>
-      <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
-        <dl>
+      </Text>
+      <Card variant="panel" className="gap-0 overflow-hidden py-0">
+        <DetailList>
           <DetailRow
             label="Sex"
             value={profileData ? SEX_LABELS[profileData.sex] : '—'}
@@ -156,23 +157,21 @@ export function PersonalDetailsSection({
                 : '—'
             }
           />
-        </dl>
+        </DetailList>
       </Card>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+          render={<Button variant="link" size="inline" />}
         >
-          {(loading || saving) && <Loader2 className="size-4 animate-spin" />}
+          {(loading || saving) && <Spinner />}
           Edit details
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-sans text-title font-semibold text-text">
-              Edit details
-            </DialogTitle>
-            <DialogDescription className="font-sans text-caption text-text-muted">
+            <DialogTitle>Edit details</DialogTitle>
+            <DialogDescription>
               We&apos;ll use this to recalculate your daily calorie target.
             </DialogDescription>
           </DialogHeader>

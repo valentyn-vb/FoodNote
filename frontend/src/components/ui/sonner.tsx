@@ -1,6 +1,5 @@
 'use client';
 
-import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 import {
   CircleCheckIcon,
@@ -22,11 +21,12 @@ import {
  * `[data-sonner-toaster]` rules, which is what makes the override stick.
  */
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      // The app has one appearance. This used to ask next-themes, without a
+      // provider above it, and got 'system' back — which meant a toast could go
+      // dark on a light app.
+      theme="light"
       richColors
       className="toaster group"
       icons={{
@@ -44,15 +44,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Matches a stat tile or a meal row rather than a popover: a toast is
           // a small surface, and 20px on one reads as a pill.
           '--border-radius': 'var(--radius-md)',
-          '--success-bg': 'var(--fn-success-bg)',
-          '--success-border': 'var(--fn-success-border)',
-          '--success-text': 'var(--fn-success-text)',
-          '--error-bg': 'var(--fn-error-bg)',
-          '--error-border': 'var(--fn-error-border)',
-          '--error-text': 'var(--fn-error-text)',
-          '--warning-bg': 'var(--fn-warning-bg)',
-          '--warning-border': 'var(--fn-warning-border)',
-          '--warning-text': 'var(--fn-warning-text)',
+          '--success-bg': 'var(--success-surface)',
+          '--success-border': 'var(--success-border)',
+          '--success-text': 'var(--success-text)',
+          '--error-bg': 'var(--destructive-surface)',
+          '--error-border': 'var(--destructive-border)',
+          '--error-text': 'var(--destructive-text)',
+          '--warning-bg': 'var(--warning-surface)',
+          '--warning-border': 'var(--warning-border)',
+          '--warning-text': 'var(--warning-text)',
           // Nothing in the app raises an info toast yet; keep it neutral so one
           // added later inherits the app's surface instead of sonner's blue.
           '--info-bg': 'var(--popover)',
@@ -62,16 +62,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: 'font-sans shadow-card',
-          title: 'font-sans text-label font-semibold',
-          description: 'font-sans text-caption',
+          toast: 'shadow-card',
+          title: 'text-label font-semibold',
+          description: 'text-caption',
           // Sonner fills the action button by inverting the toast's own colours
           // (white on near-black), which lands as a hard chip inside a soft
           // wash. The app's idiom for a secondary action is a quiet text
           // button, so this is one: `!` is needed because sonner's own
           // `[data-sonner-toast] [data-button]` rule outranks a single class.
           actionButton:
-            'h-auto! bg-transparent! px-0! font-sans text-caption font-semibold text-current! underline-offset-2 hover:underline',
+            'h-auto! bg-transparent! px-0! text-caption font-semibold text-current! underline-offset-2 hover:underline',
         },
       }}
       {...props}

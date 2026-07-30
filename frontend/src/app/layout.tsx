@@ -32,11 +32,12 @@ export default function RootLayout({
       // Browser extensions (LanguageTool etc.) mutate <html> attributes before
       // hydration; suppress attribute-mismatch noise on this element only.
       suppressHydrationWarning
+      // Only the font-face variables and the layout height: `font-sans` and
+      // `antialiased` live in @layer base in globals.css, so no element has to
+      // restate them.
       className={cn(
         'h-full',
-        'antialiased',
         geistMono.variable,
-        'font-sans',
         figtree.variable,
         fredoka.variable,
       )}

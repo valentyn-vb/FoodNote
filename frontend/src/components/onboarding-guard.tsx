@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useOnboardingStatus } from '@/lib/use-onboarding-status';
 
 // Gates the (app) group on onboarding completion. Assumes the caller has
@@ -21,7 +21,7 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
   if (status !== 'onboarded') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-text-muted" />
+        <Spinner size="lg" tone="muted" />
       </div>
     );
   }

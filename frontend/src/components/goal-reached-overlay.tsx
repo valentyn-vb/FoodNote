@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import { useReducedMotion } from 'motion/react';
@@ -27,14 +28,22 @@ import { goals, profile } from '@/lib/api-client';
 import { useMeals } from '@/lib/meals-context';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
-const CONFETTI_COLORS = ['#f5a65c', '#e08a3c', '#5bb98c', '#f4907e'];
+// canvas-confetti paints on a canvas, so it can't take CSS variables — but it
+// can take what they resolve to. Read at launch, not restated: this was the
+// fourth copy of the brand palette in the codebase.
+function confettiColors() {
+  const style = getComputedStyle(document.documentElement);
+  return ['--brand', '--brand-ink', '--brand-mint', '--brand-coral']
+    .map((token) => style.getPropertyValue(token).trim())
+    .filter(Boolean);
+}
 
 function fireConfetti() {
   const shared = {
     particleCount: 60,
     spread: 70,
     startVelocity: 45,
-    colors: CONFETTI_COLORS,
+    colors: confettiColors(),
     disableForReducedMotion: true,
     zIndex: 100,
   };
@@ -155,10 +164,8 @@ export function GoalReachedOverlay() {
                 height={96}
                 priority
               />
-              <DialogTitle className="font-display text-title font-semibold text-text">
-                You hit your target
-              </DialogTitle>
-              <DialogDescription className="font-sans text-caption text-text-muted">
+              <DialogTitle>You hit your target</DialogTitle>
+              <DialogDescription>
                 {goal
                   ? `You reached ${goal.targetWeightKg} kg. Pick where to go from here.`
                   : 'You reached your target weight.'}
@@ -175,7 +182,12 @@ export function GoalReachedOverlay() {
                 >
                   {switchingMaintenance ? '...' : 'Switch to maintenance'}
                 </Button>
-                <p className="text-center font-sans text-caption text-text-muted">
+                <Text
+                  variant="caption"
+                  tone="muted"
+                  className="text-center"
+                  render={<p />}
+                >
                   {/* maintenanceKcal is energy at the current weight, which is
                       exactly what the target becomes at pace 0 — so it is the
                       number this button will set, not an estimate. */}
@@ -183,7 +195,7 @@ export function GoalReachedOverlay() {
                   {maintenanceKcal != null
                     ? ` on ${maintenanceKcal.toLocaleString()} kcal / day.`
                     : ' where it is now.'}
-                </p>
+                </Text>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Button
@@ -197,9 +209,14 @@ export function GoalReachedOverlay() {
                 >
                   Set a new target
                 </Button>
-                <p className="text-center font-sans text-caption text-text-muted">
+                <Text
+                  variant="caption"
+                  tone="muted"
+                  className="text-center"
+                  render={<p />}
+                >
                   Choose another plan — a new goal weight and pace.
-                </p>
+                </Text>
               </div>
             </div>
           </>
@@ -208,8 +225,8 @@ export function GoalReachedOverlay() {
         {view === 'target-input' && (
           <>
             <DialogHeader className="gap-2">
-              <DialogTitle className="font-display text-heading font-semibold text-text">
-                What's your new target?
+              <DialogTitle variant="heading">
+                What&apos;s your new target?
               </DialogTitle>
             </DialogHeader>
 

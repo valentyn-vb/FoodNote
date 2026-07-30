@@ -18,19 +18,16 @@ export function OutroSlide() {
   const authed = status === 'authenticated';
 
   return (
-    <div className="flex flex-col items-center gap-6 bg-bg px-6 py-16 sm:py-20">
-      {/* bg-secondary is NOT the brand green — globals.css redefines
-          --color-secondary twice inside the same @theme block (line 21 to
-          --fn-secondary, line 56 to shadcn's own near-white --secondary),
-          and the later one wins. Using the raw token directly here rather
-          than fighting that pre-existing collision (flagged separately,
-          out of scope for this ticket to fix repo-wide). */}
+    <div className="flex flex-col items-center gap-6 bg-background px-6 py-16 sm:py-20">
+      {/* The double declaration of --color-secondary that made `bg-secondary`
+          near-white instead of brand green is gone; the decorative green has a
+          name of its own now, so this reads what it means. */}
       <div className="relative w-full max-w-[900px]">
         <Liquid
           className="overflow-hidden rounded-[32px]"
           color={[0.357, 0.725, 0.549]}
         >
-          <div className="flex flex-col items-center gap-6 bg-[var(--fn-secondary)] px-8 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-14">
+          <div className="flex flex-col items-center gap-6 bg-brand-mint px-8 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-14">
             <div className="flex flex-col items-center gap-2 text-center sm:items-start sm:text-left">
               <h2 className="font-[family-name:var(--font-accent-serif)] text-balance text-[clamp(30px,4vw,40px)] text-white italic">
                 Ready to stop guessing?
@@ -43,7 +40,7 @@ export function OutroSlide() {
               render={<Link href={authed ? '/dashboard' : '/register'} />}
               nativeButton={false}
               variant="secondary"
-              className="shrink-0 gap-2 bg-white px-7 py-3.5 text-secondary-deep hover:bg-white/90"
+              className="shrink-0 gap-2 bg-white px-7 py-3.5 text-success-text hover:bg-white/90"
               onMouseEnter={() =>
                 supportsHover() && sparkleRef.current?.startAnimation()
               }
@@ -67,11 +64,11 @@ export function OutroSlide() {
       </div>
 
       {!authed && (
-        <p className="font-sans text-[13px] text-text-muted">
+        <p className="font-sans text-[13px] text-muted-foreground">
           Already have one?{' '}
           <Link
             href="/login"
-            className="font-medium text-primary-deep hover:underline"
+            className="font-medium text-brand-ink hover:underline"
           >
             Log in
           </Link>

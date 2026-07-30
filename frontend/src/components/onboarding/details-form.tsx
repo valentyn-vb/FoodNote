@@ -96,7 +96,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
               onValueChange={field.onChange}
               items={ACTIVITY_LEVEL_LABELS}
             >
-              <SelectTrigger className="h-11.5 w-full border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline">
+              <SelectTrigger variant="field">
                 <SelectValue placeholder="Select activity level" />
               </SelectTrigger>
               <SelectContent>

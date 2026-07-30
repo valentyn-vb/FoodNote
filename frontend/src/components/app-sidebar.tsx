@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -68,11 +69,11 @@ export function AppSidebar() {
               alt="FoodNote mascot"
               width={26}
               height={26}
-              className="shrink-0 rounded-full ring-1 ring-border"
+              className="shrink-0"
             />
-            <span className="truncate font-display text-body font-semibold text-text">
+            <Text variant="title" className="truncate">
               FoodNote
-            </span>
+            </Text>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -135,26 +136,17 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <SidebarMenuButton
-                      size="lg"
-                      className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
-                    />
-                  }
-                >
+                <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
                   <Avatar className="size-8">
-                    <AvatarFallback className="bg-primary text-caption text-surface">
-                      {initials}
-                    </AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left leading-tight">
-                    <span className="truncate font-sans text-label font-semibold">
+                  <div className="grid flex-1 text-left">
+                    <Text variant="label" className="truncate">
                       {fullName}
-                    </span>
-                    <span className="truncate font-sans text-[11.5px] text-text-muted">
+                    </Text>
+                    <Text variant="caption" tone="muted" className="truncate">
                       {authUser?.email}
-                    </span>
+                    </Text>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </DropdownMenuTrigger>

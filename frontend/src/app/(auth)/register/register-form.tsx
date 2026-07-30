@@ -1,7 +1,9 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
+import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -13,7 +15,6 @@ import {
 import { ApiError } from '@/lib/api-client';
 import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -87,21 +88,23 @@ export function RegisterForm() {
             description="At least 8 characters."
           />
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+            {isSubmitting && <Spinner />}
             Create account
           </Button>
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted text-center w-full">
+        <Text
+          variant="caption"
+          tone="muted"
+          className="w-full text-center"
+          render={<p />}
+        >
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-primary-deep hover:underline"
-          >
+          <Button variant="link" size="inline" render={<Link href="/login" />}>
             Log in
-          </Link>
-        </p>
+          </Button>
+        </Text>
       </CardFooter>
     </Card>
   );

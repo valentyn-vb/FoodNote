@@ -22,28 +22,28 @@ import {
   RadialBarChart,
   ResponsiveContainer,
 } from 'recharts';
-import type { ReactNode } from 'react';
-import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import type {
   DailyCaloriePoint,
   WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
-// Shared by the mobile and desktop dashboard layouts — same chart, sized by
-// className. Colors come from the FoodNote tokens, not EvilCharts defaults.
+// Shared by the mobile and desktop dashboard layouts — same chart, sized by the
+// caller (a height is layout). Colours come from the roles by what the data
+// means: weight is progress toward the goal, calories are the day's own metric.
 
 // Same metric, same color — solid vs dashed is what tells "actual" from
 // "projected" apart, per the H03 "Weight trend & projection" annotation.
 const weightConfig = {
-  actual: { label: 'Actual', colors: { light: ['var(--fn-secondary)'] } },
+  actual: { label: 'Actual', colors: { light: ['var(--success)'] } },
   projected: {
     label: 'Projected',
-    colors: { light: ['var(--fn-secondary)'] },
+    colors: { light: ['var(--success)'] },
   },
 };
 
 const calorieConfig = {
-  kcal: { label: 'kcal', colors: { light: ['var(--fn-primary)'] } },
+  kcal: { label: 'kcal', colors: { light: ['var(--primary)'] } },
 };
 
 export function WeightTrendChart({
@@ -95,54 +95,19 @@ export function DailyCaloriesChart({
   );
 }
 
-// Card + chart together, per review: dashboard blocks were duplicated inline
-// across the mobile and desktop layouts in page.tsx. Styling stays owned by
-// the caller (className / chartClassName) since mobile and desktop size them
-// differently.
-export function WeightTrendCard({
-  className,
-  chartClassName,
-  title,
-  action,
-  data,
-}: {
-  className?: string;
-  chartClassName?: string;
-  title?: string;
-  action?: ReactNode; // trailing control in the title row (the history drawer trigger)
-  data: WeightTrendPoint[];
-}) {
-  return (
-    <Card variant="panel" className={className}>
-      {(title || action) && (
-        <div className="flex items-center justify-between">
-          {title && (
-            <div className="font-sans text-label font-semibold text-text">
-              {title}
-            </div>
-          )}
-          {action}
-        </div>
-      )}
-      <WeightTrendChart className={chartClassName} data={data} />
-    </Card>
-  );
-}
-
-export function RemainingTodayRingCard({
-  className,
+/**
+ * The remaining-calories gauge, label and all. The centre figure is an HTML
+ * overlay rather than SVG <text> so NumberFlow can animate it.
+ */
+export function RemainingTodayRing({
   remainingKcal,
   goalKcal,
 }: {
-  className?: string;
   remainingKcal: number;
   goalKcal: number;
 }) {
   return (
-    <Card variant="panel" className={className}>
-      <h2 className="self-start font-sans text-caption font-semibold text-text">
-        Remaining today
-      </h2>
+    <>
       {/* Recharts radial gauge — animates the arc on mount and on value
           change. Center label is an HTML overlay so NumberFlow can animate
           the figure (it can't render inside SVG <text>). */}
@@ -164,21 +129,20 @@ export function RemainingTodayRingCard({
             <RadialBar
               dataKey="value"
               cornerRadius={10}
-              fill="#F5A65C"
-              background={{ fill: '#F0EEE9' }}
+              fill="var(--primary)"
+              background={{ fill: 'var(--track)' }}
             />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <NumberFlow
-            value={remainingKcal}
-            className="font-display text-heading font-semibold text-text"
-          />
-          <span className="font-sans text-[10px] text-text-muted">
+          <Text variant="heading" numeric>
+            <NumberFlow value={remainingKcal} />
+          </Text>
+          <Text variant="caption" tone="muted">
             kcal left
-          </span>
+          </Text>
         </div>
       </div>
-    </Card>
+    </>
   );
 }
