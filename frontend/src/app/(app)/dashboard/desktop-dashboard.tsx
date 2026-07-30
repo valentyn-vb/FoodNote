@@ -12,9 +12,7 @@ import {
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, STAT_TILE_CLASS, fullnessMascot } from './helpers';
 import { DayNav } from './day-nav';
-import { CompareStat } from './compare-stat';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
@@ -45,14 +43,10 @@ export function DesktopDashboard() {
     entries: weightEntries,
     weightTrend,
     weightChangeKg,
-    weightChangeLastMonthKg,
     onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
-  // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
-  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
-  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
@@ -70,7 +64,7 @@ export function DesktopDashboard() {
         <DesktopDashboardSkeleton />
       ) : (
         <>
-          <div className="flex gap-3.5 [&>*]:grow [&>*]:basis-0">
+          <div className="flex gap-3.5 *:grow *:basis-0">
             <StatWidget
               label={isToday ? 'Remaining today' : 'Remaining'}
               value={remainingKcal}

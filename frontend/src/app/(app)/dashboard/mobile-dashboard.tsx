@@ -18,7 +18,6 @@ import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { EmptyMeals } from './empty-meals';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
@@ -197,7 +196,7 @@ export function MobileDashboard() {
             <div className="flex gap-2.5 border-t border-border pt-3">
               <MealLogDrawer />
               <WeightDrawer
-              mode="create"
+                mode="create"
                 onWeightSaved={onWeightSaved}
                 triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
               >
