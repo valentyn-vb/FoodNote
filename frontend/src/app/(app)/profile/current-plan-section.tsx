@@ -78,7 +78,9 @@ export function CurrentPlanSection({
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger
             disabled={loading}
-            className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-sm border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-primary-tint disabled:opacity-50"
+            // DialogTrigger is an unstyled primitive, so unlike a Button it has
+            // no radius of its own to inherit — this one is explicit on purpose.
+            className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-md border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-primary-tint disabled:opacity-50"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
             Change plan

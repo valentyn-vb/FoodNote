@@ -48,7 +48,7 @@ export function ToggleField<T extends FieldValues>({
                 key={option}
                 value={option}
                 className={cn(
-                  'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted capitalize data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-primary-tint data-[state=on]:font-semibold data-[state=on]:text-primary-deep',
+                  'h-11.5 grow basis-0 border border-border font-sans text-text-muted capitalize data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-primary-tint data-[state=on]:font-semibold data-[state=on]:text-primary-deep',
                   // Four labels (meal types) need tighter items than two (sex)
                   // to fit one row on a narrow screen.
                   options.length > 2 && 'px-1 text-[12.5px]',

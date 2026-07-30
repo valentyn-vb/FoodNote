@@ -15,13 +15,13 @@ const inputVariants = cva(
     variants: {
       variant: {
         default:
-          'h-9 rounded-sm border border-input px-2.5 py-1 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40',
+          'h-9 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-primary focus-visible:shadow-focus-primary aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40',
         // The app's standard form field: taller touch target, hairline lift,
         // and a border-only focus treatment instead of a ring.
         field:
-          'h-11.5 rounded-sm border border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline focus-visible:border-primary',
+          'h-11.5 rounded-md border border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline focus-visible:border-primary focus-visible:shadow-focus-primary',
         // A compact cell inside a denser row — a parsed meal item.
-        cell: 'h-8.5 rounded-xs border border-border px-2 text-center font-sans text-[12.5px] text-text tabular-nums focus-visible:border-primary',
+        cell: 'h-8.5 rounded-sm border border-border px-2 text-center font-sans text-[12.5px] text-text tabular-nums focus-visible:border-primary focus-visible:shadow-focus-primary',
         // Reads as text until focused — an item's name.
         bare: 'font-sans text-label font-medium text-text focus-visible:underline',
       },

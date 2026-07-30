@@ -83,7 +83,7 @@ export function MobileDashboardSkeleton() {
         <Skeleton className="h-9 w-40" />
         <Skeleton className="h-2 w-full rounded-full" />
       </Card>
-      <Skeleton className="h-11 w-full rounded-sm" />
+      <Skeleton className="h-11 w-full" />
       <Skeleton className="h-32 w-full rounded-lg" />
       <Skeleton className="h-36 w-full rounded-lg" />
     </>

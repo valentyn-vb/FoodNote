@@ -91,7 +91,7 @@ export function PlanSelection({
           type="button"
           onClick={() => selectedPace !== null && onConfirm(selectedPace)}
           disabled={selectedPace === null || submitting}
-          className="h-12.5 w-full rounded-sm bg-primary text-title shadow-cta"
+          className="h-12.5 w-full bg-primary text-title shadow-cta"
         >
           {submitting && <Loader2 className="size-4 animate-spin" />}
           Confirm plan

@@ -95,7 +95,7 @@ export function OnboardingWizard() {
         <Button
           type="submit"
           form={DETAILS_FORM_ID}
-          className="h-12.5 w-full rounded-sm bg-primary text-title shadow-cta"
+          className="h-12.5 w-full bg-primary text-title shadow-cta"
         >
           Continue
         </Button>

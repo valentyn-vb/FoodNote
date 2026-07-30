@@ -14,20 +14,20 @@ import { Textarea } from '@/components/ui/textarea';
  * ring undone.
  */
 const inputGroupVariants = cva(
-  'group/input-group relative flex w-full min-w-0 items-center rounded-sm border transition-[color,box-shadow] outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-[[data-slot][aria-invalid=true]]:border-destructive has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
+  'group/input-group relative flex w-full min-w-0 items-center rounded-md border transition-[color,box-shadow] outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-[[data-slot][aria-invalid=true]]:border-destructive has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
   {
     variants: {
       variant: {
         default:
-          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:bg-input/30 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
+          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:bg-input/30 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
         // The app's form look, shared with Input's `field`.
         field:
-          'h-11.5 border-border bg-surface shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary',
+          'h-11.5 border-border bg-surface shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
         // A compact cell in a dense row — the per-item macro boxes.
-        cell: 'h-8 rounded-xs border-border bg-surface has-[[data-slot=input-group-control]:focus-visible]:border-primary',
+        cell: 'h-8 rounded-sm border-border bg-surface has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
         // Same, for the one field in a group that carries the most weight.
         'field-primary':
-          'h-11.5 border-primary bg-primary-tint-soft shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary-deep',
+          'h-11.5 border-primary bg-primary-tint-soft shadow-hairline has-[[data-slot=input-group-control]:focus-visible]:border-primary-deep has-[[data-slot=input-group-control]:focus-visible]:shadow-focus-primary',
       },
     },
     defaultVariants: {
@@ -155,7 +155,7 @@ function InputGroupInput({
       // h-full so the control fills whatever height the group's variant sets,
       // instead of leaving dead space around a 36px input.
       className={cn(
-        'h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent',
+        'h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:shadow-none focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent',
         className,
       )}
       {...props}
@@ -171,7 +171,7 @@ function InputGroupTextarea({
     <Textarea
       data-slot="input-group-control"
       className={cn(
-        'flex-1 resize-none rounded-none border-0 bg-transparent py-2 shadow-none ring-0 focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent',
+        'flex-1 resize-none rounded-none border-0 bg-transparent py-2 shadow-none ring-0 focus-visible:shadow-none focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent',
         className,
       )}
       {...props}

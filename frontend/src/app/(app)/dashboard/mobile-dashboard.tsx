@@ -176,7 +176,7 @@ export function MobileDashboard() {
             <MealLogDrawer>Log a meal</MealLogDrawer>
             <WeightLogDrawer
               onWeightSaved={onWeightSaved}
-              triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
+              triggerClassName="h-12.5 grow basis-0 rounded-md border border-border text-[13.5px] font-medium text-text"
             >
               Log weight
             </WeightLogDrawer>
