@@ -4,3 +4,7 @@ dist/
 coverage/
 package-lock.json
 next-env.d.ts
+
+# Vendored design reference — not ours to format, and reformatting it would
+# make it diverge from what the designer handed over.
+design_handoff_foodnote/
