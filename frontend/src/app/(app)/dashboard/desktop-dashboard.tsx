@@ -41,7 +41,10 @@ export function DesktopDashboard() {
   const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
-    <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
+    // Grows with its content and lets the page scroll. Pinned to `h-screen`
+    // with `overflow-clip` it could not: the meal list is the only part that
+    // grows, so every row shrank to keep the layout inside one viewport.
+    <div className="hidden flex-col gap-5.5 bg-bg px-10 py-8 lg:flex lg:min-h-screen">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="text-text-muted" />
         <h1 className="font-display text-heading-lg font-semibold text-text">
@@ -97,20 +100,19 @@ export function DesktopDashboard() {
             />
           </div>
 
-          <div className="flex min-h-0 grow basis-0 gap-3.5">
-            <div className="flex min-h-0 grow-2 basis-0 flex-col gap-3.5">
+          {/* `items-start`, so a long meal list grows the page instead of
+              stretching the charts beside it. */}
+          <div className="flex items-start gap-3.5">
+            <div className="flex grow-2 basis-0 flex-col gap-3.5">
               {weightStatus === 'ready' ? (
                 <WeightTrendCard
-                  className="grow-2 basis-0 gap-3 px-6 py-5.5"
+                  className="h-96 gap-3 px-6 py-5.5"
                   chartClassName="aspect-auto min-h-0 w-full grow basis-0"
                   title="Weight trend"
                   data={weightTrend}
                 />
               ) : (
-                <Card
-                  variant="panel"
-                  className="grow-2 basis-0 gap-3 px-6 py-5.5"
-                >
+                <Card variant="panel" className="h-96 gap-3 px-6 py-5.5">
                   <div className="font-sans text-label font-semibold text-text">
                     Weight trend
                   </div>
@@ -122,11 +124,11 @@ export function DesktopDashboard() {
                 </Card>
               )}
 
-              <div className="flex min-h-0 grow basis-0 flex-col gap-2.5">
+              <div className="flex flex-col gap-2.5">
                 <h2 className="font-sans text-caption font-semibold text-text">
                   Logged today
                 </h2>
-                <div className="flex min-h-0 grow basis-0 flex-col gap-2.5 overflow-y-auto">
+                <div className="flex flex-col gap-2.5">
                   {todayMeals.length === 0 && <EmptyMeals />}
                   {todayMeals.map((meal) => (
                     <MealRow key={meal.id} meal={meal} />
@@ -135,13 +137,13 @@ export function DesktopDashboard() {
               </div>
             </div>
 
-            <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
+            <div className="flex grow basis-0 flex-col gap-3.5">
               <RemainingTodayRingCard
                 className="shrink-0 items-center gap-2 p-5"
                 remainingKcal={remainingKcal}
                 goalKcal={goalKcal}
               />
-              <Card variant="panel" className="grow basis-0 gap-2.5 p-5">
+              <Card variant="panel" className="h-72 gap-2.5 p-5">
                 <h2 className="font-sans text-caption font-semibold text-text">
                   7-day calories
                 </h2>
