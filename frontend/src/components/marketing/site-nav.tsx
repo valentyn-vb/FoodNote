@@ -38,7 +38,7 @@ export function SiteNav() {
             height={28}
             className="rounded-full"
           />
-          <span className="font-display text-[17px] font-semibold text-text">
+          <span className="font-display text-[17px] font-semibold text-foreground">
             FoodNote
           </span>
         </TooltipTrigger>
@@ -54,7 +54,7 @@ export function SiteNav() {
           <a
             key={section.href}
             href={section.href}
-            className="text-sm text-text/70 transition-colors hover:text-text"
+            className="text-sm text-foreground/70 transition-colors hover:text-foreground"
           >
             {section.label}
           </a>
@@ -67,7 +67,7 @@ export function SiteNav() {
           nativeButton={false}
           variant="ghost"
           size="sm"
-          className="text-text"
+          className="text-foreground"
         >
           {authed ? 'Dashboard' : 'Log in'}
         </Button>
@@ -91,7 +91,7 @@ export function SiteNav() {
                   key={section.href}
                   render={<a href={section.href} />}
                   nativeButton={false}
-                  className="rounded-md px-3 py-2 text-text hover:bg-muted"
+                  className="rounded-md px-3 py-2 text-foreground hover:bg-muted"
                 >
                   {section.label}
                 </SheetClose>
