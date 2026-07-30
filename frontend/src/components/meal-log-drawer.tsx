@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Pencil } from 'lucide-react';
+import { Pencil, TriangleAlert } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -240,25 +240,13 @@ export function MealLogDrawer({
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
       {children && (
-        <DrawerTrigger className="h-12.5 grow-2 basis-0 rounded-sm bg-primary text-surface shadow-cta lg:grow-0 lg:px-6">
+        <DrawerTrigger className="h-12.5 grow-2 basis-0 rounded-md bg-primary text-surface shadow-cta lg:grow-0 lg:px-6">
           {children}
         </DrawerTrigger>
       )}
 
       <DrawerContent>
-        <DrawerTitleBar
-          leading={
-            step === 'manual' && (
-              <Button
-                variant="quiet"
-                size="inline"
-                onClick={() => setStep('input')}
-              >
-                ← Back
-              </Button>
-            )
-          }
-        >
+        <DrawerTitleBar>
           {step === 'preview'
             ? 'Review your meal'
             : step === 'manual'
@@ -268,7 +256,7 @@ export function MealLogDrawer({
 
         {step === 'input' && (
           <StepPanel key="input">
-            <div className="flex flex-col gap-3 px-5 pt-2">
+            <div className="flex flex-col gap-3 px-5 pt-5">
               <DrawerDescription className="font-sans text-caption font-medium text-text">
                 Describe what you ate
               </DrawerDescription>
@@ -283,15 +271,17 @@ export function MealLogDrawer({
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
                 className="min-h-32.5 rounded-md border-[1.5px] border-primary bg-surface p-3.5 font-sans text-[14.5px] text-text shadow-focus-primary focus:outline-none"
               />
+              {/* Full-height chips: at `size="xs"` (24px) these were a
+                  thumb-sized miss on a phone, and they are the fastest way into
+                  the flow. */}
               {description.length === 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {EXAMPLES.map((example) => (
                     <Button
                       key={example}
                       variant="outline"
-                      size="xs"
                       onClick={() => setDescription(example)}
-                      className="rounded-full font-sans text-[12px] text-text-muted"
+                      className="rounded-full px-4 h-8 font-sans text-caption text-text-muted"
                     >
                       {example}
                     </Button>
@@ -374,8 +364,22 @@ export function MealLogDrawer({
               id={MEAL_FORM_ID}
               onSubmit={form.handleSubmit(handleSave)}
               noValidate
-              className="flex min-h-0 flex-col gap-4.5 overflow-y-auto px-5 pt-1.5 pb-2"
+              className="flex min-h-0 flex-col gap-4.5 overflow-y-auto px-5 pt-4 pb-2"
             >
+              {/* Below the title rather than beside it: level with the title it
+                  read as a second heading and crowded the centred label. */}
+              {step === 'manual' && (
+                <Button
+                  type="button"
+                  variant="quiet"
+                  size="inline"
+                  onClick={() => setStep('input')}
+                  className="w-fit"
+                >
+                  ← Back
+                </Button>
+              )}
+
               {step === 'preview' && (
                 <div className="flex items-center gap-2 rounded-md bg-primary-tint-soft px-3.5 py-2.5">
                   <span className="min-w-0 grow basis-0 truncate font-sans text-[12.5px] text-text-warm">
@@ -402,18 +406,12 @@ export function MealLogDrawer({
                 />
               )}
 
+              {/* Read-only in the parsed preview: the items are the editable
+                  surface, and correcting a figure there recomputes these
+                  tiles. Taking the totals over by hand is reachable from the
+                  macro suggestion below, and manual entry has its own step. */}
               {step === 'preview' && !totalsOverridden ? (
-                <div className="flex flex-col items-center gap-1.5">
-                  <MealTotalsSummary control={form.control} />
-                  <Button
-                    type="button"
-                    variant="quiet"
-                    size="inline"
-                    onClick={() => setTotalsOverridden(true)}
-                  >
-                    Set totals manually
-                  </Button>
-                </div>
+                <MealTotalsSummary control={form.control} />
               ) : (
                 <>
                   <MealTotalsFields
@@ -552,8 +550,21 @@ function RecoverStep({
             className="size-24"
           />
         </div>
-        <div className="max-w-67.5 text-center font-sans text-[14.5px] text-text">
-          {message}
+        {/* Announced and framed as a failure: the mascot alone reads as a
+            friendly illustration, so nothing told the user the parse had not
+            worked. The tinted panel and the icon carry that, and `role=alert`
+            makes a screen reader say it. */}
+        <div
+          role="alert"
+          className="flex max-w-4/5 items-start gap-2.5 rounded-md border border-error/45 bg-error-bg px-3.5 py-3"
+        >
+          <TriangleAlert
+            aria-hidden
+            className="mt-px size-4 shrink-0 text-error"
+          />
+          <div className="font-sans text-[14.5px] text-text text-pretty">
+            {message}
+          </div>
         </div>
       </div>
       {children}

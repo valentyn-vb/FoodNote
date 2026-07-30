@@ -54,7 +54,26 @@ const MACRO_FIELDS = [
 
 // `type="number"` keeps RHF's numeric coercion and the numeric keypad; ui/Input
 // handles the wheel-rewrites-the-value hazard that comes with it.
-const numericProps = { type: 'number', inputMode: 'numeric' } as const;
+//
+// The two sets differ because the values do. Calories are whole kcal. Macro
+// grams arrive fractional from the parser (7.5 g, 38.4 g), and with the default
+// step of 1 the browser calls those a step mismatch — the field reports itself
+// invalid to assistive tech while holding a value we accept. `inputMode` matters
+// on a phone for the same reason: `numeric` offers no decimal separator, so a
+// fractional gram figure can't be typed at all.
+const integerProps = {
+  type: 'number',
+  inputMode: 'numeric',
+  step: 1,
+  min: 0,
+} as const;
+
+const decimalProps = {
+  type: 'number',
+  inputMode: 'decimal',
+  step: 'any',
+  min: 0,
+} as const;
 
 export function MealNameField({
   form,
@@ -133,6 +152,7 @@ export function MealTotalsFields({
             id={name}
             label={label}
             unit="g"
+            fractional
             error={formState.errors[name]?.message}
             {...numeric(name)}
           />
@@ -156,6 +176,7 @@ function NutrientField({
   label,
   unit,
   accent,
+  fractional,
   error,
   ...props
 }: {
@@ -163,6 +184,8 @@ function NutrientField({
   label: string;
   unit: string;
   accent?: boolean;
+  /** Grams, not kcal — accepts a decimal and offers the keypad for one. */
+  fractional?: boolean;
   error?: string;
 } & React.ComponentProps<typeof InputGroupInput>) {
   return (
@@ -174,13 +197,13 @@ function NutrientField({
         <InputGroupInput
           id={id}
           aria-invalid={!!error || undefined}
-          className="px-2.5 text-right font-sans text-[14.5px] text-text tabular-nums"
-          {...numericProps}
+          className="px-2.5 text-center font-sans text-[14.5px] text-text tabular-nums"
+          {...(fractional ? decimalProps : integerProps)}
           {...props}
         />
         <InputGroupAddon
           align="inline-end"
-          className="pr-2 pl-0 text-[11px] font-medium text-text-muted"
+          className="pr-2 pl-0 text-[12px] font-medium text-text-muted"
         >
           {unit}
         </InputGroupAddon>
@@ -234,7 +257,7 @@ export function MealTotalsSummary({
             )}
           >
             <NumberFlow value={value} />
-            <span className="font-sans text-[10px] font-medium text-text-muted">
+            <span className="font-sans text-[11px] font-medium text-text-muted">
               {unit}
             </span>
           </div>
@@ -319,14 +342,27 @@ export function MealItemsFields({
           className="@container motion-keep-fade gap-2.5 p-3 bg-background rounded-md transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
         >
           <div className="flex items-center gap-2">
-            <Input
-              variant="bare"
-              aria-label={`Item ${index + 1} name`}
-              className="min-w-24 grow-2 basis-0"
-              {...form.register(`items.${index}.name`, {
-                onChange: onItemsChange,
-              })}
-            />
+            {/* A parsed name is a label, not a field: what the user corrects
+                here are the figures, and an input invited edits to the one part
+                that changes nothing downstream. A hand-added item still needs
+                one — it arrives nameless, and the schema requires a name — so
+                that case keeps its input. */}
+            {field.name ? (
+              <div
+                title={field.name}
+                className="min-w-24 grow-2 basis-0 truncate font-sans text-label font-medium text-text"
+              >
+                {field.name}
+              </div>
+            ) : (
+              <Input
+                variant="bare"
+                aria-label={`Item ${index + 1} name`}
+                placeholder="Item name"
+                className="min-w-24 grow-2 basis-0"
+                {...form.register(`items.${index}.name`)}
+              />
+            )}
             {/* Read-only: it is what makes the calorie figure checkable
                 ("Rice — 196 kcal" can't be judged, "Rice, 150 g — 196 kcal"
                 can), but the totals are what the user actually corrects. */}
@@ -365,7 +401,7 @@ export function MealItemsFields({
                 <InputGroupInput
                   aria-label={`Item ${index + 1} ${label}`}
                   className="px-1 text-center text-[12px] text-text tabular-nums"
-                  {...numericProps}
+                  {...(name === 'calories' ? integerProps : decimalProps)}
                   {...form.register(`items.${index}.${name}`, {
                     valueAsNumber: true,
                     onChange: onItemsChange,
