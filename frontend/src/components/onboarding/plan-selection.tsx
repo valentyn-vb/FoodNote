@@ -2,8 +2,10 @@
 
 import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
 import { buildPlanOptions, PlanOption, type Pace } from '@foodnote/shared';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DEFAULT_PLAN_PACE, type OnboardingFormValues } from './form-schema';
 import { PlanOptions } from './plan-options';
@@ -51,24 +53,26 @@ export function PlanSelection({
   const selectedPace = pickedPace ?? initialPace ?? defaultPlanPace(options);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-1 bg-bg pt-2.5 pb-4.5">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-1 pt-2.5 pb-4.5">
       <div className="flex flex-col gap-1 px-5 pb-3.5">
         {onBack && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={onBack}
             aria-label="Back"
-            className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
+            className="mb-2 -ml-2"
           >
-            <ChevronLeft size={18} className="text-text-soft" strokeWidth={2} />
-          </button>
+            <ChevronLeft />
+          </Button>
         )}
-        <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
+        <Text variant="heading" render={<h1 />}>
           Choose your plan
-        </h1>
-        <p className="font-sans text-label text-text-muted">
+        </Text>
+        <Text variant="label" tone="muted" render={<p />}>
           Based on your goal, here are a few daily-calorie options.
-        </p>
+        </Text>
       </div>
 
       <div className="px-5">
@@ -83,17 +87,18 @@ export function PlanSelection({
 
       <div className="flex flex-col gap-2.5 px-5 pt-3">
         {submitError && (
-          <p role="alert" className="font-sans text-[12px] text-destructive">
+          <Text variant="caption" tone="danger" render={<p role="alert" />}>
             {submitError}
-          </p>
+          </Text>
         )}
         <Button
           type="button"
           onClick={() => selectedPace !== null && onConfirm(selectedPace)}
           disabled={selectedPace === null || submitting}
-          className="h-12.5 w-full bg-primary text-title shadow-cta"
+          size="lg"
+          className="w-full"
         >
-          {submitting && <Loader2 className="size-4 animate-spin" />}
+          {submitting && <Spinner />}
           Confirm plan
         </Button>
       </div>

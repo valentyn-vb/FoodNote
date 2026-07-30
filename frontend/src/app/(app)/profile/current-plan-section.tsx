@@ -3,10 +3,10 @@
 import { OnboardingFormValues } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
 import { type Pace, type ProfileResponse } from '@foodnote/shared';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -82,7 +82,7 @@ export function CurrentPlanSection({
             // no radius of its own to inherit — this one is explicit on purpose.
             className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-md border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-primary-tint disabled:opacity-50"
           >
-            {loading && <Loader2 className="size-4 animate-spin" />}
+            {loading && <Spinner />}
             Change plan
           </DialogTrigger>
           <DialogContent className="p-0">

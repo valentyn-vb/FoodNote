@@ -11,6 +11,7 @@ import {
 } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -77,14 +78,14 @@ export function OnboardingWizard() {
       submitError={submitError}
     />
   ) : (
-    <div className="mx-auto flex w-full max-w-md flex-col bg-bg pt-1.5 pb-5">
+    <div className="mx-auto flex w-full max-w-md flex-col pt-1.5 pb-5">
       <div className="flex flex-col gap-1 px-5 pb-4.5">
-        <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
+        <Text variant="heading" render={<h1 />}>
           Tell us about you
-        </h1>
-        <p className="font-sans text-label text-text-muted">
+        </Text>
+        <Text variant="label" tone="muted" render={<p />}>
           We&apos;ll use this to calculate your daily calorie target.
-        </p>
+        </Text>
       </div>
 
       <DetailsForm form={form} onSubmit={goToPlan} />
@@ -95,7 +96,8 @@ export function OnboardingWizard() {
         <Button
           type="submit"
           form={DETAILS_FORM_ID}
-          className="h-12.5 w-full bg-primary text-title shadow-cta"
+          size="lg"
+          className="w-full"
         >
           Continue
         </Button>

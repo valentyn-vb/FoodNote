@@ -1,6 +1,7 @@
 'use client';
 
 import { RadioGroup } from '@/components/ui/radio-group';
+import { Text } from '@/components/ui/text';
 import type { Pace, PlanOption } from '@foodnote/shared';
 import { DEFAULT_PLAN_PACE } from './form-schema';
 import { PlanOptionCard } from './plan-option-card';
@@ -20,10 +21,10 @@ export function PlanOptions({
 }: PlanOptionsProps) {
   if (options.length === 0) {
     return (
-      <p className="font-sans text-label text-text-muted">
+      <Text tone="muted" render={<p />}>
         No safe plan reaches this target from your current weight. Try a smaller
         change.
-      </p>
+      </Text>
     );
   }
 

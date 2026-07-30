@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogClose,
@@ -17,7 +18,6 @@ import {
   type UpdateAccountRequest,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -103,7 +103,7 @@ export function EditProfileDialog() {
             variant="cta"
             disabled={saving}
           >
-            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving && <Spinner />}
             Save
           </Button>
         </DialogFooter>

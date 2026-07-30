@@ -1,7 +1,9 @@
 'use client';
 
+import { Card } from '@/components/ui/card';
 import { RadioGroupItem } from '@/components/ui/radio-group';
-import { cn, formatGoalDate } from '@/lib/utils';
+import { Text } from '@/components/ui/text';
+import { formatGoalDate } from '@/lib/utils';
 import type { PlanOption } from '@foodnote/shared';
 
 type PlanOptionCardProps = {
@@ -16,43 +18,31 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
   // like a broken value, and there is no goal date to show — formatGoalDate(null)
   // would print "Target already reached" on a plan just being started.
   const isMaintenance = option.pace === 0;
+  // Selection is carried by the surface and by the text going from muted to
+  // full weight — not by colouring the text orange, which measured 2.67:1.
+  const tone = selected ? 'default' : 'muted';
 
   return (
-    <label
-      className={cn(
-        'flex cursor-pointer flex-col gap-1.5 rounded-md px-4.5 py-4 transition-colors duration-150',
-        selected
-          ? 'border-2 border-primary bg-primary-tint-soft shadow-selected'
-          : 'border border-border bg-surface shadow-hairline',
-      )}
+    <Card
+      variant="option"
+      data-selected={selected || undefined}
+      render={<label />}
+      className="cursor-pointer"
     >
       <div className="flex items-center justify-between">
-        <div
-          className={cn(
-            'font-sans text-[12.5px] font-medium',
-            selected ? 'text-primary-deep' : 'text-text-muted',
-          )}
-        >
+        <Text variant="caption" tone={tone}>
           {isMaintenance ? 'Maintain your weight' : `${option.pace} kg / week`}
-        </div>
-        <RadioGroupItem
-          value={String(option.pace)}
-          className="size-4.5 border-none bg-transparent data-checked:bg-primary"
-        />
+        </Text>
+        <RadioGroupItem value={String(option.pace)} />
       </div>
-      <div className="font-display text-[25px] font-semibold text-text">
+      <Text variant="heading">
         {option.dailyCalorieTarget.toLocaleString()} kcal / day
-      </div>
-      <div
-        className={cn(
-          'font-sans text-[12.5px]',
-          selected ? 'text-primary-deep' : 'text-text-muted',
-        )}
-      >
+      </Text>
+      <Text variant="caption" tone={tone}>
         {isMaintenance
           ? 'Holds your current weight'
           : `Goal date ~ ${formatGoalDate(option.projectedGoalDate)}`}
-      </div>
-    </label>
+      </Text>
+    </Card>
   );
 }

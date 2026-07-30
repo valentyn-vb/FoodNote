@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -13,7 +14,6 @@ import {
 import { ApiError } from '@/lib/api-client';
 import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -87,7 +87,7 @@ export function RegisterForm() {
             description="At least 8 characters."
           />
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+            {isSubmitting && <Spinner />}
             Create account
           </Button>
         </form>

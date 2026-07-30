@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from 'react';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +13,7 @@ import {
   DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { weights } from '@/lib/api-client';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -160,7 +160,7 @@ export function WeightDrawer(props: WeightDrawerProps) {
             variant="cta"
             className="w-full py-3.5"
           >
-            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving && <Spinner />}
             {mode === 'create' ? 'Save weight' : 'Save'}
           </Button>
         </DrawerFooter>

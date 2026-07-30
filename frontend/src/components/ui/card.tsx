@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cloneElement } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
@@ -24,6 +25,12 @@ const cardVariants = cva(
         panel: 'rounded-xl border border-border bg-card shadow-card',
         // A compact stat tile — self-padding, tighter radius and gap.
         tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline',
+        // A tile you choose between: same surface, plus a selected state driven
+        // by `data-selected` on the call site. The border keeps its width and
+        // only changes colour — thickening it on selection shifts the content
+        // half a pixel in every direction, which reads as a twitch.
+        option:
+          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline transition-colors duration-150 data-selected:border-primary data-selected:bg-brand-softer',
       },
     },
     defaultVariants: {
@@ -32,20 +39,37 @@ const cardVariants = cva(
   },
 );
 
+/**
+ * `render` swaps the element without moving the look outside: a selectable card
+ * has to be a <label> to make the whole surface click its radio, and that is a
+ * semantic decision, not a visual one.
+ */
 function Card({
   className,
   size = 'default',
   variant = 'default',
+  render,
+  children,
   ...props
 }: React.ComponentProps<'div'> &
-  VariantProps<typeof cardVariants> & { size?: 'default' | 'sm' }) {
+  VariantProps<typeof cardVariants> & {
+    size?: 'default' | 'sm';
+    render?: React.ReactElement<{ className?: string }>;
+  }) {
+  const shared = {
+    'data-slot': 'card',
+    'data-size': size,
+    className: cn(cardVariants({ variant, className })),
+  };
+
+  if (render) {
+    return cloneElement(render, { ...shared, ...props }, children);
+  }
+
   return (
-    <div
-      data-slot="card"
-      data-size={size}
-      className={cn(cardVariants({ variant, className }))}
-      {...props}
-    />
+    <div {...shared} {...props}>
+      {children}
+    </div>
   );
 }
 

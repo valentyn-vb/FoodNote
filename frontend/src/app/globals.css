@@ -114,12 +114,17 @@
   --text-title: 18px;
   --text-title--line-height: 1.35;
   --text-title--font-weight: 600;
+  /* The two display levels carry a touch of negative tracking: default spacing
+     is set for body sizes and reads loose at 26px and above. It belongs to the
+     level, so no call site writes tracking of its own. */
   --text-heading: 26px;
   --text-heading--line-height: 1.2;
   --text-heading--font-weight: 600;
+  --text-heading--letter-spacing: -0.01em;
   --text-display: 40px;
   --text-display--line-height: 1.05;
   --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.015em;
   /* Transitional: collapsed into --text-heading, deleted with its call sites. */
   --text-heading-lg: 26px;
 

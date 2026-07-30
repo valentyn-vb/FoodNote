@@ -7,8 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginRequestSchema, type LoginRequest } from '@foodnote/shared';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -78,7 +78,7 @@ export function LoginForm() {
             </p>
           )}
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+            {isSubmitting && <Spinner />}
             Log in
           </Button>
         </form>

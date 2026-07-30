@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeightEntryResponse } from '@foodnote/shared';
 import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
 import { WeightDrawer } from './weight-drawer';
@@ -71,11 +72,7 @@ export function WeightHistoryRow({
           className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track disabled:opacity-40 disabled:hover:bg-transparent"
           onClick={handleDelete}
         >
-          {busy ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Trash2 size={16} />
-          )}
+          {busy ? <Spinner /> : <Trash2 size={16} />}
         </button>
       </div>
     </Card>

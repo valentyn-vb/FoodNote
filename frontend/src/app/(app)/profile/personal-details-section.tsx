@@ -10,6 +10,7 @@ import {
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import {
   Dialog,
@@ -25,7 +26,6 @@ import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -164,7 +164,7 @@ export function PersonalDetailsSection({
           disabled={loading || saving}
           className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
         >
-          {(loading || saving) && <Loader2 className="size-4 animate-spin" />}
+          {(loading || saving) && <Spinner />}
           Edit details
         </DialogTrigger>
         <DialogContent>
