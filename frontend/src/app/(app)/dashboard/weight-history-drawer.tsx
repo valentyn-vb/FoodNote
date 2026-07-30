@@ -8,7 +8,6 @@ import {
   DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import { Text } from '@/components/ui/text';
 import { WeightHistoryRow } from '@/components/weight-history-row';
 
 // Reuses the Drawer primitive from WeightDrawer — "edit/delete from the
@@ -38,9 +37,7 @@ export function WeightHistoryDrawer({
         <DrawerTitleBar>Weight history</DrawerTitleBar>
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto px-5 py-4">
           {sorted.length === 0 && (
-            <Text variant="caption" tone="muted" render={<p />}>
-              No entries yet.
-            </Text>
+            <p className="text-sm text-muted-foreground">No entries yet.</p>
           )}
           {sorted.map((entry) => (
             <WeightHistoryRow

@@ -141,17 +141,19 @@
   --shadow-hairline: 0 1px 2px #00000008;
 
   /* ── Radius ──────────────────────────────────────────────────────────────
-     Explicit px and monotonic. It was neither: sm/md/lg were px (8/12/20)
-     while xl was a calc() of --radius (14px), so rounded-lg came out *larger*
-     than rounded-xl and two cards named the same looked different.
-     Button and field md; tile and list row lg; card, drawer and dialog xl;
-     avatar, badge and progress full. --radius itself must stay a length —
-     input-group computes calc(var(--radius) - 5px) from it. */
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 20px;
+     One number, and shadcn's own formula off it: sm/md/lg/xl are −4/−2/0/+4.
+     At 16 that is 12/14/16/20, which lands on the handoff's 12–13 for controls,
+     18 for tiles and 20–22 for cards.
+     The previous pass wrote five explicit px because the calc setup it
+     inherited was non-monotonic — rounded-lg came out larger than rounded-xl.
+     That was a property of that setup, not of the formula, which is monotonic
+     by construction. --radius must stay a length: input-group computes
+     calc(var(--radius) - 5px) from it. */
+  --radius: 16px;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
   /* ── Motion ──────────────────────────────────────────────────────────────
      Indeterminate progress: a fill that sweeps because the wait has no known

@@ -11,7 +11,6 @@ import { DailyCaloriesChart, WeightTrendChart } from '@/components/ui/charts';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Text } from '@/components/ui/text';
 import { WeightDrawer } from '@/components/weight-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
@@ -54,9 +53,7 @@ export function MobileDashboard() {
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:hidden">
       <div className="flex items-center justify-between">
-        <Text variant="heading" render={<h1 />}>
-          Today
-        </Text>
+        <h1 className="font-heading text-2xl font-semibold">Today</h1>
         {/* The sidebar (and its profile menu) is desktop-only — on mobile the
             avatar is the only path to the profile page. */}
         <Link href="/profile" aria-label="Open profile">
@@ -72,21 +69,14 @@ export function MobileDashboard() {
         <MobileDashboardSkeleton />
       ) : (
         <>
-          <Card variant="panel" className="gap-2.5 p-5">
-            <Text variant="caption" tone="muted" render={<h2 />}>
-              Remaining today
-            </Text>
-            <Text variant="display" numeric>
+          <Card className="gap-2.5 p-5">
+            <h2 className="text-sm text-muted-foreground">Remaining today</h2>
+            <div className="font-heading text-4xl font-semibold tabular-nums">
               <NumberFlow value={remainingKcal} suffix=" kcal" />
-            </Text>
+            </div>
             <Progress value={progressPct} />
             <div className="flex justify-between">
-              <Text
-                variant="caption"
-                tone="muted"
-                numeric
-                className="flex items-center gap-1.5"
-              >
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
                 <Image
                   src={fullnessMascot(eatenKcal, goalKcal)}
                   alt=""
@@ -94,10 +84,10 @@ export function MobileDashboard() {
                   height={20}
                 />
                 <NumberFlow value={eatenKcal} /> eaten
-              </Text>
-              <Text variant="caption" tone="muted" numeric>
+              </span>
+              <span className="text-sm text-muted-foreground tabular-nums">
                 Goal <NumberFlow value={goalKcal} />
-              </Text>
+              </span>
             </div>
           </Card>
 
@@ -123,17 +113,15 @@ export function MobileDashboard() {
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">
-              <Text variant="label" render={<h2 />}>
-                Weight trend
-              </Text>
+              <h2 className="text-base font-semibold">Weight trend</h2>
               <div className="flex items-center gap-2">
                 {weightReady && (
-                  <Text variant="caption" tone="success" numeric>
+                  <span className="text-sm text-success-text tabular-nums">
                     <NumberFlow
                       value={weightChangeKg}
                       suffix=" kg this month"
                     />
-                  </Text>
+                  </span>
                 )}
                 {weightReady && (
                   <WeightHistoryDrawer
@@ -148,7 +136,7 @@ export function MobileDashboard() {
                 )}
               </div>
             </div>
-            <Card variant="panel" className="p-4">
+            <Card className="p-4">
               {weightReady ? (
                 <WeightTrendChart
                   className="aspect-auto h-[110px] w-full flex-none"
@@ -163,10 +151,8 @@ export function MobileDashboard() {
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <Text variant="label" render={<h2 />}>
-              Daily calories (7 days)
-            </Text>
-            <Card variant="panel" className="shrink-0 px-4 pt-4 pb-3">
+            <h2 className="text-base font-semibold">Daily calories (7 days)</h2>
+            <Card className="shrink-0 px-4 pt-4 pb-3">
               <DailyCaloriesChart
                 className="aspect-auto h-30 w-full flex-none"
                 data={dailyCalories}
@@ -177,9 +163,7 @@ export function MobileDashboard() {
           <Disclaimer />
 
           <div className="flex flex-col gap-2.5">
-            <Text variant="label" render={<h2 />}>
-              Logged today
-            </Text>
+            <h2 className="text-sm font-semibold">Logged today</h2>
             {todayMeals.length === 0 ? (
               <EmptyMeals />
             ) : (

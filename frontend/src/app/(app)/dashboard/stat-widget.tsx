@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import NumberFlow from '@number-flow/react';
 import { Card } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
 
 export function StatWidget({
   label,
@@ -17,11 +16,11 @@ export function StatWidget({
   mascotSrc?: string;
 }) {
   return (
-    <Card variant="tile" className="relative">
-      <Text variant="caption" tone="muted" className="relative z-10">
+    <Card className="relative gap-1.5 rounded-lg px-4.5 py-4">
+      <span className="relative z-10 text-sm text-muted-foreground">
         {label}
-      </Text>
-      <Text variant="heading" numeric>
+      </span>
+      <div className="font-heading text-2xl font-semibold tabular-nums">
         {typeof value === 'string' ? (
           value
         ) : (
@@ -31,7 +30,7 @@ export function StatWidget({
             format={{ maximumFractionDigits: 1 }}
           />
         )}
-      </Text>
+      </div>
       {mascotSrc && (
         <Image
           src={mascotSrc}

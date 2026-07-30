@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/charts';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Text } from '@/components/ui/text';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
@@ -54,9 +53,7 @@ export function DesktopDashboard() {
     <div className="hidden flex-col gap-5.5 px-10 py-8 lg:flex lg:min-h-screen">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
-        <Text variant="heading" render={<h1 />}>
-          Dashboard
-        </Text>
+        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
       </div>
 
       {gate.state === 'error' ? (
@@ -111,9 +108,9 @@ export function DesktopDashboard() {
               stretching the charts beside it. */}
           <div className="flex items-start gap-3.5">
             <div className="flex grow-2 basis-0 flex-col gap-3.5">
-              <Card variant="panel" className="h-96 gap-3 px-6 py-5.5">
+              <Card className="h-96 gap-3 px-6 py-5.5">
                 <div className="flex items-center justify-between">
-                  <Text variant="label">Weight trend</Text>
+                  <span className="text-base font-semibold">Weight trend</span>
                   {weightStatus === 'ready' && (
                     <WeightHistoryDrawer
                       entries={weightEntries}
@@ -139,9 +136,7 @@ export function DesktopDashboard() {
               </Card>
 
               <div className="flex flex-col gap-2.5">
-                <Text variant="label" render={<h2 />}>
-                  Logged today
-                </Text>
+                <h2 className="text-base font-semibold">Logged today</h2>
                 <div className="flex flex-col gap-2.5">
                   {todayMeals.length === 0 ? (
                     <EmptyMeals />
@@ -156,19 +151,17 @@ export function DesktopDashboard() {
             </div>
 
             <div className="flex grow basis-0 flex-col gap-3.5">
-              <Card variant="panel" className="shrink-0 items-center gap-2 p-5">
-                <Text variant="label" className="self-start" render={<h2 />}>
+              <Card className="shrink-0 items-center gap-2 p-5">
+                <h2 className="self-start text-base font-semibold">
                   Remaining today
-                </Text>
+                </h2>
                 <RemainingTodayRing
                   remainingKcal={remainingKcal}
                   goalKcal={goalKcal}
                 />
               </Card>
-              <Card variant="panel" className="h-72 gap-2.5 p-5">
-                <Text variant="label" render={<h2 />}>
-                  7-day calories
-                </Text>
+              <Card className="h-72 gap-2.5 p-5">
+                <h2 className="text-base font-semibold">7-day calories</h2>
                 <DailyCaloriesChart
                   className="aspect-auto min-h-0 w-full grow basis-0"
                   data={dailyCalories}

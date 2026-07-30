@@ -35,6 +35,14 @@ const eslintConfig = defineConfig([
       'src/app/(app)/meals/desktop-meal-groups.tsx',
       'src/components/meal-line.tsx',
       'src/components/meal-groups-accordion.tsx',
+      // The #97 pilot, migrated to the stock utilities ahead of the rule that
+      // will permit them. This is the only way the pilot and the old rule
+      // coexist for one step; #101 deletes the rule and this list with it.
+      'src/app/(app)/dashboard/desktop-dashboard.tsx',
+      'src/app/(app)/dashboard/mobile-dashboard.tsx',
+      'src/app/(app)/dashboard/stat-widget.tsx',
+      'src/app/(app)/dashboard/states.tsx',
+      'src/app/(app)/dashboard/weight-history-drawer.tsx',
     ],
     plugins: { local },
     rules: {
