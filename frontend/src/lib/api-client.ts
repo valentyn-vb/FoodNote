@@ -28,6 +28,7 @@ import {
   type RegisterRequest,
   type UpdateAccountRequest,
   type UpdateGoalRequest,
+  type UpdateWeightRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
 
@@ -164,6 +165,23 @@ export const weights = {
   async list(from?: string, to?: string): Promise<ListWeightsResponse> {
     const res = await apiFetch(`/api/weights${rangeQuery(from, to)}`);
     return listWeightsResponseSchema.parse(await res.json());
+  },
+
+  /** PATCH /weights/:id corrects a specific entry (append-only journal, ADR-0004). */
+  async update(
+    id: string,
+    data: UpdateWeightRequest,
+  ): Promise<WeightEntryResponse> {
+    const res = await apiFetch(`/api/weights/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return weightEntryResponseSchema.parse(await res.json());
+  },
+
+  /** DELETE /weights/:id — 204. */
+  async remove(id: string): Promise<void> {
+    await apiFetch(`/api/weights/${id}`, { method: 'DELETE' });
   },
 };
 

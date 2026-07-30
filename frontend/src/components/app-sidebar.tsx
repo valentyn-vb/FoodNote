@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { WeightDrawer } from '@/components/weight-drawer';
 import {
   Sidebar,
   SidebarContent,
@@ -109,7 +109,8 @@ export function AppSidebar() {
                     <Scale />
                     <span>Log weight</span>
                   </SidebarMenuButton>
-                  <WeightLogDrawer
+                  <WeightDrawer
+                    mode="create"
                     onWeightSaved={onWeightSaved}
                     open={weightDrawerOpen}
                     onOpenChange={setWeightDrawerOpen}

@@ -22,6 +22,7 @@ import {
   RadialBarChart,
   ResponsiveContainer,
 } from 'recharts';
+import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import type {
   DailyCaloriePoint,
@@ -102,18 +103,25 @@ export function WeightTrendCard({
   className,
   chartClassName,
   title,
+  action,
   data,
 }: {
   className?: string;
   chartClassName?: string;
   title?: string;
+  action?: ReactNode; // trailing control in the title row (the history drawer trigger)
   data: WeightTrendPoint[];
 }) {
   return (
     <Card variant="panel" className={className}>
-      {title && (
-        <div className="font-sans text-label font-semibold text-text">
-          {title}
+      {(title || action) && (
+        <div className="flex items-center justify-between">
+          {title && (
+            <div className="font-sans text-label font-semibold text-text">
+              {title}
+            </div>
+          )}
+          {action}
         </div>
       )}
       <WeightTrendChart className={chartClassName} data={data} />

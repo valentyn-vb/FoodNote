@@ -33,10 +33,12 @@ type FetchStatus = 'loading' | 'error' | 'ready';
 type WeightContextValue = {
   status: FetchStatus;
   retry: () => void;
+  entries: WeightEntryResponse[];
   weightTrend: WeightTrendPoint[];
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
   onWeightSaved: (entry: WeightEntryResponse) => void;
+  onWeightsChanged: () => void;
 };
 
 const WeightContext = createContext<WeightContextValue | null>(null);
@@ -91,6 +93,21 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     [refetchDashboard],
   );
 
+  // Edits and deletes re-list rather than patching locally, so the client
+  // never holds a view the server disagrees with. That also fixes a real bug:
+  // an edit can move an entry's recordedAt outside this provider's 60-day
+  // window, and a local patch would keep showing it while the server-derived
+  // goal block excluded it. Bumping reloadKey refetches without setting
+  // 'loading', so no skeleton flashes.
+  //
+  // onWeightSaved above stays optimistic on purpose: it appends at `now`,
+  // which can never fall outside the window, and the save toast's NumberFlow
+  // animation depends on the number moving immediately.
+  const onWeightsChanged = useCallback(() => {
+    setReloadKey((k) => k + 1);
+    void refetchDashboard();
+  }, [refetchDashboard]);
+
   const value = useMemo<WeightContextValue>(() => {
     const change = goal
       ? computeWeightChange(entries, goal.currentWeightKg, new Date())
@@ -98,12 +115,14 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     return {
       status,
       retry,
+      entries,
       weightTrend: goal ? buildWeightTrend(entries, goal, new Date()) : [],
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
       onWeightSaved,
+      onWeightsChanged,
     };
-  }, [entries, goal, status, retry, onWeightSaved]);
+  }, [entries, goal, status, retry, onWeightSaved, onWeightsChanged]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>
