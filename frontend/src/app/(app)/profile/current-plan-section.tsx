@@ -60,7 +60,7 @@ export function CurrentPlanSection({
   return (
     <section className="flex flex-col gap-2.5">
       <h2 className="font-sans text-caption text-text-muted">Current plan</h2>
-      <Card className="gap-1 rounded-lg border-[1.5px] border-border bg-surface p-4 py-4 shadow-[0_1px_3px_#0000000a] ring-0">
+      <Card variant="panel" className="gap-1 border-[1.5px] p-4">
         <div className="font-display text-heading font-semibold text-text">
           {profileData?.calorieTarget != null
             ? `${profileData.calorieTarget.toLocaleString()} kcal / day`
@@ -79,7 +79,9 @@ export function CurrentPlanSection({
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger
             disabled={loading}
-            className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-sm border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-[#FFF3E7] disabled:opacity-50"
+            // DialogTrigger is an unstyled primitive, so unlike a Button it has
+            // no radius of its own to inherit — this one is explicit on purpose.
+            className="mt-1.5 inline-flex h-9.5 w-fit items-center gap-1.5 rounded-md border-[1.5px] border-primary bg-transparent px-3.5 font-sans text-label font-semibold text-primary-deep shadow-none hover:bg-primary-tint disabled:opacity-50"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
             Change plan

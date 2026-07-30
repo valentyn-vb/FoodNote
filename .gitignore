@@ -16,3 +16,6 @@ coverage/
 .agents/
 .claude/skills/
 skills-lock.json
+
+# Wayfinder maps and scratch notes — working artifacts, not team-facing.
+.scratch/

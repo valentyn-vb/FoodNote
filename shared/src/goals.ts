@@ -21,7 +21,7 @@ export const MAX_SAFE_PACE_KG = 1.0;
 /**
  * Weekly weight-change rate in kg/week. `0` is the maintenance plan — Pace is
  * the single thing that says what kind of plan a Goal is, so a Goal is
- * maintenance when, and only when, its pace is 0 (see docs/adr/0006). Non-zero
+ * maintenance when, and only when, its pace is 0 (see docs/adr/0007). Non-zero
  * values are magnitudes; direction comes from targetWeightKg vs startWeightKg.
  *
  * Any rate in range, not just the presets below: a manual plan's rate is derived

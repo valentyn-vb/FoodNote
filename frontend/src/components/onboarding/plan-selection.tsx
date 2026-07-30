@@ -89,7 +89,7 @@ export function PlanSelection({
             aria-label="Back"
             className="mb-2 flex size-5.5 shrink-0 items-center justify-center"
           >
-            <ChevronLeft size={18} className="text-[#333333]" strokeWidth={2} />
+            <ChevronLeft size={18} className="text-text-soft" strokeWidth={2} />
           </button>
         )}
         <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] text-text">
@@ -135,7 +135,7 @@ export function PlanSelection({
           type="button"
           onClick={() => selectedPace !== null && onConfirm(selectedPace)}
           disabled={selectedPace === null || submitting}
-          className="h-12.5 w-full rounded-sm bg-primary text-[15px] shadow-[0_2px_8px_#f5a65c59]"
+          className="h-12.5 w-full bg-primary text-title shadow-cta"
         >
           {submitting && <Loader2 className="size-4 animate-spin" />}
           Confirm plan

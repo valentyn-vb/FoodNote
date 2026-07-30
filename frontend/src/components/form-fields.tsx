@@ -5,10 +5,29 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
-export const LABEL_CLASS = 'font-sans text-caption font-medium text-text';
-export const INPUT_CLASS =
-  'h-11.5 rounded-sm border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-[0_1px_2px_#00000008] focus-visible:border-primary focus-visible:ring-0';
+// One definition of the label look, shared by the two elements that need it.
+// A component pair rather than an exported class string, so no call site can
+// merge its own overrides on top.
+const labelClasses = 'font-sans text-caption font-medium text-text';
+
+/** Labels a single control. */
+export function FormLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof FieldLabel>) {
+  return <FieldLabel className={cn(labelClasses, className)} {...props} />;
+}
+
+/** Heads a group of controls (a macro row, a chip set) — no `for` target, so
+    it must not be a <label>. */
+export function FormGroupLabel({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  return <div className={cn(labelClasses, className)} {...props} />;
+}
 
 export function InputField({
   id,
@@ -28,13 +47,11 @@ export function InputField({
       className="grow basis-0 gap-1.75"
       data-invalid={!!error || undefined}
     >
-      <FieldLabel htmlFor={id} className={LABEL_CLASS}>
-        {label}
-      </FieldLabel>
+      <FormLabel htmlFor={id}>{label}</FormLabel>
       <Input
         id={id}
+        variant="field"
         aria-invalid={!!error || undefined}
-        className={INPUT_CLASS}
         {...props}
       />
       {description && (

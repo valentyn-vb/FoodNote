@@ -113,7 +113,7 @@ export function WeightTrendCard({
   data: WeightTrendPoint[];
 }) {
   return (
-    <Card className={className}>
+    <Card variant="panel" className={className}>
       {(title || action) && (
         <div className="flex items-center justify-between">
           {title && (
@@ -139,7 +139,7 @@ export function RemainingTodayRingCard({
   goalKcal: number;
 }) {
   return (
-    <Card className={className}>
+    <Card variant="panel" className={className}>
       <h2 className="self-start font-sans text-caption font-semibold text-text">
         Remaining today
       </h2>

@@ -6,9 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function AuthFormSkeleton() {
   return (
     <div className="flex w-full flex-col gap-3">
-      <Skeleton className="h-11.5 w-full rounded-sm" />
-      <Skeleton className="h-11.5 w-full rounded-sm" />
-      <Skeleton className="h-12.5 w-full rounded-sm" />
+      <Skeleton className="h-11.5 w-full" />
+      <Skeleton className="h-11.5 w-full" />
+      <Skeleton className="h-12.5 w-full" />
     </div>
   );
 }

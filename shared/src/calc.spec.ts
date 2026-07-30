@@ -1,6 +1,7 @@
 import {
   bmr,
   buildPlanOptions,
+  caloriesFromMacros,
   calorieTargetForPace,
   dailyEnergyDeltaForPace,
   hasReachedTarget,
@@ -11,6 +12,32 @@ import {
 } from './calc';
 import { MAX_SAFE_PACE_KG } from './goals';
 import type { Pace } from './goals';
+
+describe('caloriesFromMacros (Atwater)', () => {
+  it('applies 4/4/9 kcal per gram', () => {
+    // 62·4 + 0·4 + 7·9 = 311
+    expect(
+      caloriesFromMacros({ proteinGrams: 62, carbsGrams: 0, fatGrams: 7 }),
+    ).toBe(311);
+  });
+
+  it('is zero when no macros are given', () => {
+    expect(
+      caloriesFromMacros({ proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
+    ).toBe(0);
+  });
+
+  it('rounds fractional grams to whole kcal', () => {
+    // 10.5·4 + 0·4 + 0·9 = 42
+    expect(
+      caloriesFromMacros({ proteinGrams: 10.5, carbsGrams: 0, fatGrams: 0 }),
+    ).toBe(42);
+    // 0.1·4 + 0.1·4 + 0.1·9 = 1.7 → 2
+    expect(
+      caloriesFromMacros({ proteinGrams: 0.1, carbsGrams: 0.1, fatGrams: 0.1 }),
+    ).toBe(2);
+  });
+});
 
 describe('bmr (Mifflin-St Jeor)', () => {
   it('computes male BMR: 10·kg + 6.25·cm − 5·age + 5', () => {

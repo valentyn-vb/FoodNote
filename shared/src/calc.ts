@@ -13,6 +13,31 @@ import { MAX_SAFE_PACE_KG, PACE_OPTIONS } from './goals';
  * user-facing kcal outputs round.
  */
 
+/** Atwater factors: kcal yielded per gram of each macronutrient. */
+const KCAL_PER_GRAM = { protein: 4, carbs: 4, fat: 9 } as const;
+
+/**
+ * The energy the given macros account for, by the Atwater factors. Used to
+ * cross-check a meal's stated calories against its macros — the two are
+ * allowed to disagree (alcohol, fibre, plain rounding), so this informs the
+ * user rather than gating anything.
+ */
+export function caloriesFromMacros({
+  proteinGrams,
+  carbsGrams,
+  fatGrams,
+}: {
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+}): number {
+  return Math.round(
+    proteinGrams * KCAL_PER_GRAM.protein +
+      carbsGrams * KCAL_PER_GRAM.carbs +
+      fatGrams * KCAL_PER_GRAM.fat,
+  );
+}
+
 /**
  * Basal Metabolic Rate via Mifflin-St Jeor, returned unrounded so callers can
  * compose without compounding rounding error.

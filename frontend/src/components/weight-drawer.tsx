@@ -2,22 +2,21 @@
 
 import { useState, type ReactNode } from 'react';
 import Image from 'next/image';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type WeightEntryResponse } from '@foodnote/shared';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
+  DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { weights } from '@/lib/api-client';
+import { useControllableState } from '@/hooks/use-controllable-state';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
 import {
   WEIGHT_FORM_ID,
@@ -31,26 +30,45 @@ import {
 // second in-row edit form: the two duplicated the same weight input, error
 // copy, and validation regex (review on #36). "Log weight" (sidebar, mobile
 // bar) and "Edit entry" (weight history row) are the same drawer.
-type WeightDrawerProps =
-  | {
-      mode: 'create';
-      onWeightSaved?: (entry: WeightEntryResponse) => void;
-      triggerClassName?: string;
-      triggerLabel?: string;
-      children?: ReactNode;
-    }
-  | {
-      mode: 'edit';
-      entry: WeightEntryResponse;
-      onChanged: () => void;
-      triggerClassName?: string;
-      triggerLabel?: string;
-      children?: ReactNode;
-    };
+// Either renders its own trigger from `children`, or runs controlled via
+// `open`/`onOpenChange` so a caller can supply a trigger of its own — which is
+// how the sidebar uses a real SidebarMenuButton (tooltip in the collapsed rail
+// included) instead of restating that button's classes (#39).
+type WeightDrawerTrigger = {
+  triggerClassName?: string;
+  triggerLabel?: string;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+type WeightDrawerProps = WeightDrawerTrigger &
+  (
+    | {
+        mode: 'create';
+        onWeightSaved?: (entry: WeightEntryResponse) => void;
+      }
+    | {
+        mode: 'edit';
+        entry: WeightEntryResponse;
+        onChanged: () => void;
+      }
+  );
 
 export function WeightDrawer(props: WeightDrawerProps) {
-  const { mode, triggerClassName, triggerLabel, children } = props;
-  const [open, setOpen] = useState(false);
+  const {
+    mode,
+    triggerClassName,
+    triggerLabel,
+    children,
+    open: controlledOpen,
+    onOpenChange,
+  } = props;
+  const [open, setOpen] = useControllableState(
+    controlledOpen,
+    onOpenChange,
+    false,
+  );
   const [saving, setSaving] = useState(false);
   const form = useForm<WeightFormValues>({
     resolver: zodResolver(weightFormSchema),
@@ -115,21 +133,20 @@ export function WeightDrawer(props: WeightDrawerProps) {
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
-      <DrawerTrigger aria-label={triggerLabel} className={triggerClassName}>
-        {children ?? (mode === 'create' ? 'Log weight' : undefined)}
-      </DrawerTrigger>
+      {/* Nothing to render when the caller drives `open` itself: it brought its
+          own trigger, and an empty one here would sit in the tab order. */}
+      {controlledOpen === undefined && (
+        <DrawerTrigger aria-label={triggerLabel} className={triggerClassName}>
+          {children ?? (mode === 'create' ? 'Log weight' : undefined)}
+        </DrawerTrigger>
+      )}
       <DrawerContent className="lg:mx-auto lg:max-w-lg">
-        <DrawerHeader className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
-            {mode === 'create' ? 'Log weight' : 'Edit weight'}
-          </DrawerTitle>
-          <DrawerClose
-            aria-label="Close drawer"
-            className="col-start-3 flex size-5 items-center justify-self-end justify-center"
-          >
-            <X size={20} className="text-[#333333]" strokeWidth={2} />
-          </DrawerClose>
-        </DrawerHeader>
+        {/* #39 factored this header — centred title plus close button — into
+            DrawerTitleBar; main had restated it inline, hardcoded icon colour
+            included. */}
+        <DrawerTitleBar>
+          {mode === 'create' ? 'Log weight' : 'Edit weight'}
+        </DrawerTitleBar>
         <WeightForm
           form={form}
           onSubmit={handleSubmit}

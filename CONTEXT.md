@@ -33,7 +33,11 @@ _Avoid_: food log, entry (alone)
 
 **Meal Item**:
 An optional line inside a Meal Entry detailing one food ("Chicken breast,
-180 g"). Items illustrate the meal; they are never summed by the server.
+180 g"). Items illustrate the meal; they are never summed by the server. While
+the user reviews a Parsed Meal the client may sum them as an editing aid, but
+the moment the user sets a total by hand that total stands and the items are
+illustration again — a stored Meal Entry whose items disagree with its totals
+is the model working as intended, not a corrupt record.
 _Avoid_: ingredient, product
 
 **AI Parse**:

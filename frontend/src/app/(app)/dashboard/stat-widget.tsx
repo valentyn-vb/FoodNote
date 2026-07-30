@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import NumberFlow from '@number-flow/react';
 import { Card } from '@/components/ui/card';
-import { STAT_TILE_CLASS } from './helpers';
 
 export function StatWidget({
   label,
@@ -17,7 +16,7 @@ export function StatWidget({
   mascotSrc?: string;
 }) {
   return (
-    <Card className={`${STAT_TILE_CLASS} relative`}>
+    <Card variant="tile" className="relative">
       <div className="relative z-10 font-sans text-[12px] text-text-muted">
         {label}
       </div>

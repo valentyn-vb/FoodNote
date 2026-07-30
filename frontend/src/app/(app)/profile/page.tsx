@@ -100,7 +100,7 @@ export default function ProfilePage() {
       <div className="border-t border-border px-4 pt-3 pb-6">
         <LogoutButton
           variant="outline"
-          className="h-12 w-full rounded-sm border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
+          className="h-12 w-full border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
         >
           Log out
         </LogoutButton>

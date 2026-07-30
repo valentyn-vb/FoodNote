@@ -23,6 +23,30 @@
   --color-tertiary: var(--fn-tertiary);
   --color-error: var(--destructive);
   --color-error-bg: var(--fn-error-bg);
+  --color-primary-tint: var(--fn-primary-tint);
+  --color-primary-tint-soft: var(--fn-primary-tint-soft);
+  --color-track: var(--fn-track);
+  --color-text-soft: var(--fn-text-soft);
+  --color-text-warm: var(--fn-text-warm);
+
+  /* Elevation. The only place a shadow is defined — a raw shadow-[…] utility
+     hardcodes a colour that can't be themed or contrast-audited. */
+  --shadow-card: 0 1px 3px #0000000a;
+  --shadow-hairline: 0 1px 2px #00000008;
+  --shadow-cta: 0 2px 8px #f5a65c59;
+  --shadow-selected: 0 4px 14px #f5a65c29;
+  --shadow-focus-primary: 0 0 0 3px var(--fn-primary-ring);
+
+  /* Indeterminate progress: a fill that sweeps because the wait has no known
+     duration. Exempt from the reduced-motion collapse — see the note there. */
+  --animate-indeterminate: indeterminate-sweep 1.4s ease-in-out infinite;
+
+  /* Easing. The stock CSS curves are too soft to read as intentional: at the
+     same duration a strong ease-out feels faster than ease, because the eye is
+     watching hardest at the first frame. ease-in is never right for UI — it
+     withholds exactly that frame. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
   --text-caption: 13px;
   --text-label: 14px;
   --text-title: 15px;
@@ -60,6 +84,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -79,6 +104,29 @@
   --fn-tertiary: #f4907e;
   --fn-error-bg: #fbe9e7;
   --fn-text-muted: #6b6b6b;
+  /* Warm primary tints: the selected/hover wash (tint), the calmer callout
+     background (tint-soft) and the focus halo (ring). */
+  --fn-primary-tint: #fff3e7;
+  --fn-primary-tint-soft: #fff9f3;
+  --fn-primary-ring: #fdebd6;
+  /* Neutral progress-bar track, and the two body-copy weights that sit
+     between --foreground and --muted-foreground. */
+  --fn-track: #f0eee9;
+  --fn-text-soft: #333333;
+  --fn-text-warm: #6b5843;
+  /* Status washes for feedback surfaces (toasts today). Each is the brand hue
+     over white, with a text weight dark enough to clear 4.5:1 on its own wash —
+     the brand colours themselves reach only ~3:1 as text (#3e9a70 is 3.15 on
+     the green wash), which is why these are separate values rather than
+     `--fn-secondary` reused. */
+  --fn-success-bg: #ebf7f1;
+  --fn-success-border: #c6e6d7;
+  --fn-success-text: #2c6e4f;
+  --fn-error-border: #f3c7c7;
+  --fn-error-text: #b83a3a;
+  --fn-warning-bg: var(--fn-primary-tint);
+  --fn-warning-border: #fbdbbe;
+  --fn-warning-text: #8a5a2b;
   /* --font-display comes from next/font/google (Fredoka) on <html>, see layout.tsx */
 
   --background: #fdfdfb;
@@ -109,7 +157,7 @@
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--fn-primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fff3e7;
+  --sidebar-accent: var(--fn-primary-tint);
   --sidebar-accent-foreground: var(--fn-primary-deep);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--fn-primary);
@@ -199,6 +247,41 @@
   }
 }
 
+@keyframes indeterminate-sweep {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(20%) scaleX(0.7);
+  }
+  100% {
+    transform: translateX(250%) scaleX(0.4);
+  }
+}
+
+/* tw-animate-css ships accordion-down/up, but its keyframes interpolate to
+   var(--radix-accordion-content-height, … auto) — Radix's variable. Base UI
+   exposes the measured height as --accordion-panel-height instead, so the
+   imported keyframes resolve to `auto` and the panel snaps open. Redefining
+   them here (after the @import) points them at Base UI's variable. */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--accordion-panel-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--accordion-panel-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
 @keyframes gradient-mesh-drift {
   0%,
   100% {
@@ -236,5 +319,45 @@
 @media (prefers-reduced-motion: reduce) {
   .gradient-mesh {
     animation: none;
+  }
+}
+
+/* The app-wide reduced-motion rule. Decorative motion is collapsed rather
+   than removed, so anything that animates *into* view (a drawer sliding up,
+   a Base UI popup fading in) still arrives — it just arrives at once instead
+   of travelling. Removing the animation outright would strand elements that
+   start at opacity 0.
+   JS-driven motion is out of CSS's reach and is handled at its source:
+   NumberFlow honours the preference itself, ScrollReveal via motion/react's
+   useReducedMotion, and the three Canvas UI surfaces query the media feature
+   directly to damp or stop their render loops.
+   New components should rely on this rule rather than re-implementing it;
+   only add an exemption for motion that *is* the information. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* Exempt: a busy indicator that stops moving reads as a frozen app, not as
+     a calm one. WCAG 2.3.3 targets non-essential motion; progress feedback is
+     essential. Slowed well below the "distracting" threshold instead. */
+  .animate-spin,
+  .animate-indeterminate {
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Reduced motion means less movement, not no transitions. A cross-fade
+     still tells you one thing replaced another; it is the travel that causes
+     trouble. Elements marked this way keep the fade and lose the motion. */
+  .motion-keep-fade {
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
   }
 }

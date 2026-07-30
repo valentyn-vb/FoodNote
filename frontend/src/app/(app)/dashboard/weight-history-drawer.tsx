@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { History, X } from 'lucide-react';
+import { History } from 'lucide-react';
 import type { WeightEntryResponse } from '@foodnote/shared';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
+  DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { WeightHistoryRow } from '@/components/weight-history-row';
@@ -39,17 +37,9 @@ export function WeightHistoryDrawer({
         <History size={16} />
       </DrawerTrigger>
       <DrawerContent className="lg:mx-auto lg:max-w-lg">
-        <DrawerHeader className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
-            Weight history
-          </DrawerTitle>
-          <DrawerClose
-            aria-label="Close drawer"
-            className="col-start-3 flex size-5 items-center justify-self-end justify-center"
-          >
-            <X size={20} className="text-[#333333]" strokeWidth={2} />
-          </DrawerClose>
-        </DrawerHeader>
+        {/* DrawerTitleBar (#39) is this exact header; main restated it inline,
+            hardcoded icon colour included. */}
+        <DrawerTitleBar>Weight history</DrawerTitleBar>
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto px-5 py-4">
           {sorted.length === 0 && (
             <p className="font-sans text-caption text-text-muted">
