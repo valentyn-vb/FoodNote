@@ -73,17 +73,30 @@ still re-exported from the package root, so no consumer changed.
 
 ## What this buys, concretely
 
-No migration: `goals.preferredWeeklyChangeKg` is already `numeric(4,2)` and has
-always accepted arbitrary rates. No new contract field. No new endpoint — the
-client derives the rate with the shared calc (which is exactly what ADR-0001
-exists for) and sends it through the `POST /goals` and `PATCH /goals/current`
-that already take a Pace. **The backend needed no source change at all.**
+No new column. No new contract field. No new endpoint — the client derives the
+rate with the shared calc (which is exactly what ADR-0001 exists for) and sends it
+through the `POST /goals` and `PATCH /goals/current` that already take a Pace. The
+backend needed no source change beyond one column's precision.
 
-One consequence worth stating: `numeric(4,2)` keeps two decimals, so 0.5909… is
-stored as 0.59 and 1,750 comes back as 1,751. `paceForCalorieTarget` rounds to
-the same two decimals deliberately, so the rate previewed beside the input is the
-rate that gets saved and served — the drift is a kcal, and it is never a
-surprise. That is the feature's entire error budget.
+## Why the Pace column carries four decimals
+
+The first cut reused `numeric(4,2)` as it stood and called the rounding a
+negligible error budget. That was wrong, and it showed up immediately: a user who
+typed 1,600 was served 1,596.
+
+One step of Pace is worth `step × 7700 ÷ 7` kcal/day. At two decimals that step is
+**11 kcal**, so the achievable calorie targets sat on an 11 kcal grid and a typed
+budget landed up to 5.5 kcal away from itself. The number the user chose was not
+the number the app served, which is the one property a manual plan has to have.
+
+`numeric(6,4)` puts the step at 0.11 kcal — inside the ±0.5 that whole-kcal
+rounding absorbs — so `calorieTargetForPace(paceForCalorieTarget(budget))` returns
+the budget exactly, and `paceForCalorieTarget` rounds to the same four decimals so
+the previewed rate is the stored one. `calc.spec.ts` asserts the round trip over a
+spread of budgets rather than a tolerance, because a tolerance is what hid this.
+
+The migration is a widening: every stored preset is representable unchanged and
+the integer part stays two digits, so no row needs a backfill.
 
 ## Where it lives
 
@@ -92,6 +105,15 @@ one of them, so onboarding, Settings → Change plan and the goal-reached overla
 all get it from one place. It owns its own form state and derived preview, and
 saves through the same `onConfirm(pace)` callback a preset card does — the three
 call sites did not change.
+
+Re-opening the picker on a manual plan needs two different paces, and conflating
+them was a bug: the cards fall back to the default preset, because a derived rate
+matches none of them and would leave every card unchecked, but the **dialog** must
+open on the rate actually saved. Feeding it the card selection instead showed the
+default plan's calories in place of the user's own. `PlanSelection` therefore
+computes `manualStartPace` separately from `selectedPace`, and the trigger reads
+"Edit your custom plan" rather than "Create your own plan" so it does not look
+like the current plan is about to be discarded.
 
 Being a sibling also matters at the dead end: when the Safety Floor hides every
 loss preset, "no safe plan reaches this target" used to be the end of the
