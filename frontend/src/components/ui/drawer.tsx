@@ -5,6 +5,7 @@ import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { textVariants } from '@/components/ui/text';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 type DrawerContextProps = {
@@ -238,14 +239,14 @@ function DrawerTitleBar({
       ) : (
         <div />
       )}
-      <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
+      <DrawerTitle className="col-start-2 justify-self-center">
         {children}
       </DrawerTitle>
       <DrawerClose
         aria-label="Close drawer"
         className="col-start-3 flex size-5 items-center justify-self-end justify-center"
       >
-        <XIcon size={20} className="text-text-soft" strokeWidth={2} />
+        <XIcon size={20} className="text-muted-foreground" strokeWidth={2} />
       </DrawerClose>
     </DrawerHeader>
   );
@@ -261,11 +262,17 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+/**
+ * `title`, not `heading`: the display levels are for page-level headings, and
+ * 26px Fredoka in a sheet's own title bar competes with the content under it.
+ * Call sites pass placement, never type — this is the one place the drawer
+ * title's look is decided.
+ */
 function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('font-heading font-medium text-foreground', className)}
+      className={cn(textVariants({ variant: 'title' }), className)}
       {...props}
     />
   );

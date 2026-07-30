@@ -10,20 +10,24 @@ import { cn } from '@/lib/utils';
  * base look with its height and focus ring undone.
  */
 const inputVariants = cva(
-  'w-full min-w-0 bg-transparent transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive dark:bg-input/30 dark:aria-invalid:border-destructive/50',
+  // Every variant keeps `text-base md:…`: 16px on mobile is a platform
+  // constraint, not a choice — Safari zooms the page when a focused field's
+  // text is smaller. It's also why the `body` level (15px) can't be used on a
+  // field at all, and why <Text> doesn't apply to inputs.
+  'w-full min-w-0 bg-card transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive',
   {
     variants: {
       variant: {
         default:
-          'h-9 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-primary focus-visible:shadow-focus-primary aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40',
-        // The app's standard form field: taller touch target, hairline lift,
-        // and a border-only focus treatment instead of a ring.
+          'h-9 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-primary focus-visible:shadow-focus-primary aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm',
+        // The app's standard form field: hairline lift and a border-only focus
+        // treatment instead of a ring.
         field:
-          'h-11.5 rounded-md border border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline focus-visible:border-primary focus-visible:shadow-focus-primary',
+          'h-9 rounded-md border border-border px-3.5 text-base shadow-hairline focus-visible:border-primary focus-visible:shadow-focus-primary md:text-sm',
         // A compact cell inside a denser row — a parsed meal item.
-        cell: 'h-8.5 rounded-sm border border-border px-2 text-center font-sans text-[12.5px] text-text tabular-nums focus-visible:border-primary focus-visible:shadow-focus-primary',
+        cell: 'h-8 rounded-sm border border-border px-2 text-center text-base tabular-nums focus-visible:border-primary focus-visible:shadow-focus-primary md:text-caption',
         // Reads as text until focused — an item's name.
-        bare: 'font-sans text-label font-medium text-text focus-visible:underline',
+        bare: 'bg-transparent text-base font-medium focus-visible:underline md:text-label',
       },
     },
     defaultVariants: {

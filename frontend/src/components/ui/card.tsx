@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
+import { Text } from '@/components/ui/text';
 
 /**
  * Surface, radius and elevation live in the variant, never in the base — so
@@ -13,13 +14,16 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
+        // One surface boundary, one mechanism: `border`, never a ring. A ring is
+        // reserved for focus and invalid states, so a card and a focused card
+        // can't be drawn the same way.
         default:
-          'rounded-xl bg-card py-(--card-spacing) shadow-xs ring-1 ring-foreground/10',
-        // The app's standard content surface: hairline border, no ring, and
-        // padding supplied by the call site.
-        panel: 'rounded-lg border border-border bg-surface shadow-card',
+          'rounded-xl border border-border bg-card py-(--card-spacing) shadow-xs',
+        // The app's standard content surface: hairline border and padding
+        // supplied by the call site.
+        panel: 'rounded-xl border border-border bg-card shadow-card',
         // A compact stat tile — self-padding, tighter radius and gap.
-        tile: 'gap-1.5 rounded-md border border-border bg-surface px-4.5 py-4 shadow-hairline',
+        tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-hairline',
       },
     },
     defaultVariants: {
@@ -58,14 +62,18 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+/**
+ * Renders a <Text> level rather than its own font rules, so the heading face
+ * is declared in one place instead of two. A small card drops a level rather
+ * than shrinking the same one.
+ */
 function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div
+    <Text
       data-slot="card-title"
-      className={cn(
-        'font-heading text-xl leading-normal font-semibold group-data-[size=sm]/card:text-sm',
-        className,
-      )}
+      variant="heading"
+      render={<div />}
+      className={cn('group-data-[size=sm]/card:text-title', className)}
       {...props}
     />
   );
@@ -73,9 +81,12 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
 
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div
+    <Text
       data-slot="card-description"
-      className={cn('text-sm text-muted-foreground', className)}
+      variant="caption"
+      tone="muted"
+      render={<div />}
+      className={className}
       {...props}
     />
   );
