@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { calorieTargetForPace, hasReachedTarget, tdee } from '@foodnote/shared';
 import type {
-  Pace,
   PatchProfileRequest,
   ProfileResponse,
   PutProfileRequest,
@@ -81,7 +80,7 @@ export class ProfileService {
         const reached = hasReachedTarget({
           startWeightKg: goal.startWeightKg,
           targetWeightKg: goal.targetWeightKg,
-          preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg as Pace,
+          preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg,
           currentWeightKg,
         });
         calorieTarget = calorieTargetForPace(
@@ -93,7 +92,7 @@ export class ProfileService {
             currentWeightKg,
             targetWeightKg: reached ? currentWeightKg : goal.targetWeightKg,
           },
-          goal.preferredWeeklyChangeKg as Pace,
+          goal.preferredWeeklyChangeKg,
         );
       }
     }
@@ -107,9 +106,7 @@ export class ProfileService {
       maintenanceCalories,
       calorieTarget,
       targetWeightKg: goal ? goal.targetWeightKg : null,
-      preferredWeeklyChangeKg: goal
-        ? (goal.preferredWeeklyChangeKg as Pace)
-        : null,
+      preferredWeeklyChangeKg: goal ? goal.preferredWeeklyChangeKg : null,
     };
   }
 }
