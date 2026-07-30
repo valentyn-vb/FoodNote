@@ -110,7 +110,7 @@ describe('Goals (e2e)', () => {
     expect((get.body as GoalResponse).id).toBe(current.id);
   });
 
-  it('accepts a derived, non-preset pace and stores it to 2dp', async () => {
+  it('accepts a derived, non-preset pace and keeps all four decimals', async () => {
     // What a manual plan saves: the user named calories, the client derived the
     // rate, and it goes into the same field a preset card would use — no extra
     // column, no extra endpoint (ADR-0009).
@@ -118,22 +118,16 @@ describe('Goals (e2e)', () => {
       await request(app.getHttpServer())
         .patch('/api/goals/current')
         .set(auth())
-        .send({ preferredWeeklyChangeKg: 0.59 })
+        .send({ preferredWeeklyChangeKg: 0.9173 })
         .expect(200)
     ).body as GoalResponse;
-    expect(patched.preferredWeeklyChangeKg).toBe(0.59);
+    expect(patched.preferredWeeklyChangeKg).toBe(0.9173);
     expect(patched.projectedGoalDate).not.toBeNull();
 
-    // `goals.preferredWeeklyChangeKg` is numeric(4,2), so a finer rate rounds on
-    // the way in. Read it back fresh rather than trusting the write's own echo:
-    // this is the whole reason paceForCalorieTarget rounds to 2dp before saving,
-    // so a previewed rate equals the stored one.
-    await request(app.getHttpServer())
-      .patch('/api/goals/current')
-      .set(auth())
-      .send({ preferredWeeklyChangeKg: 0.591 })
-      .expect(200);
-    expect((await current()).preferredWeeklyChangeKg).toBe(0.59);
+    // Read it back fresh rather than trusting the write's own echo — the column is
+    // numeric(6,4) and the precision is load-bearing: at the old (4,2) this
+    // rounded to 0.92, which handed the user's typed budget back ~5 kcal off.
+    expect((await current()).preferredWeeklyChangeKg).toBe(0.9173);
   });
 
   it('PATCH /goals/current mutates target/pace in place (id stable)', async () => {
