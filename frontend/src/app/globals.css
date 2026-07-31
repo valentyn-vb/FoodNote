@@ -4,10 +4,9 @@
 
 @theme inline {
   /* ── Colour ──────────────────────────────────────────────────────────────
-     shadcn's own names, kept deliberately: a freshly pulled `shadcn add`
-     depends on them existing, and a missing token yields no CSS rather than a
-     default. The two-layer form (bare `--x` in :root, `--color-x: var(--x)`
-     here) is a compatibility requirement, not legacy — don't collapse it. */
+     shadcn's own names: `shadcn add` depends on them, and a missing token
+     yields no CSS rather than a default. The two layers (bare `--x` in :root,
+     `--color-x` here) are a compatibility requirement — don't collapse them. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -27,45 +26,32 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* The one addition to the stock roles that is not a status colour.
-     The handoff has two oranges doing different jobs: a fill (`#F5A65C`, now
-     --primary) and a text weight (`#A85517`, here). One value cannot do both —
-     the fill reads at 2.0:1 as text, and the text weight makes a muddy brown
-     button. So brand colour fills through --primary and writes through
-     --brand-ink: links, an active nav item, an emphasized figure, at 4.9:1.
-     The warm washes that used to be --brand-soft/-softer are --accent, the
-     warm hairline that was --brand-line is --border, and the focus colour that
-     was --brand-focus is --ring. */
+  /* The one non-status addition to the stock roles. The handoff's two oranges
+     do different jobs and one value can't do both: the fill (--primary) reads
+     at 2.0:1 as text, the text weight makes a muddy brown button. So brand
+     colour fills through --primary and writes through --brand-ink — links, the
+     active nav item, an emphasized figure — at 4.9:1. */
   --color-brand-ink: var(--brand-ink);
 
-  /* Charts. Stock shadcn names, carrying the decorative hues that used to be
-     --brand-mint and --brand-coral — the gradient mesh and the goal overlay
-     are exactly what these are for. */
+  /* Charts, under the stock names: the decorative hues the gradient mesh and
+     the goal overlay use. */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* Status. Two fill/border/icon weights beside the stock --destructive, and
-     the three text weights.
-     The `-surface` and `-border` washes are gone: a component derives them
-     with color-mix from the base colour, which measures 5.98:1 (success),
-     5.63:1 (warning) and 8.29:1 (destructive) for text on its own wash,
-     against a 4.5:1 threshold.
-     The `-text` weights stayed tokens, though, and that is not an oversight:
-     with <Text tone="success"> deleted, a bare call site has no component to
-     derive a colour inside, and `text-[color-mix(in_oklch,…)]` in the markup
-     is worse than a name. */
+  /* Status: two fills beside the stock --destructive, plus three text weights.
+     The `-surface` and `-border` washes are derived with color-mix instead,
+     measuring 5.98 / 5.63 / 8.29:1 for text on their own wash. The `-text`
+     weights stay tokens: a bare call site has no component to derive one
+     inside, and `text-[color-mix(…)]` in markup is worse than a name. */
   --color-success: var(--success);
   --color-success-text: var(--success-text);
   --color-warning: var(--warning);
   --color-warning-text: var(--warning-text);
   --color-destructive-text: var(--destructive-text);
 
-  /* Sidebar. Compatibility shims: `shadcn add sidebar` greps for these names,
-     so they keep them, but they resolve to base roles rather than holding
-     values of their own. */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -73,79 +59,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* ── Type ────────────────────────────────────────────────────────────────
-     One scale, six levels. A level sets size, line-height and weight at once —
-     a level is not a size. Family comes with it for the two display levels
-     (font-heading). The default tailwind row (--text-xs/sm/base/lg) is left
-     untouched because the ui/* components themselves use it.
-     This block is on its way out. <Text> is gone (#107), so the only readers
-     left are field.tsx, label.tsx and sonner.tsx — #111 moves those three onto
-     the stock row and deletes the block. Deleting it before they move loses
-     their type silently: a missing token yields no CSS at all.
-     The previous scale declared title 15px under body 16px — a heading smaller
-     than its own body text, which is why call sites wrote text-[15px] by hand
-     instead. Here title 18 > body 15. */
-  /* Micro-caps. Four of these have to sit above ~110px columns and still read
-     as labels rather than as values, which no size in the ladder does on its
-     own — uppercase and tracking are what make it a label. */
-  --text-overline: 11px;
-  --text-overline--line-height: 1.3;
-  --text-overline--font-weight: 700;
-  --text-overline--letter-spacing: 0.06em;
-  --text-caption: 13px;
-  --text-caption--line-height: 1.4;
-  --text-caption--font-weight: 400;
-  --text-body: 15px;
-  --text-body--line-height: 1.5;
-  --text-body--font-weight: 400;
-  --text-label: 15px;
-  --text-label--line-height: 1.45;
-  --text-label--font-weight: 600;
-  --text-title: 18px;
-  --text-title--line-height: 1.35;
-  --text-title--font-weight: 700;
-  /* The two display levels carry a touch of negative tracking: default spacing
-     is set for body sizes and reads loose at 26px and above. It belongs to the
-     level, so no call site writes tracking of its own. */
-  --text-heading: 26px;
-  --text-heading--line-height: 1.2;
-  --text-heading--font-weight: 600;
-  --text-heading--letter-spacing: -0.01em;
-  --text-display: 40px;
-  --text-display--line-height: 1.05;
-  --text-display--font-weight: 600;
-  --text-display--letter-spacing: -0.015em;
-
   --font-sans: var(--font-sans);
-  /* A system stack, not a downloaded face. Two call sites want monospace — a
-     tooltip figure in the vendored charts and one filename on the landing —
-     and neither justifies shipping a font for it. */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  /* Fredoka, under the name the shadcn CLI greps for. Both families come from
+  /* Fredoka, under the name the shadcn CLI greps for. Both families load from
      next/font/google on <html> — see layout.tsx. */
   --font-heading: var(--font-display);
 
-  /* ── Elevation ───────────────────────────────────────────────────────────
-     None of our own. The two that were here — 0 1px 3px #0000000a and
-     0 1px 2px #00000008 — were two names for an effect
-     nobody could tell apart on screen; tailwind's own `shadow-xs/sm/md/lg`
-     cover the same ground, and the heaviest thing the handoff asks for — the
-     popover's `0 12px 32px rgba(59,35,20,.14)` — is roughly `shadow-lg`.
-     There is deliberately no brand glow: the orange `0 2px 8px #f5a65c59`
-     under the CTA is dropped as a device rather than tokenised. A CTA holds
-     attention with its fill, not with light. Nor is there a focus halo — a soft
-     wash under a focused field reads as a smudge, and the border says it
-     already. */
-
   /* ── Radius ──────────────────────────────────────────────────────────────
-     One number, and shadcn's own formula off it: sm/md/lg/xl are −4/−2/0/+4.
-     At 16 that is 12/14/16/20, which lands on the handoff's 12–13 for controls,
-     18 for tiles and 20–22 for cards.
-     The previous pass wrote five explicit px because the calc setup it
-     inherited was non-monotonic — rounded-lg came out larger than rounded-xl.
-     That was a property of that setup, not of the formula, which is monotonic
-     by construction. --radius must stay a length: input-group computes
-     calc(var(--radius) - 5px) from it. */
+     One number, shadcn's own formula off it: sm/md/lg/xl are −4/−2/0/+4, so 16
+     gives 12/14/16/20 — the handoff's controls, tiles and cards. Must stay a
+     length: input-group computes calc(var(--radius) - 5px) from it. */
   --radius: 16px;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -153,54 +76,46 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   /* ── Motion ──────────────────────────────────────────────────────────────
-     Indeterminate progress: a fill that sweeps because the wait has no known
-     duration. Exempt from the reduced-motion collapse — see the note there. */
+     Indeterminate progress, for a wait with no known duration. Exempt from the
+     reduced-motion collapse — see the note there. */
   --animate-indeterminate: indeterminate-sweep 1.4s ease-in-out infinite;
 
-  /* Easing. The stock CSS curves are too soft to read as intentional: at the
-     same duration a strong ease-out feels faster than ease, because the eye is
-     watching hardest at the first frame. ease-in is never right for UI — it
-     withholds exactly that frame. */
+  /* The stock CSS curves are too soft to read as intentional: at the same
+     duration a strong ease-out feels faster, because the eye watches hardest
+     at the first frame — which is exactly what ease-in withholds. */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 :root {
-  /* All values are oklch: color-mix(in oklch, …) and /opacity are only
-     predictable there, and the components derive their hover, active and
-     translucent states that way instead of holding tokens for them. */
   --background: oklch(0.975 0.009 78.3);
   --foreground: oklch(0.283 0.045 52.1);
   --card: oklch(1 0 90);
   --card-foreground: var(--foreground);
   --popover: oklch(1 0 90);
   --popover-foreground: var(--foreground);
-  /* The fill is the brand hue; the label on it is the app's own ink, which
-     measures 7.3:1 — better than white on any orange dark enough to take it. */
+  /* The label on the brand fill is the app's own ink at 7.3:1 — better than
+     white on any orange dark enough to take it. */
   --primary: oklch(0.788 0.13 62.2);
   --primary-foreground: var(--foreground);
   --secondary: oklch(0.986 0.006 75.4);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.968 0.015 70.9);
   --muted-foreground: oklch(0.515 0.04 55.3);
-  /* Was --brand-softer, and --brand-soft resolved here too: two warm washes a
+  /* Both --brand-soft and --brand-softer collapsed here: two warm washes a
      tenth of a lightness step apart, which nothing on screen distinguished. */
   --accent: oklch(0.966 0.023 65.5);
   --accent-foreground: var(--foreground);
-  /* Absorbs the old --track (0.933 0.02 70), which sat a hair off it and was
-     used for one progress bar. */
   --border: oklch(0.925 0.021 67.6);
   --input: oklch(0.915 0.025 65.6);
-  /* Was --brand-focus. Focus is warm but not the fill orange: the fill reaches
-     2.0:1 against white where WCAG 2.2 wants 3:1. */
+  /* Warm but not the fill orange: the fill reaches 2.0:1 against white where
+     WCAG 2.2 wants 3:1. */
   --ring: oklch(0.798 0.122 58.7);
 
   --brand-ink: oklch(0.541 0.129 51.5);
 
-  /* The decorative hues, under the stock chart names. 1 is the brand orange, 2
-     the mint and 3 the coral that the gradient mesh and the goal overlay use;
-     4 and 5 extend the same warm-to-cool run for a chart that needs five
-     series, which none does yet. */
+  /* 1 is the brand orange, 2 the mint and 3 the coral the mesh and the overlay
+     use; 4 and 5 extend the same warm-to-cool run, unused so far. */
   --chart-1: var(--primary);
   --chart-2: oklch(0.716 0.112 160.8);
   --chart-3: oklch(0.755 0.125 31.1);
@@ -246,11 +161,10 @@
   }
 }
 
-/* tw-animate-css ships accordion-down/up, but its keyframes interpolate to
-   var(--radix-accordion-content-height, … auto) — Radix's variable. Base UI
-   exposes the measured height as --accordion-panel-height instead, so the
-   imported keyframes resolve to `auto` and the panel snaps open. Redefining
-   them here (after the @import) points them at Base UI's variable. */
+/* tw-animate-css's accordion-down/up interpolate to Radix's
+   --radix-accordion-content-height, which resolves to `auto` here, so the panel
+   snaps open. Redefined after the @import to point at Base UI's own
+   --accordion-panel-height. */
 @keyframes accordion-down {
   from {
     height: 0;
@@ -269,17 +183,6 @@
   }
 }
 
-/* The app-wide reduced-motion rule. Decorative motion is collapsed rather
-   than removed, so anything that animates *into* view (a drawer sliding up,
-   a Base UI popup fading in) still arrives — it just arrives at once instead
-   of travelling. Removing the animation outright would strand elements that
-   start at opacity 0.
-   JS-driven motion is out of CSS's reach and is handled at its source:
-   NumberFlow honours the preference itself, ScrollReveal via motion/react's
-   useReducedMotion, and the three Canvas UI surfaces query the media feature
-   directly to damp or stop their render loops.
-   New components should rely on this rule rather than re-implementing it;
-   only add an exemption for motion that *is* the information. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -291,18 +194,16 @@
     transition-delay: 0ms !important;
   }
 
-  /* Exempt: a busy indicator that stops moving reads as a frozen app, not as
-     a calm one. WCAG 2.3.3 targets non-essential motion; progress feedback is
-     essential. Slowed well below the "distracting" threshold instead. */
+  /* Exempt: a busy indicator that stops reads as a frozen app. WCAG 2.3.3
+     targets non-essential motion, so this is slowed, not stopped. */
   .animate-spin,
   .animate-indeterminate {
     animation-duration: 2s !important;
     animation-iteration-count: infinite !important;
   }
 
-  /* Reduced motion means less movement, not no transitions. A cross-fade
-     still tells you one thing replaced another; it is the travel that causes
-     trouble. Elements marked this way keep the fade and lose the motion. */
+  /* Less movement, not no transitions: a cross-fade still says one thing
+     replaced another. Marked elements keep the fade and lose the travel. */
   .motion-keep-fade {
     transition-property: opacity !important;
     transition-duration: 150ms !important;

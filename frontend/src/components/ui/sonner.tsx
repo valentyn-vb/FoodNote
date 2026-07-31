@@ -69,15 +69,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: 'shadow-xs',
-          title: 'text-label font-semibold',
-          description: 'text-caption',
+          title: 'text-sm font-semibold',
+          description: 'text-sm',
           // Sonner fills the action button by inverting the toast's own colours
           // (white on near-black), which lands as a hard chip inside a soft
           // wash. The app's idiom for a secondary action is a quiet text
           // button, so this is one: `!` is needed because sonner's own
           // `[data-sonner-toast] [data-button]` rule outranks a single class.
           actionButton:
-            'h-auto! bg-transparent! px-0! text-caption font-semibold text-current! underline-offset-2 hover:underline',
+            'h-auto! bg-transparent! px-0! text-sm font-semibold text-current! underline-offset-2 hover:underline',
         },
       }}
       {...props}

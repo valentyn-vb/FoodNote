@@ -1,43 +1,21 @@
 import { clsx, type ClassValue } from 'clsx';
-import { extendTailwindMerge } from 'tailwind-merge';
+import { twMerge } from 'tailwind-merge';
 
 /**
- * tailwind-merge has to be told about the type scale, or it silently eats it.
- *
- * `text-*` is two class groups at once — font size (`text-sm`) and text colour
- * (`text-muted-foreground`) — and tailwind-merge tells them apart from its
- * built-in list of size keys. A theme-defined level like `text-heading` isn't on
- * that list, so it gets filed as a colour, collides with the actual colour class
- * beside it, and the later one wins: `cn('text-heading', 'text-foreground')`
- * returned just `text-foreground`, and every level rendered at the inherited
- * size. It bit the Paper scale before this rewrite too, which is a large part of
- * why call sites reached for `text-[15px]` — an arbitrary value *is* recognised
+ * Stock `twMerge`, and it stays stock. It used to be `extendTailwindMerge` with
+ * the seven semantic levels registered as font sizes, because `text-*` is two
+ * class groups at once — size (`text-sm`) and colour (`text-muted-foreground`) —
+ * which tailwind-merge tells apart from a built-in list of size keys. A
+ * theme-defined `text-heading` was not on that list, so it was filed as a
+ * colour, collided with the colour beside it, and the later one won: every
+ * level silently rendered at the inherited size. That is a large part of why
+ * call sites had reached for `text-[15px]` — an arbitrary value *is* recognised
  * as a size, so it was the only thing that stuck.
  *
- * Registering the six levels as font sizes fixes size and colour composing, and
- * keeps `cn('text-title', 'text-heading')` collapsing to one size, which is the
- * whole point of merging.
+ * With the scale gone (#111), every size in the app is one tailwind-merge
+ * already knows. Adding a level back means teaching it here again — which is
+ * the cost the stock row exists to avoid.
  */
-const twMerge = extendTailwindMerge({
-  extend: {
-    classGroups: {
-      'font-size': [
-        {
-          text: [
-            'overline',
-            'caption',
-            'body',
-            'label',
-            'title',
-            'heading',
-            'display',
-          ],
-        },
-      ],
-    },
-  },
-});
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
