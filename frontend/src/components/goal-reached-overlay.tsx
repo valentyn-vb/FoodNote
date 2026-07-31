@@ -26,6 +26,7 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
 import { goals, profile } from '@/lib/api-client';
 import { useMeals } from '@/lib/meals-context';
+import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
 // canvas-confetti paints on a canvas, so it can't take CSS variables — but it
@@ -139,7 +140,7 @@ export function GoalReachedOverlay() {
       });
       await refetchDashboard();
       toast.success('New target set', {
-        description: `Target: ${targetWeightValue} kg · ${pace} kg/week`,
+        description: `Target: ${targetWeightValue} kg · ${formatPace(pace)} kg/week`,
       });
     } catch {
       toast.error("Couldn't set your new target. Please try again.");
@@ -153,7 +154,10 @@ export function GoalReachedOverlay() {
       modal={true}
       disablePointerDismissal={true}
     >
-      <DialogContent className="max-w-sm" showCloseButton={false}>
+      <DialogContent
+        className="max-h-[85dvh] max-w-sm overflow-y-auto"
+        showCloseButton={false}
+      >
         {view === 'choice' && (
           <>
             <DialogHeader className="items-center gap-2 text-center">

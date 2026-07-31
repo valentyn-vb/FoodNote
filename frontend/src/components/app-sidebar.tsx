@@ -31,6 +31,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
+import { useMeals } from '@/lib/meals-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 
 // Navigation only. "Log a meal" and "Log weight" were menu items here; they are
@@ -39,6 +40,7 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isToday } = useMeals();
   const { user: authUser, logout } = useAuth();
   const fullName = fullNameOf(authUser);
   const initials = initialsOf(authUser);
@@ -87,7 +89,10 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === '/meals'}
                     tooltip="Meals"
-                    render={<Link href="/meals" />}
+                    render={
+                      isToday ? <Link href="/meals" /> : <button disabled />
+                    }
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <NotebookTextIcon />
                     <span>Meals</span>
@@ -101,7 +106,11 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
-                <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+                <DropdownMenuTrigger
+                  render={
+                    <SidebarMenuButton size="lg" className="bg-primary/10" />
+                  }
+                >
                   <Avatar className="size-8">
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>

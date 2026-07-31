@@ -1,5 +1,6 @@
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldLabel,
   FieldTitle,
@@ -30,10 +31,15 @@ export function InputField({
   id,
   label,
   error,
+  description,
   ...props
-}: { id: string; label: string; error?: string } & React.ComponentProps<
-  typeof Input
->) {
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  /** Helper text under the control — e.g. a value derived from what was typed. */
+  description?: React.ReactNode;
+} & React.ComponentProps<typeof Input>) {
   return (
     <Field
       className="grow basis-0 gap-1.75"
@@ -41,6 +47,7 @@ export function InputField({
     >
       <FormLabel htmlFor={id}>{label}</FormLabel>
       <Input id={id} aria-invalid={!!error || undefined} {...props} />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {error && <FieldError>{error}</FieldError>}
     </Field>
   );

@@ -42,6 +42,36 @@ export function isoDaysAgo(days: number, now: Date): string {
   return new Date(now.getTime() - days * DAY_MS).toISOString().slice(0, 10);
 }
 
+/** Add (or subtract) `days` to a UTC 'YYYY-MM-DD' string. */
+export function addDays(isoDate: string, days: number): string {
+  return new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * DAY_MS)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** True when `isoDate` is strictly after today UTC. */
+export function isFutureDay(isoDate: string, now: Date): boolean {
+  return isoDate > todayUtc(now);
+}
+
+/**
+ * Human label for a tracking day:
+ * - same UTC day as `now` → "Today"
+ * - one day before → "Yesterday"
+ * - otherwise → locale short date, e.g. "Mon, Jul 28"
+ */
+export function formatDayLabel(isoDate: string, now: Date): string {
+  const today = todayUtc(now);
+  if (isoDate === today) return 'Today';
+  if (isoDate === addDays(today, -1)) return 'Yesterday';
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${isoDate}T00:00:00Z`));
+}
+
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }

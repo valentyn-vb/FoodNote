@@ -3,9 +3,11 @@ import {
   aiParseResponseSchema,
   authResponseSchema,
   authUserSchema,
+  createGoalRequestSchema,
   createMealRequestSchema,
   createWeightRequestSchema,
   errorResponseSchema,
+  goalResponseSchema,
   healthResponseSchema,
   listMealsQuerySchema,
   listMealsResponseSchema,
@@ -16,6 +18,7 @@ import {
   refreshResponseSchema,
   registerRequestSchema,
   updateAccountRequestSchema,
+  updateGoalRequestSchema,
   updateMealRequestSchema,
   updateWeightRequestSchema,
   weightEntryResponseSchema,
@@ -29,8 +32,8 @@ import { z } from 'zod';
  * re-declares a request/response shape; the paths below only wire the existing
  * schemas to routes, so the docs cannot drift from validation.
  *
- * Scope: the endpoints live on `main` today — auth, the weight journal, and
- * health. Profile/goals/meals/dashboard join as their modules land.
+ * Scope: auth, the weight journal, meals, goals, and health. Profile and
+ * dashboard join as their modules are documented.
  */
 
 type Io = 'input' | 'output';
@@ -80,6 +83,9 @@ export function buildOpenApiDocument(): OpenAPIObject {
     ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
     AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
     AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
+    CreateGoalRequest: schemaObject(createGoalRequestSchema, 'input'),
+    UpdateGoalRequest: schemaObject(updateGoalRequestSchema, 'input'),
+    GoalResponse: schemaObject(goalResponseSchema, 'output'),
     HealthResponse: schemaObject(healthResponseSchema, 'output'),
     ErrorResponse: schemaObject(errorResponseSchema, 'output'),
   };
@@ -146,6 +152,12 @@ export function buildOpenApiDocument(): OpenAPIObject {
       {
         name: 'meals',
         description: 'Logged meals with their macro totals and optional items',
+      },
+      {
+        name: 'goals',
+        description:
+          'The active weight plan — at most one per user. Its Pace drives the ' +
+          'derived calorie target and projected date.',
       },
       { name: 'health', description: 'Liveness probe' },
     ],
@@ -237,6 +249,72 @@ export function buildOpenApiDocument(): OpenAPIObject {
             },
             400: errorResponse('Validation failed'),
             401: unauthorized,
+          },
+        },
+      },
+      '/goals': {
+        post: {
+          tags: ['goals'],
+          summary: 'Create a goal, replacing any active one',
+          description:
+            'Always creates a new active goal, never 409s. The outgoing active ' +
+            'goal is marked `completed` if its target had been reached and ' +
+            '`replaced` if it had not (ADR-0003). `startWeightKg` and ' +
+            '`startDate` are captured server-side from the weight journal, so ' +
+            'the journal must not be empty.\n\n' +
+            '`preferredWeeklyChangeKg` accepts any rate from 0 to 1.0 kg/week, ' +
+            'not only the presets the picker offers: a manual plan derives its ' +
+            'rate from a calorie budget the user names (ADR-0009). `0` is a ' +
+            'maintenance plan, which parks the target and has no projected date.',
+          requestBody: jsonBody('CreateGoalRequest'),
+          responses: {
+            201: {
+              description: 'Goal created and now active',
+              ...jsonContent('GoalResponse'),
+            },
+            400: errorResponse(
+              'Validation failed, or no weight entry to start from',
+            ),
+            401: unauthorized,
+          },
+        },
+      },
+      '/goals/current': {
+        get: {
+          tags: ['goals'],
+          summary: "Read the caller's active goal",
+          description:
+            'The `404` is contractual, not exceptional: it is the signal that ' +
+            'onboarding is not complete, and the client redirects on it. ' +
+            '`projectedGoalDate`, `reachedTarget` and the calorie numbers are ' +
+            'all derived on read, never stored.',
+          responses: {
+            200: {
+              description: 'The active goal, with its derived fields',
+              ...jsonContent('GoalResponse'),
+            },
+            401: unauthorized,
+            404: errorResponse('No active goal — onboarding is not complete'),
+          },
+        },
+        patch: {
+          tags: ['goals'],
+          summary: 'Edit the active goal in place',
+          description:
+            'Mutates the existing row, so the goal id and the `startWeightKg` / ' +
+            '`startDate` baseline survive — that is what separates a plan tweak ' +
+            'from `POST /goals` (ADR-0003). Only the target weight and the pace ' +
+            'can change; switching to or from maintenance is a pace change here, ' +
+            'not a new goal (ADR-0006).',
+          requestBody: jsonBody('UpdateGoalRequest'),
+          responses: {
+            200: {
+              description: 'Goal updated',
+              ...jsonContent('GoalResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+            404: errorResponse('No active goal to update'),
           },
         },
       },

@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
+import { formatPace } from '@/lib/utils';
 import {
   type Pace,
   type PlanInput,
@@ -101,7 +102,7 @@ export function CurrentPlanSection({
               ? // Pace 0 is maintenance: "0 kg / week" reads as a broken value,
                 // and the stored target is parked and irrelevant here.
                 'Maintaining your weight'
-              : `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`}
+              : `${formatPace(pace)} kg / week${target != null ? ` · target ${target} kg` : ''}`}
         </p>
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -117,7 +118,9 @@ export function CurrentPlanSection({
             {loading && <Spinner />}
             Change plan
           </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
+          {/* The option list is the tall part, so the dialog caps its own
+              height and scrolls — the plan picker no longer brings its own. */}
+          <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Change plan</DialogTitle>
               <DialogDescription>

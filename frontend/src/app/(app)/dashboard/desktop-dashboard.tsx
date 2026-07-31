@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
+import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -28,28 +29,36 @@ import { useDashboardGate } from './use-dashboard-gate';
 import { WeightHistoryDrawer } from './weight-history-drawer';
 
 export function DesktopDashboard() {
-  const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
-    useMeals();
+  const {
+    eatenKcal,
+    remainingKcal,
+    goalKcal,
+    todayMeals,
+    dailyCalories,
+    isToday,
+  } = useMeals();
   const {
     status: weightStatus,
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
     weightChangeKg,
-    weightChangeLastMonthKg,
     onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
-  // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
-  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
-  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     // Grows with its content and lets the page scroll. Pinned to `h-screen`
     // with `overflow-clip` it could not: the meal list is the only part that
     // grows, so every row shrank to keep the layout inside one viewport.
     <div className="hidden flex-col gap-4 lg:flex lg:min-h-screen">
+      {/* The route header is the shell's now, so the day picker stands on its
+          own row here rather than inside a second page title. */}
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
+
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
@@ -58,12 +67,12 @@ export function DesktopDashboard() {
         <>
           <div className="flex gap-3.5 *:grow *:basis-0">
             <StatWidget
-              label="Remaining today"
+              label={isToday ? 'Remaining today' : 'Remaining'}
               value={remainingKcal}
               suffix=" kcal"
             />
             <StatWidget
-              label="Eaten today"
+              label={isToday ? 'Eaten today' : 'Eaten'}
               value={eatenKcal}
               suffix=" kcal"
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
@@ -130,7 +139,9 @@ export function DesktopDashboard() {
               </Card>
 
               <div className="flex flex-col gap-2.5">
-                <h2 className="text-base font-semibold">Logged today</h2>
+                <h2 className="text-base font-semibold">
+                  {isToday ? 'Logged today' : 'Logged meals'}
+                </h2>
                 <div className="flex flex-col gap-2.5">
                   {todayMeals.length === 0 ? (
                     <EmptyMeals />

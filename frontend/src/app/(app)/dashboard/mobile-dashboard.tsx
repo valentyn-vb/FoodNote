@@ -20,6 +20,7 @@ import NumberFlow from '@number-flow/react';
 import { History } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -36,6 +37,7 @@ export function MobileDashboard() {
     goalKcal,
     todayMeals,
     dailyCalories,
+    isToday,
   } = useMeals();
   const {
     status: weightStatus,
@@ -53,7 +55,8 @@ export function MobileDashboard() {
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:hidden">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-semibold">Today</h1>
+        {/* Not "Today" any more: the day being shown is DayNav's to say. */}
+        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
         {/* The sidebar (and its profile menu) is desktop-only — on mobile the
             avatar is the only path to the profile page. */}
         <Link href="/profile" aria-label="Open profile">
@@ -63,6 +66,10 @@ export function MobileDashboard() {
         </Link>
       </div>
 
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
+
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
@@ -70,7 +77,9 @@ export function MobileDashboard() {
       ) : (
         <>
           <Card className="gap-2.5 p-5">
-            <h2 className="text-sm text-muted-foreground">Remaining today</h2>
+            <h2 className="text-sm text-muted-foreground">
+              {isToday ? 'Remaining today' : 'Remaining'}
+            </h2>
             <div className="font-heading text-4xl font-semibold tabular-nums">
               <NumberFlow value={remainingKcal} suffix=" kcal" />
             </div>
@@ -86,7 +95,8 @@ export function MobileDashboard() {
                 <NumberFlow value={eatenKcal} /> eaten
               </span>
               <span className="text-sm text-muted-foreground tabular-nums">
-                Goal <NumberFlow value={goalKcal} />
+                {isToday ? 'Goal' : 'Current goal'}{' '}
+                <NumberFlow value={goalKcal} />
               </span>
             </div>
           </Card>
@@ -163,7 +173,9 @@ export function MobileDashboard() {
           <Disclaimer />
 
           <div className="flex flex-col gap-2.5">
-            <h2 className="text-sm font-semibold">Logged today</h2>
+            <h2 className="text-sm font-semibold">
+              {isToday ? 'Logged today' : 'Logged meals'}
+            </h2>
             {todayMeals.length === 0 ? (
               <EmptyMeals />
             ) : (
@@ -171,27 +183,36 @@ export function MobileDashboard() {
             )}
           </div>
 
-          <Separator />
-          <div className="flex gap-2.5">
-            {/* Twice the weight button's share of the bar — it is the action
-                this screen exists for. */}
-            <MealLogDrawer
-              trigger={
-                <Button size="lg" className="grow-2 basis-0 px-8">
-                  Log a meal
-                </Button>
-              }
-            />
-            <WeightLogDrawer
-              mode="create"
-              onWeightSaved={onWeightSaved}
-              trigger={
-                <Button variant="outline" size="lg" className="grow basis-0">
-                  Log weight
-                </Button>
-              }
-            />
-          </div>
+          {/* Nothing to log into a day that has passed. */}
+          {isToday && (
+            <>
+              <Separator />
+              <div className="flex gap-2.5">
+                {/* Twice the weight button's share of the bar — it is the action
+                    this screen exists for. */}
+                <MealLogDrawer
+                  trigger={
+                    <Button size="lg" className="grow-2 basis-0 px-8">
+                      Log a meal
+                    </Button>
+                  }
+                />
+                <WeightLogDrawer
+                  mode="create"
+                  onWeightSaved={onWeightSaved}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="grow basis-0"
+                    >
+                      Log weight
+                    </Button>
+                  }
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
