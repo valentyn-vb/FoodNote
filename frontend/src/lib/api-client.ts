@@ -1,4 +1,5 @@
 import {
+  aiParseResponseSchema,
   authResponseSchema,
   authUserSchema,
   dashboardResponseSchema,
@@ -9,6 +10,8 @@ import {
   profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
+  type AiParseRequest,
+  type AiParseResponse,
   type AuthResponse,
   type AuthUser,
   type CreateGoalRequest,
@@ -202,6 +205,24 @@ export const meals = {
   /** DELETE /meals/:id — 204, used by the save toast's Undo action. */
   async remove(id: string): Promise<void> {
     await apiFetch(`/api/meals/${id}`, { method: 'DELETE' });
+  },
+
+  /**
+   * POST /meals/ai-parse — never writes. Resolves to the discriminated union:
+   * a Parsed Meal, or the "not food" verdict, both successful recognitions
+   * (ADR-0006). Real failures reject as ApiError: 429 rate limit, 502 terminal
+   * model failure. `signal` carries the drawer's cancel/timeout.
+   */
+  async aiParse(
+    data: AiParseRequest,
+    signal?: AbortSignal,
+  ): Promise<AiParseResponse> {
+    const res = await apiFetch('/api/meals/ai-parse', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      signal,
+    });
+    return aiParseResponseSchema.parse(await res.json());
   },
 };
 

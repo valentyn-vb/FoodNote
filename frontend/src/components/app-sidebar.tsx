@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -10,6 +11,7 @@ import {
   NotebookText,
   Scale,
   UserRoundPen,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -19,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { WeightDrawer } from '@/components/weight-drawer';
 import {
   Sidebar,
@@ -37,17 +40,16 @@ import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 
-// Mirrors SidebarMenuButton's look (incl. icon-collapsed mode via the root
-// `group` data attributes) for the one item that must be a DrawerTrigger.
-// Hover tooltip in collapsed mode is the one nicety it lacks.
-const DRAWER_TRIGGER_CLASS =
-  'flex h-8 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>svg]:size-4 [&>svg]:shrink-0 [&>span]:truncate';
-
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isToday } = useMeals();
   const { onWeightSaved } = useWeight();
+  // The drawers run controlled here so each menu item can be a real
+  // SidebarMenuButton — same look as the nav links, and it keeps the
+  // collapsed-mode tooltip a hand-rolled trigger would have lost.
+  const [mealDrawerOpen, setMealDrawerOpen] = useState(false);
+  const [weightDrawerOpen, setWeightDrawerOpen] = useState(false);
   const { user: authUser, logout } = useAuth();
   const fullName = fullNameOf(authUser);
   const initials = initialsOf(authUser);
@@ -102,24 +104,36 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  {isToday ? (
-                    <WeightDrawer
-                      mode="create"
-                      onWeightSaved={onWeightSaved}
-                      triggerClassName={DRAWER_TRIGGER_CLASS}
-                    >
-                      <Scale />
-                      <span>Log weight</span>
-                    </WeightDrawer>
-                  ) : (
-                    <button
-                      disabled
-                      className={`${DRAWER_TRIGGER_CLASS} cursor-not-allowed opacity-40`}
-                    >
-                      <Scale />
-                      <span>Log weight</span>
-                    </button>
-                  )}
+                  <SidebarMenuButton
+                    tooltip="Log a meal"
+                    onClick={() => setMealDrawerOpen(true)}
+                    disabled={!isToday}
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
+                  >
+                    <UtensilsCrossed />
+                    <span>Log a meal</span>
+                  </SidebarMenuButton>
+                  <MealLogDrawer
+                    open={mealDrawerOpen}
+                    onOpenChange={setMealDrawerOpen}
+                  />
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Log weight"
+                    onClick={() => setWeightDrawerOpen(true)}
+                    disabled={!isToday}
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
+                  >
+                    <Scale />
+                    <span>Log weight</span>
+                  </SidebarMenuButton>
+                  <WeightDrawer
+                    mode="create"
+                    onWeightSaved={onWeightSaved}
+                    open={weightDrawerOpen}
+                    onOpenChange={setWeightDrawerOpen}
+                  />
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>

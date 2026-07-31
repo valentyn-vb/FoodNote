@@ -1,20 +1,45 @@
 import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
+
+/**
+ * Surface, radius and elevation live in the variant, never in the base — so
+ * `panel` and `tile` don't have to undo `default`'s ring and padding the way
+ * the old CARD_CLASS constant did.
+ */
+const cardVariants = cva(
+  'group/card flex flex-col gap-(--card-spacing) overflow-hidden text-sm text-card-foreground [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
+  {
+    variants: {
+      variant: {
+        default:
+          'rounded-xl bg-card py-(--card-spacing) shadow-xs ring-1 ring-foreground/10',
+        // The app's standard content surface: hairline border, no ring, and
+        // padding supplied by the call site.
+        panel: 'rounded-lg border border-border bg-surface shadow-card',
+        // A compact stat tile — self-padding, tighter radius and gap.
+        tile: 'gap-1.5 rounded-md border border-border bg-surface px-4.5 py-4 shadow-hairline',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  },
+);
 
 function Card({
   className,
   size = 'default',
+  variant = 'default',
   ...props
-}: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
+}: React.ComponentProps<'div'> &
+  VariantProps<typeof cardVariants> & { size?: 'default' | 'sm' }) {
   return (
     <div
       data-slot="card"
       data-size={size}
-      className={cn(
-        'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs ring-1 ring-foreground/10 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
-        className,
-      )}
+      className={cn(cardVariants({ variant, className }))}
       {...props}
     />
   );

@@ -7,7 +7,6 @@ import type { WeightEntryResponse } from '@foodnote/shared';
 import { Card } from '@/components/ui/card';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
-import { CARD_CLASS } from '@/app/(app)/dashboard/helpers';
 import { WeightDrawer } from './weight-drawer';
 
 export function WeightHistoryRow({
@@ -34,8 +33,13 @@ export function WeightHistoryRow({
   }
 
   return (
+    // The same kind of object as the dashboard's former MealRow (now
+    // MealLine inside MealGroupsAccordion), so the same variant and radius:
+    // CARD_CLASS, which main still used here, was deleted on this branch
+    // (14edc01).
     <Card
-      className={`${CARD_CLASS} flex-row items-center justify-between px-4 py-3`}
+      variant="panel"
+      className="shrink-0 flex-row items-center justify-between rounded-md px-4 py-3"
     >
       <div className="flex flex-col gap-0.5">
         <div className="font-sans text-label font-semibold text-text [font-variant-numeric:tabular-nums]">
@@ -51,7 +55,7 @@ export function WeightHistoryRow({
           entry={entry}
           onChanged={onChanged}
           triggerLabel="Edit entry"
-          triggerClassName="flex size-8 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9]"
+          triggerClassName="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track"
         >
           <Pencil size={16} />
         </WeightDrawer>
@@ -66,7 +70,7 @@ export function WeightHistoryRow({
             canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
           disabled={busy || !canDelete}
-          className="flex size-8 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9] disabled:opacity-40 disabled:hover:bg-transparent"
+          className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track disabled:opacity-40 disabled:hover:bg-transparent"
           onClick={handleDelete}
         >
           {busy ? (
