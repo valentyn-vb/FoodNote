@@ -1,6 +1,10 @@
 # 0009 — Visual style lives in the ui components
 
-Status: accepted (2026-07-30)
+Status: superseded by [ADR 0010](0010-values-come-from-the-theme.md) (2026-07-31)
+
+Left as written. This is the record that the boundary was tried, which is why
+0010 supersedes it rather than editing it: 0010 says what it cost, and which of
+the decisions below it keeps.
 
 ## Context
 

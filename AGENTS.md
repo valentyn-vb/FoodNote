@@ -37,39 +37,41 @@ The frontend is shadcn `base-vega` on Base UI (`frontend/components.json`; check
 
 ## Styling
 
-Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. **All visual
-style lives inside `frontend/src/components/ui/**` as component variants.
-Outside it, only layout.** See
-[ADR 0009](docs/adr/0009-visual-style-lives-in-components.md) for why, and
-[the spec](docs/design/styling-rewrite-spec.md) for the tokens, the levels and
-the component APIs.
+Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. **A value
+comes from the theme; a utility built from a theme value is legal anywhere.**
+There is no `ui/**` boundary — that was [ADR
+0009](docs/adr/0009-visual-style-lives-in-components.md), superseded by [ADR
+0010](docs/adr/0010-values-come-from-the-theme.md), which says what it cost. The
+tokens, the type row and the named divergences from upstream are in
+[the spec](docs/design/styling-rewrite-spec.md).
 
-- **Forbidden outside `ui/**`:** colour, background, font size and weight,
-  radius, shadow, border. **Allowed:** layout, sizing, alignment and wrapping,
-  casing, figure style, motion. `frontend/eslint-rules/no-visual-classes.js`
-  enforces this at `error` and names the replacement in the message. It is an
-  allow-list, so a tailwind utility nobody has classified yet is forbidden by
-  default — that is deliberate, and widening it is a decision, not a fix.
-- **Text gets its type from a level, never a class:** `<Text variant="label"
-tone="muted">`. A level sets size, line-height, weight and family at once, so
-  there is no `size` prop to combine with it. `render` swaps the element when the
-  level and the heading rank disagree.
-- **Never export a className string.** A look shared by two call sites is a `cva`
-  variant on the `ui/` component, so callers write `<Card variant="tile">`. Five
-  such constants have been deleted from this repo, one of them written a day
-  after four others were — the lint rule now rejects any `*_CLASS` identifier.
-- **A `*ClassName` prop is the same hole with a different name.** A component
-  that needs a styled trigger takes the element: `trigger={<Button …/>}`.
-- **Cancelling a `ui/` component's own defaults is the tell.** When a call site
-  fights the component, the variant belongs _in_ the component.
-- **No arbitrary value that hardcodes a colour or an elevation.** If the value is
-  missing, add the token to `@theme` and use the generated utility. Note that a
-  _missing_ token yields no CSS at all rather than a default, so deleting one
-  silently removes the rule that used it.
-- **Register any new type level with `tailwind-merge`** in `frontend/src/lib/utils.ts`.
-  `text-*` is both a size and a colour group; an unregistered level is treated as
-  a colour, collides with the colour beside it, and is dropped. This silently ate
-  the previous type scale.
+- **Write utilities, not variants:** `<h2 className="text-sm font-semibold">`,
+  not a level, a tone or a `<Text>`. There is no semantic type scale and no
+  `Text` component; the row is tailwind's own, with a weight class beside it.
+- **What is forbidden is a literal.** `frontend/eslint-rules/no-literal-values.js`
+  errors on a colour literal (`#hex`, `rgb()`, `oklch()`) **anywhere in a
+  `.tsx`** — including inside `style={{}}` and a chart prop — and on an arbitrary
+  value in a visual group that references no token. So `text-[13px]` and
+  `shadow-[0_1px_2px_rgba(0,0,0,.04)]` are errors, and
+  `rounded-[calc(var(--radius)-5px)]` and `bg-[color-mix(in_oklch,var(--card),var(--foreground)_5%)]`
+  are not. Layout and variants (`data-[state=open]:`, `has-[…]`) are untouched.
+- **If the value you need isn't there, add the token** to `@theme` and use the
+  generated utility. A _missing_ token yields no CSS at all rather than a
+  default, so deleting one silently removes the rule that used it — and a token
+  name can be held as a string (`goal-reached-overlay.tsx` resolves several
+  through `getComputedStyle`), where no type error will find it.
+- **`ui/**` holds only what `shadcn add` brought,** at upstream's variants. Add
+  components with `npx shadcn@latest add <name> -c frontend`, never by hand. A
+  component that _draws_ rather than styles goes in `components/`. Don't invent a
+  variant: write the look at the call site that wants it.
+- **Never export a className string.** A look shared by two call sites is a
+  component, not a constant. Five such constants were deleted from this repo, one
+  written a day after four others were — the lint rule rejects any `*_CLASS`
+  identifier. A component that needs a styled part takes the element:
+  `trigger={<Button …/>}`.
+- **Two families, and Fredoka is explicit.** `font-heading` is applied at
+  display-scale call sites — a page title, a large figure. A heading's rank does
+  not imply a face: an `h2` of running text is not in Fredoka.
 - **Don't re-implement reduced motion.** `globals.css` collapses every CSS
   animation and transition under `prefers-reduced-motion: reduce`, app-wide. Two
   exceptions: motion driven from JS must check the preference at its source, and
