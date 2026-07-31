@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
-import { WeightDrawer } from './weight-drawer';
+import { WeightLogDrawer } from './weight-log-drawer';
 
 export function WeightHistoryRow({
   entry,
@@ -49,15 +49,16 @@ export function WeightHistoryRow({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <WeightDrawer
+        <WeightLogDrawer
           mode="edit"
           entry={entry}
           onChanged={onChanged}
-          triggerLabel="Edit entry"
-          trigger={<Button variant="ghost" size="icon-sm" />}
-        >
-          <Pencil size={16} />
-        </WeightDrawer>
+          trigger={
+            <Button variant="ghost" size="icon-sm" aria-label="Edit entry">
+              <Pencil size={16} />
+            </Button>
+          }
+        />
         <Button
           variant="ghost"
           size="icon-sm"

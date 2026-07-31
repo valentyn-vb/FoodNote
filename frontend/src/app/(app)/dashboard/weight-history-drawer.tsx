@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/drawer';
 import { WeightHistoryRow } from '@/components/weight-history-row';
 
-// Reuses the Drawer primitive from WeightDrawer — "edit/delete from the
+// Reuses the Drawer primitive from WeightLogDrawer — "edit/delete from the
 // trend context" (#36) opens this rather than adding a second list column
 // that the dashboard's fixed h-screen grid has no room for.
 export function WeightHistoryDrawer({

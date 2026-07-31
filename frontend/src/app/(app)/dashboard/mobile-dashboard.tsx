@@ -11,7 +11,7 @@ import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { WeightDrawer } from '@/components/weight-drawer';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { initialsOf } from '@/lib/user-display';
@@ -173,16 +173,24 @@ export function MobileDashboard() {
 
           <Separator />
           <div className="flex gap-2.5">
-            <MealLogDrawer>Log a meal</MealLogDrawer>
-            <WeightDrawer
+            {/* Twice the weight button's share of the bar — it is the action
+                this screen exists for. */}
+            <MealLogDrawer
+              trigger={
+                <Button size="lg" className="grow-2 basis-0 px-8">
+                  Log a meal
+                </Button>
+              }
+            />
+            <WeightLogDrawer
               mode="create"
               onWeightSaved={onWeightSaved}
               trigger={
-                <Button variant="outline" size="lg" className="grow basis-0" />
+                <Button variant="outline" size="lg" className="grow basis-0">
+                  Log weight
+                </Button>
               }
-            >
-              Log weight
-            </WeightDrawer>
+            />
           </div>
         </>
       )}

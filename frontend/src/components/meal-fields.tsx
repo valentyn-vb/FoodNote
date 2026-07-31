@@ -17,14 +17,13 @@ import {
 import type { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Field, FieldError } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { FormGroupLabel, InputField } from './form-fields';
+import { FigureField, FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
 /**
@@ -125,10 +124,10 @@ export function MealTotalsFields({
     register(name, { valueAsNumber: true, onChange: onUserEdit });
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
-        <FormGroupLabel>Nutrition</FormGroupLabel>
-        <p className="text-sm text-muted-foreground">macros optional</p>
+        <FormGroupLabel>Macros</FormGroupLabel>
+        <p className="text-sm text-muted-foreground">Optional</p>
       </div>
 
       {/* One row of four. Calories leads — it is the only required figure and
@@ -163,13 +162,13 @@ export function MealTotalsFields({
 // summary and the fields doesn't move a single column.
 const NUTRIENT_GRID = 'grid grid-cols-4 gap-2';
 
+/**
+ * A nutrient figure: `FigureField` plus the numeric props the value needs.
+ * `accent` goes to calories — the only required figure and the only one the
+ * dashboard spends — while the macros stay on the stock field surface.
+ */
 function NutrientField({
-  id,
-  label,
-  unit,
-  accent,
   fractional,
-  error,
   ...props
 }: {
   id: string;
@@ -181,30 +180,11 @@ function NutrientField({
   error?: string;
 } & React.ComponentProps<typeof InputGroupInput>) {
   return (
-    <Field className="gap-1.5" data-invalid={!!error || undefined}>
-      <label
-        htmlFor={id}
-        className="text-xs font-bold tracking-wider text-muted-foreground uppercase"
-      >
-        {label}
-      </label>
-      {/* Calories leads — the only required figure and the only one the
-          dashboard spends — so it carries the accent while the macros stay on
-          the stock field surface. */}
-      <InputGroup className={accent ? 'border-primary bg-accent' : undefined}>
-        <InputGroupInput
-          id={id}
-          aria-invalid={!!error || undefined}
-          className="px-2.5 text-center"
-          {...(fractional ? decimalProps : integerProps)}
-          {...props}
-        />
-        <InputGroupAddon align="inline-end" className="pr-2 pl-0">
-          {unit}
-        </InputGroupAddon>
-      </InputGroup>
-      {error && <FieldError>{error}</FieldError>}
-    </Field>
+    <FigureField
+      compact
+      {...(fractional ? decimalProps : integerProps)}
+      {...props}
+    />
   );
 }
 
@@ -237,8 +217,7 @@ export function MealTotalsSummary({
       {cells.map(({ label, unit, value }) => (
         <Card
           key={label}
-          // A compact stat tile: self-padding, tighter radius and gap.
-          className="items-center gap-0.5 rounded-lg px-4 py-3"
+          className="items-center gap-0.5 rounded-lg px-4 py-3 shadow-none"
         >
           <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {label}
@@ -328,7 +307,7 @@ export function MealItemsFields({
           style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
           // One line of a list: a fixed-height surface that never flexes, at a
           // tighter radius than the card default.
-          className="@container motion-keep-fade shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
+          className="@container motion-keep-fade bg-accent/20 shadow-none shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
         >
           <div className="flex items-center gap-2">
             {/* A parsed name is a label, not a field: what the user corrects
@@ -380,9 +359,15 @@ export function MealItemsFields({
               units go after a number, nutrient names before it, so kcal reads
               as the marker for this box rather than a stray unit. */}
           <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
-            {/* A compact cell in a dense row, tighter than a form field. */}
+            {/* A compact cell in a dense row, tighter than a form field. White
+                and flat: the row already sits on a tinted wash, so a field that
+                lifts off it competes with the row, and the fill is what marks it
+                editable — the read-only name and quantity beside it are not. */}
             {ITEM_NUTRIENTS.map(({ name, label }) => (
-              <InputGroup key={name} className="h-9 min-w-0 rounded-sm">
+              <InputGroup
+                key={name}
+                className="h-9 min-w-0 rounded-sm bg-card shadow-none"
+              >
                 <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
                 <InputGroupInput
                   aria-label={`Item ${index + 1} ${label}`}
