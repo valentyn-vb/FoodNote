@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginRequestSchema, type LoginRequest } from '@foodnote/shared';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
@@ -91,13 +92,18 @@ export function LoginForm() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           No account yet?{' '}
-          <Button
-            variant="link"
-            className="h-auto gap-1 p-0"
-            render={<Link href="/register" />}
+          {/* A `Link` wearing the button look, not a `Button` rendering a link:
+              through `Button` this navigation was announced as a button with no
+              URL. `buttonVariants` is upstream's answer for exactly this. */}
+          <Link
+            href="/register"
+            className={cn(
+              buttonVariants({ variant: 'link' }),
+              'h-auto gap-1 p-0',
+            )}
           >
             Register
-          </Button>
+          </Link>
         </p>
       </CardFooter>
     </Card>

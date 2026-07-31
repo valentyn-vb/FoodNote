@@ -3,11 +3,11 @@
 import { useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Liquid } from '@/components/canvasui/Liquid';
 import { MascotPeek } from '@/components/marketing/mascot-peek';
 import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
-import { supportsHover } from '@/lib/utils';
+import { cn, supportsHover } from '@/lib/utils';
 
 export function OutroSlide() {
   const sparkleRef = useRef<SparklesIconHandle>(null);
@@ -33,11 +33,12 @@ export function OutroSlide() {
                 Start for free. No credit card required.
               </p>
             </div>
-            <Button
-              render={<Link href={authed ? '/dashboard' : '/register'} />}
-              nativeButton={false}
-              variant="secondary"
-              className="shrink-0 gap-2 bg-white px-7 py-3.5 text-success-text hover:bg-white/90"
+            <Link
+              href={authed ? '/dashboard' : '/register'}
+              className={cn(
+                buttonVariants({ variant: 'secondary' }),
+                'shrink-0 gap-2 bg-white px-7 py-3.5 text-success-text hover:bg-white/90',
+              )}
               onMouseEnter={() =>
                 supportsHover() && sparkleRef.current?.startAnimation()
               }
@@ -47,7 +48,7 @@ export function OutroSlide() {
             >
               <SparklesIcon ref={sparkleRef} size={16} />
               {authed ? 'Go to dashboard' : 'Create your free account'}
-            </Button>
+            </Link>
           </div>
         </Liquid>
         {/* Last section on the page — no scroll room left below it for the

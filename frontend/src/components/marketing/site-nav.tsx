@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -32,7 +33,7 @@ export function SiteNav() {
       <Tooltip>
         <TooltipTrigger className="flex items-center gap-2">
           <Image
-            src="/mascot/defaultlogo.png"
+            src="/mascot/default.webp"
             alt="FoodNote mascot"
             width={28}
             height={28}
@@ -62,15 +63,15 @@ export function SiteNav() {
       </div>
 
       <div className="flex items-center gap-1">
-        <Button
-          render={<Link href={authed ? '/dashboard' : '/login'} />}
-          nativeButton={false}
-          variant="ghost"
-          size="sm"
-          className="text-foreground"
+        <Link
+          href={authed ? '/dashboard' : '/login'}
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'sm' }),
+            'text-foreground',
+          )}
         >
           {authed ? 'Dashboard' : 'Log in'}
-        </Button>
+        </Link>
 
         {/* Mobile only — section links live behind a burger instead of
             competing for space in the pill; Log in stays visible either

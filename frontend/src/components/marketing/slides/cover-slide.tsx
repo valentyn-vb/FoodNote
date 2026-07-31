@@ -10,7 +10,7 @@ import {
   useTransform,
 } from 'motion/react';
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import type { Asciify as AsciifyComponent } from '@/components/canvasui/Asciify';
 import type {
   DitheredObjectProps,
@@ -18,7 +18,7 @@ import type {
 } from '@/components/canvasui/DitheredObject';
 import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { supportsHover } from '@/lib/utils';
+import { cn, supportsHover } from '@/lib/utils';
 
 // The mascot drags in three.js (GLTF/DRACO loaders, ~320KB gzipped) plus an
 // 800KB+ .glb model, and only ever renders at lg+ — `hidden lg:block` alone
@@ -116,10 +116,9 @@ function HeroCopy({ className }: { className?: string }) {
         that adapts.
       </p>
       <div className="flex flex-row gap-3 pt-1">
-        <Button
-          render={<Link href={authed ? '/dashboard' : '/register'} />}
-          nativeButton={false}
-          className="gap-2 px-6 py-3.5"
+        <Link
+          href={authed ? '/dashboard' : '/register'}
+          className={cn(buttonVariants(), 'gap-2 px-6 py-3.5')}
           onMouseEnter={() =>
             supportsHover() && sparkleRef.current?.startAnimation()
           }
@@ -129,16 +128,17 @@ function HeroCopy({ className }: { className?: string }) {
         >
           <SparklesIcon ref={sparkleRef} size={16} />
           {authed ? 'Go to dashboard' : 'Get started'}
-        </Button>
+        </Link>
         {!authed && (
-          <Button
-            render={<Link href="/login" />}
-            nativeButton={false}
-            variant="outline"
-            className="border-black/10 bg-white/70 px-6 py-3.5"
+          <Link
+            href="/login"
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'border-black/10 bg-white/70 px-6 py-3.5',
+            )}
           >
             Log in
-          </Button>
+          </Link>
         )}
       </div>
     </div>
@@ -278,7 +278,13 @@ export function CoverSlide() {
             alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
             fill
             priority
-            sizes="100vw"
+            // The wrapper is `sm:hidden`, so above 640px this element has no
+            // width at all — `100vw` promised one anyway, which is what Next
+            // warned about, and `display: none` does not stop the fetch: a
+            // desktop visitor was downloading a priority mobile hero it never
+            // shows. Stating the breakpoint makes the srcset pick a negligible
+            // candidate there instead.
+            sizes="(max-width: 639px) 100vw, 1px"
             className="object-cover"
           />
         </motion.div>

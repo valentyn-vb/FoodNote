@@ -1,7 +1,8 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
@@ -100,13 +101,16 @@ export function RegisterForm() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Button
-            variant="link"
-            className="h-auto gap-1 p-0"
-            render={<Link href="/login" />}
+          {/* A `Link` wearing the button look — see login-form. */}
+          <Link
+            href="/login"
+            className={cn(
+              buttonVariants({ variant: 'link' }),
+              'h-auto gap-1 p-0',
+            )}
           >
             Log in
-          </Button>
+          </Link>
         </p>
       </CardFooter>
     </Card>
