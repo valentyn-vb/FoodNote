@@ -12,17 +12,31 @@ import { caloriesSchema, dateSchema, idSchema, weightKgSchema } from './common';
  */
 
 /**
- * Weekly weight-change rate. `0` is the maintenance plan — Pace is the single
- * thing that says what kind of plan a Goal is, so a Goal is maintenance when,
- * and only when, its pace is 0 (see docs/adr/0007). The non-zero values are
- * magnitudes; direction comes from targetWeightKg vs startWeightKg.
+ * Medical ceiling on weekly weight change, and the top preset (see ADR-0002).
+ * Lives with Pace rather than in calc because it is a property of the value,
+ * not of the arithmetic — and paceSchema needs it as its upper bound.
  */
-export const paceSchema = z.literal([0, 0.25, 0.5, 0.75, 1.0]);
+export const MAX_SAFE_PACE_KG = 1.0;
 
-// The preset paces, derived from the schema so the values live in one place.
-// Used by both apps to render the pace picker — 0 is what puts "maintain" in it.
-// 1.0 is also the safety ceiling (MAX_SAFE_PACE_KG in calc) — see docs/adr/0002.
-export const PACE_OPTIONS = [...paceSchema.values];
+/**
+ * Weekly weight-change rate in kg/week. `0` is the maintenance plan — Pace is
+ * the single thing that says what kind of plan a Goal is, so a Goal is
+ * maintenance when, and only when, its pace is 0 (see docs/adr/0007). Non-zero
+ * values are magnitudes; direction comes from targetWeightKg vs startWeightKg.
+ *
+ * Any rate in range, not just the presets below: a manual plan's rate is derived
+ * from the calories the user typed, so it lands anywhere between 0 and the
+ * ceiling (see docs/adr/0009, which amends ADR-0002's frozen set). The goals
+ * column is `numeric(6,4)`, so a rate carries four decimals —
+ * paceForCalorieTarget rounds to match, which is what makes a manual budget come
+ * back as the number the user typed rather than a few kcal off it.
+ */
+export const paceSchema = z.number().min(0).max(MAX_SAFE_PACE_KG);
+
+// The paces the picker offers, listed explicitly now that paceSchema is a range
+// rather than a literal union. 0 is what puts "maintain" in it; 1.0 doubles as
+// the safety ceiling. Presets are a shortcut, not the whole domain of Pace.
+export const PACE_OPTIONS = [0, 0.25, 0.5, 0.75, MAX_SAFE_PACE_KG];
 
 export const goalStatusSchema = z.enum(['active', 'completed', 'replaced']);
 

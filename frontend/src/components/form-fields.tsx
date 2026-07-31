@@ -1,6 +1,11 @@
-import { cn } from '@/lib/utils';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 // One definition of the label look, shared by the two elements that need it.
 // A component pair rather than an exported class string, so no call site can
@@ -28,10 +33,15 @@ export function InputField({
   id,
   label,
   error,
+  description,
   ...props
-}: { id: string; label: string; error?: string } & React.ComponentProps<
-  typeof Input
->) {
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  /** Helper text under the control — e.g. a value derived from what was typed. */
+  description?: React.ReactNode;
+} & React.ComponentProps<typeof Input>) {
   return (
     <Field
       className="grow basis-0 gap-1.75"
@@ -44,6 +54,11 @@ export function InputField({
         aria-invalid={!!error || undefined}
         {...props}
       />
+      {description && (
+        <FieldDescription className="font-sans text-[12.5px]">
+          {description}
+        </FieldDescription>
+      )}
       {error && (
         <FieldError className="font-sans text-[12px]">{error}</FieldError>
       )}

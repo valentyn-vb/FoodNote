@@ -70,14 +70,26 @@ the status ever changes. Statuses: `active`, `completed`, `replaced`.
 _Avoid_: plan, target (alone)
 
 **Pace**:
-The Goal's chosen weekly weight-change rate (kg/week): 0 / 0.25 / 0.5 / 0.75 /
-1.0, never above the 1.0 kg/week safety ceiling. The non-zero values are
-magnitudes — direction belongs to the Goal, not the Pace — and imply the daily
-calorie deficit or surplus (~7700 kcal per kg). A Pace of 0 is the single thing
-that makes a Goal a maintenance plan: no destination, no deadline, Calorie
-Target equal to Maintenance Calories. Moving a plan to or from maintenance is a
-Pace change on the same Goal, not a new one.
+The Goal's weekly weight-change rate (kg/week): any rate from 0 up to the 1.0
+kg/week safety ceiling, never above it. Non-zero values are magnitudes —
+direction belongs to the Goal, not the Pace — and imply the daily calorie
+deficit or surplus (~7700 kcal per kg). A Pace of 0 is the single thing that
+makes a Goal a maintenance plan: no destination, no deadline, Calorie Target
+equal to Maintenance Calories. Moving a plan to or from maintenance is a Pace
+change on the same Goal, not a new one.
+0.25 / 0.5 / 0.75 / 1.0 are the **preset** paces the picker offers; a Manual
+Plan's Pace is derived from calories and lands anywhere in between.
 _Avoid_: speed, rate, weekly change
+
+**Manual Plan**:
+A Goal whose Pace was derived from a daily calorie budget the user named,
+instead of picked from a preset. Nothing extra is stored — the derived rate goes
+into the Goal's Pace like any preset would, so Calorie Target, Projected Goal
+Date and Target Reached all keep working unchanged, and the plan still tracks
+Current Weight as it falls. The budget it may name is bounded: never below the
+Safety Floor, and never further from Maintenance Calories than the safety
+ceiling allows.
+_Avoid_: custom goal, manual target, calorie override
 
 **Target Reached**:
 Current Weight has met or passed the active Goal's target, measured in that
@@ -105,10 +117,13 @@ The lowest Calorie Target ever offered — 1200 kcal (female) / 1500 kcal
 _Avoid_: minimum, lower bound
 
 **Plan Option**:
-One viable plan for a given Pace, shown during onboarding before a Goal
-exists: its Calorie Target, daily deficit/surplus, and Projected Goal Date.
-An option whose unclamped loss target falls below the Safety Floor is hidden
-(omitted entirely), not shown disabled.
+One plan offered wherever a plan is picked: its Pace, Calorie Target, daily
+deficit/surplus, and Projected Goal Date. One per preset Pace, plus the active
+Goal's own Pace — which always earns an option, so the picker can show the plan
+the user actually chose even when it is a Manual Plan's derived rate. A preset
+whose unclamped loss target falls below the Safety Floor is hidden (omitted
+entirely), not shown disabled; a Manual Plan is what remains when every preset is
+hidden.
 _Avoid_: plan choice, tier
 
 **Sex**:

@@ -1,7 +1,7 @@
 'use client';
 
 import { RadioGroupItem } from '@/components/ui/radio-group';
-import { cn, formatGoalDate } from '@/lib/utils';
+import { cn, formatGoalDate, formatPace } from '@/lib/utils';
 import type { PlanOption } from '@foodnote/shared';
 
 type PlanOptionCardProps = {
@@ -33,7 +33,9 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
             selected ? 'text-primary-deep' : 'text-text-muted',
           )}
         >
-          {isMaintenance ? 'Maintain your weight' : `${option.pace} kg / week`}
+          {isMaintenance
+            ? 'Maintain your weight'
+            : `${formatPace(option.pace)} kg / week`}
         </div>
         <RadioGroupItem
           value={String(option.pace)}
