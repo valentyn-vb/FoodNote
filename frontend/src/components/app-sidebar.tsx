@@ -1,17 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ChevronsUpDown,
-  LayoutDashboard,
-  LogOut,
-  NotebookText,
-  Scale,
-  UserRoundPen,
-  UtensilsCrossed,
+  ChevronsUpDownIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  NotebookTextIcon,
+  UserRoundPenIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -21,8 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightDrawer } from '@/components/weight-drawer';
 import {
   Sidebar,
   SidebarContent,
@@ -36,19 +31,14 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
-import { useWeight } from '@/lib/weight-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
-import { notImplemented } from '@/lib/not-implemented';
 
+// Navigation only. "Log a meal" and "Log weight" were menu items here; they are
+// actions, not places, and as rows they went away with the collapsed rail. They
+// live in AppHeader now, which is on every route at every rail state.
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { onWeightSaved } = useWeight();
-  // The drawers run controlled here so each menu item can be a real
-  // SidebarMenuButton — same look as the nav links, and it keeps the
-  // collapsed-mode tooltip a hand-rolled trigger would have lost.
-  const [mealDrawerOpen, setMealDrawerOpen] = useState(false);
-  const [weightDrawerOpen, setWeightDrawerOpen] = useState(false);
   const { user: authUser, logout } = useAuth();
   const fullName = fullNameOf(authUser);
   const initials = initialsOf(authUser);
@@ -62,15 +52,21 @@ export function AppSidebar() {
     <div className="hidden lg:contents">
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <div className="flex h-8 items-center gap-2 overflow-hidden px-1">
+          {/* Collapsed, the rail is 3rem and SidebarHeader's own `p-2` leaves
+              exactly the mascot's 32px — so the row drops its `px-4` there and
+              centres, and the wordmark goes. With the padding kept, the logo
+              was pushed past the edge and `overflow-hidden` cut it in half. */}
+          <div className="flex h-14 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <Image
-              src="/mascot/defaultlogo.png"
+              src="/mascot/default.webp"
               alt="FoodNote mascot"
-              width={26}
-              height={26}
-              className="shrink-0"
+              width={32}
+              height={32}
+              className="shrink-0 rounded-full"
             />
-            <span className="truncate text-lg font-bold">FoodNote</span>
+            <span className="truncate text-lg font-bold group-data-[collapsible=icon]:hidden">
+              FoodNote
+            </span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -83,7 +79,7 @@ export function AppSidebar() {
                     tooltip="Dashboard"
                     render={<Link href="/dashboard" />}
                   >
-                    <LayoutDashboard />
+                    <LayoutDashboardIcon />
                     <span>Dashboard</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -93,37 +89,9 @@ export function AppSidebar() {
                     tooltip="Meals"
                     render={<Link href="/meals" />}
                   >
-                    <NotebookText />
+                    <NotebookTextIcon />
                     <span>Meals</span>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Log a meal"
-                    onClick={() => setMealDrawerOpen(true)}
-                  >
-                    <UtensilsCrossed />
-                    <span>Log a meal</span>
-                  </SidebarMenuButton>
-                  <MealLogDrawer
-                    open={mealDrawerOpen}
-                    onOpenChange={setMealDrawerOpen}
-                  />
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Log weight"
-                    onClick={() => setWeightDrawerOpen(true)}
-                  >
-                    <Scale />
-                    <span>Log weight</span>
-                  </SidebarMenuButton>
-                  <WeightDrawer
-                    mode="create"
-                    onWeightSaved={onWeightSaved}
-                    open={weightDrawerOpen}
-                    onOpenChange={setWeightDrawerOpen}
-                  />
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -145,16 +113,16 @@ export function AppSidebar() {
                       {authUser?.email}
                     </span>
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  <ChevronsUpDownIcon className="ml-auto size-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="end" className="w-48">
+                <DropdownMenuContent side="right" align="end">
                   <DropdownMenuItem render={<Link href="/profile" />}>
-                    <UserRoundPen />
+                    <UserRoundPenIcon />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut />
+                    <LogOutIcon />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

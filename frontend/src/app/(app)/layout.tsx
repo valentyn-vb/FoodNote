@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,8 +17,9 @@ import { WeightProvider } from '@/lib/weight-context';
 // status settles as unauthenticated we bounce to /login.
 //
 // Once authenticated, this is the shared shell for the app routes. Mobile
-// gets none of the chrome — AppSidebar and SidebarInset only activate at
-// lg+, each route's own `lg:hidden` block still owns the mobile layout.
+// gets none of the chrome — AppSidebar, AppHeader and SidebarInset only
+// activate at lg+, each route's own `lg:hidden` block still owns the mobile
+// layout.
 // MealsProvider lives here (not in the dashboard page) so the sidebar's
 // "Log a meal" trigger shares the same state as the dashboard's numbers.
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -42,7 +44,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <MealsProvider>
           <WeightProvider>
             <AppSidebar />
-            <SidebarInset>{children}</SidebarInset>
+            <SidebarInset>
+              <AppHeader />
+              <main className="px-8 py-6">{children}</main>
+            </SidebarInset>
             {/* Both "Log weight" triggers live in different trees (sidebar on
                 desktop, dashboard row on mobile), so the celebration is mounted
                 here — the nearest shared ancestor that can see either save. */}

@@ -75,7 +75,7 @@ export function EditProfileDialog() {
           id={EDIT_PROFILE_FORM_ID}
           onSubmit={form.handleSubmit(handleSave)}
           noValidate
-          className="flex flex-col gap-5 px-5 pt-4.5"
+          className="flex flex-col gap-6"
         >
           <AuthTextField
             control={form.control}
@@ -91,7 +91,7 @@ export function EditProfileDialog() {
           />
         </form>
 
-        <DialogFooter className="flex-row justify-end gap-2.5">
+        <DialogFooter className="flex-row justify-end gap-2">
           <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>

@@ -16,7 +16,12 @@ export function StatWidget({
   mascotSrc?: string;
 }) {
   return (
-    <Card className="relative gap-1.5 rounded-lg px-4.5 py-4">
+    // `isolate`, so the z-0/z-10 pair below orders the label against the
+    // mascot and nothing else. `relative` alone leaves z-index:auto, which is
+    // not a stacking context: the label then competed with the shell's sticky
+    // header at the same z-10, won on source order, and scrolled over it —
+    // which reads as a see-through header.
+    <Card className="relative isolate gap-1.5 rounded-lg px-4.5 py-4">
       <span className="relative z-10 text-sm text-muted-foreground">
         {label}
       </span>

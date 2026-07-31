@@ -11,7 +11,6 @@ import {
   RemainingTodayRing,
   WeightTrendChart,
 } from '@/components/charts';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
@@ -50,12 +49,7 @@ export function DesktopDashboard() {
     // Grows with its content and lets the page scroll. Pinned to `h-screen`
     // with `overflow-clip` it could not: the meal list is the only part that
     // grows, so every row shrank to keep the layout inside one viewport.
-    <div className="hidden flex-col gap-5.5 px-10 py-8 lg:flex lg:min-h-screen">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger />
-        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
-      </div>
-
+    <div className="hidden flex-col gap-4 lg:flex lg:min-h-screen">
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
@@ -143,9 +137,6 @@ export function DesktopDashboard() {
                   ) : (
                     <MealGroupsAccordion meals={todayMeals} />
                   )}
-                  <MealLogDrawer triggerClassName="ml-auto">
-                    Log a meal
-                  </MealLogDrawer>
                 </div>
               </div>
             </div>

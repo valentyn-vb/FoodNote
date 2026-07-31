@@ -23,25 +23,26 @@ export default function MealsPage() {
   const { status, retry, todayMeals } = useMeals();
 
   return (
-    <div className="flex w-full flex-col gap-5 px-5 pt-6 pb-8 lg:mx-14 lg:my-10 lg:max-w-6xl lg:px-0 lg:py-0">
-      <div className="flex items-center gap-2">
+    <div className="flex w-full flex-col gap-5  lg:max-w-6xl">
+      {/* Mobile only: at lg+ the shell's own AppHeader carries the title and
+          the "Log a meal" trigger for every route. */}
+      <div className="flex items-center gap-2 lg:hidden">
         {/* The sidebar is desktop-only, so on mobile this is the only way back
             out of the page (there is no mobile nav to /meals yet either). */}
-        <Link
-          href="/dashboard"
-          aria-label="Back to dashboard"
-          className="lg:hidden"
-        >
+        <Link href="/dashboard" aria-label="Back to dashboard">
           <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
         </Link>
         <h1 className="font-heading text-2xl font-semibold">Meals</h1>
         {/* Logging is reachable from here too, not just the dashboard — this is
-            the page you land on to review the day. The drawer's own trigger
-            defaults stretch to fill a mobile action bar, so the grow/basis
-            reset keeps it a compact header button on both breakpoints. */}
-        <MealLogDrawer triggerClassName="ml-auto grow-0 basis-auto">
-          Log a meal
-        </MealLogDrawer>
+            the page you land on to review the day. A compact header button,
+            not the full-width one the mobile action bar uses. */}
+        <MealLogDrawer
+          trigger={
+            <Button size="lg" className="ml-auto px-8">
+              Log a meal
+            </Button>
+          }
+        />
       </div>
 
       {status === 'error' ? (

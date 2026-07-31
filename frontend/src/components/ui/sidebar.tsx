@@ -263,7 +263,7 @@ function SidebarTrigger({
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
-      size="icon-sm"
+      size="icon-lg"
       className={cn(className)}
       onClick={(event) => {
         onClick?.(event);
@@ -479,7 +479,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 // icons stay --muted-foreground at every state, active included — an orange
 // icon beside orange text doubles the signal and reads as a second accent.
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button group/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md px-3 py-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent/50! hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground active:font-semibold disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-brand-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground [&>span:last-child]:truncate',
+  'peer/menu-button group/menu-button flex w-full items-center gap-3 overflow-hidden rounded-sm px-3 py-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent/50! hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground active:font-semibold disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-semibold data-active:text-brand-ink data-active:hover:bg-sidebar-accent! data-active:hover:text-brand-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground [&>span:last-child]:truncate',
   {
     variants: {
       variant: {

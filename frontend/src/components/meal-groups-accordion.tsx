@@ -32,8 +32,8 @@ export function MealGroupsAccordion({ meals }: { meals: MealResponse[] }) {
       <Accordion multiple>
         {groups.map((group) => (
           <AccordionItem key={group.mealType} value={group.mealType}>
-            <AccordionTrigger className="px-4 hover:no-underline">
-              <div className="flex flex-1 items-center justify-between gap-3">
+            <AccordionTrigger className="px-4 hover:no-underline hover:bg-accent/15 rounded-s-none rounded-e-none items-center">
+              <div className="flex flex-1 items-center justify-between gap-3 mr-2 ">
                 <span className="text-sm font-semibold capitalize">
                   {group.mealType}
                 </span>
