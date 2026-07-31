@@ -58,6 +58,7 @@ type MealsContextValue = {
   dailyCalories: DailyCaloriePoint[];
   /** Logs onto `day` (UTC 'YYYY-MM-DD'); omitted, onto the day being viewed. */
   saveMeal: (draft: CreateMealRequest, day?: string) => void;
+  deleteMeal: (meal: MealResponse) => void;
   // Weight saves recompute the goal block server-side (projected date and
   // reachedTarget both depend on the new weight), so WeightProvider — nested
   // inside this one — calls this after POST /weights to refresh the goal tile
@@ -160,17 +161,32 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Bound to the created meal (not just its id) so no render-time ref is needed
-  // to recover the totals for the delta + rollback.
-  const undoMeal = useCallback((meal: MealResponse) => {
+  // One optimistic DELETE behind both entry points — a meal line's trash
+  // control and the save toast's Undo. They differ only in what a failed round
+  // trip should say, since "couldn't undo" and "couldn't delete" are different
+  // news. Bound to the whole meal (not just its id) so no render-time ref is
+  // needed to recover the totals for the delta + rollback.
+  const removeMeal = useCallback((meal: MealResponse, failure: string) => {
     setMeals((prev) => prev.filter((m) => m.id !== meal.id));
     setDashboard((d) => (d ? applyMealDelta(d, meal, -1) : d));
     mealsApi.remove(meal.id).catch(() => {
       setMeals((prev) => [meal, ...prev]);
       setDashboard((d) => (d ? applyMealDelta(d, meal, 1) : d));
-      toast.error("Couldn't undo — your meal is still saved.");
+      toast.error(failure);
     });
   }, []);
+
+  const undoMeal = useCallback(
+    (meal: MealResponse) =>
+      removeMeal(meal, "Couldn't undo — your meal is still saved."),
+    [removeMeal],
+  );
+
+  const deleteMeal = useCallback(
+    (meal: MealResponse) =>
+      removeMeal(meal, "Couldn't delete your meal. Please try again."),
+    [removeMeal],
+  );
 
   const saveMeal = useCallback(
     (draft: CreateMealRequest, day?: string) => {
@@ -248,6 +264,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         ? bucketDailyCalories(meals, dashboard.date)
         : [],
       saveMeal,
+      deleteMeal,
       refetchDashboard,
     };
   }, [
@@ -258,6 +275,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     selectedDate,
     setSelectedDate,
     saveMeal,
+    deleteMeal,
     refetchDashboard,
   ]);
 
