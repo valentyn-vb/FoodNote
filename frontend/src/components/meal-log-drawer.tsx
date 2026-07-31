@@ -6,7 +6,11 @@ import { Pencil, TriangleAlert } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { aiParseRequestSchema, type AiParsedMeal } from '@foodnote/shared';
+import {
+  aiParseRequestSchema,
+  type AiParsedMeal,
+  type MealResponse,
+} from '@foodnote/shared';
 import {
   Drawer,
   DrawerContent,
@@ -44,7 +48,16 @@ import { useControllableState } from '@/hooks/use-controllable-state';
  * A parse never writes (ADR-0006): what it returns is a proposal the user
  * confirms, and only the confirm posts.
  */
-type Step = 'input' | 'manual' | 'loading' | 'preview' | 'not-food' | 'error';
+type Step =
+  | 'input'
+  | 'manual'
+  | 'loading'
+  | 'preview'
+  | 'not-food'
+  | 'error'
+  // Editing an existing Meal Entry: the same field blocks as the parsed
+  // preview, but it is the first and only step — there is nothing to parse.
+  | 'edit';
 
 /** The AI call is a live model round-trip; past this it isn't coming. */
 const PARSE_TIMEOUT_MS = 15_000;
@@ -98,43 +111,62 @@ const emptyDraft = (): MealDraftValues => ({
   items: [],
 });
 
-export function MealLogDrawer({
-  open: controlledOpen,
-  onOpenChange,
-  triggerClassName,
-  children,
-}: {
+const draftFromMeal = (meal: MealResponse): MealDraftValues => ({
+  mealName: meal.mealName,
+  mealType: meal.mealType,
+  totalCalories: meal.totalCalories,
+  proteinGrams: meal.proteinGrams,
+  carbsGrams: meal.carbsGrams,
+  fatGrams: meal.fatGrams,
+  items: meal.items,
+});
+
+// One component, mode-switched, rather than a second drawer for editing — the
+// two would restate the same field blocks, validation and save button (the same
+// call WeightDrawer makes for "Log weight" / "Edit entry", #36).
+type MealLogDrawerProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   // Layout only — the trigger's own look stays in the component. `/meals` and
   // the desktop dashboard need it to sit right in their columns.
   triggerClassName?: string;
   children?: React.ReactNode;
-}) {
+} & ({ mode?: 'create' } | { mode: 'edit'; meal: MealResponse });
+
+export function MealLogDrawer(props: MealLogDrawerProps) {
+  const {
+    open: controlledOpen,
+    onOpenChange,
+    triggerClassName,
+    children,
+  } = props;
+  const editing = props.mode === 'edit' ? props.meal : undefined;
   // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
   // since Undo (DELETE) needs the server id and rollback is the provider's job.
-  const { saveMeal } = useMeals();
+  const { saveMeal, updateMeal } = useMeals();
   const [open, setOpen] = useControllableState(
     controlledOpen,
     onOpenChange,
     false,
   );
 
-  const [step, setStep] = useState<Step>('input');
+  const [step, setStep] = useState<Step>(editing ? 'edit' : 'input');
   const [description, setDescription] = useState('');
   const [notFoodReason, setNotFoodReason] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
   const [confidenceNote, setConfidenceNote] = useState<string | null>(null);
   // Once the user sets a total by hand the items stop driving it — they become
-  // illustration again and both are posted as shown (ADR-0008).
-  const [totalsOverridden, setTotalsOverridden] = useState(false);
+  // illustration again and both are posted as shown (ADR-0008). A stored meal
+  // is in that state from the outset: its totals are already the source of
+  // truth, so opening it to edit must not let an item edit rewrite them.
+  const [totalsOverridden, setTotalsOverridden] = useState(!!editing);
 
   const abortRef = useRef<AbortController | null>(null);
   const timedOutRef = useRef(false);
 
   const form = useForm<MealDraftValues>({
     resolver: mealDraftResolver,
-    defaultValues: emptyDraft(),
+    defaultValues: editing ? draftFromMeal(editing) : emptyDraft(),
   });
 
   // One evaluation feeds both the submit guard and the button's enabled state,
@@ -154,13 +186,16 @@ export function MealLogDrawer({
   useEffect(() => abortParse, [abortParse]);
 
   function reset() {
-    setStep('input');
+    setStep(editing ? 'edit' : 'input');
     setDescription('');
     setNotFoodReason(null);
     setRateLimited(false);
     setConfidenceNote(null);
-    setTotalsOverridden(false);
-    form.reset(emptyDraft());
+    // A stored meal's totals are the source of truth (ADR-0008), so editing one
+    // starts already "overridden": correcting an item must not silently rewrite
+    // the figure the day's calories were counted from.
+    setTotalsOverridden(!!editing);
+    form.reset(editing ? draftFromMeal(editing) : emptyDraft());
   }
 
   function handleOpenChange(next: boolean) {
@@ -262,11 +297,18 @@ export function MealLogDrawer({
 
   function handleSave(values: MealDraftValues) {
     setOpen(false);
-    saveMeal({
-      ...values,
-      recordedAt: new Date().toISOString(),
-      source: step === 'manual' ? 'manual' : 'ai',
-    });
+    if (editing) {
+      // No recordedAt and no source in the patch: an edit corrects a meal's
+      // figures, it doesn't move it to another Tracking Day or turn an AI parse
+      // into a manual entry.
+      updateMeal(editing, values);
+    } else {
+      saveMeal({
+        ...values,
+        recordedAt: new Date().toISOString(),
+        source: step === 'manual' ? 'manual' : 'ai',
+      });
+    }
     setTimeout(reset, 300);
   }
 
@@ -287,11 +329,13 @@ export function MealLogDrawer({
 
       <DrawerContent>
         <DrawerTitleBar>
-          {step === 'preview'
-            ? 'Review your meal'
-            : step === 'manual'
-              ? 'Enter a meal'
-              : 'Log a meal'}
+          {step === 'edit'
+            ? 'Edit meal'
+            : step === 'preview'
+              ? 'Review your meal'
+              : step === 'manual'
+                ? 'Enter a meal'
+                : 'Log a meal'}
         </DrawerTitleBar>
 
         {step === 'input' && (
@@ -385,7 +429,7 @@ export function MealLogDrawer({
           </StepPanel>
         )}
 
-        {(step === 'preview' || step === 'manual') && (
+        {(step === 'preview' || step === 'manual' || step === 'edit') && (
           <StepPanel key="form">
             <form
               id={MEAL_FORM_ID}
@@ -426,7 +470,9 @@ export function MealLogDrawer({
 
               <MealNameField form={form} />
 
-              {step === 'preview' && (
+              {/* Editing shows the items too, but they stay illustration: with
+                  totalsOverridden set they no longer feed the totals. */}
+              {(step === 'preview' || step === 'edit') && (
                 <MealItemsFields
                   form={form}
                   onItemsChange={handleItemsChange}

@@ -16,6 +16,7 @@ import type {
   CreateMealRequest,
   DashboardResponse,
   MealResponse,
+  UpdateMealRequest,
 } from '@foodnote/shared';
 import { dashboard as dashboardApi, meals as mealsApi } from '@/lib/api-client';
 import {
@@ -59,6 +60,9 @@ type MealsContextValue = {
   /** Logs onto `day` (UTC 'YYYY-MM-DD'); omitted, onto the day being viewed. */
   saveMeal: (draft: CreateMealRequest, day?: string) => void;
   deleteMeal: (meal: MealResponse) => void;
+  /** Patches a meal in place. Its recordedAt and source are never touched, so
+      an edit can't move a meal to another day or rewrite its provenance. */
+  updateMeal: (meal: MealResponse, patch: UpdateMealRequest) => void;
   // Weight saves recompute the goal block server-side (projected date and
   // reachedTarget both depend on the new weight), so WeightProvider — nested
   // inside this one — calls this after POST /weights to refresh the goal tile
@@ -188,6 +192,21 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     [removeMeal],
   );
 
+  const updateMeal = useCallback(
+    (meal: MealResponse, patch: UpdateMealRequest) => {
+      mealsApi
+        .update(meal.id, patch)
+        .then((saved) => {
+          setMeals((prev) => prev.map((m) => (m.id === saved.id ? saved : m)));
+          refetchDashboard();
+        })
+        .catch(() =>
+          toast.error("Couldn't save your changes. Please try again."),
+        );
+    },
+    [refetchDashboard],
+  );
+
   const saveMeal = useCallback(
     (draft: CreateMealRequest, day?: string) => {
       // Only the day part of the drawer's `new Date()` stamp is replaced — the
@@ -197,28 +216,13 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         ...draft,
         recordedAt: `${trackingDay}T${draft.recordedAt.slice(11)}`,
       };
-      const tempId = `temp-${crypto.randomUUID()}`;
-      const optimistic: MealResponse = {
-        id: tempId,
-        mealName: meal.mealName,
-        mealType: meal.mealType,
-        recordedAt: meal.recordedAt,
-        totalCalories: meal.totalCalories,
-        proteinGrams: meal.proteinGrams,
-        carbsGrams: meal.carbsGrams,
-        fatGrams: meal.fatGrams,
-        source: meal.source,
-        items: meal.items ?? [],
-      };
-      // Optimistic: bump the tiles and show the meal immediately so NumberFlow
-      // animates now, not after the round trip.
-      setMeals((prev) => [optimistic, ...prev]);
-      setDashboard((d) => (d ? applyMealDelta(d, meal, 1) : d));
-
+      // The saved meal only enters the list once the server has given it an id,
+      // so nothing in the UI is ever holding a meal that doesn't exist yet.
       mealsApi
         .create(meal)
         .then((created) => {
-          setMeals((prev) => prev.map((m) => (m.id === tempId ? created : m)));
+          setMeals((prev) => [created, ...prev]);
+          refetchDashboard();
           // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
           toast.success('Meal saved', {
             icon: (
@@ -232,13 +236,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             action: { label: 'Undo', onClick: () => undoMeal(created) },
           });
         })
-        .catch(() => {
-          setMeals((prev) => prev.filter((m) => m.id !== tempId));
-          setDashboard((d) => (d ? applyMealDelta(d, meal, -1) : d));
-          toast.error("Couldn't save your meal. Please try again.");
-        });
+        .catch(() => toast.error("Couldn't save your meal. Please try again."));
     },
-    [undoMeal],
+    [undoMeal, refetchDashboard],
   );
 
   const value = useMemo<MealsContextValue>(() => {
@@ -265,6 +265,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         : [],
       saveMeal,
       deleteMeal,
+      updateMeal,
       refetchDashboard,
     };
   }, [
@@ -276,6 +277,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     setSelectedDate,
     saveMeal,
     deleteMeal,
+    updateMeal,
     refetchDashboard,
   ]);
 

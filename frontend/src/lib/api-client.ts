@@ -16,6 +16,7 @@ import {
   type AuthUser,
   type CreateGoalRequest,
   type CreateMealRequest,
+  type UpdateMealRequest,
   type CreateWeightRequest,
   type DashboardResponse,
   type GoalResponse,
@@ -184,6 +185,16 @@ export const meals = {
   async create(data: CreateMealRequest): Promise<MealResponse> {
     const res = await apiFetch('/api/meals', {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return mealResponseSchema.parse(await res.json());
+  },
+
+  /** PATCH /meals/:id — a partial draft. Totals stay the source of truth, so
+      the items are only ever sent alongside them, never summed into them. */
+  async update(id: string, data: UpdateMealRequest): Promise<MealResponse> {
+    const res = await apiFetch(`/api/meals/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
     return mealResponseSchema.parse(await res.json());

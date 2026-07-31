@@ -1,9 +1,11 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
-import type { MealResponse } from '@foodnote/shared';
 import { formatMealTime } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
+import type { MealResponse } from '@foodnote/shared';
+import { Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { MealLogDrawer } from './meal-log-drawer';
 
 // A meal inside a meal-time group. A flat row, not a Card: these sit inside the
 // group's own card, where a nested card reads heavy. (It replaced the former
@@ -12,6 +14,7 @@ import { useMeals } from '@/lib/meals-context';
 // figure is plain text.
 export function MealLine({ meal }: { meal: MealResponse }) {
   const { deleteMeal } = useMeals();
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-t-0">
@@ -25,20 +28,31 @@ export function MealLine({ meal }: { meal: MealResponse }) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <div className="font-sans text-label font-semibold text-text [font-variant-numeric:tabular-nums]">
-          {meal.totalCalories} kcal
-        </div>
+        <button
+          type="button"
+          aria-label={`Edit ${meal.mealName}`}
+          className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track hover:text-text"
+          onClick={() => setEditOpen(true)}
+        >
+          <Pencil size={16} />
+        </button>
+        <MealLogDrawer
+          mode="edit"
+          meal={meal}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
         <button
           type="button"
           aria-label={`Delete ${meal.mealName}`}
-          // An optimistic meal has no server id until its POST settles, so a
-          // DELETE now would 404 and roll a saved meal back into the list.
-          disabled={meal.id.startsWith('temp-')}
-          className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track hover:text-text disabled:opacity-40 disabled:hover:bg-transparent"
+          className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-track hover:text-text"
           onClick={() => deleteMeal(meal)}
         >
           <Trash2 size={16} />
         </button>
+        <div className="font-sans text-label font-semibold text-text [font-variant-numeric:tabular-nums]">
+          {meal.totalCalories} kcal
+        </div>
       </div>
     </div>
   );
