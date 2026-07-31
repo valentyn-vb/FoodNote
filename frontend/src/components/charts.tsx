@@ -22,7 +22,6 @@ import {
   RadialBarChart,
   ResponsiveContainer,
 } from 'recharts';
-import { Text } from '@/components/ui/text';
 import type {
   DailyCaloriePoint,
   WeightTrendPoint,
@@ -135,12 +134,10 @@ export function RemainingTodayRing({
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <Text variant="heading" numeric>
+          <span className="font-heading text-2xl font-semibold tabular-nums">
             <NumberFlow value={remainingKcal} />
-          </Text>
-          <Text variant="caption" tone="muted">
-            kcal left
-          </Text>
+          </span>
+          <span className="text-sm text-muted-foreground">kcal left</span>
         </div>
       </div>
     </>

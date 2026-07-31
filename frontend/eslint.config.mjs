@@ -64,6 +64,13 @@ const eslintConfig = defineConfig([
       'src/app/(onboarding)/onboarding/onboarding-wizard.tsx',
       'src/components/onboarding/plan-selection.tsx',
       'src/components/onboarding/plan-options.tsx',
+      'src/components/api-status.tsx',
+      'src/components/app-sidebar.tsx',
+      'src/components/charts.tsx',
+      'src/components/disclaimer.tsx',
+      'src/components/empty-state.tsx',
+      'src/components/goal-reached-overlay.tsx',
+      'src/components/user-menu.tsx',
     ],
     plugins: { local },
     rules: {

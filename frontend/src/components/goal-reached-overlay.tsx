@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import { useReducedMotion } from 'motion/react';
@@ -181,12 +180,7 @@ export function GoalReachedOverlay() {
                 >
                   {switchingMaintenance ? '...' : 'Switch to maintenance'}
                 </Button>
-                <Text
-                  variant="caption"
-                  tone="muted"
-                  className="text-center"
-                  render={<p />}
-                >
+                <p className="text-center text-sm text-muted-foreground">
                   {/* maintenanceKcal is energy at the current weight, which is
                       exactly what the target becomes at pace 0 — so it is the
                       number this button will set, not an estimate. */}
@@ -194,7 +188,7 @@ export function GoalReachedOverlay() {
                   {maintenanceKcal != null
                     ? ` on ${maintenanceKcal.toLocaleString()} kcal / day.`
                     : ' where it is now.'}
-                </Text>
+                </p>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Button
@@ -208,14 +202,9 @@ export function GoalReachedOverlay() {
                 >
                   Set a new target
                 </Button>
-                <Text
-                  variant="caption"
-                  tone="muted"
-                  className="text-center"
-                  render={<p />}
-                >
+                <p className="text-center text-sm text-muted-foreground">
                   Choose another plan — a new goal weight and pace.
-                </Text>
+                </p>
               </div>
             </div>
           </>

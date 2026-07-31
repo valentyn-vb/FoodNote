@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { Text } from '@/components/ui/text';
 import { weightKgSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
@@ -68,7 +67,7 @@ export function WeightForm({
         error={errors.weightKg?.message}
         // One big figure, centred: the weight this screen is entirely about.
         // Fredoka, because it reads as a headline number.
-        className="h-12 text-center font-heading text-title tabular-nums"
+        className="h-12 text-center font-heading text-lg font-bold tabular-nums"
         {...register('weightKg')}
       />
       {showDate ? (
@@ -81,9 +80,9 @@ export function WeightForm({
           {...register('recordedAt')}
         />
       ) : (
-        <Text variant="caption" tone="muted">
+        <p className="text-sm text-muted-foreground">
           Each save adds a new entry to your weight journal.
-        </Text>
+        </p>
       )}
     </form>
   );

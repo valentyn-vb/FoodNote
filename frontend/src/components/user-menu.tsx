@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Text } from '@/components/ui/text';
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -39,13 +38,13 @@ export function UserMenu() {
         <DropdownMenuGroup>
           <DropdownMenuLabel className="max-w-56">
             {fullName && (
-              <Text variant="label" className="block truncate">
+              <span className="block truncate text-sm font-semibold">
                 {fullName}
-              </Text>
+              </span>
             )}
-            <Text variant="caption" tone="muted" className="block truncate">
+            <span className="block truncate text-sm text-muted-foreground">
               {user?.email}
-            </Text>
+            </span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

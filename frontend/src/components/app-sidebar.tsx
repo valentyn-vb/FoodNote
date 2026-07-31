@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -71,9 +70,7 @@ export function AppSidebar() {
               height={26}
               className="shrink-0"
             />
-            <Text variant="title" className="truncate">
-              FoodNote
-            </Text>
+            <span className="truncate text-lg font-bold">FoodNote</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -141,12 +138,12 @@ export function AppSidebar() {
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left">
-                    <Text variant="label" className="truncate">
+                    <span className="truncate text-sm font-semibold">
                       {fullName}
-                    </Text>
-                    <Text variant="caption" tone="muted" className="truncate">
+                    </span>
+                    <span className="truncate text-sm text-muted-foreground">
                       {authUser?.email}
-                    </Text>
+                    </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </DropdownMenuTrigger>
