@@ -56,7 +56,8 @@ type MealsContextValue = {
   goal: GoalBlock | null;
   selectedDayMeals: MealResponse[];
   dailyCalories: DailyCaloriePoint[];
-  saveMeal: (draft: CreateMealRequest) => void;
+  /** Logs onto `day` (UTC 'YYYY-MM-DD'); omitted, onto the day being viewed. */
+  saveMeal: (draft: CreateMealRequest, day?: string) => void;
   // Weight saves recompute the goal block server-side (projected date and
   // reachedTarget both depend on the new weight), so WeightProvider — nested
   // inside this one — calls this after POST /weights to refresh the goal tile
@@ -172,30 +173,34 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveMeal = useCallback(
-    (draft: CreateMealRequest) => {
-      // Meal logging is only allowed for today — the drawer is disabled for
-      // past dates, but guard here too for safety.
-      if (selectedDateRef.current !== todayUtc(new Date())) return;
+    (draft: CreateMealRequest, day?: string) => {
+      // Only the day part of the drawer's `new Date()` stamp is replaced — the
+      // time of day is what orders meals inside a Tracking Day.
+      const trackingDay = day ?? selectedDateRef.current;
+      const meal: CreateMealRequest = {
+        ...draft,
+        recordedAt: `${trackingDay}T${draft.recordedAt.slice(11)}`,
+      };
       const tempId = `temp-${crypto.randomUUID()}`;
       const optimistic: MealResponse = {
         id: tempId,
-        mealName: draft.mealName,
-        mealType: draft.mealType,
-        recordedAt: draft.recordedAt,
-        totalCalories: draft.totalCalories,
-        proteinGrams: draft.proteinGrams,
-        carbsGrams: draft.carbsGrams,
-        fatGrams: draft.fatGrams,
-        source: draft.source,
-        items: draft.items ?? [],
+        mealName: meal.mealName,
+        mealType: meal.mealType,
+        recordedAt: meal.recordedAt,
+        totalCalories: meal.totalCalories,
+        proteinGrams: meal.proteinGrams,
+        carbsGrams: meal.carbsGrams,
+        fatGrams: meal.fatGrams,
+        source: meal.source,
+        items: meal.items ?? [],
       };
       // Optimistic: bump the tiles and show the meal immediately so NumberFlow
       // animates now, not after the round trip.
       setMeals((prev) => [optimistic, ...prev]);
-      setDashboard((d) => (d ? applyMealDelta(d, draft, 1) : d));
+      setDashboard((d) => (d ? applyMealDelta(d, meal, 1) : d));
 
       mealsApi
-        .create(draft)
+        .create(meal)
         .then((created) => {
           setMeals((prev) => prev.map((m) => (m.id === tempId ? created : m)));
           // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
@@ -213,7 +218,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {
           setMeals((prev) => prev.filter((m) => m.id !== tempId));
-          setDashboard((d) => (d ? applyMealDelta(d, draft, -1) : d));
+          setDashboard((d) => (d ? applyMealDelta(d, meal, -1) : d));
           toast.error("Couldn't save your meal. Please try again.");
         });
     },

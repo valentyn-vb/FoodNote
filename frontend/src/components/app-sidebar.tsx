@@ -107,8 +107,6 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     tooltip="Log a meal"
                     onClick={() => setMealDrawerOpen(true)}
-                    disabled={!isToday}
-                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <UtensilsCrossed />
                     <span>Log a meal</span>
