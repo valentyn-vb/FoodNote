@@ -42,21 +42,28 @@ export function DayNav() {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    // One control, not three: the arrows and the label share a card-coloured
+    // track, so the group reads as a single day switcher on the page ground.
+    <div className="h-10 inline-flex items-center gap-0.5 rounded-md border bg-card p-1">
       <Button
         variant="ghost"
         size="icon"
-        className="size-8 text-muted-foreground hover:text-foreground"
+        className="h-8 rounded-sm text-muted-foreground"
         aria-label="Previous day"
         onClick={() => setSelectedDate(addDays(selectedDate, -1))}
       >
-        <ChevronLeft size={18} />
+        <ChevronLeft className="size-5" />
       </Button>
 
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
-          className="min-w-24 rounded-md px-2.5 py-1 text-sm font-medium hover:bg-accent focus:outline-none"
           aria-label="Pick a date"
+          render={
+            <Button
+              variant="ghost"
+              className="min-w-32 h-8 rounded-sm text-sm tabular-nums"
+            />
+          }
         >
           {formatDayLabel(selectedDate, now)}
         </PopoverTrigger>
@@ -74,12 +81,12 @@ export function DayNav() {
       <Button
         variant="ghost"
         size="icon"
-        className="size-8 text-muted-foreground hover:text-foreground disabled:opacity-30"
+        className="h-8 rounded-sm text-muted-foreground"
         aria-label="Next day"
         disabled={isToday}
         onClick={() => setSelectedDate(addDays(selectedDate, 1))}
       >
-        <ChevronRight size={18} />
+        <ChevronRight className="size-5" />
       </Button>
     </div>
   );

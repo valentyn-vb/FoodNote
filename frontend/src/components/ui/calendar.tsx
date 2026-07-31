@@ -123,7 +123,11 @@ function Calendar({
           defaultClassNames.range_end,
         ),
         today: cn(
-          'rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none',
+          // Upstream squares the today wash when the day is selected, so a range
+          // can run through it. In `mode="single"` there is no range to join and
+          // the wash just sits behind the round selected button as a pale
+          // rectangle — the selection already says what today's cell would.
+          'rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:bg-transparent',
           defaultClassNames.today,
         ),
         outside: cn(
