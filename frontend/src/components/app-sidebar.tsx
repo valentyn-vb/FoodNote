@@ -94,10 +94,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === '/meals'}
                     tooltip="Meals"
-                    render={
-                      isToday ? <Link href="/meals" /> : <button disabled />
-                    }
-                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
+                    render={<Link href="/meals" />}
                   >
                     <NotebookText />
                     <span>Meals</span>

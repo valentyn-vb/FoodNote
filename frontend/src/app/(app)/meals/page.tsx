@@ -4,21 +4,22 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DayNav } from '@/components/day-nav';
 import { EmptyState } from '@/components/empty-state';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { useMeals } from '@/lib/meals-context';
 import { DesktopMealGroups } from './desktop-meal-groups';
 
-// Today's meals, grouped by meal time. Read-only: logging still happens through
-// the drawer, and editing a past meal isn't wired up yet (PATCH /meals/:id
-// exists, no UI uses it). A date picker and pagination are a later ticket —
-// GET /meals already takes from/to bounds, so that stays frontend-only.
+// One Tracking Day's meals, grouped by meal time; the day nav steps back
+// through past days. Editing a logged meal isn't wired up yet (PATCH
+// /meals/:id exists, no UI uses it), and neither is pagination.
 //
-// No fetch of its own: this route sits inside MealsProvider, whose `selectedDayMeals`
-// is already exactly this page's dataset (one Tracking Day). useDashboardGate is
-// deliberately not reused — it also gates on the weight journal and goal block,
-// neither of which this page renders.
+// No fetch of its own: this route sits inside MealsProvider, whose
+// `selectedDayMeals` is already exactly this page's dataset and whose
+// `selectedDate` the dashboard shares. useDashboardGate is deliberately not
+// reused — it also gates on the weight journal and goal block, neither of
+// which this page renders.
 export default function MealsPage() {
   const { status, retry, selectedDayMeals } = useMeals();
 
@@ -48,6 +49,11 @@ export default function MealsPage() {
         <MealLogDrawer triggerClassName="ml-auto h-10 grow-0 basis-auto px-5 text-label font-semibold">
           Log a meal
         </MealLogDrawer>
+      </div>
+
+      {/* Its own row: the header already clips between the sidebar and ~1400px (#112). */}
+      <div className="flex justify-center lg:justify-start">
+        <DayNav />
       </div>
 
       {status === 'error' ? (
