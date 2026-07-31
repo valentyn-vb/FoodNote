@@ -36,7 +36,6 @@ import { useAuth } from '@/components/auth-provider';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
-import { notImplemented } from '@/lib/not-implemented';
 
 // Mirrors SidebarMenuButton's look (incl. icon-collapsed mode via the root
 // `group` data attributes) for the one item that must be a DrawerTrigger.
@@ -89,20 +88,21 @@ export function AppSidebar() {
                     <span>Dashboard</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                {isToday && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
+                <SidebarMenuItem>
+                  <SidebarMenuButton
                     isActive={pathname === '/meals'}
                     tooltip="Meals"
-                    render={<Link href="/meals" />}
-                      >
+                    render={
+                      isToday ? <Link href="/meals" /> : <button disabled />
+                    }
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
+                  >
                     <NotebookText />
-                      <span>Meals</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-                {isToday && (
-                  <SidebarMenuItem>
+                    <span>Meals</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  {isToday ? (
                     <WeightDrawer
                       mode="create"
                       onWeightSaved={onWeightSaved}
@@ -111,8 +111,16 @@ export function AppSidebar() {
                       <Scale />
                       <span>Log weight</span>
                     </WeightDrawer>
-                  </SidebarMenuItem>
-                )}
+                  ) : (
+                    <button
+                      disabled
+                      className={`${DRAWER_TRIGGER_CLASS} cursor-not-allowed opacity-40`}
+                    >
+                      <Scale />
+                      <span>Log weight</span>
+                    </button>
+                  )}
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

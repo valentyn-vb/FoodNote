@@ -22,7 +22,6 @@ import Link from 'next/link';
 import { CARD_CLASS, fullnessMascot } from './helpers';
 import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
-import { MealRow } from './meal-row';
 import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -69,7 +68,9 @@ export function MobileDashboard() {
         </Link>
       </div>
 
-      <DayNav />
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
 
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
@@ -163,7 +164,7 @@ export function MobileDashboard() {
                 {weightStatus === 'error' ? (
                   <InlineError onRetry={retryWeight} />
                 ) : (
-                  <Skeleton className="h-[110px] w-full" />
+                  <Skeleton className="h-27.5 w-full" />
                 )}
               </Card>
             )}
@@ -175,7 +176,7 @@ export function MobileDashboard() {
             </h2>
             <Card className={`${CARD_CLASS} shrink-0 px-4 pt-4 pb-3`}>
               <DailyCaloriesChart
-                className="aspect-auto h-[120px] w-full flex-none"
+                className="aspect-auto h-30 w-full flex-none"
                 data={dailyCalories}
               />
             </Card>

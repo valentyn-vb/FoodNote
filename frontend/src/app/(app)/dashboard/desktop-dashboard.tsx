@@ -51,12 +51,14 @@ export function DesktopDashboard() {
 
   return (
     <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center gap-2">
         <SidebarTrigger className="text-text-muted" />
         <h1 className="font-display text-heading-lg font-semibold text-text">
           Dashboard
         </h1>
-        <DayNav />
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <DayNav />
+        </div>
       </div>
 
       {gate.state === 'error' ? (
