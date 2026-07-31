@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -69,13 +70,33 @@ export function OnboardingWizard() {
   };
 
   return step === 'plan' ? (
-    <PlanSelection
-      input={form.getValues()}
-      onBack={goBack}
-      onConfirm={handleConfirm}
-      submitting={submitting}
-      submitError={submitError}
-    />
+    <div className="mx-auto flex w-full max-w-md flex-col px-5 pt-2.5 pb-4.5">
+      <div className="flex flex-col gap-1 pb-3.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={goBack}
+          aria-label="Back"
+          className="mb-2 -ml-2"
+        >
+          <ChevronLeft />
+        </Button>
+        <h1 className="font-heading text-2xl font-semibold">
+          Choose your plan
+        </h1>
+        <p className="text-sm font-semibold text-muted-foreground">
+          Based on your goal, here are a few daily-calorie options.
+        </p>
+      </div>
+
+      <PlanSelection
+        input={form.getValues()}
+        onConfirm={handleConfirm}
+        submitting={submitting}
+        submitError={submitError}
+      />
+    </div>
   ) : (
     <div className="mx-auto flex w-full max-w-md flex-col pt-1.5 pb-5">
       <div className="flex flex-col gap-1 px-5 pb-4.5">

@@ -3,15 +3,21 @@
 import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { buildPlanOptions, PlanOption, type Pace } from '@foodnote/shared';
-import { ChevronLeft } from 'lucide-react';
+import {
+  buildPlanOptions,
+  PlanOption,
+  type Pace,
+  type PlanInput,
+} from '@foodnote/shared';
 import { useMemo, useState } from 'react';
-import { DEFAULT_PLAN_PACE, type OnboardingFormValues } from './form-schema';
+import { DEFAULT_PLAN_PACE } from './form-schema';
 import { PlanOptions } from './plan-options';
 
+// The options, the disclaimer and the confirm button only: the heading, any
+// back affordance and the surrounding padding belong to the caller, because
+// this renders both as an onboarding step and inside two dialogs.
 type PlanSelectionProps = {
-  input: OnboardingFormValues;
-  onBack?: () => void;
+  input: PlanInput;
   onConfirm: (pace: Pace) => void | Promise<void>;
   /** True while onConfirm is in flight — disables the button and shows a spinner. */
   submitting?: boolean;
@@ -33,7 +39,6 @@ export function defaultPlanPace(options: PlanOption[]): Pace | null {
 
 export function PlanSelection({
   input,
-  onBack,
   onConfirm,
   submitting = false,
   submitError = null,
@@ -52,39 +57,18 @@ export function PlanSelection({
   const selectedPace = pickedPace ?? initialPace ?? defaultPlanPace(options);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-1 pt-2.5 pb-4.5">
-      <div className="flex flex-col gap-1 px-5 pb-3.5">
-        {onBack && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onBack}
-            aria-label="Back"
-            className="mb-2 -ml-2"
-          >
-            <ChevronLeft />
-          </Button>
-        )}
-        <h1 className="font-heading text-2xl font-semibold">
-          Choose your plan
-        </h1>
-        <p className="text-sm font-semibold text-muted-foreground">
-          Based on your goal, here are a few daily-calorie options.
-        </p>
-      </div>
+    // A container, so the option grid answers to the width it was given —
+    // one column in the onboarding column, two in the wide Change-plan dialog.
+    <div className="@container flex flex-col gap-3.5">
+      <PlanOptions
+        options={options}
+        value={selectedPace}
+        onValueChange={setPickedPace}
+      />
 
-      <div className="px-5">
-        <PlanOptions
-          options={options}
-          value={selectedPace}
-          onValueChange={setPickedPace}
-        />
-      </div>
+      <Disclaimer />
 
-      <Disclaimer className="px-5 pt-3.5" />
-
-      <div className="flex flex-col gap-2.5 px-5 pt-3">
+      <div className="flex flex-col gap-2.5">
         {submitError && (
           <p role="alert" className="text-sm text-destructive-text">
             {submitError}

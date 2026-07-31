@@ -13,6 +13,7 @@ import {
   type Pace,
   type ProfileResponse,
 } from '@foodnote/shared';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -256,17 +257,35 @@ export function GoalReachedOverlay() {
         )}
 
         {view === 'target-plan' && profileData && targetWeightValue && (
-          <PlanSelection
-            input={{
-              ...profileData,
-              targetWeightKg: targetWeightValue,
-              currentWeightKg:
-                profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
-            }}
-            onBack={() => setView('target-input')}
-            onConfirm={handlePlanConfirm}
-            fromDate={new Date().toISOString().slice(0, 10)}
-          />
+          <>
+            <DialogHeader className="gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setView('target-input')}
+                aria-label="Back"
+                className="-ml-2 self-start"
+              >
+                <ChevronLeft />
+              </Button>
+              <DialogTitle>Choose your plan</DialogTitle>
+              <DialogDescription>
+                Based on your new target, here are a few daily-calorie options.
+              </DialogDescription>
+            </DialogHeader>
+
+            <PlanSelection
+              input={{
+                ...profileData,
+                targetWeightKg: targetWeightValue,
+                currentWeightKg:
+                  profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
+              }}
+              onConfirm={handlePlanConfirm}
+              fromDate={new Date().toISOString().slice(0, 10)}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>

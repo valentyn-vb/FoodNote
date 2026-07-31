@@ -28,6 +28,9 @@ export function PlanOptions({
 
   return (
     <RadioGroup
+      // Two abreast once the container clears 32rem — below that the cards'
+      // 2xl figure has nowhere to go and they stack.
+      className="@lg:grid-cols-2"
       value={value !== null ? String(value) : ''}
       onValueChange={(next) => onValueChange(Number(next) as Pace)}
     >

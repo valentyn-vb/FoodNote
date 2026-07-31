@@ -1,14 +1,24 @@
 'use client';
 
-import { OnboardingFormValues } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
-import { type Pace, type ProfileResponse } from '@foodnote/shared';
-import { useState } from 'react';
+import {
+  type Pace,
+  type PlanInput,
+  type ProfileResponse,
+} from '@foodnote/shared';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type CurrentPlanSectionProps = {
@@ -57,6 +67,24 @@ export function CurrentPlanSection({
   const target = profileData?.targetWeightKg;
   const pace = profileData?.preferredWeeklyChangeKg;
 
+  // Memoised because PlanSelection keys its option math on this object.
+  const planInput: PlanInput | null = useMemo(
+    () =>
+      profileData != null &&
+      profileData.currentWeightKg != null &&
+      profileData.targetWeightKg != null
+        ? {
+            age: profileData.age,
+            sex: profileData.sex,
+            heightCm: profileData.heightCm,
+            activityLevel: profileData.activityLevel,
+            currentWeightKg: profileData.currentWeightKg,
+            targetWeightKg: profileData.targetWeightKg,
+          }
+        : null,
+    [profileData],
+  );
+
   return (
     <section className="flex flex-col gap-2.5">
       <h2 className="text-sm text-muted-foreground">Current plan</h2>
@@ -78,20 +106,29 @@ export function CurrentPlanSection({
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger
-            disabled={loading}
+            // The plan math needs a weight to compute from and a target to
+            // reach, and PATCH /goals/current needs the goal that supplies the
+            // target — without both there is nothing to change.
+            disabled={loading || planInput === null}
             // An unstyled primitive, so it renders *as* a Button rather than
             // restating a button's look.
-            render={<Button variant="outline" size="sm" />}
-            className="mt-1.5 w-fit"
+            render={<Button variant="outline" size="sm" className="w-fit" />}
           >
             {loading && <Spinner />}
             Change plan
           </DialogTrigger>
-          <DialogContent className="p-0">
-            {profileData && (
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Change plan</DialogTitle>
+              <DialogDescription>
+                Pick a new pace — your daily calorie target moves with it.
+              </DialogDescription>
+            </DialogHeader>
+
+            {planInput && (
               <PlanSelection
-                input={profileData as OnboardingFormValues}
-                initialPace={profileData?.preferredWeeklyChangeKg ?? null}
+                input={planInput}
+                initialPace={pace ?? null}
                 onConfirm={handleConfirm}
                 submitting={submitting}
                 submitError={submitError}
