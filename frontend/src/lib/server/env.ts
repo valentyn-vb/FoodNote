@@ -21,6 +21,15 @@ const envSchema = z.object({
    * is the point at which a missing `API_URL` should stop the build.
    */
   API_URL: z.url().default('http://localhost:3001'),
+
+  /**
+   * Set by Next itself, never by a `.env` file. It is here so that `cookies.ts`
+   * can decide the `secure` flag without reaching for `process.env` directly and
+   * making this module's "only reader" claim false on its first day.
+   */
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
 });
 
 export const env = envSchema.parse(process.env);

@@ -1,6 +1,6 @@
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { ActionResult } from './result';
+import type { ActionFailure } from './result';
 
 /**
  * Draws a failed `ActionResult` where it belongs: field errors onto their
@@ -15,7 +15,7 @@ import type { ActionResult } from './result';
  */
 export function applyActionError<T extends FieldValues>(
   form: UseFormReturn<T>,
-  result: Extract<ActionResult<unknown>, { ok: false }>,
+  result: ActionFailure,
 ): void {
   const entries = Object.entries(result.fieldErrors ?? {});
 
@@ -24,6 +24,9 @@ export function applyActionError<T extends FieldValues>(
     return;
   }
 
+  // Field errors only, no toast: the summary would duplicate what is already
+  // drawn under each field, and "Validation failed" beside three red inputs
+  // reads as a fourth, unrelated problem.
   for (const [name, message] of entries) {
     // The server names fields as strings; `Path<T>` is a compile-time view of
     // the same names. A mismatch means the form and the request schema have
@@ -32,8 +35,5 @@ export function applyActionError<T extends FieldValues>(
     form.setError(name as Path<T>, { type: 'server', message });
   }
 
-  // The summary message would otherwise duplicate what is already drawn under
-  // each field ("Validation failed" beside three red inputs reads as a fourth,
-  // unrelated problem).
   form.setFocus(entries[0][0] as Path<T>);
 }

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import {
   authUserSchema,
   goalResponseSchema,
@@ -21,11 +22,22 @@ import { serverFetch, serverFetchOrNull } from './fetch';
  *   authority. Anything that renders real data must use these.
  */
 
-type SessionClaims = {
-  sub: string;
-  email: string;
-  exp: number;
-};
+/**
+ * The part of Nest's `AccessTokenPayload` this decoder actually uses
+ * (`backend/src/auth/auth.service.ts` signs `sub`, `email` and the JWT `exp`).
+ *
+ * `email` is deliberately loose. Validating it as an address would add a way for
+ * a *valid* token to be read as "no session" — the strictness buys nothing here,
+ * because nothing downstream reads the claim and Nest verifies the real thing on
+ * the next request anyway.
+ */
+const sessionClaimsSchema = z.object({
+  sub: z.string(),
+  email: z.string(),
+  exp: z.number(),
+});
+
+export type SessionClaims = z.infer<typeof sessionClaimsSchema>;
 
 /**
  * Reads the `exp` claim without validating the signature — a forged token is
@@ -33,18 +45,19 @@ type SessionClaims = {
  * rejects a forged token on the very next request, which is the check that
  * counts; this one exists so a page that reads nothing does not have to make a
  * network round trip just to decide between "sign in" and "open the app".
+ *
+ * The shape is checked by a schema rather than by hand so that the type is
+ * derived from the check instead of asserted alongside it: every field on
+ * `SessionClaims` is one the decoder actually verified.
  */
 export function decodeSession(token: string): SessionClaims | null {
   const payload = token.split('.')[1];
   if (!payload) return null;
   try {
-    const claims = JSON.parse(
+    const claims: unknown = JSON.parse(
       Buffer.from(payload, 'base64url').toString('utf8'),
-    ) as Partial<SessionClaims>;
-    if (typeof claims.sub !== 'string' || typeof claims.exp !== 'number') {
-      return null;
-    }
-    return claims as SessionClaims;
+    );
+    return sessionClaimsSchema.safeParse(claims).data ?? null;
   } catch {
     return null;
   }

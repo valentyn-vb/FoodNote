@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { z } from 'zod';
+import { ApiError, apiErrorMessage } from '@/lib/api-error';
 import { ACCESS_COOKIE } from './cookies';
 import { env } from './env';
 
@@ -18,25 +19,7 @@ import { env } from './env';
  * component ever holds an unvalidated API shape.
  */
 
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-type FetchOptions = RequestInit & {
-  /** Treat 404 as an absent resource rather than a failure. */
-  nullOn404?: boolean;
-};
-
-async function request(
-  path: string,
-  { nullOn404, ...init }: FetchOptions,
-): Promise<Response | null> {
+async function request(path: string, init: RequestInit): Promise<Response> {
   const accessToken = (await cookies()).get(ACCESS_COOKIE)?.value;
 
   // No cookie at all: `proxy.ts` renews an *expired* access token, so reaching
@@ -62,10 +45,9 @@ async function request(
   });
 
   if (res.status === 401) redirect('/login');
-  if (res.status === 404 && nullOn404) return null;
 
   if (!res.ok) {
-    throw new ApiError(res.status, await errorMessage(res));
+    throw new ApiError(res.status, await apiErrorMessage(res));
   }
 
   return res;
@@ -75,11 +57,9 @@ async function request(
 export async function serverFetch<T>(
   path: string,
   schema: z.ZodType<T>,
-  init: FetchOptions = {},
+  init: RequestInit = {},
 ): Promise<T> {
   const res = await request(path, init);
-  // Unreachable: `nullOn404` is not set, so `request` either returns or throws.
-  if (!res) throw new ApiError(404, 'Not found');
   return schema.parse(await res.json());
 }
 
@@ -87,20 +67,30 @@ export async function serverFetch<T>(
  * For endpoints where "not there" is an ordinary answer rather than a fault —
  * `GET /goals/current` 404s for a user who has not finished onboarding, which is
  * a state the app renders, not an error it reports.
+ *
+ * The 404 is caught here rather than flagged down into `request`, so the
+ * primitive keeps one return type and the policy sits in the one function whose
+ * name declares it.
  */
 export async function serverFetchOrNull<T>(
   path: string,
   schema: z.ZodType<T>,
-  init: FetchOptions = {},
+  init: RequestInit = {},
 ): Promise<T | null> {
-  const res = await request(path, { ...init, nullOn404: true });
-  return res ? schema.parse(await res.json()) : null;
+  try {
+    return await serverFetch(path, schema, init);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    // Everything else goes back up untouched — including the `NEXT_REDIRECT`
+    // that `redirect('/login')` throws, which must not be swallowed here.
+    throw err;
+  }
 }
 
 /** 204s and other bodiless successes. */
 export async function serverSend(
   path: string,
-  init: FetchOptions = {},
+  init: RequestInit = {},
 ): Promise<void> {
   await request(path, init);
 }
@@ -108,15 +98,4 @@ export async function serverSend(
 function forwardedFor(incoming: Headers): Record<string, string> {
   const value = incoming.get('x-forwarded-for');
   return value ? { 'x-forwarded-for': value } : {};
-}
-
-async function errorMessage(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { message?: string | string[] };
-    const { message } = body;
-    if (Array.isArray(message)) return message.join(', ');
-    return message ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
 }

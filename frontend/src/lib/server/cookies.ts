@@ -1,3 +1,5 @@
+import { env } from './env';
+
 /**
  * The two Next-owned session cookies.
  *
@@ -26,6 +28,6 @@ export const SESSION_COOKIE_OPTIONS = {
   // any external link, so a signed-in user following a link to the app would
   // land on the marketing page as an anonymous visitor.
   sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
+  secure: env.NODE_ENV === 'production',
   path: '/',
 } as const;

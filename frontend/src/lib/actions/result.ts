@@ -13,9 +13,13 @@ import type { ZodError } from 'zod';
  * belongs to. It never decides where the error is drawn — that is the form's
  * job, via `applyActionError`.
  */
-export type ActionResult<T = undefined> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; fieldErrors?: Record<string, string> };
+export type ActionFailure = {
+  ok: false;
+  message: string;
+  fieldErrors?: Record<string, string>;
+};
+
+export type ActionResult<T = undefined> = { ok: true; data: T } | ActionFailure;
 
 export function ok(): ActionResult;
 export function ok<T>(data: T): ActionResult<T>;
@@ -26,7 +30,7 @@ export function ok<T>(data?: T): ActionResult<T | undefined> {
 export function fail(
   message: string,
   fieldErrors?: Record<string, string>,
-): ActionResult<never> {
+): ActionFailure {
   return { ok: false, message, fieldErrors };
 }
 
