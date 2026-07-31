@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CurrentPlanSection } from './current-plan-section';
 import { EditProfileDialog } from './edit-profile-dialog';
-import { LogoutButton } from './logout-button';
 import { PersonalDetailsSection } from './personal-details-section';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
