@@ -349,7 +349,7 @@ export function MealItemsFields({
                 placeholder="Item name"
                 // Reads as text until focused — an item's name, not a form
                 // field: no box, no shadow, the underline does the work.
-                className="min-w-24 grow-2 basis-0 border-transparent font-medium shadow-none focus-visible:underline md:text-label"
+                className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
                 {...form.register(`items.${index}.name`)}
               />
             )}
