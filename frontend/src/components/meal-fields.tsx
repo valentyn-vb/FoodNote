@@ -188,7 +188,10 @@ function NutrientField({
       <Text variant="overline" tone="muted" render={<label htmlFor={id} />}>
         {label}
       </Text>
-      <InputGroup variant={accent ? 'field-primary' : 'field'}>
+      {/* Calories leads — the only required figure and the only one the
+          dashboard spends — so it carries the accent while the macros stay on
+          the stock field surface. */}
+      <InputGroup className={accent ? 'border-primary bg-accent' : undefined}>
         <InputGroupInput
           id={id}
           aria-invalid={!!error || undefined}
@@ -381,8 +384,9 @@ export function MealItemsFields({
               units go after a number, nutrient names before it, so kcal reads
               as the marker for this box rather than a stray unit. */}
           <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
+            {/* A compact cell in a dense row, tighter than a form field. */}
             {ITEM_NUTRIENTS.map(({ name, label }) => (
-              <InputGroup key={name} variant="cell" className="h-9 min-w-0">
+              <InputGroup key={name} className="h-9 min-w-0 rounded-sm">
                 <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
                 <InputGroupInput
                   aria-label={`Item ${index + 1} ${label}`}

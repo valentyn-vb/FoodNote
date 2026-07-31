@@ -96,7 +96,9 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
               onValueChange={field.onChange}
               items={ACTIVITY_LEVEL_LABELS}
             >
-              <SelectTrigger variant="field">
+              {/* `w-fit` is the stock trigger's default; a select filling a
+                  form row is layout, not a variant. */}
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select activity level" />
               </SelectTrigger>
               <SelectContent>

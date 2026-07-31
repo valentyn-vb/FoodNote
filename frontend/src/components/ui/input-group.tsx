@@ -9,43 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 /**
- * Height, surface and focus treatment live in the variant, matching Input's —
- * `field` is the app's form look rather than the base look with its height and
- * ring undone.
+ * Upstream `base-vega`, with the one divergence `Input` carries: `h-11` against
+ * upstream's `h-9`, so a group and a bare field are the same height. They were
+ * not, before this — the inner control is an `Input`, and after #99 that is
+ * 44px inside a 36px group.
+ *
+ * No variants. `field` said "the app's form look", which the stock `Input` now
+ * *is*; `field-primary` and `cell` are one line of utilities at the one call
+ * site each of them had.
  */
-const inputGroupVariants = cva(
-  'group/input-group relative flex w-full min-w-0 items-center rounded-md border transition-[color,box-shadow] outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-[[data-slot][aria-invalid=true]]:border-destructive has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
-  {
-    variants: {
-      variant: {
-        default:
-          'h-9 border-input has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20',
-        // The app's form look, shared with Input's `field`.
-        field:
-          'h-11 border-border bg-card shadow-xs has-[[data-slot=input-group-control]:focus-visible]:border-ring',
-        // A compact cell in a dense row — the per-item macro boxes.
-        cell: 'h-8 rounded-sm border-border bg-card has-[[data-slot=input-group-control]:focus-visible]:border-ring',
-        // Same, for the one field in a group that carries the most weight.
-        'field-primary':
-          'h-11 border-primary bg-accent shadow-xs has-[[data-slot=input-group-control]:focus-visible]:border-ring',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-);
-
-function InputGroup({
-  className,
-  variant,
-  ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof inputGroupVariants>) {
+function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="input-group"
       role="group"
-      className={cn(inputGroupVariants({ variant, className }))}
+      className={cn(
+        'group/input-group relative flex h-11 w-full min-w-0 items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
+        className,
+      )}
       {...props}
     />
   );
@@ -152,8 +133,9 @@ function InputGroupInput({
   return (
     <Input
       data-slot="input-group-control"
-      // h-full so the control fills whatever height the group's variant sets,
-      // instead of leaving dead space around a 36px input.
+      // h-full so the control fills whatever height the group is given —
+      // upstream leaves the Input's own height, which a call site that shrinks
+      // the group (the macro cells) would then have to undo twice.
       className={cn(
         'h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:shadow-none focus-visible:ring-0 aria-invalid:ring-0',
         className,
