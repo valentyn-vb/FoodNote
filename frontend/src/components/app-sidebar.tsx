@@ -58,7 +58,7 @@ export function AppSidebar() {
               exactly the mascot's 32px — so the row drops its `px-4` there and
               centres, and the wordmark goes. With the padding kept, the logo
               was pushed past the edge and `overflow-hidden` cut it in half. */}
-          <div className="flex h-14 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          <div className="flex h-18 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <Image
               src="/mascot/default.webp"
               alt="FoodNote mascot"
@@ -108,7 +108,10 @@ export function AppSidebar() {
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <SidebarMenuButton size="lg" className="bg-primary/10" />
+                    <SidebarMenuButton
+                      size="lg"
+                      className="bg-primary/5 border border-text-foreground h-14"
+                    />
                   }
                 >
                   <Avatar className="size-8">

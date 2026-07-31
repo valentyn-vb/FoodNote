@@ -66,10 +66,11 @@
   --font-heading: var(--font-display);
 
   /* ── Radius ──────────────────────────────────────────────────────────────
-     One number, shadcn's own formula off it: sm/md/lg/xl are −4/−2/0/+4, so 16
-     gives 12/14/16/20 — the handoff's controls, tiles and cards. Must stay a
-     length: input-group computes calc(var(--radius) - 5px) from it. */
-  --radius: 16px;
+     One number, shadcn's own formula off it: xs/sm/md/lg/xl are −6/−4/−2/0/+4,
+     so 14 gives 8/10/12/14/18 — the handoff's controls, tiles and cards. Must
+     stay a length: input-group computes calc(var(--radius) - 5px) from it. */
+  --radius: 14px;
+  --radius-xs: calc(var(--radius) - 6px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
