@@ -3,7 +3,6 @@
 import { Disclaimer } from '@/components/disclaimer';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
 import { buildPlanOptions, PlanOption, type Pace } from '@foodnote/shared';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -67,12 +66,12 @@ export function PlanSelection({
             <ChevronLeft />
           </Button>
         )}
-        <Text variant="heading" render={<h1 />}>
+        <h1 className="font-heading text-2xl font-semibold">
           Choose your plan
-        </Text>
-        <Text variant="label" tone="muted" render={<p />}>
+        </h1>
+        <p className="text-sm font-semibold text-muted-foreground">
           Based on your goal, here are a few daily-calorie options.
-        </Text>
+        </p>
       </div>
 
       <div className="px-5">
@@ -87,9 +86,9 @@ export function PlanSelection({
 
       <div className="flex flex-col gap-2.5 px-5 pt-3">
         {submitError && (
-          <Text variant="caption" tone="danger" render={<p role="alert" />}>
+          <p role="alert" className="text-sm text-destructive-text">
             {submitError}
-          </Text>
+          </p>
         )}
         <Button
           type="button"

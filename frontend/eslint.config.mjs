@@ -61,6 +61,9 @@ const eslintConfig = defineConfig([
       'src/app/(auth)/register/register-form.tsx',
       'src/app/(app)/profile/current-plan-section.tsx',
       'src/app/(app)/profile/personal-details-section.tsx',
+      'src/app/(onboarding)/onboarding/onboarding-wizard.tsx',
+      'src/components/onboarding/plan-selection.tsx',
+      'src/components/onboarding/plan-options.tsx',
     ],
     plugins: { local },
     rules: {
