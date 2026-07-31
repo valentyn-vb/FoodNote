@@ -3,7 +3,6 @@
 import { History } from 'lucide-react';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
-import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -15,7 +14,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -53,12 +51,6 @@ export function DesktopDashboard() {
     // with `overflow-clip` it could not: the meal list is the only part that
     // grows, so every row shrank to keep the layout inside one viewport.
     <div className="hidden flex-col gap-4 lg:flex lg:min-h-screen">
-      {/* The route header is the shell's now, so the day picker stands on its
-          own row here rather than inside a second page title. */}
-      <div className="flex justify-center">
-        <DayNav />
-      </div>
-
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
