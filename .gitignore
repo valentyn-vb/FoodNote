@@ -19,3 +19,9 @@ skills-lock.json
 
 # Wayfinder maps and scratch notes — working artifacts, not team-facing.
 .scratch/
+
+# End-to-end suite artifacts — the run's seeded identities and captured
+# sessions, plus Playwright's own output. All regenerated per run.
+e2e/.auth/
+e2e/test-results/
+e2e/playwright-report/
