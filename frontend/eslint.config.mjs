@@ -1,7 +1,7 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
-import local from './eslint-rules/no-visual-classes.js';
+import local from './eslint-rules/no-literal-values.js';
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -15,73 +15,37 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
   ]),
   {
-    // Scoped with `files` rather than a global `ignores`: the folders left out
-    // here — ui/ (where the visual style lives), marketing/, canvasui/ and
-    // evilcharts/ (their own visual systems) — must stay under every *other*
-    // check, which a global ignore would also switch off.
-    files: [
-      'src/app/**/*.tsx',
-      'src/components/*.tsx',
-      'src/components/onboarding/**/*.tsx',
-    ],
-    // Every file here is migrated onto the stock utilities and correct under
-    // the rule #101 installs, but illegal under the one still standing. The
-    // list exists for that single step and dies with the rule.
+    // All of `src`, `ui/**` included: the rule bans hardcoded values, and a
+    // value written in markup is no better inside a component than outside it.
+    // This is what replaced the per-file ignore list, which had grown to 26
+    // entries — one for every screen migrated ahead of the rule.
+    files: ['src/**/*.{ts,tsx}'],
+    // The three self-contained visual systems. `canvasui/**` and
+    // `evilcharts/**` are vendored and out of scope by the map; `marketing/**`
+    // is a slide deck with its own palette — 34 literals whose replacement
+    // would mean either redesigning it or minting a token per gradient stop.
+    // Neither is this effort's business, so the deck keeps its literals and
+    // stays under every other check.
     ignores: [
-      // Arrived from `main` (the meal-overview page, #81, and the AI meal
-      // drawer, #83) after this branch's rewrite, in the pre-rewrite classes.
-      // #100 restyled them: until then they read `--color-text-muted` and
-      // friends, which #98 deleted, so they were rendering with no colour rule
-      // at all rather than the wrong one.
-      'src/app/(app)/meals/page.tsx',
-      'src/app/(app)/meals/desktop-meal-groups.tsx',
-      'src/components/meal-line.tsx',
-      'src/components/meal-groups-accordion.tsx',
-      // The #97 pilot, migrated to the stock utilities ahead of the rule that
-      // will permit them. This is the only way the pilot and the old rule
-      // coexist for one step; #101 deletes the rule and this list with it.
-      'src/app/(app)/dashboard/desktop-dashboard.tsx',
-      'src/app/(app)/dashboard/mobile-dashboard.tsx',
-      'src/app/(app)/dashboard/stat-widget.tsx',
-      'src/app/(app)/dashboard/states.tsx',
-      'src/app/(app)/dashboard/weight-history-drawer.tsx',
-      // #99 cut `ui/**` back to the upstream variants, so the looks that used
-      // to be `Card variant="tile"`, `Button variant="quiet"` and the rest are
-      // written where they are used. Same bind as the pilot above: the call
-      // site is correct under the rule #101 installs and illegal under the one
-      // still standing. Both lists die with the rule.
-      'src/app/(app)/profile/page.tsx',
-      'src/components/meal-fields.tsx',
-      'src/components/meal-log-drawer.tsx',
-      'src/components/onboarding/plan-option-card.tsx',
-      'src/components/toggle-field.tsx',
-      'src/components/weight-form.tsx',
-      // #100 migrates the call sites, one screen per commit. Each screen joins
-      // this list as it lands, for the same one step as everything above it.
-      'src/app/(auth)/layout.tsx',
-      'src/app/(auth)/login/login-form.tsx',
-      'src/app/(auth)/register/register-form.tsx',
-      'src/app/(app)/profile/current-plan-section.tsx',
-      'src/app/(app)/profile/personal-details-section.tsx',
-      'src/app/(onboarding)/onboarding/onboarding-wizard.tsx',
-      'src/components/onboarding/plan-selection.tsx',
-      'src/components/onboarding/plan-options.tsx',
-      'src/components/api-status.tsx',
-      'src/components/app-sidebar.tsx',
-      'src/components/charts.tsx',
-      'src/components/disclaimer.tsx',
-      'src/components/empty-state.tsx',
-      'src/components/goal-reached-overlay.tsx',
-      'src/components/user-menu.tsx',
-      // #107 deleted the style-only wrappers, so the row `ListRow` used to draw
-      // is written at its one call site. Same one step as everything above.
-      'src/components/weight-history-row.tsx',
+      'src/components/canvasui/**',
+      'src/components/evilcharts/**',
+      'src/components/marketing/**',
     ],
     plugins: { local },
     rules: {
-      // `error`, not `warn`: the migration is complete in the same PR, and a
-      // warning is a boundary that erodes on the next deadline.
-      'local/no-visual-classes': 'error',
+      'local/no-literal-values': 'error',
+    },
+  },
+  {
+    // `ui/**` is registry code, kept diffable against upstream — and upstream
+    // writes `ring-[3px]` and the tooltip arrow's `rounded-[2px]`. An
+    // untokenised length is allowed here so those files can stay byte-equal to
+    // what `shadcn add` brought. Colour literals and hardcoded type are still
+    // errors: the registry never writes those.
+    files: ['src/components/ui/**/*.tsx'],
+    plugins: { local },
+    rules: {
+      'local/no-literal-values': ['error', { allowUntokenisedLengths: true }],
     },
   },
 ]);
