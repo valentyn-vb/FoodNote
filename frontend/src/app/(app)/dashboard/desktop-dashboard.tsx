@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
+import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -27,33 +28,38 @@ import { useDashboardGate } from './use-dashboard-gate';
 import { WeightHistoryDrawer } from './weight-history-drawer';
 
 export function DesktopDashboard() {
-  const { eatenKcal, remainingKcal, goalKcal, todayMeals, dailyCalories } =
-    useMeals();
+  const {
+    eatenKcal,
+    remainingKcal,
+    goalKcal,
+    todayMeals,
+    dailyCalories,
+    isToday,
+  } = useMeals();
   const {
     status: weightStatus,
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
     weightChangeKg,
-    weightChangeLastMonthKg,
     onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
-  // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
-  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
-  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     // Grows with its content and lets the page scroll. Pinned to `h-screen`
     // with `overflow-clip` it could not: the meal list is the only part that
     // grows, so every row shrank to keep the layout inside one viewport.
     <div className="hidden flex-col gap-5.5 bg-bg px-10 py-8 lg:flex lg:min-h-screen">
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center gap-2">
         <SidebarTrigger className="text-text-muted" />
         <h1 className="font-display text-heading-lg font-semibold text-text">
           Dashboard
         </h1>
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <DayNav />
+        </div>
       </div>
 
       {gate.state === 'error' ? (
@@ -64,12 +70,12 @@ export function DesktopDashboard() {
         <>
           <div className="flex gap-3.5 *:grow *:basis-0">
             <StatWidget
-              label="Remaining today"
+              label={isToday ? 'Remaining today' : 'Remaining'}
               value={remainingKcal}
               suffix=" kcal"
             />
             <StatWidget
-              label="Eaten today"
+              label={isToday ? 'Eaten today' : 'Eaten'}
               value={eatenKcal}
               suffix=" kcal"
               mascotSrc={fullnessMascot(eatenKcal, goalKcal)}
@@ -137,7 +143,7 @@ export function DesktopDashboard() {
 
               <div className="flex flex-col gap-2.5">
                 <h2 className="font-sans text-caption font-semibold text-text">
-                  Logged today
+                  {isToday ? 'Logged today' : 'Logged meals'}
                 </h2>
                 <div className="flex flex-col gap-2.5">
                   {todayMeals.length === 0 ? (

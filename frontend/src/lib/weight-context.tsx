@@ -93,6 +93,12 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     [refetchDashboard],
   );
 
+  // Use the selected tracking day as "now" so the weight trend and change stat
+  // reflect the state at that day, not the current moment.
+  const { selectedDate } = useMeals();
+  // UTC noon to avoid any DST edge-case on the boundary.
+  const selectedDateAsNow = new Date(`${selectedDate}T12:00:00Z`);
+
   // Edits and deletes re-list rather than patching locally, so the client
   // never holds a view the server disagrees with. That also fixes a real bug:
   // an edit can move an entry's recordedAt outside this provider's 60-day
@@ -110,19 +116,22 @@ export function WeightProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<WeightContextValue>(() => {
     const change = goal
-      ? computeWeightChange(entries, goal.currentWeightKg, new Date())
+      ? computeWeightChange(entries, goal.currentWeightKg, selectedDateAsNow)
       : { weightChangeKg: 0, weightChangeLastMonthKg: 0 };
     return {
       status,
       retry,
       entries,
-      weightTrend: goal ? buildWeightTrend(entries, goal, new Date()) : [],
+      weightTrend: goal
+        ? buildWeightTrend(entries, goal, selectedDateAsNow)
+        : [],
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
       onWeightSaved,
       onWeightsChanged,
     };
-  }, [entries, goal, status, retry, onWeightSaved, onWeightsChanged]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, goal, status, retry, selectedDate, onWeightSaved, onWeightsChanged]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>

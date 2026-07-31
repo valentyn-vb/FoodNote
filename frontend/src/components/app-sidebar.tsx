@@ -36,13 +36,14 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
+import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
-import { notImplemented } from '@/lib/not-implemented';
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isToday } = useMeals();
   const { onWeightSaved } = useWeight();
   // The drawers run controlled here so each menu item can be a real
   // SidebarMenuButton — same look as the nav links, and it keeps the
@@ -93,7 +94,10 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === '/meals'}
                     tooltip="Meals"
-                    render={<Link href="/meals" />}
+                    render={
+                      isToday ? <Link href="/meals" /> : <button disabled />
+                    }
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <NotebookText />
                     <span>Meals</span>
@@ -103,6 +107,8 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     tooltip="Log a meal"
                     onClick={() => setMealDrawerOpen(true)}
+                    disabled={!isToday}
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <UtensilsCrossed />
                     <span>Log a meal</span>
@@ -116,6 +122,8 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     tooltip="Log weight"
                     onClick={() => setWeightDrawerOpen(true)}
+                    disabled={!isToday}
+                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <Scale />
                     <span>Log weight</span>

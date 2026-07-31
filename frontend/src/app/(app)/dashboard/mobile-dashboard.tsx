@@ -19,6 +19,7 @@ import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -35,6 +36,7 @@ export function MobileDashboard() {
     goalKcal,
     todayMeals,
     dailyCalories,
+    isToday,
   } = useMeals();
   const {
     status: weightStatus,
@@ -53,7 +55,7 @@ export function MobileDashboard() {
     <div className="flex flex-col gap-5 bg-bg px-5 pt-6 pb-8 lg:hidden">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-heading-lg font-semibold text-text">
-          Today
+          Dashboard
         </h1>
         {/* The sidebar (and its profile menu) is desktop-only — on mobile the
             avatar is the only path to the profile page. */}
@@ -66,6 +68,10 @@ export function MobileDashboard() {
         </Link>
       </div>
 
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
+
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
@@ -74,7 +80,7 @@ export function MobileDashboard() {
         <>
           <Card variant="panel" className="gap-2.5 p-5">
             <h2 className="font-sans text-caption text-text-muted">
-              Remaining today
+              {isToday ? 'Remaining today' : 'Remaining'}
             </h2>
             <NumberFlow
               value={remainingKcal}
@@ -98,7 +104,8 @@ export function MobileDashboard() {
                 <NumberFlow value={eatenKcal} /> eaten
               </div>
               <div>
-                Goal <NumberFlow value={goalKcal} />
+                {isToday ? 'Goal' : 'Current goal'}{' '}
+                <NumberFlow value={goalKcal} />
               </div>
             </div>
           </Card>
@@ -179,7 +186,7 @@ export function MobileDashboard() {
 
           <div className="flex flex-col gap-2.5">
             <h2 className="font-sans text-caption font-medium text-text">
-              Logged today
+              {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
             {todayMeals.length === 0 ? (
               <EmptyMeals />
@@ -188,16 +195,18 @@ export function MobileDashboard() {
             )}
           </div>
 
-          <div className="flex gap-2.5 border-t border-border pt-3">
-            <MealLogDrawer>Log a meal</MealLogDrawer>
-            <WeightDrawer
-              mode="create"
-              onWeightSaved={onWeightSaved}
-              triggerClassName="h-12.5 grow basis-0 rounded-md border border-border text-[13.5px] font-medium text-text"
-            >
-              Log weight
-            </WeightDrawer>
-          </div>
+          {isToday && (
+            <div className="flex gap-2.5 border-t border-border pt-3">
+              <MealLogDrawer>Log a meal</MealLogDrawer>
+              <WeightDrawer
+                mode="create"
+                onWeightSaved={onWeightSaved}
+                triggerClassName="h-12.5 grow basis-0 rounded-md border border-border text-[13.5px] font-medium text-text"
+              >
+                Log weight
+              </WeightDrawer>
+            </div>
+          )}
         </>
       )}
     </div>
