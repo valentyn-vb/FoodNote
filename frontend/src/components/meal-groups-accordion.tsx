@@ -34,10 +34,10 @@ export function MealGroupsAccordion({ meals }: { meals: MealResponse[] }) {
           <AccordionItem key={group.mealType} value={group.mealType}>
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex flex-1 items-center justify-between gap-3">
-                <span className="font-sans text-label font-semibold text-text capitalize">
+                <span className="text-sm font-semibold capitalize">
                   {group.mealType}
                 </span>
-                <span className="font-sans text-caption text-text-muted [font-variant-numeric:tabular-nums]">
+                <span className="text-sm text-muted-foreground tabular-nums">
                   {formatGroupSummary(group)}
                 </span>
               </div>

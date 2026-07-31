@@ -32,15 +32,9 @@ export default function MealsPage() {
           aria-label="Back to dashboard"
           className="lg:hidden"
         >
-          <ChevronLeft
-            size={20}
-            className="shrink-0 text-text"
-            strokeWidth={1.8}
-          />
+          <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
         </Link>
-        <h1 className="font-display text-heading-lg font-semibold text-text">
-          Meals
-        </h1>
+        <h1 className="font-heading text-2xl font-semibold">Meals</h1>
         {/* Logging is reachable from here too, not just the dashboard — this is
             the page you land on to review the day. The drawer's own trigger
             defaults stretch to fill a mobile action bar, so the grow/basis
@@ -77,7 +71,7 @@ export default function MealsPage() {
 function MealsError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <span className="font-sans text-caption text-text-muted">
+      <span className="text-sm text-muted-foreground">
         Couldn&apos;t load your meals.
       </span>
       <Button variant="outline" onClick={onRetry}>

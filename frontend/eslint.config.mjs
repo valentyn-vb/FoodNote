@@ -24,13 +24,15 @@ const eslintConfig = defineConfig([
       'src/components/*.tsx',
       'src/components/onboarding/**/*.tsx',
     ],
-    // Arrived from `main` (the meal-overview page, #81, and the AI meal drawer,
-    // #83) after this branch's rewrite, so they are written in the pre-rewrite
-    // classes. They are not restyled onto this system, because #100 on the map
-    // (Back to stock shadcn, #94) migrates every call site onto the stock
-    // utilities and #101 replaces this rule entirely — styling them twice would
-    // be the only outcome. The debt is one grep away: `git grep text-text-muted`.
+    // Every file here is migrated onto the stock utilities and correct under
+    // the rule #101 installs, but illegal under the one still standing. The
+    // list exists for that single step and dies with the rule.
     ignores: [
+      // Arrived from `main` (the meal-overview page, #81, and the AI meal
+      // drawer, #83) after this branch's rewrite, in the pre-rewrite classes.
+      // #100 restyled them: until then they read `--color-text-muted` and
+      // friends, which #98 deleted, so they were rendering with no colour rule
+      // at all rather than the wrong one.
       'src/app/(app)/meals/page.tsx',
       'src/app/(app)/meals/desktop-meal-groups.tsx',
       'src/components/meal-line.tsx',

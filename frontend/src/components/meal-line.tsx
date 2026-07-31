@@ -10,15 +10,13 @@ export function MealLine({ meal }: { meal: MealResponse }) {
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-t-0">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="truncate font-sans text-label font-semibold text-text">
-          {meal.mealName}
-        </div>
-        <div className="font-sans text-caption text-text-muted">
+        <div className="truncate text-sm font-semibold">{meal.mealName}</div>
+        <div className="text-sm text-muted-foreground">
           {meal.source === 'ai' ? 'AI logged' : 'Manual'} ·{' '}
           {formatMealTime(meal.recordedAt)}
         </div>
       </div>
-      <div className="shrink-0 font-sans text-label font-semibold text-text [font-variant-numeric:tabular-nums]">
+      <div className="shrink-0 text-sm font-semibold tabular-nums">
         {meal.totalCalories} kcal
       </div>
     </div>
@@ -28,7 +26,7 @@ export function MealLine({ meal }: { meal: MealResponse }) {
 /** Shown in place of the meal lines when nothing was logged for a meal time. */
 export function EmptyGroupLine() {
   return (
-    <div className="px-4 py-3 font-sans text-caption text-text-muted">
+    <div className="px-4 py-3 text-sm text-muted-foreground">
       Nothing logged
     </div>
   );
