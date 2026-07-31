@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Text } from '@/components/ui/text';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -74,9 +73,9 @@ export function LoginForm() {
             autoComplete="current-password"
           />
           {formError && (
-            <Text variant="caption" tone="danger" render={<p role="alert" />}>
+            <p role="alert" className="text-sm text-destructive-text">
               {formError}
-            </Text>
+            </p>
           )}
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting && <Spinner />}
@@ -85,12 +84,7 @@ export function LoginForm() {
         </form>
       </CardContent>
       <CardFooter>
-        <Text
-          variant="caption"
-          tone="muted"
-          className="w-full text-center"
-          render={<p />}
-        >
+        <p className="w-full text-center text-sm text-muted-foreground">
           No account yet?{' '}
           <Button
             variant="link"
@@ -99,7 +93,7 @@ export function LoginForm() {
           >
             Register
           </Button>
-        </Text>
+        </p>
       </CardFooter>
     </Card>
   );

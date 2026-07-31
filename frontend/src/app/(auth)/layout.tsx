@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Text } from '@/components/ui/text';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
@@ -34,7 +33,8 @@ export default function AuthLayout({
           height={112}
           priority
         />
-        <Text variant="heading">FoodNote</Text>
+        {/* The wordmark: a page title, so it keeps the brand face. */}
+        <p className="font-heading text-2xl font-semibold">FoodNote</p>
       </div>
       <div className="w-full max-w-sm">
         {status === 'unauthenticated' ? children : <AuthFormSkeleton />}

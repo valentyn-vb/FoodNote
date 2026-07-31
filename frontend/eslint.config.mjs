@@ -54,6 +54,13 @@ const eslintConfig = defineConfig([
       'src/components/onboarding/plan-option-card.tsx',
       'src/components/toggle-field.tsx',
       'src/components/weight-form.tsx',
+      // #100 migrates the call sites, one screen per commit. Each screen joins
+      // this list as it lands, for the same one step as everything above it.
+      'src/app/(auth)/layout.tsx',
+      'src/app/(auth)/login/login-form.tsx',
+      'src/app/(auth)/register/register-form.tsx',
+      'src/app/(app)/profile/current-plan-section.tsx',
+      'src/app/(app)/profile/personal-details-section.tsx',
     ],
     plugins: { local },
     rules: {

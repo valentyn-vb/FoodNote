@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
 import {
   Dialog,
   DialogClose,
@@ -125,9 +124,7 @@ export function PersonalDetailsSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <Text variant="caption" tone="muted" render={<h2 />}>
-        Personal details
-      </Text>
+      <h2 className="text-sm text-muted-foreground">Personal details</h2>
       <Card className="gap-0 overflow-hidden py-0">
         <DetailList>
           <DetailRow

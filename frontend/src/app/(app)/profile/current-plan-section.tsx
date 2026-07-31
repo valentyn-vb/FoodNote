@@ -4,7 +4,6 @@ import { OnboardingFormValues } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
 import { Spinner } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
@@ -60,16 +59,14 @@ export function CurrentPlanSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <Text variant="caption" tone="muted" render={<h2 />}>
-        Current plan
-      </Text>
+      <h2 className="text-sm text-muted-foreground">Current plan</h2>
       <Card className="gap-1 p-4">
-        <Text variant="heading" numeric>
+        <p className="font-heading text-2xl font-semibold tabular-nums">
           {profileData?.calorieTarget != null
             ? `${profileData.calorieTarget.toLocaleString()} kcal / day`
             : '—'}
-        </Text>
-        <Text variant="caption" tone="muted">
+        </p>
+        <p className="text-sm text-muted-foreground">
           {pace == null
             ? 'No active plan yet'
             : pace === 0
@@ -77,7 +74,7 @@ export function CurrentPlanSection({
                 // and the stored target is parked and irrelevant here.
                 'Maintaining your weight'
               : `${pace} kg / week${target != null ? ` · target ${target} kg` : ''}`}
-        </Text>
+        </p>
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger

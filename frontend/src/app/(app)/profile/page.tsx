@@ -3,7 +3,6 @@
 import { useAuth } from '@/components/auth-provider';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
 import { profile } from '@/lib/api-client';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
@@ -57,9 +56,7 @@ export default function ProfilePage() {
         >
           <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
         </Link>
-        <Text variant="title" render={<h1 />}>
-          Profile
-        </Text>
+        <h1 className="font-heading text-2xl font-semibold">Profile</h1>
       </div>
       <Separator />
 
@@ -68,15 +65,13 @@ export default function ProfilePage() {
           <Avatar className="size-18">
             {/* The stock fallback is a grey wash at 14px — it reads as a
                 missing image at this size, not as a person. */}
-            <AvatarFallback className="bg-primary text-heading font-semibold text-primary-foreground">
+            <AvatarFallback className="bg-primary text-2xl font-semibold text-primary-foreground">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
-            <Text variant="title">{fullName}</Text>
-            <Text variant="caption" tone="muted">
-              {authUser?.email}
-            </Text>
+            <p className="text-lg font-bold">{fullName}</p>
+            <p className="text-sm text-muted-foreground">{authUser?.email}</p>
           </div>
         </div>
         <EditProfileDialog />

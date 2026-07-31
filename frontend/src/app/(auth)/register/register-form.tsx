@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -94,12 +93,7 @@ export function RegisterForm() {
         </form>
       </CardContent>
       <CardFooter>
-        <Text
-          variant="caption"
-          tone="muted"
-          className="w-full text-center"
-          render={<p />}
-        >
+        <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Button
             variant="link"
@@ -108,7 +102,7 @@ export function RegisterForm() {
           >
             Log in
           </Button>
-        </Text>
+        </p>
       </CardFooter>
     </Card>
   );
