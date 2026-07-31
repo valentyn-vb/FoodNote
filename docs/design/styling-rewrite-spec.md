@@ -123,7 +123,14 @@ shadow the handoff asks for is roughly `shadow-lg`. No brand glow — a CTA hold
 attention with its fill — and no focus halo, which reads as a smudge where the
 border already says it.
 
-Focus is `--ring`: a border plus a 3px ring at `/50`, upstream's own treatment.
+Focus and invalid are the same shape on every field: `border-ring` plus
+`ring-1 ring-ring ring-inset`, and the same in `--destructive` for
+`aria-invalid`. Inset, so it reads as a 2px edge with the border and costs no
+layout — no halo, which reads as a smudge where the border already carries the
+state. `Textarea` is where this is written out; `Input`, `SelectTrigger` and
+`InputGroup` follow it, and `InputGroup` draws it on the group rather than on
+the control it wraps. Buttons and toggles keep upstream's 3px at `/50`: they are
+not fields, and a pressed toggle needs the softer edge to stay legible.
 
 ## Components
 

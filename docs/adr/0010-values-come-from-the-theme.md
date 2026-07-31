@@ -112,6 +112,28 @@ listed here rather than discovered later:
 - **`Card` is bounded by a `border`,** not upstream's `ring-1
 ring-foreground/10`. A ring means focus and invalid state here, so a card and
   a focused card must not be drawn the same way.
+- **Field states are a 1px inset ring in the solid colour,** not upstream's 3px
+  at `/20`. Focus is `border-ring` + `ring-1 ring-ring ring-inset`, invalid the
+  same in `--destructive`, across `Input`, `Textarea`, `SelectTrigger` and
+  `InputGroup`. It reads as a 2px edge together with the border and costs no
+  layout; the soft halo is the one thing ADR 0009 measured and rejected, and
+  three of the four had drifted back to it. `Button`, `Toggle` and `RadioGroup`
+  keep upstream's — they are not fields.
+- **A field label is `font-semibold`,** not upstream's `font-medium`: it is the
+  app's `label` role at 14/600, and at 500 it read as body text above a control
+  rather than as the control's name. `Label`, `FieldTitle` and `FieldLegend`
+  agree on this.
+- **The active sidebar row is `font-semibold`,** not upstream's `font-medium`.
+  It is the same 600 the pressed state already used, so the row no longer
+  changes weight under the finger; at 500 beside the inactive 400 the current
+  page was carried almost entirely by the accent fill. It also keeps both its
+  `text-brand-ink` and its full-strength `bg-sidebar-accent` under `hover`:
+  upstream's `hover:text-sidebar-accent-foreground` ties on specificity with
+  `data-active:text-*` and wins on source order, and `hover:bg-sidebar-accent/50`
+  is `!important`, so pointing at the current page repainted it as an ordinary
+  row and _faded_ its fill. The two `data-active:hover:` rules are the narrower
+  selector; the background one carries `!` because it has an `!important` to
+  beat, not because it is winning an argument with a call site.
 - **`Button variant="link"` reads `text-brand-ink`,** not `text-primary`:
   `--primary` is the fill orange and fails contrast as text.
 - **`dark:` rules are dropped** from registry files. This app has no dark mode,
