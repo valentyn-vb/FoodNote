@@ -1,9 +1,12 @@
 import type { NextConfig } from 'next';
+import { env } from './src/lib/server/env';
 
 // All browser traffic goes to the frontend's own origin; Next.js proxies
 // /api/* to the backend. Keeps auth cookies first-party in production.
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-
+//
+// The environment is read through `env` rather than `process.env` so that this
+// import is what validates it: the config is loaded before anything else, so a
+// bad value stops the build instead of surfacing on a request.
 const nextConfig: NextConfig = {
   // localhost:3000 may be taken by another local service, so the app is often
   // browsed via the machine's LAN IP in dev. Next 16 blocks dev resources
@@ -14,7 +17,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${API_URL}/api/:path*`,
+        destination: `${env.API_URL}/api/:path*`,
       },
     ];
   },

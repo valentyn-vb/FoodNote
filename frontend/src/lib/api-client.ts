@@ -31,6 +31,11 @@ import {
   type UpdateWeightRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
+import { ApiError, apiErrorMessage } from '@/lib/api-error';
+
+// Re-exported so existing importers keep their path; the class itself is shared
+// with the server data layer, which throws the same one.
+export { ApiError };
 
 /**
  * The access token lives only in memory (never in storage) and is re-obtained
@@ -41,15 +46,6 @@ let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
-}
-
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
 }
 
 async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -84,18 +80,9 @@ export async function apiFetch(
     res = await rawFetch(path, init);
   }
   if (!res.ok) {
-    throw new ApiError(res.status, await safeErrorMessage(res));
+    throw new ApiError(res.status, await apiErrorMessage(res));
   }
   return res;
-}
-
-async function safeErrorMessage(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { message?: string };
-    return body.message ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
 }
 
 async function handleAuthResponse(res: Response): Promise<AuthResponse> {
