@@ -59,7 +59,7 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        render={<Button variant="link" size="inline" />}
+        render={<Button variant="link" className="h-auto gap-1 p-0" />}
       >
         Edit profile
       </DialogTrigger>
@@ -95,12 +95,7 @@ export function EditProfileDialog() {
           <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>
-          <Button
-            type="submit"
-            form={EDIT_PROFILE_FORM_ID}
-            variant="cta"
-            disabled={saving}
-          >
+          <Button type="submit" form={EDIT_PROFILE_FORM_ID} disabled={saving}>
             {saving && <Spinner />}
             Save
           </Button>

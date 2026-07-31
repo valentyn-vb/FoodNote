@@ -65,8 +65,12 @@ export default function ProfilePage() {
 
       <div className="pt-7 pb-5 lg:px-4 lg:pt-6">
         <div className="mb-2.5 flex flex-col items-center lg:flex-row lg:items-center lg:gap-4">
-          <Avatar size="xl">
-            <AvatarFallback>{initials}</AvatarFallback>
+          <Avatar className="size-18">
+            {/* The stock fallback is a grey wash at 14px — it reads as a
+                missing image at this size, not as a person. */}
+            <AvatarFallback className="bg-primary text-heading font-semibold text-primary-foreground">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
             <Text variant="title">{fullName}</Text>
@@ -94,7 +98,14 @@ export default function ProfilePage() {
 
       <Separator />
       <div className="px-4 pt-3 pb-6">
-        <LogoutButton variant="destructiveOutline" size="lg" className="w-full">
+        {/* Outlined rather than filled: a destructive action that is
+            *available* rather than urgent. The filled `destructive` variant is
+            for the confirmation itself. */}
+        <LogoutButton
+          variant="outline"
+          size="lg"
+          className="w-full border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-card text-destructive-text hover:bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]"
+        >
           Log out
         </LogoutButton>
       </div>

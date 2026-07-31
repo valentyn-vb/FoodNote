@@ -1,52 +1,22 @@
 import * as React from 'react';
 import { Input as InputPrimitive } from '@base-ui/react/input';
-import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
 /**
- * Size, surface and focus treatment live in the variant so a call site never
- * has to cancel a default — `field` *is* the app's form look, rather than the
- * base look with its height and focus ring undone.
+ * Upstream `base-vega`, with one divergence: `h-11` (44px) against upstream's
+ * `h-9`. A thumb-target argument, not a style one — recorded in ADR 0010.
+ *
+ * `text-base md:text-sm` is upstream's and stays exactly as shipped, for a
+ * reason worth knowing: 16px on mobile is a platform constraint, not a choice.
+ * Safari zooms the page when a focused field's text is smaller.
  */
-const inputVariants = cva(
-  // Every variant keeps `text-base md:…`: 16px on mobile is a platform
-  // constraint, not a choice — Safari zooms the page when a focused field's
-  // text is smaller. It's also why the `body` level (15px) can't be used on a
-  // field at all, and why <Text> doesn't apply to inputs.
-  'w-full min-w-0 bg-card transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive',
-  {
-    variants: {
-      variant: {
-        default:
-          'h-11 rounded-md border border-input px-2.5 py-1 text-base focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm',
-        // The app's standard form field: hairline lift and a border-only focus
-        // treatment instead of a ring.
-        field:
-          'h-11 rounded-md border border-border px-3.5 text-base shadow-xs focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset md:text-sm',
-        // A compact cell inside a denser row — a parsed meal item.
-        cell: 'h-9 rounded-sm border border-border px-2 text-center text-base tabular-nums focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset md:text-caption',
-        // One big figure, centred: the weight or calorie value a screen is
-        // entirely about. Fredoka, because it reads as a headline number.
-        figure:
-          'h-12 rounded-md border border-border px-3.5 text-center font-heading text-title tabular-nums shadow-xs focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
-        // Reads as text until focused — an item's name.
-        bare: 'bg-transparent text-base font-medium focus-visible:underline md:text-label',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-);
-
 function Input({
   className,
   type,
-  variant,
   onWheel,
   ...props
-}: React.ComponentProps<'input'> & VariantProps<typeof inputVariants>) {
+}: React.ComponentProps<'input'>) {
   return (
     <InputPrimitive
       type={type}
@@ -58,10 +28,13 @@ function Input({
         if (type === 'number') event.currentTarget.blur();
         onWheel?.(event);
       }}
-      className={cn(inputVariants({ variant, className }))}
+      className={cn(
+        'h-11 w-full min-w-0 rounded-md border border-input bg-transparent px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export { Input, inputVariants };
+export { Input };

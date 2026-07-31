@@ -162,7 +162,6 @@ export function WeightDrawer(props: WeightDrawerProps) {
             type="submit"
             form={WEIGHT_FORM_ID}
             disabled={saving}
-            variant="cta"
             className="w-full py-3.5"
           >
             {saving && <Spinner />}

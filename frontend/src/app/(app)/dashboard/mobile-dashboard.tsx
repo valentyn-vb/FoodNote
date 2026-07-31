@@ -7,7 +7,7 @@ import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DailyCaloriesChart, WeightTrendChart } from '@/components/ui/charts';
+import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';

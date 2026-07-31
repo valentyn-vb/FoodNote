@@ -8,15 +8,18 @@ import { cn } from '@/lib/utils';
  * five hand-built `h-2 bg-border` + `bg-primary` pairs it replaces each picked
  * their own height.
  */
-const progressVariants = cva('shrink-0 overflow-hidden rounded-full bg-border', {
-  variants: {
-    size: {
-      default: 'h-2',
-      sm: 'h-1.5',
+const progressVariants = cva(
+  'shrink-0 overflow-hidden rounded-full bg-border',
+  {
+    variants: {
+      size: {
+        default: 'h-2',
+        sm: 'h-1.5',
+      },
     },
+    defaultVariants: { size: 'default' },
   },
-  defaultVariants: { size: 'default' },
-});
+);
 
 function Progress({
   value,

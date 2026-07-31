@@ -6,10 +6,7 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Liquid } from '@/components/canvasui/Liquid';
 import { MascotPeek } from '@/components/marketing/mascot-peek';
-import {
-  SparklesIcon,
-  type SparklesIconHandle,
-} from '@/components/ui/sparkles';
+import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
 import { supportsHover } from '@/lib/utils';
 
 export function OutroSlide() {

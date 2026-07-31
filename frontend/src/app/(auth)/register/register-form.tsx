@@ -101,7 +101,11 @@ export function RegisterForm() {
           render={<p />}
         >
           Already have an account?{' '}
-          <Button variant="link" size="inline" render={<Link href="/login" />}>
+          <Button
+            variant="link"
+            className="h-auto gap-1 p-0"
+            render={<Link href="/login" />}
+          >
             Log in
           </Button>
         </Text>

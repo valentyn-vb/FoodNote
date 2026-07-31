@@ -24,10 +24,13 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
 
   return (
     <Card
-      variant="option"
       data-selected={selected || undefined}
       render={<label />}
-      className="cursor-pointer"
+      // A tile you choose between: the card surface, plus a selected state
+      // driven by `data-selected`. The border keeps its width and only changes
+      // colour — thickening it on selection shifts the content half a pixel in
+      // every direction, which reads as a twitch.
+      className="cursor-pointer gap-1.5 rounded-lg px-4.5 py-4 transition-colors duration-150 data-selected:border-primary data-selected:bg-accent"
     >
       <div className="flex items-center justify-between">
         <Text variant="caption" tone={tone}>

@@ -5,19 +5,24 @@ import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Upstream `base-vega`, minus the `dark:` rules this app can never match. The
+ * `xl` size is gone: it had one call site — the profile header — and one use
+ * is a call-site size, not a step on a ladder.
+ */
 function Avatar({
   className,
   size = 'default',
   ...props
 }: AvatarPrimitive.Root.Props & {
-  size?: 'default' | 'sm' | 'lg' | 'xl';
+  size?: 'default' | 'sm' | 'lg';
 }) {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
       data-size={size}
       className={cn(
-        'group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 data-[size=xl]:size-18',
+        'group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6',
         className,
       )}
       {...props}
@@ -46,7 +51,7 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        'flex size-full items-center justify-center rounded-full bg-primary text-caption font-semibold text-primary-foreground group-data-[size=xl]/avatar:text-heading',
+        'flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs',
         className,
       )}
       {...props}

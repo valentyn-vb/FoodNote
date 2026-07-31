@@ -128,7 +128,7 @@ export function PersonalDetailsSection({
       <Text variant="caption" tone="muted" render={<h2 />}>
         Personal details
       </Text>
-      <Card variant="panel" className="gap-0 overflow-hidden py-0">
+      <Card className="gap-0 overflow-hidden py-0">
         <DetailList>
           <DetailRow
             label="Sex"
@@ -163,7 +163,7 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          render={<Button variant="link" size="inline" />}
+          render={<Button variant="link" className="h-auto gap-1 p-0" />}
         >
           {(loading || saving) && <Spinner />}
           Edit details
@@ -182,7 +182,7 @@ export function PersonalDetailsSection({
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" form={DETAILS_FORM_ID} variant="cta">
+            <Button type="submit" form={DETAILS_FORM_ID}>
               Save
             </Button>
           </DialogFooter>

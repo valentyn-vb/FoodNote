@@ -94,7 +94,7 @@ export function LoginForm() {
           No account yet?{' '}
           <Button
             variant="link"
-            size="inline"
+            className="h-auto gap-1 p-0"
             render={<Link href="/register" />}
           >
             Register

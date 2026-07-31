@@ -10,7 +10,7 @@ import {
   DailyCaloriesChart,
   RemainingTodayRing,
   WeightTrendChart,
-} from '@/components/ui/charts';
+} from '@/components/charts';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';

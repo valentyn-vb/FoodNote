@@ -234,8 +234,8 @@ export function MealTotalsSummary({
       {cells.map(({ label, unit, value }) => (
         <Card
           key={label}
-          variant="tile"
-          className="items-center gap-0.5 px-4 py-3"
+          // A compact stat tile: self-padding, tighter radius and gap.
+          className="items-center gap-0.5 rounded-lg px-4 py-3"
         >
           <Text variant="overline" tone="muted">
             {label}
@@ -323,8 +323,9 @@ export function MealItemsFields({
           // appearance reads as a repaint. Capped so a ten-item parse doesn't
           // turn into a queue.
           style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
-          variant="row"
-          className="@container motion-keep-fade flex-col items-stretch gap-2.5 p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
+          // One line of a list: a fixed-height surface that never flexes, at a
+          // tighter radius than the card default.
+          className="@container motion-keep-fade shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
         >
           <div className="flex items-center gap-2">
             {/* A parsed name is a label, not a field: what the user corrects
@@ -342,10 +343,11 @@ export function MealItemsFields({
               </Text>
             ) : (
               <Input
-                variant="bare"
                 aria-label={`Item ${index + 1} name`}
                 placeholder="Item name"
-                className="min-w-24 grow-2 basis-0"
+                // Reads as text until focused — an item's name, not a form
+                // field: no box, no shadow, the underline does the work.
+                className="min-w-24 grow-2 basis-0 border-transparent font-medium shadow-none focus-visible:underline md:text-label"
                 {...form.register(`items.${index}.name`)}
               />
             )}
@@ -400,12 +402,11 @@ export function MealItemsFields({
       <Button
         type="button"
         variant="link"
-        size="inline"
+        className="h-auto w-fit gap-1 p-0"
         onClick={() => {
           append(EMPTY_ITEM);
           onItemsChange();
         }}
-        className="w-fit"
       >
         + Add item
       </Button>

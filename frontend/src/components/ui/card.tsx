@@ -1,78 +1,40 @@
 import * as React from 'react';
 import { cloneElement } from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
-import { Text } from '@/components/ui/text';
 
 /**
- * Surface, radius and elevation live in the variant, never in the base — so
- * `panel` and `tile` don't have to undo `default`'s ring and padding the way
- * the old CARD_CLASS constant did.
- */
-const cardVariants = cva(
-  'group/card flex flex-col gap-(--card-spacing) overflow-hidden text-sm text-card-foreground [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
-  {
-    variants: {
-      variant: {
-        // One surface boundary, one mechanism: `border`, never a ring. A ring is
-        // reserved for focus and invalid states, so a card and a focused card
-        // can't be drawn the same way.
-        default:
-          'rounded-xl border border-border bg-card py-(--card-spacing) shadow-xs',
-        // The app's standard content surface: hairline border and padding
-        // supplied by the call site.
-        panel: 'rounded-xl border border-border bg-card shadow-xs',
-        // A compact stat tile — self-padding, tighter radius and gap.
-        tile: 'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-xs',
-        // One line of a list: a fixed-height surface that never flexes, because
-        // inside a bounded scrolling column a row would squash before the column
-        // scrolled. Tighter radius than `panel` — 20px on a 64px row reads as a
-        // pill.
-        row: 'shrink-0 flex-row items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3.5 shadow-xs',
-        // A quiet aside on a warm wash — a confidence note, a parsed summary.
-        note: 'gap-1 rounded-md bg-accent px-3.5 py-2.5',
-        // The same shape, carrying a failure. Bordered, because a wash alone
-        // doesn't say "this went wrong" on a warm page.
-        alert:
-          'gap-1 rounded-md border border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)] px-3.5 py-3',
-        // A tile you choose between: same surface, plus a selected state driven
-        // by `data-selected` on the call site. The border keeps its width and
-        // only changes colour — thickening it on selection shifts the content
-        // half a pixel in every direction, which reads as a twitch.
-        option:
-          'gap-1.5 rounded-lg border border-border bg-card px-4.5 py-4 shadow-xs transition-colors duration-150 data-selected:border-primary data-selected:bg-accent',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-);
-
-/**
- * `render` swaps the element without moving the look outside: a selectable card
- * has to be a <label> to make the whole surface click its radio, and that is a
- * semantic decision, not a visual one.
+ * Upstream `base-vega`, with one divergence: the surface boundary is a
+ * `border`, not upstream's `ring-1 ring-foreground/10`. A ring is reserved for
+ * focus and invalid states — drawn the upstream way, a card and a focused card
+ * are the same picture. Everything else, including `py-(--card-spacing)` and
+ * the header/content/footer slots that depend on it, is as shipped.
+ *
+ * No variants. The five looks that used to live here are written at the call
+ * site now: a tile is a line of utilities, a note is a wash and a radius.
  */
 function Card({
   className,
   size = 'default',
-  variant = 'default',
   render,
   children,
   ...props
-}: React.ComponentProps<'div'> &
-  VariantProps<typeof cardVariants> & {
-    size?: 'default' | 'sm';
-    render?: React.ReactElement<{ className?: string }>;
-  }) {
+}: React.ComponentProps<'div'> & {
+  size?: 'default' | 'sm';
+  render?: React.ReactElement<{ className?: string }>;
+}) {
   const shared = {
     'data-slot': 'card',
     'data-size': size,
-    className: cn(cardVariants({ variant, className })),
+    className: cn(
+      'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl border border-border bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
+      className,
+    ),
   };
 
+  // `render` swaps the element without moving the look outside: a selectable
+  // card has to be a <label> to make the whole surface click its radio, and
+  // that is a semantic decision, not a visual one.
   if (render) {
     return cloneElement(render, { ...shared, ...props }, children);
   }
@@ -98,17 +60,19 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 /**
- * Renders a <Text> level rather than its own font rules, so the heading face
- * is declared in one place instead of two. A small card drops a level rather
- * than shrinking the same one.
+ * `font-semibold`, not upstream's `font-medium`: #97 found a *card* heading
+ * (16/600) to be a different role from a *section* heading (14/600), and both
+ * carry the weight. Upstream's `cn-font-heading` is dropped — this project has
+ * no such class, and the brand face is applied explicitly at display scale.
  */
 function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <Text
+    <div
       data-slot="card-title"
-      variant="heading"
-      render={<div />}
-      className={cn('group-data-[size=sm]/card:text-title', className)}
+      className={cn(
+        'text-base leading-normal font-semibold group-data-[size=sm]/card:text-sm',
+        className,
+      )}
       {...props}
     />
   );
@@ -116,12 +80,9 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
 
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <Text
+    <div
       data-slot="card-description"
-      variant="caption"
-      tone="muted"
-      render={<div />}
-      className={className}
+      className={cn('text-sm text-muted-foreground', className)}
       {...props}
     />
   );

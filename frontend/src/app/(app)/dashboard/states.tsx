@@ -37,7 +37,7 @@ export function InlineError({ onRetry }: { onRetry: () => void }) {
       <p className="text-sm text-muted-foreground">
         Couldn&apos;t load weight data.
       </p>
-      <Button variant="link" size="inline" onClick={onRetry}>
+      <Button variant="link" className="h-auto gap-1 p-0" onClick={onRetry}>
         Try again
       </Button>
     </div>
@@ -64,7 +64,7 @@ export function DesktopDashboardSkeleton() {
         </div>
         <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
           <Card className="h-44 shrink-0 p-5">
-            <Skeleton shape="circle" className="mx-auto size-28" />
+            <Skeleton className="rounded-full mx-auto size-28" />
           </Card>
           <Card className="grow basis-0 p-5">
             <Skeleton className="h-full w-full" />
@@ -81,11 +81,11 @@ export function MobileDashboardSkeleton() {
       <Card className="gap-3 p-5">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-9 w-40" />
-        <Skeleton shape="pill" className="h-2 w-full" />
+        <Skeleton className="rounded-full h-2 w-full" />
       </Card>
       <Skeleton className="h-11 w-full" />
-      <Skeleton shape="panel" className="h-32 w-full" />
-      <Skeleton shape="panel" className="h-36 w-full" />
+      <Skeleton className="rounded-xl h-32 w-full" />
+      <Skeleton className="rounded-xl h-36 w-full" />
     </>
   );
 }

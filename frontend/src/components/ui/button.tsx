@@ -3,8 +3,22 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Upstream `base-vega`, with two deliberate divergences, both recorded in ADR
+ * 0010 so that what `shadcn diff` reports is the whole of it:
+ *
+ * 1. `link` reads `text-brand-ink`, not `text-primary`. The handoff carries two
+ *    oranges with different jobs — a fill and a text weight — and `--primary`
+ *    is the fill. Link text set in it fails contrast on the page wash.
+ * 2. `lg` is `h-12` and `icon-lg` is `size-11`, against upstream's 40/40. A
+ *    thumb-target argument, not a style one; the horizontal padding stays
+ *    upstream's, so the divergence is the height and nothing else.
+ *
+ * The registry file's `dark:` rules are dropped: this app has no dark mode, and
+ * a rule that can never match is a rule nobody can verify.
+ */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-out-strong outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -18,45 +32,23 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20',
         link: 'text-brand-ink underline-offset-4 hover:underline',
-        // Outlined rather than filled: a destructive action that is *available*
-        // rather than urgent — logging out, deleting one entry. The filled
-        // `destructive` above is for the confirmation itself.
-        destructiveOutline:
-          'border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-card text-destructive-text hover:bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]',
-        // Deprecated, removed with its last call site: without the orange glow
-        // and with the size ladder back to shadcn's, this is `default`.
-        cta: 'bg-primary text-primary-foreground active:scale-[0.98]',
-        // The quiet secondary action beneath a CTA ("Cancel", "Enter manually
-        // instead") — present but never competing with the primary button.
-        quiet:
-          'text-caption text-muted-foreground underline-offset-4 hover:underline',
-      },
-      // A chip reads as a suggestion rather than as a control, and the shape is
-      // the whole difference — so it is a shape, not six variants over again.
-      shape: {
-        default: '',
-        pill: 'rounded-full',
       },
       size: {
         default:
           'h-9 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
-        xs: "h-6 gap-1 rounded-sm px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: 'h-8 gap-1 rounded-sm px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
-        lg: 'h-12 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4',
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: 'h-8 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
+        lg: 'h-12 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
         icon: 'size-9',
         'icon-xs':
-          "size-6 rounded-sm in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
-        'icon-sm': 'size-8 rounded-sm in-data-[slot=button-group]:rounded-md',
+          "size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
+        'icon-sm':
+          'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
         'icon-lg': 'size-11',
-        // The full-width primary action that ends a sheet or a wizard step.
-        cta: 'h-12 w-full gap-1.5 px-6',
-        // Sits in a line of text or under a CTA — no box, no reserved height.
-        inline: 'h-auto gap-1 p-0',
       },
     },
     defaultVariants: {
       variant: 'default',
-      shape: 'default',
       size: 'default',
     },
   },
@@ -65,14 +57,13 @@ const buttonVariants = cva(
 function Button({
   className,
   variant = 'default',
-  shape = 'default',
   size = 'default',
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, shape, size, className }))}
+      className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
   );

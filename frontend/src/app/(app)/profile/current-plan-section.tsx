@@ -63,7 +63,7 @@ export function CurrentPlanSection({
       <Text variant="caption" tone="muted" render={<h2 />}>
         Current plan
       </Text>
-      <Card variant="panel" className="gap-1 p-4">
+      <Card className="gap-1 p-4">
         <Text variant="heading" numeric>
           {profileData?.calorieTarget != null
             ? `${profileData.calorieTarget.toLocaleString()} kcal / day`

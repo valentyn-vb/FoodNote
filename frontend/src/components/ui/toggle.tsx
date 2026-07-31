@@ -5,24 +5,22 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Upstream `base-vega`, with one divergence: `lg` is `h-11 min-w-11` against
+ * upstream's 40/40, so a toggle a finger chooses between clears 44px. Recorded
+ * in ADR 0010 alongside the field and CTA heights.
+ *
+ * The `option` variant is gone. A toggle that reads as its own option rather
+ * than as a pressed button is a look, and it is written at the two call sites
+ * that need it.
+ */
 const toggleVariants = cva(
-  // The pressed look lives in the variants, not the base, so `option` can
-  // state its own without fighting a neutral one it inherited.
-  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/toggle inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-pressed:bg-muted [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          'bg-transparent hover:bg-muted hover:text-foreground data-pressed:bg-muted',
-        outline:
-          'border border-input bg-transparent shadow-xs hover:bg-muted hover:text-foreground data-pressed:bg-muted',
-        // One choice among a few, each reading as its own option rather than as
-        // a pressed button — gender, meal type, a pace. Selection is on
-        // `data-pressed`, which is the attribute Base UI actually emits; the
-        // border keeps its width and only changes colour, so choosing an option
-        // doesn't nudge it half a pixel in every direction.
-        option:
-          'border border-border bg-card text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
+        default: 'bg-transparent',
+        outline: 'border border-input bg-transparent shadow-xs hover:bg-muted',
       },
       size: {
         default:

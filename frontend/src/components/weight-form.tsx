@@ -66,7 +66,9 @@ export function WeightForm({
         autoFocus
         placeholder="e.g. 71.4"
         error={errors.weightKg?.message}
-        variant="figure"
+        // One big figure, centred: the weight this screen is entirely about.
+        // Fredoka, because it reads as a headline number.
+        className="h-12 text-center font-heading text-title tabular-nums"
         {...register('weightKg')}
       />
       {showDate ? (

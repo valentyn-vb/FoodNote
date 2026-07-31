@@ -176,7 +176,6 @@ export function GoalReachedOverlay() {
               <div className="flex flex-col gap-1.5">
                 <Button
                   type="button"
-                  variant="cta"
                   onClick={handleSwitchMaintenance}
                   disabled={switchingMaintenance}
                 >
@@ -254,7 +253,6 @@ export function GoalReachedOverlay() {
                 </Button>
                 <Button
                   type="submit"
-                  variant="cta"
                   disabled={form.formState.isSubmitting}
                   className="flex-1"
                 >

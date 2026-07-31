@@ -25,8 +25,11 @@ function PasswordInput({
     <InputGroup className={className}>
       <InputGroupInput type={visible ? 'text' : 'password'} {...props} />
       <InputGroupAddon align="inline-end">
+        {/* `icon-sm` (32px), not `icon-xs` (24px): #95 found the reveal hard
+            to hit, and 24 is the WCAG 2.2 §2.5.8 floor rather than a target a
+            control this deep in a form deserves. */}
         <InputGroupButton
-          size="icon-xs"
+          size="icon-sm"
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
           className="hover:bg-transparent"

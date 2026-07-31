@@ -16,10 +16,7 @@ import type {
   DitheredObjectProps,
   DitheredObject as DitheredObjectComponent,
 } from '@/components/canvasui/DitheredObject';
-import {
-  SparklesIcon,
-  type SparklesIconHandle,
-} from '@/components/ui/sparkles';
+import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { supportsHover } from '@/lib/utils';
 
@@ -122,7 +119,6 @@ function HeroCopy({ className }: { className?: string }) {
         <Button
           render={<Link href={authed ? '/dashboard' : '/register'} />}
           nativeButton={false}
-          variant="cta"
           className="gap-2 px-6 py-3.5"
           onMouseEnter={() =>
             supportsHover() && sparkleRef.current?.startAnimation()

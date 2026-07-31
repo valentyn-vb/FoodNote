@@ -34,12 +34,7 @@ export function InputField({
       data-invalid={!!error || undefined}
     >
       <FormLabel htmlFor={id}>{label}</FormLabel>
-      <Input
-        id={id}
-        variant="field"
-        aria-invalid={!!error || undefined}
-        {...props}
-      />
+      <Input id={id} aria-invalid={!!error || undefined} {...props} />
       {error && <FieldError>{error}</FieldError>}
     </Field>
   );

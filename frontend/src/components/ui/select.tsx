@@ -29,7 +29,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 }
 
 /**
- * `variant="field"` is the same surface as `Input variant="field"` — a select
+ * `variant="field"` is the same surface as the stock `Input` — a select
  * standing in a form row has to be indistinguishable from the fields around it,
  * and that agreement can only be kept here.
  */

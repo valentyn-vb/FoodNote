@@ -337,14 +337,14 @@ export function MealLogDrawer({
               <Button
                 onClick={handleParse}
                 disabled={!canParse}
-                variant="cta"
-                size="cta"
+                size="lg"
+                className="w-full"
               >
                 Parse with AI
               </Button>
               <Button
-                variant="quiet"
-                size="inline"
+                variant="link"
+                className="h-auto gap-1 p-0 text-caption text-muted-foreground"
                 onClick={() => switchToManual()}
               >
                 Enter manually instead
@@ -377,10 +377,9 @@ export function MealLogDrawer({
               <Text variant="label">Reading your meal…</Text>
               <Progress indeterminate size="sm" className="w-40" />
               <Button
-                variant="quiet"
-                size="inline"
+                variant="link"
+                className="h-auto gap-1 p-0 text-caption text-muted-foreground mt-1"
                 onClick={handleCancelParse}
-                className="mt-1"
               >
                 Cancel
               </Button>
@@ -401,17 +400,16 @@ export function MealLogDrawer({
               {step === 'manual' && (
                 <Button
                   type="button"
-                  variant="quiet"
-                  size="inline"
+                  variant="link"
+                  className="h-auto gap-1 p-0 text-caption text-muted-foreground w-fit"
                   onClick={() => setStep('input')}
-                  className="w-fit"
                 >
                   ← Back
                 </Button>
               )}
 
               {step === 'preview' && (
-                <Card variant="note" className="flex-row items-center gap-2">
+                <Card className="gap-1 rounded-md border-transparent bg-accent px-3.5 py-2.5 shadow-none flex-row items-center gap-2">
                   <Text
                     variant="caption"
                     className="min-w-0 grow basis-0 truncate"
@@ -421,9 +419,8 @@ export function MealLogDrawer({
                   <Button
                     type="button"
                     variant="link"
-                    size="inline"
+                    className="h-auto gap-1 p-0 shrink-0"
                     onClick={() => setStep('input')}
-                    className="shrink-0"
                   >
                     <Pencil className="size-3" />
                     Edit &amp; re-parse
@@ -471,7 +468,7 @@ export function MealLogDrawer({
               <MealTypeField form={form} />
 
               {step === 'preview' && confidenceNote && (
-                <Card variant="note" className="gap-2">
+                <Card className="gap-1 rounded-md border-transparent bg-accent px-3.5 py-2.5 shadow-none gap-2">
                   <div className="flex items-center gap-2.5">
                     <Image
                       src="/mascot/reassure.webp"
@@ -561,7 +558,7 @@ function ExampleChips({
           key={example}
           variant="outline"
           onClick={() => onPick(example)}
-          shape="pill"
+          className="rounded-full"
         >
           {example}
         </Button>
@@ -617,8 +614,7 @@ function RecoverStep({
             makes a screen reader say it. */}
         <Card
           role="alert"
-          variant="alert"
-          className="max-w-4/5 flex-row items-start gap-2.5"
+          className="gap-1 rounded-md border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)] px-3.5 py-3 shadow-none max-w-4/5 flex-row items-start gap-2.5"
         >
           <TriangleAlert aria-hidden className="mt-px size-4 shrink-0" />
           <Text variant="label" className="text-pretty">
@@ -631,12 +627,16 @@ function RecoverStep({
         <Button
           onClick={primary.onClick}
           disabled={primary.disabled}
-          variant="cta"
-          size="cta"
+          size="lg"
+          className="w-full"
         >
           {primary.label}
         </Button>
-        <Button variant="quiet" size="inline" onClick={secondary.onClick}>
+        <Button
+          variant="link"
+          className="h-auto gap-1 p-0 text-caption text-muted-foreground"
+          onClick={secondary.onClick}
+        >
           {secondary.label}
         </Button>
       </DrawerFooter>
@@ -654,7 +654,7 @@ function SaveButton({ control }: { control: Control<MealDraftValues> }) {
       <span aria-live="polite" className="sr-only">
         {totalCalories} kcal total
       </span>
-      <Button type="submit" form={MEAL_FORM_ID} variant="cta" size="cta">
+      <Button type="submit" form={MEAL_FORM_ID} size="lg" className="w-full">
         Save
         {totalCalories > 0 && (
           <>
@@ -684,7 +684,7 @@ function MacroSuggestion({
       <Button
         type="button"
         variant="link"
-        size="inline"
+        className="h-auto gap-1 p-0"
         onClick={() => onUse(suggestion)}
       >
         Use it

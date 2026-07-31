@@ -43,6 +43,17 @@ const eslintConfig = defineConfig([
       'src/app/(app)/dashboard/stat-widget.tsx',
       'src/app/(app)/dashboard/states.tsx',
       'src/app/(app)/dashboard/weight-history-drawer.tsx',
+      // #99 cut `ui/**` back to the upstream variants, so the looks that used
+      // to be `Card variant="tile"`, `Button variant="quiet"` and the rest are
+      // written where they are used. Same bind as the pilot above: the call
+      // site is correct under the rule #101 installs and illegal under the one
+      // still standing. Both lists die with the rule.
+      'src/app/(app)/profile/page.tsx',
+      'src/components/meal-fields.tsx',
+      'src/components/meal-log-drawer.tsx',
+      'src/components/onboarding/plan-option-card.tsx',
+      'src/components/toggle-field.tsx',
+      'src/components/weight-form.tsx',
     ],
     plugins: { local },
     rules: {

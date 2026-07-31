@@ -13,8 +13,8 @@ import {
   Scale,
   UtensilsCrossed,
 } from 'lucide-react';
-import { GaugeIcon } from '@/components/ui/gauge';
-import { ShieldCheckIcon } from '@/components/ui/shield-check';
+import { GaugeIcon } from '@/components/gauge';
+import { ShieldCheckIcon } from '@/components/shield-check';
 import { ScrollReveal } from '@/components/marketing/scroll-reveal';
 import { MascotPeek } from '@/components/marketing/mascot-peek';
 

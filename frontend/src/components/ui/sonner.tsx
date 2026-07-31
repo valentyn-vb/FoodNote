@@ -44,14 +44,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Matches a stat tile or a meal row rather than a popover: a toast is
           // a small surface, and 20px on one reads as a pill.
           '--border-radius': 'var(--radius-md)',
-          '--success-bg': 'color-mix(in oklch, var(--success), var(--card) 90%)',
-          '--success-border': 'color-mix(in oklch, var(--success), var(--card) 70%)',
+          '--success-bg':
+            'color-mix(in oklch, var(--success), var(--card) 90%)',
+          '--success-border':
+            'color-mix(in oklch, var(--success), var(--card) 70%)',
           '--success-text': 'var(--success-text)',
-          '--error-bg': 'color-mix(in oklch, var(--destructive), var(--card) 90%)',
-          '--error-border': 'color-mix(in oklch, var(--destructive), var(--card) 70%)',
+          '--error-bg':
+            'color-mix(in oklch, var(--destructive), var(--card) 90%)',
+          '--error-border':
+            'color-mix(in oklch, var(--destructive), var(--card) 70%)',
           '--error-text': 'var(--destructive-text)',
-          '--warning-bg': 'color-mix(in oklch, var(--warning), var(--card) 90%)',
-          '--warning-border': 'color-mix(in oklch, var(--warning), var(--card) 70%)',
+          '--warning-bg':
+            'color-mix(in oklch, var(--warning), var(--card) 90%)',
+          '--warning-border':
+            'color-mix(in oklch, var(--warning), var(--card) 70%)',
           '--warning-text': 'var(--warning-text)',
           // Nothing in the app raises an info toast yet; keep it neutral so one
           // added later inherits the app's surface instead of sonner's blue.

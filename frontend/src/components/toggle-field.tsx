@@ -47,10 +47,14 @@ export function ToggleField<T extends FieldValues>({
               <ToggleGroupItem
                 key={option}
                 value={option}
-                variant="option"
                 size="lg"
                 className={cn(
-                  'grow basis-0 capitalize',
+                  // One choice among a few, reading as its own option rather
+                  // than as a pressed button. Selection is on `data-pressed`,
+                  // the attribute Base UI actually emits; the border keeps its
+                  // width and only changes colour, so choosing an option
+                  // doesn't nudge it half a pixel in every direction.
+                  'grow basis-0 border border-border bg-card capitalize text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
                   // Four labels (meal types) need tighter items than two (sex)
                   // to fit one row on a narrow screen. Narrower, not smaller:
                   // the type level is the same either way.
