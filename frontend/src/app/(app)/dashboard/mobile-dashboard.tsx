@@ -34,7 +34,7 @@ export function MobileDashboard() {
     remainingKcal,
     progressPct,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
     isToday,
   } = useMeals();
@@ -188,10 +188,10 @@ export function MobileDashboard() {
             <h2 className="font-sans text-caption font-medium text-text">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {todayMeals.length === 0 ? (
+            {selectedDayMeals.length === 0 ? (
               <EmptyMeals />
             ) : (
-              <MealGroupsAccordion meals={todayMeals} />
+              <MealGroupsAccordion meals={selectedDayMeals} />
             )}
           </div>
 

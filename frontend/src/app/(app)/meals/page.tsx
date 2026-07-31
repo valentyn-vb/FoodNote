@@ -15,12 +15,12 @@ import { DesktopMealGroups } from './desktop-meal-groups';
 // exists, no UI uses it). A date picker and pagination are a later ticket —
 // GET /meals already takes from/to bounds, so that stays frontend-only.
 //
-// No fetch of its own: this route sits inside MealsProvider, whose `todayMeals`
+// No fetch of its own: this route sits inside MealsProvider, whose `selectedDayMeals`
 // is already exactly this page's dataset (one Tracking Day). useDashboardGate is
 // deliberately not reused — it also gates on the weight journal and goal block,
 // neither of which this page renders.
 export default function MealsPage() {
-  const { status, retry, todayMeals } = useMeals();
+  const { status, retry, selectedDayMeals } = useMeals();
 
   return (
     <div className="flex w-full flex-col gap-5 px-5 pt-6 pb-8 lg:mx-14 lg:my-10 lg:max-w-6xl lg:px-0 lg:py-0">
@@ -54,7 +54,7 @@ export default function MealsPage() {
         <MealsError onRetry={retry} />
       ) : status === 'loading' ? (
         <MealsSkeleton />
-      ) : todayMeals.length === 0 ? (
+      ) : selectedDayMeals.length === 0 ? (
         <EmptyState
           mascotSrc="/mascot/accompany.webp"
           caption="Nothing logged yet — your first meal starts the day."
@@ -65,9 +65,9 @@ export default function MealsPage() {
           {/* The accordion owns no breakpoint of its own (the dashboards use it
               at every width), so the mobile-only scoping lives here. */}
           <div className="lg:hidden">
-            <MealGroupsAccordion meals={todayMeals} />
+            <MealGroupsAccordion meals={selectedDayMeals} />
           </div>
-          <DesktopMealGroups meals={todayMeals} />
+          <DesktopMealGroups meals={selectedDayMeals} />
         </>
       )}
     </div>

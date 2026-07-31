@@ -32,7 +32,7 @@ export function DesktopDashboard() {
     eatenKcal,
     remainingKcal,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
     isToday,
   } = useMeals();
@@ -146,10 +146,10 @@ export function DesktopDashboard() {
                   {isToday ? 'Logged today' : 'Logged meals'}
                 </h2>
                 <div className="flex flex-col gap-2.5">
-                  {todayMeals.length === 0 ? (
+                  {selectedDayMeals.length === 0 ? (
                     <EmptyMeals />
                   ) : (
-                    <MealGroupsAccordion meals={todayMeals} />
+                    <MealGroupsAccordion meals={selectedDayMeals} />
                   )}
                   <MealLogDrawer triggerClassName="ml-auto h-10 text-label font-semibold">
                     Log a meal

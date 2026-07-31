@@ -54,7 +54,7 @@ type MealsContextValue = {
   // maintenance plan. Null until the dashboard has loaded.
   maintenanceKcal: number | null;
   goal: GoalBlock | null;
-  todayMeals: MealResponse[];
+  selectedDayMeals: MealResponse[];
   dailyCalories: DailyCaloriePoint[];
   saveMeal: (draft: CreateMealRequest) => void;
   // Weight saves recompute the goal block server-side (projected date and
@@ -238,7 +238,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
           ? Math.min(100, Math.round((eatenKcal / goalKcal) * 100))
           : 0,
       goal: dashboard?.goal ?? null,
-      todayMeals: dashboard ? todaysMeals(meals, dashboard.date) : [],
+      selectedDayMeals: dashboard ? todaysMeals(meals, dashboard.date) : [],
       dailyCalories: dashboard
         ? bucketDailyCalories(meals, dashboard.date)
         : [],
