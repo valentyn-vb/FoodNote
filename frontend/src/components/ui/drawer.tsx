@@ -243,11 +243,24 @@ function DrawerTitleBar({
       </DrawerTitle>
       <DrawerClose
         aria-label="Close drawer"
-        className="col-start-3 flex size-5 items-center justify-self-end justify-center"
+        className="col-start-3 -my-1.5 flex size-8 items-center justify-self-end justify-center"
       >
         <XIcon size={20} className="text-muted-foreground" strokeWidth={2} />
       </DrawerClose>
     </DrawerHeader>
+  );
+}
+
+function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="drawer-body"
+      className={cn(
+        'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4',
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -299,6 +312,7 @@ export {
   DrawerContent,
   DrawerHeader,
   DrawerTitleBar,
+  DrawerBody,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,

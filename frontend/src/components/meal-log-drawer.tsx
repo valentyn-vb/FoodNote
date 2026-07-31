@@ -1,23 +1,53 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
-import { Pencil, TriangleAlert } from 'lucide-react';
+import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
-import { useForm, type Control } from 'react-hook-form';
+import {
+  useForm,
+  useWatch,
+  type Control,
+  type UseFormReturn,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { aiParseRequestSchema, type AiParsedMeal } from '@foodnote/shared';
+import {
+  aiParseRequestSchema,
+  type AiParsedMeal,
+  type AiParseRequest,
+} from '@foodnote/shared';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Drawer,
+  DrawerBody,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerTitleBar,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { Disclaimer } from '@/components/disclaimer';
 import {
@@ -37,17 +67,30 @@ import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
+import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 
 /**
- * Logging a meal, AI-first. Every state is a step inside this one container —
- * the manual form included — because a dialog stacked on an open sheet means
- * two focus traps, two Escape layers and, on mobile, two things fighting for
- * the keyboard.
- *
- * A parse never writes (ADR-0006): what it returns is a proposal the user
- * confirms, and only the confirm posts.
+ * The step, and whatever only that step knows. A parsed meal's confidence note
+ * and a not-food verdict's reason used to be their own nullable state, which
+ * meant `reset()` had to clear them and the render had to re-check the step
+ * before reading them. Here they can't outlive the step they belong to.
  */
-type Step = 'input' | 'manual' | 'loading' | 'preview' | 'not-food' | 'error';
+type View =
+  | { step: 'ai-input' }
+  | { step: 'manual' }
+  | { step: 'loading' }
+  | { step: 'preview'; confidenceNote: string | null }
+  | { step: 'not-food'; reason: string }
+  | { step: 'error' };
+
+const STEP_TITLES: Record<View['step'], string> = {
+  'ai-input': 'Log a meal',
+  manual: 'Enter a meal',
+  loading: 'Log a meal',
+  preview: 'Review your meal',
+  'not-food': 'Log a meal',
+  error: 'Log a meal',
+};
 
 /** The AI call is a live model round-trip; past this it isn't coming. */
 const PARSE_TIMEOUT_MS = 15_000;
@@ -90,6 +133,16 @@ function pickExamples() {
 
 // Static, so building it per render only allocates a closure useForm drops.
 const mealDraftResolver = zodResolver(mealDraftSchema);
+const parseResolver = zodResolver(aiParseRequestSchema);
+
+/** The description is a form field like any other, so the AI step is a form. */
+const PARSE_FORM_ID = 'ai-parse-form';
+
+/** The seeded name has to survive the same validation the field does, so this
+    tracks `mealNameSchema.max(200)` in `shared/src/common.ts`. Read from the
+    schema it would be `number | null`, and a null would silently slice the seed
+    to nothing — worse than a stated number. */
+const MEAL_NAME_MAX = 200;
 
 const emptyDraft = (): MealDraftValues => ({
   mealName: '',
@@ -101,134 +154,139 @@ const emptyDraft = (): MealDraftValues => ({
   items: [],
 });
 
+/**
+ * Logging a meal, AI-first. Every state is a step inside this one container —
+ * the manual form included — because a dialog stacked on an open sheet means
+ * two focus traps, two Escape layers and, on mobile, two things fighting for
+ * the keyboard.
+ *
+ * Two forms, one per input the user actually fills: `parseForm` holds the
+ * description the AI reads, `form` holds the draft that gets posted. A parse
+ * never writes (ADR-0006) — what it returns is a proposal the user confirms,
+ * and only the confirm posts.
+ */
 export function MealLogDrawer({
   open: controlledOpen,
   onOpenChange,
-  triggerClassName,
-  children,
+  trigger,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  // Layout only — the trigger's own look stays in the component. `/meals` and
-  // the desktop dashboard need it to sit right in their columns.
-  triggerClassName?: string;
-  children?: React.ReactNode;
+  /**
+   * The whole button that opens the drawer — variant, size, layout, icon and
+   * label all belong to the caller. Not `children`: on a drawer that reads as
+   * the drawer's own content, which is the one thing it isn't. Not
+   * `triggerClassName` either — a class string can't change the variant or the
+   * size, only fight the classes underneath it, and all four call sites were
+   * passing layout to undo a default they never asked for.
+   *
+   * Omit it when driving `open` yourself; the caller then owns the trigger
+   * outright and a second one here would sit in the tab order.
+   */
+  trigger?: React.ReactElement;
 }) {
   // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
   // since Undo (DELETE) needs the server id and rollback is the provider's job.
   const { saveMeal } = useMeals();
+  // A modal on desktop, a sheet from the bottom on a phone — shadcn's
+  // responsive-dialog pattern, and the same breakpoint `WeightLogDrawer` uses so
+  // the two agree on where desktop starts.
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const [open, setOpen] = useControllableState(
     controlledOpen,
     onOpenChange,
     false,
   );
 
-  const [step, setStep] = useState<Step>('input');
-  const [description, setDescription] = useState('');
-  const [notFoodReason, setNotFoodReason] = useState<string | null>(null);
-  const [rateLimited, setRateLimited] = useState(false);
-  const [confidenceNote, setConfidenceNote] = useState<string | null>(null);
+  const [view, setView] = useState<View>({ step: 'ai-input' });
+  const step = view.step;
   // Once the user sets a total by hand the items stop driving it — they become
   // illustration again and both are posted as shown (ADR-0008).
   const [totalsOverridden, setTotalsOverridden] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
-  const timedOutRef = useRef(false);
 
   const form = useForm<MealDraftValues>({
     resolver: mealDraftResolver,
     defaultValues: emptyDraft(),
   });
 
-  // One evaluation feeds both the submit guard and the button's enabled state,
-  // so the two can't disagree about what counts as parseable.
-  const parsedDescription = useMemo(
-    () => aiParseRequestSchema.safeParse({ description }),
-    [description],
-  );
+  /** `mode: 'onChange'` so the Parse button's enabled state is the resolver's
+      verdict rather than a second opinion about what counts as parseable. */
+  const parseForm = useForm<AiParseRequest>({
+    resolver: parseResolver,
+    defaultValues: { description: '' },
+    mode: 'onChange',
+  });
 
-  const abortParse = useCallback(() => {
+  function abortParse() {
     abortRef.current?.abort();
     abortRef.current = null;
-  }, []);
-
-  // A response that lands after the user has moved on must not resurrect a
-  // step they left; aborting on close is what guarantees that.
-  useEffect(() => abortParse, [abortParse]);
-
-  function reset() {
-    setStep('input');
-    setDescription('');
-    setNotFoodReason(null);
-    setRateLimited(false);
-    setConfidenceNote(null);
-    setTotalsOverridden(false);
-    form.reset(emptyDraft());
   }
 
+  // A response that lands after the user has moved on must not resurrect a
+  // step they left; aborting on unmount is what guarantees that.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  function reset() {
+    setView({ step: 'ai-input' });
+    setTotalsOverridden(false);
+    form.reset(emptyDraft());
+    parseForm.reset({ description: '' });
+  }
+
+  /** Reset on the way in, never on the way out — the same rule `WeightLogDrawer`
+      follows. Resetting after a delay on close raced the close animation, and
+      it re-derived the default meal type at close time, so a page left open
+      overnight seeded yesterday's meal. */
   function handleOpenChange(next: boolean) {
-    if (!next) {
-      abortParse();
-      setTimeout(reset, 300);
-    }
+    if (next) reset();
+    else abortParse();
     setOpen(next);
   }
 
-  /** Load a Parsed Meal into the form. Its own totals stand until an item is
-      edited — we never silently contradict the numbers the model returned. */
+  /** Load a Parsed Meal into the form. The payload deliberately shares the
+      draft's field names (see `shared/src/meals.ts`), so spreading it is what
+      keeps that contract worth having — only `confidenceNote` isn't a field.
+      Its own totals stand until an item is edited: we never silently
+      contradict the numbers the model returned. */
   function loadParsedMeal(meal: AiParsedMeal) {
-    form.reset({
-      mealName: meal.mealName,
-      mealType: mealTypeForHour(new Date().getHours()),
-      totalCalories: meal.totalCalories,
-      proteinGrams: meal.proteinGrams,
-      carbsGrams: meal.carbsGrams,
-      fatGrams: meal.fatGrams,
-      items: meal.items,
-    });
-    setConfidenceNote(meal.confidenceNote);
+    const { confidenceNote, ...draft } = meal;
+    form.reset({ ...emptyDraft(), ...draft });
     setTotalsOverridden(false);
+    setView({ step: 'preview', confidenceNote });
   }
 
-  async function handleParse() {
-    if (!parsedDescription.success) return;
-
+  async function runParse({ description }: AiParseRequest) {
     abortParse();
     const controller = new AbortController();
     abortRef.current = controller;
-    timedOutRef.current = false;
+    // Local, not a ref: it is written and read inside this one call, and as a
+    // ref two overlapping parses shared it. It exists because an AbortError
+    // doesn't say who aborted, and a user cancel must not surface as a failure.
+    let timedOut = false;
     const timeout = setTimeout(() => {
-      timedOutRef.current = true;
+      timedOut = true;
       controller.abort();
     }, PARSE_TIMEOUT_MS);
 
-    setRateLimited(false);
-    setStep('loading');
+    setView({ step: 'loading' });
 
     try {
-      const result = await mealsApi.aiParse(
-        parsedDescription.data,
-        controller.signal,
-      );
+      const result = await mealsApi.aiParse({ description }, controller.signal);
       if (controller.signal.aborted) return;
-      if (result.parsed) {
-        loadParsedMeal(result.meal);
-        setStep('preview');
-      } else {
-        setNotFoodReason(result.reason);
-        setStep('not-food');
-      }
+      if (result.parsed) loadParsedMeal(result.meal);
+      else setView({ step: 'not-food', reason: result.reason });
     } catch (error) {
-      // A user-initiated cancel already returned us to the input step; only a
-      // timeout should surface as a failure.
-      if (controller.signal.aborted && !timedOutRef.current) return;
-      // 429 is transient and the text is still good — keep them on the input
-      // step. A 502 is terminal (ADR-0006), so retrying is the wrong headline.
+      if (controller.signal.aborted && !timedOut) return;
       if (error instanceof ApiError && error.status === 429) {
-        setRateLimited(true);
-        setStep('input');
+        setView({ step: 'ai-input' });
+        parseForm.setError('description', {
+          message:
+            "That's a lot of parsing at once — give it a few seconds and try again.",
+        });
       } else {
-        setStep('error');
+        setView({ step: 'error' });
       }
     } finally {
       clearTimeout(timeout);
@@ -236,320 +294,493 @@ export function MealLogDrawer({
     }
   }
 
+  /** The submit path for both entry points to a parse: the input step's form,
+      and "Try again" on the not-food step. Built inside the handler rather than
+      at render level, so `runParse` reading `abortRef` isn't a ref read during
+      render (react-hooks/refs). */
+  const handleParse = () => parseForm.handleSubmit(runParse)();
+
   function handleCancelParse() {
     abortParse();
-    setStep('input');
+    setView({ step: 'ai-input' });
   }
 
   /** The AI is unreachable — carry the description over so the manual form
       isn't a blank page after a failure. */
-  function switchToManual(seedName?: string) {
-    if (seedName) {
-      const firstSentence = seedName.split(/[.!?\n]/)[0].trim() || seedName;
-      form.setValue('mealName', firstSentence.slice(0, 200));
+  function switchToManual(seed?: string) {
+    if (seed) {
+      const firstSentence = seed.split(/[.!?\n]/)[0].trim() || seed;
+      form.setValue('mealName', firstSentence.slice(0, MEAL_NAME_MAX));
     }
-    setStep('manual');
+    setView({ step: 'manual' });
   }
 
   /** Items drive the totals until the user takes them over. Safe to read
       synchronously: react-hook-form writes the field (and useFieldArray writes
-      the array) before it calls back here. */
-  const handleItemsChange = useCallback(() => {
+      the array) before it calls back here. Not memoized: `MealItemsFields`
+      isn't, so a stable identity was never observed. */
+  function handleItemsChange() {
     if (totalsOverridden) return;
     const next = sumItems(form.getValues('items') ?? []);
     form.setValue('totalCalories', next.totalCalories);
     form.setValue('proteinGrams', next.proteinGrams);
     form.setValue('carbsGrams', next.carbsGrams);
     form.setValue('fatGrams', next.fatGrams);
-  }, [form, totalsOverridden]);
+  }
 
   function handleSave(values: MealDraftValues) {
-    setOpen(false);
     saveMeal({
       ...values,
       recordedAt: new Date().toISOString(),
       source: step === 'manual' ? 'manual' : 'ai',
     });
-    setTimeout(reset, 300);
+    // Closing resets: DrawerPortal unmounts the content, and `handleOpenChange`
+    // re-seeds the forms on the way back in.
+    setOpen(false);
   }
 
-  const canParse = parsedDescription.success;
+  // A snapshot, not a subscription: both readers render after a step change,
+  // and watching here would re-render the whole drawer on every keystroke.
+  const readDescription = () => parseForm.getValues('description');
 
-  return (
-    <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
-      {children && (
-        <DrawerTrigger
-          render={<Button size="lg" />}
-          className={cn('grow-2 basis-0 lg:grow-0', triggerClassName)}
-        >
-          {children}
-        </DrawerTrigger>
-      )}
+  const pickExample = (example: string) =>
+    parseForm.setValue('description', example, { shouldValidate: true });
 
-      <DrawerContent>
-        <DrawerTitleBar>
-          {step === 'preview'
-            ? 'Review your meal'
-            : step === 'manual'
-              ? 'Enter a meal'
-              : 'Log a meal'}
-        </DrawerTitleBar>
+  // The back link out of the manual step. Rendered into whichever header the
+  // width gives us, never floating in the body.
+  const back =
+    step === 'manual' ? (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setView({ step: 'ai-input' })}
+      >
+        <ArrowLeftIcon /> Back
+      </Button>
+    ) : undefined;
 
-        {step === 'input' && (
-          <StepPanel key="input">
-            <div className="flex flex-col gap-3 px-5 pt-5">
-              {/* Full-strength, not muted: here the description labels the
-                  textarea under it rather than explaining the sheet. */}
-              <DrawerDescription className="text-foreground">
-                Describe what you ate
-              </DrawerDescription>
-              <Textarea
+  // Everything below the header, shared by both containers per shadcn's
+  // responsive-dialog example. `DrawerBody` and `DrawerFooter` inside the steps
+  // are plain padded divs, so they sit in the dialog unchanged; only the
+  // container and its header differ.
+  const steps = (
+    <>
+      {/* Outside the steps on purpose: a live region has to exist before its
+          text changes, or the change is never announced — one mounted
+          together with its own content says nothing. */}
+      <span aria-live="polite" className="sr-only">
+        {step === 'loading' ? 'Reading your meal…' : ''}
+      </span>
+
+      {step === 'ai-input' && (
+        <StepPanel key="input">
+          <DrawerBody>
+            <form
+              id={PARSE_FORM_ID}
+              onSubmit={(event) => parseForm.handleSubmit(runParse)(event)}
+              noValidate
+              className="flex flex-col gap-3"
+            >
+              <DescriptionField
+                parseForm={parseForm}
                 autoFocus
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  setRateLimited(false);
-                }}
                 rows={4}
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
-                className="min-h-32.5"
+                className="min-h-32"
               />
-              <ExampleChips
-                show={description.length === 0}
-                onPick={setDescription}
-              />
-              <p className="text-sm text-muted-foreground">
-                One meal at a time. Portions can be approximate — you&apos;ll
-                review before saving.
-              </p>
-              {rateLimited && (
-                <p role="alert" className="text-sm text-destructive-text">
-                  That&apos;s a lot of parsing at once — give it a few seconds
-                  and try again.
-                </p>
-              )}
-            </div>
-            <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
-              <Button
-                onClick={handleParse}
-                disabled={!canParse}
-                size="lg"
-                className="w-full"
-              >
-                Parse with AI
-              </Button>
-              <Button
-                variant="link"
-                className="h-auto gap-1 p-0 text-sm text-muted-foreground"
-                onClick={() => switchToManual()}
-              >
-                Enter manually instead
-              </Button>
-            </DrawerFooter>
-          </StepPanel>
-        )}
+              <ExampleChips control={parseForm.control} onPick={pickExample} />
+            </form>
+          </DrawerBody>
+          <StepFooter
+            primary={{
+              label: 'Parse with AI',
+              type: 'submit',
+              form: PARSE_FORM_ID,
+              disabled: !parseForm.formState.isValid,
+            }}
+            secondary={{
+              label: 'Enter manually instead',
+              onClick: () => switchToManual(),
+            }}
+          />
+        </StepPanel>
+      )}
 
-        {step === 'loading' && (
-          <StepPanel key="loading">
-            {/* flex-1 + justify-center so the wait sits in the middle of a
+      {step === 'loading' && (
+        <StepPanel key="loading">
+          {/* flex-1 + justify-center so the wait sits in the middle of a
                 full-height desktop panel; on mobile the sheet is content-sized
                 and there is no slack to centre in, so it just stacks. Cancel
                 lives in here rather than in the footer — pinned to the bottom
-                it ended up a screen away from the thing it cancels. */}
-            <div
-              aria-busy="true"
-              aria-live="polite"
-              className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-12"
-            >
-              {/* The round wash the mascot waits in. */}
-              <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-accent">
-                <Image
-                  src="/mascot/defaultlogo.png"
-                  alt=""
-                  width={104}
-                  height={104}
-                  className="size-26"
-                />
-              </div>
-              <p className="text-sm font-semibold">Reading your meal…</p>
-              <Progress indeterminate size="sm" className="w-40" />
-              <Button
-                variant="link"
-                className="h-auto gap-1 p-0 text-sm text-muted-foreground mt-1"
-                onClick={handleCancelParse}
-              >
-                Cancel
-              </Button>
-            </div>
-          </StepPanel>
-        )}
-
-        {(step === 'preview' || step === 'manual') && (
-          <StepPanel key="form">
-            <form
-              id={MEAL_FORM_ID}
-              onSubmit={form.handleSubmit(handleSave)}
-              noValidate
-              className="flex min-h-0 flex-col gap-4.5 overflow-y-auto px-5 pt-4 pb-2"
-            >
-              {/* Below the title rather than beside it: level with the title it
-                  read as a second heading and crowded the centred label. */}
-              {step === 'manual' && (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto gap-1 p-0 text-sm text-muted-foreground w-fit"
-                  onClick={() => setStep('input')}
-                >
-                  ← Back
-                </Button>
-              )}
-
-              {step === 'preview' && (
-                <Card className="gap-1 rounded-md border-transparent bg-accent px-3.5 py-2.5 shadow-none flex-row items-center gap-2">
-                  <p className="min-w-0 grow basis-0 truncate text-sm">
-                    “{description}”
-                  </p>
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="h-auto gap-1 p-0 shrink-0"
-                    onClick={() => setStep('input')}
-                  >
-                    <Pencil className="size-3" />
-                    Edit &amp; re-parse
-                  </Button>
-                </Card>
-              )}
-
-              <MealNameField form={form} />
-
-              {step === 'preview' && (
-                <MealItemsFields
-                  form={form}
-                  onItemsChange={handleItemsChange}
-                />
-              )}
-
-              {/* Read-only in the parsed preview: the items are the editable
-                  surface, and correcting a figure there recomputes these
-                  tiles. Taking the totals over by hand is reachable from the
-                  macro suggestion below, and manual entry has its own step. */}
-              {step === 'preview' && !totalsOverridden ? (
-                <MealTotalsSummary control={form.control} />
-              ) : (
-                <>
-                  <MealTotalsFields
-                    form={form}
-                    onUserEdit={() => setTotalsOverridden(true)}
-                  />
-                  {step === 'preview' && (
-                    <p className="text-sm text-muted-foreground">
-                      Totals set by hand — they no longer follow the items.
-                    </p>
-                  )}
-                </>
-              )}
-
-              <MacroSuggestion
-                control={form.control}
-                onUse={(kcal) => {
-                  form.setValue('totalCalories', kcal);
-                  setTotalsOverridden(true);
-                }}
+                it ended up a screen away from the thing it cancels.
+                `aria-busy` only: the announcement is the drawer-level live
+                region above, which exists before this panel mounts. */}
+          <div
+            aria-busy="true"
+            className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-4 py-12"
+          >
+            {/* The round wash the mascot waits in. */}
+            <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-accent">
+              <Image
+                src="/mascot/default.webp"
+                alt=""
+                width={104}
+                height={104}
+                className="size-26"
               />
+            </div>
+            <p className="text-sm font-semibold">Reading your meal…</p>
+            <Progress indeterminate size="sm" className="w-40" />
+            {/* The same shape as the header's Back: both step out of where
+                  the user is, so they read as one control, not two ideas. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelParse}
+            >
+              Cancel
+            </Button>
+          </div>
+        </StepPanel>
+      )}
 
-              <MealTypeField form={form} />
+      {view.step === 'preview' && (
+        <StepPanel key="preview">
+          <ReviewStep
+            form={form}
+            description={readDescription()}
+            confidenceNote={view.confidenceNote}
+            totalsOverridden={totalsOverridden}
+            onTakeOverTotals={() => setTotalsOverridden(true)}
+            onItemsChange={handleItemsChange}
+            onReparse={() => setView({ step: 'ai-input' })}
+            onSubmit={form.handleSubmit(handleSave)}
+          />
+        </StepPanel>
+      )}
 
-              {step === 'preview' && confidenceNote && (
-                <Card className="gap-1 rounded-md border-transparent bg-accent px-3.5 py-2.5 shadow-none gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <Image
-                      src="/mascot/reassure.webp"
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="size-10 shrink-0"
-                    />
-                    <p className="text-sm">{confidenceNote}</p>
-                  </div>
-                  <Disclaimer />
-                </Card>
-              )}
-            </form>
+      {step === 'manual' && (
+        <StepPanel key="manual">
+          <ManualStep
+            form={form}
+            onTakeOverTotals={() => setTotalsOverridden(true)}
+            onSubmit={form.handleSubmit(handleSave)}
+          />
+        </StepPanel>
+      )}
 
-            <DrawerFooter className="pt-4 pb-5">
-              <SaveButton control={form.control} />
-            </DrawerFooter>
-          </StepPanel>
-        )}
-
-        {step === 'not-food' && (
+      {view.step === 'not-food' && (
+        <StepPanel key="not-food">
           <RecoverStep
             message={
-              notFoodReason ??
+              view.reason ||
               'That doesn’t look like a meal. Try describing what you ate — like “two eggs and toast.”'
             }
             primary={{
               label: 'Try again',
               onClick: handleParse,
-              disabled: !canParse,
+              disabled: !parseForm.formState.isValid,
             }}
             secondary={{
               label: 'Enter manually instead',
-              onClick: () => switchToManual(description),
+              onClick: () => switchToManual(readDescription()),
             }}
           >
-            <div className="flex flex-col gap-2.5 px-5 pt-3.5">
-              <p className="text-sm font-semibold">Describe what you ate</p>
-              <Textarea
-                autoFocus
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                // The invalid look is the component's, driven by the attribute
-                // that also tells a screen reader — not a red border painted on
-                // from here.
-                aria-invalid
-                className="min-h-22.5"
-              />
-            </div>
+            <DrawerBody>
+              <DescriptionField parseForm={parseForm} autoFocus rows={3} />
+            </DrawerBody>
           </RecoverStep>
-        )}
+        </StepPanel>
+      )}
 
-        {step === 'error' && (
-          // Manual leads: the failures that land here are terminal (ADR-0006),
-          // so "try again" is the wrong thing to make prominent.
+      {step === 'error' && (
+        // Manual leads: the failures that land here are terminal (ADR-0006),
+        // so "try again" is the wrong thing to make prominent.
+        <StepPanel key="error">
           <RecoverStep
             message="AI logging isn’t available right now. You can still enter the meal yourself — nothing you typed is lost."
             primary={{
               label: 'Enter manually',
-              onClick: () => switchToManual(description),
+              onClick: () => switchToManual(readDescription()),
             }}
             secondary={{ label: 'Try again', onClick: handleParse }}
           />
-        )}
+        </StepPanel>
+      )}
+    </>
+  );
+
+  // Nothing to render when the caller drives `open` itself.
+  const showTrigger = controlledOpen === undefined && trigger;
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {showTrigger && <DialogTrigger render={trigger} />}
+        {/* `p-0 gap-0` and a flex column, so the steps scroll between a pinned
+            header and footer exactly as they do in the sheet — the stock
+            `grid gap-6 p-6` would pad the popup and the body both, and a
+            ten-item parse would grow the popup instead of scrolling inside it.
+            Same shape as `WeightLogDrawer`. */}
+        <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="flex-row items-center gap-2 p-4 pb-0">
+            {back}
+            {/* Clears the stock close button at `top-4 right-4`. */}
+            <DialogTitle className="pr-10">{STEP_TITLES[step]}</DialogTitle>
+          </DialogHeader>
+          {steps}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
+      {showTrigger && <DrawerTrigger render={trigger} />}
+      <DrawerContent>
+        {/* The shared header (#39): the title optically centred, one definition
+            of the close button, and the back link in its `leading` slot. */}
+        <DrawerTitleBar leading={back}>{STEP_TITLES[step]}</DrawerTitleBar>
+        {steps}
       </DrawerContent>
     </Drawer>
   );
 }
 
+/**
+ * The AI's proposal, up for confirmation. The items are the editable surface
+ * here — correcting a figure there recomputes the totals tiles — so the totals
+ * stay read-only until the user takes them over.
+ */
+function ReviewStep({
+  form,
+  description,
+  confidenceNote,
+  totalsOverridden,
+  onTakeOverTotals,
+  onItemsChange,
+  onReparse,
+  onSubmit,
+}: {
+  form: UseFormReturn<MealDraftValues>;
+  description: string;
+  confidenceNote: string | null;
+  totalsOverridden: boolean;
+  onTakeOverTotals: () => void;
+  onItemsChange: () => void;
+  onReparse: () => void;
+  onSubmit: React.FormEventHandler<HTMLFormElement>;
+}) {
+  return (
+    <>
+      <DrawerBody>
+        <form
+          id={MEAL_FORM_ID}
+          onSubmit={onSubmit}
+          noValidate
+          className="flex flex-col gap-5"
+        >
+          <Item size="sm" className="bg-accent">
+            <ItemContent>
+              <ItemTitle className="text-muted-foreground">
+                “{description}”
+              </ItemTitle>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto gap-2 p-0"
+                onClick={onReparse}
+              >
+                <Pencil className="size-3" />
+                Edit &amp; re-parse
+              </Button>
+            </ItemActions>
+          </Item>
+
+          <MealNameField form={form} />
+          <MealItemsFields form={form} onItemsChange={onItemsChange} />
+
+          {totalsOverridden ? (
+            <>
+              <MealTotalsFields form={form} onUserEdit={onTakeOverTotals} />
+              <p className="text-sm text-muted-foreground">
+                Totals set by hand — they no longer follow the items.
+              </p>
+            </>
+          ) : (
+            <MealTotalsSummary control={form.control} />
+          )}
+
+          <MacroSuggestion
+            control={form.control}
+            onUse={(kcal) => {
+              form.setValue('totalCalories', kcal);
+              onTakeOverTotals();
+            }}
+          />
+
+          <MealTypeField form={form} />
+
+          {confidenceNote && (
+            <Item className="bg-accent">
+              <ItemMedia variant="image">
+                <Image
+                  src="/mascot/reassure.webp"
+                  alt=""
+                  width={40}
+                  height={40}
+                />
+              </ItemMedia>
+              <ItemContent>
+                {/* `line-clamp-none`: the note is the model's own words about
+                    what it wasn't sure of, and two lines truncates the reason
+                    away. */}
+                <ItemDescription className="line-clamp-none text-foreground">
+                  {confidenceNote}
+                </ItemDescription>
+                <Disclaimer />
+              </ItemContent>
+            </Item>
+          )}
+        </form>
+      </DrawerBody>
+
+      <DrawerFooter className="pb-5">
+        <SaveButton control={form.control} />
+      </DrawerFooter>
+    </>
+  );
+}
+
+/**
+ * Typing a meal in by hand: the same field vocabulary, no items and no proposal
+ * to confirm, so the totals are the editable surface from the start. A separate
+ * component rather than a mode flag — the two steps shared one form body behind
+ * five `step === 'preview'` checks, and neither could be read straight through.
+ */
+function ManualStep({
+  form,
+  onTakeOverTotals,
+  onSubmit,
+}: {
+  form: UseFormReturn<MealDraftValues>;
+  onTakeOverTotals: () => void;
+  onSubmit: React.FormEventHandler<HTMLFormElement>;
+}) {
+  return (
+    <>
+      <DrawerBody>
+        <form
+          id={MEAL_FORM_ID}
+          onSubmit={onSubmit}
+          noValidate
+          className="flex flex-col gap-5"
+        >
+          <MealNameField form={form} />
+          <MealTotalsFields form={form} onUserEdit={onTakeOverTotals} />
+          <MacroSuggestion
+            control={form.control}
+            onUse={(kcal) => {
+              form.setValue('totalCalories', kcal);
+              onTakeOverTotals();
+            }}
+          />
+          <MealTypeField form={form} />
+        </form>
+      </DrawerBody>
+
+      <DrawerFooter className="pb-5">
+        <SaveButton control={form.control} />
+      </DrawerFooter>
+    </>
+  );
+}
+
+/**
+ * A secondary action that reads as a link but is still a target: `py-2` puts it
+ * at ~36px where `p-0` left a 20px strip. WCAG 2.5.8's inline-text exemption
+ * doesn't apply — none of these sit inside a sentence.
+ */
+function QuietButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      type="button"
+      variant="link"
+      className={cn(
+        'h-auto gap-1 px-1 py-2 text-sm text-muted-foreground',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * The one description field, used by the input step and by the not-food step's
+ * second try — the same field of the same form, so a retry keeps what was
+ * typed, and `min(3)`/`max(500)` finally produce a message instead of silently
+ * disabling the button. Invalid styling is declared on both the `Field` and the
+ * control, per the Forms rule.
+ */
+function DescriptionField({
+  parseForm,
+  className,
+  ...props
+}: {
+  parseForm: UseFormReturn<AiParseRequest>;
+} & Omit<React.ComponentProps<typeof Textarea>, 'form'>) {
+  const id = useId();
+  const { error } = parseForm.getFieldState('description', parseForm.formState);
+
+  return (
+    <Field data-invalid={error ? true : undefined}>
+      <FieldLabel htmlFor={id}>Describe what you ate</FieldLabel>
+      <Textarea
+        id={id}
+        aria-invalid={error ? true : undefined}
+        className={cn('min-h-22', className)}
+        {...props}
+        {...parseForm.register('description')}
+      />
+      {/* Says what the disabled Parse button is waiting for. Before the field is
+          touched there is no error to show, so without this the button is dead
+          with no stated reason. */}
+      <FieldDescription>
+        A few words is enough. One meal at a time, and portions can be
+        approximate — you&apos;ll review before saving.
+      </FieldDescription>
+      <FieldError errors={[error]} />
+    </Field>
+  );
+}
+
+/** Subscribes to the description itself, so typing re-renders the chips rather
+    than the drawer. */
 function ExampleChips({
-  show,
+  control,
   onPick,
 }: {
-  show: boolean;
+  control: Control<AiParseRequest>;
   onPick: (example: string) => void;
 }) {
   const [examples] = useState(pickExamples);
+  const description = useWatch({ control, name: 'description' });
 
-  if (!show) return null;
+  if (description.length > 0) return null;
 
   return (
     <div className="flex flex-wrap gap-2">
       {examples.map((example) => (
         <Button
           key={example}
+          type="button"
           variant="outline"
           onClick={() => onPick(example)}
           className="rounded-full"
@@ -561,18 +792,67 @@ function ExampleChips({
   );
 }
 
+/** Every step ends the same way: one full-width action, one quiet link under
+    it. `RecoverStep` and the input step used to spell this out separately, and
+    disagreed on the gap. */
+function StepFooter({
+  primary,
+  secondary,
+}: {
+  primary: {
+    label: string;
+    onClick?: () => void;
+    disabled?: boolean;
+    type?: 'button' | 'submit';
+    form?: string;
+  };
+  secondary: { label: string; onClick: () => void };
+}) {
+  return (
+    <DrawerFooter className="items-center gap-2 pb-5">
+      <Button
+        type={primary.type ?? 'button'}
+        form={primary.form}
+        onClick={primary.onClick}
+        disabled={primary.disabled}
+        size="lg"
+        className="w-full"
+      >
+        {primary.label}
+      </Button>
+      <QuietButton onClick={secondary.onClick}>{secondary.label}</QuietButton>
+    </DrawerFooter>
+  );
+}
+
 /**
  * Wraps a step so it fades and rises into place instead of blinking in.
  * Keyed on the step in the caller, so React remounts it and @starting-style
  * has something to start from.
  *
- * The purpose is not decoration: swapping a whole panel with no transition
- * reads as a glitch, especially here where the drawer's height changes at the
- * same moment. Under reduced motion the fade stays and the travel goes.
+ * The remount is also where focus is caught: a step swap unmounts whatever held
+ * it, and without this the keyboard lands on `<body>` — the user is outside the
+ * drawer with nothing announced. Only when the new panel focuses nothing of its
+ * own, so an `autoFocus`ed field still wins.
+ *
+ * The fade is not decoration: swapping a whole panel with no transition reads as
+ * a glitch, especially here where the drawer's height changes at the same
+ * moment. Under reduced motion the fade stays and the travel goes.
  */
 function StepPanel({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const panel = ref.current;
+    if (panel && !panel.contains(document.activeElement)) panel.focus();
+  }, []);
+
   return (
-    <div className="motion-keep-fade flex min-h-0 flex-1 flex-col transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0">
+    <div
+      ref={ref}
+      tabIndex={-1}
+      className="motion-keep-fade flex min-h-0 flex-1 flex-col transition-[opacity,transform] duration-200 ease-out-strong outline-none starting:translate-y-1 starting:opacity-0"
+    >
       {children}
     </div>
   );
@@ -592,7 +872,7 @@ function RecoverStep({
 }) {
   return (
     <>
-      <div className="flex flex-col items-center gap-3.5 px-6 pt-9 pb-2">
+      <div className="flex flex-col items-center gap-3.5 px-4 pt-9 pb-2">
         {/* The same wash, tinted by the failure: the mascot sits in it while
             the panel below says what went wrong. */}
         <div className="flex size-30 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]">
@@ -617,23 +897,7 @@ function RecoverStep({
         </Card>
       </div>
       {children}
-      <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
-        <Button
-          onClick={primary.onClick}
-          disabled={primary.disabled}
-          size="lg"
-          className="w-full"
-        >
-          {primary.label}
-        </Button>
-        <Button
-          variant="link"
-          className="h-auto gap-1 p-0 text-sm text-muted-foreground"
-          onClick={secondary.onClick}
-        >
-          {secondary.label}
-        </Button>
-      </DrawerFooter>
+      <StepFooter primary={primary} secondary={secondary} />
     </>
   );
 }
