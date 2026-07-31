@@ -97,7 +97,7 @@ export function EditProfileDialog() {
           </DialogClose>
           <Button type="submit" form={EDIT_PROFILE_FORM_ID} disabled={saving}>
             {saving && <Spinner />}
-            Save
+            Update profile
           </Button>
         </DialogFooter>
       </DialogContent>

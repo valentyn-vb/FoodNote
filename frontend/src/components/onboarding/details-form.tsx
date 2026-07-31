@@ -36,7 +36,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       id={DETAILS_FORM_ID}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-5 px-5 pt-4.5"
+      className="flex flex-col gap-5"
     >
       <div className="flex gap-3">
         <InputField

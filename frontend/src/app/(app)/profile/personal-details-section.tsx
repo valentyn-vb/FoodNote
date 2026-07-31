@@ -189,7 +189,7 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          render={<Button variant="link" className="h-auto gap-1 p-0" />}
+          render={<Button variant="link" />}
         >
           {(loading || saving) && <Spinner />}
           Edit details
@@ -204,12 +204,12 @@ export function PersonalDetailsSection({
 
           <DetailsForm form={form} onSubmit={handleSave} />
 
-          <DialogFooter className="flex-row justify-end gap-2.5">
+          <DialogFooter className="flex-row justify-end gap-2">
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
             <Button type="submit" form={DETAILS_FORM_ID}>
-              Save
+              Save changes
             </Button>
           </DialogFooter>
         </DialogContent>

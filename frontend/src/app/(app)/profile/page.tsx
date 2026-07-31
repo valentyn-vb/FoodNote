@@ -85,16 +85,6 @@ export default function ProfilePage() {
           onProfileChange={setProfileData}
         />
       </div>
-
-      <Separator />
-
-      <LogoutButton
-        variant="outline"
-        size="lg"
-        className="w-full border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-card text-destructive-text hover:bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]"
-      >
-        Log out
-      </LogoutButton>
     </div>
   );
 }
