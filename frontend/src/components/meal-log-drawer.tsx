@@ -19,13 +19,6 @@ import {
   type AiParseRequest,
 } from '@foodnote/shared';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -67,7 +60,6 @@ import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
-import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 
 /**
  * The step, and whatever only that step knows. A parsed meal's confidence note
@@ -188,10 +180,6 @@ export function MealLogDrawer({
   // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
   // since Undo (DELETE) needs the server id and rollback is the provider's job.
   const { saveMeal } = useMeals();
-  // A modal on desktop, a sheet from the bottom on a phone — shadcn's
-  // responsive-dialog pattern, and the same breakpoint `WeightLogDrawer` uses so
-  // the two agree on where desktop starts.
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const [open, setOpen] = useControllableState(
     controlledOpen,
     onOpenChange,
@@ -346,8 +334,8 @@ export function MealLogDrawer({
   const pickExample = (example: string) =>
     parseForm.setValue('description', example, { shouldValidate: true });
 
-  // The back link out of the manual step. Rendered into whichever header the
-  // width gives us, never floating in the body.
+  // The back link out of the manual step. Rendered into the title bar, never
+  // floating in the body.
   const back =
     step === 'manual' ? (
       <Button
@@ -356,14 +344,11 @@ export function MealLogDrawer({
         size="sm"
         onClick={() => setView({ step: 'ai-input' })}
       >
-        <ArrowLeftIcon /> Back
+        <ArrowLeftIcon /> Back to AI Input
       </Button>
     ) : undefined;
 
-  // Everything below the header, shared by both containers per shadcn's
-  // responsive-dialog example. `DrawerBody` and `DrawerFooter` inside the steps
-  // are plain padded divs, so they sit in the dialog unchanged; only the
-  // container and its header differ.
+  // Everything below the title bar.
   const steps = (
     <>
       {/* Outside the steps on purpose: a live region has to exist before its
@@ -515,27 +500,9 @@ export function MealLogDrawer({
   // Nothing to render when the caller drives `open` itself.
   const showTrigger = controlledOpen === undefined && trigger;
 
-  if (isDesktop) {
-    return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {showTrigger && <DialogTrigger render={trigger} />}
-        {/* `p-0 gap-0` and a flex column, so the steps scroll between a pinned
-            header and footer exactly as they do in the sheet — the stock
-            `grid gap-6 p-6` would pad the popup and the body both, and a
-            ten-item parse would grow the popup instead of scrolling inside it.
-            Same shape as `WeightLogDrawer`. */}
-        <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-          <DialogHeader className="flex-row items-center gap-2 p-4 pb-0">
-            {back}
-            {/* Clears the stock close button at `top-4 right-4`. */}
-            <DialogTitle className="pr-10">{STEP_TITLES[step]}</DialogTitle>
-          </DialogHeader>
-          {steps}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
+  // One shell at every width: `responsiveSide` is what changes shape — a bottom
+  // sheet in the thumb zone on a phone, a right-hand panel on desktop. Logging a
+  // meal is not a modal question to answer; the day stays visible beside it.
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} responsiveSide>
       {showTrigger && <DrawerTrigger render={trigger} />}
