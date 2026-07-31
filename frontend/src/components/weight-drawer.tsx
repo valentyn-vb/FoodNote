@@ -158,11 +158,16 @@ export function WeightDrawer(props: WeightDrawerProps) {
           showDate={mode === 'edit'}
         />
         <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
+          {/* `lg` is the app's CTA step (48px), the same height as the weight
+              field above it. The default 36px left the primary action shorter
+              than its own input, and the `py-3.5` that used to stand in for it
+              did nothing against a fixed height. */}
           <Button
             type="submit"
             form={WEIGHT_FORM_ID}
+            size="lg"
             disabled={saving}
-            className="w-full py-3.5"
+            className="w-full"
           >
             {saving && <Spinner />}
             {mode === 'create' ? 'Save weight' : 'Save'}

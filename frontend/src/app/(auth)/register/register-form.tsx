@@ -86,7 +86,12 @@ export function RegisterForm() {
             autoComplete="new-password"
             description="At least 8 characters."
           />
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full"
+          >
             {isSubmitting && <Spinner />}
             Create account
           </Button>

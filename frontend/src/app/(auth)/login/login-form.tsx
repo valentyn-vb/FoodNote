@@ -77,7 +77,12 @@ export function LoginForm() {
               {formError}
             </p>
           )}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full"
+          >
             {isSubmitting && <Spinner />}
             Log in
           </Button>
