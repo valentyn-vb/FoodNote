@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text } from '@/components/ui/text';
 import { Progress } from '@/components/ui/progress';
 import { Medallion } from '@/components/ui/medallion';
 import { Card } from '@/components/ui/card';
@@ -318,19 +317,15 @@ export function MealLogDrawer({
                 show={description.length === 0}
                 onPick={setDescription}
               />
-              <Text variant="caption" tone="muted">
+              <p className="text-sm text-muted-foreground">
                 One meal at a time. Portions can be approximate — you&apos;ll
                 review before saving.
-              </Text>
+              </p>
               {rateLimited && (
-                <Text
-                  variant="caption"
-                  tone="danger"
-                  render={<p role="alert" />}
-                >
+                <p role="alert" className="text-sm text-destructive-text">
                   That&apos;s a lot of parsing at once — give it a few seconds
                   and try again.
-                </Text>
+                </p>
               )}
             </div>
             <DrawerFooter className="items-center gap-3.5 pt-4.5 pb-5">
@@ -344,7 +339,7 @@ export function MealLogDrawer({
               </Button>
               <Button
                 variant="link"
-                className="h-auto gap-1 p-0 text-caption text-muted-foreground"
+                className="h-auto gap-1 p-0 text-sm text-muted-foreground"
                 onClick={() => switchToManual()}
               >
                 Enter manually instead
@@ -374,11 +369,11 @@ export function MealLogDrawer({
                   className="size-26"
                 />
               </Medallion>
-              <Text variant="label">Reading your meal…</Text>
+              <p className="text-sm font-semibold">Reading your meal…</p>
               <Progress indeterminate size="sm" className="w-40" />
               <Button
                 variant="link"
-                className="h-auto gap-1 p-0 text-caption text-muted-foreground mt-1"
+                className="h-auto gap-1 p-0 text-sm text-muted-foreground mt-1"
                 onClick={handleCancelParse}
               >
                 Cancel
@@ -401,7 +396,7 @@ export function MealLogDrawer({
                 <Button
                   type="button"
                   variant="link"
-                  className="h-auto gap-1 p-0 text-caption text-muted-foreground w-fit"
+                  className="h-auto gap-1 p-0 text-sm text-muted-foreground w-fit"
                   onClick={() => setStep('input')}
                 >
                   ← Back
@@ -410,12 +405,9 @@ export function MealLogDrawer({
 
               {step === 'preview' && (
                 <Card className="gap-1 rounded-md border-transparent bg-accent px-3.5 py-2.5 shadow-none flex-row items-center gap-2">
-                  <Text
-                    variant="caption"
-                    className="min-w-0 grow basis-0 truncate"
-                  >
+                  <p className="min-w-0 grow basis-0 truncate text-sm">
                     “{description}”
-                  </Text>
+                  </p>
                   <Button
                     type="button"
                     variant="link"
@@ -450,9 +442,9 @@ export function MealLogDrawer({
                     onUserEdit={() => setTotalsOverridden(true)}
                   />
                   {step === 'preview' && (
-                    <Text variant="caption" tone="muted">
+                    <p className="text-sm text-muted-foreground">
                       Totals set by hand — they no longer follow the items.
-                    </Text>
+                    </p>
                   )}
                 </>
               )}
@@ -477,7 +469,7 @@ export function MealLogDrawer({
                       height={40}
                       className="size-10 shrink-0"
                     />
-                    <Text variant="caption">{confidenceNote}</Text>
+                    <p className="text-sm">{confidenceNote}</p>
                   </div>
                   <Disclaimer />
                 </Card>
@@ -507,7 +499,7 @@ export function MealLogDrawer({
             }}
           >
             <div className="flex flex-col gap-2.5 px-5 pt-3.5">
-              <Text variant="label">Describe what you ate</Text>
+              <p className="text-sm font-semibold">Describe what you ate</p>
               <Textarea
                 autoFocus
                 value={description}
@@ -617,9 +609,7 @@ function RecoverStep({
           className="gap-1 rounded-md border-[color-mix(in_oklch,var(--destructive),var(--card)_70%)] bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)] px-3.5 py-3 shadow-none max-w-4/5 flex-row items-start gap-2.5"
         >
           <TriangleAlert aria-hidden className="mt-px size-4 shrink-0" />
-          <Text variant="label" className="text-pretty">
-            {message}
-          </Text>
+          <p className="text-pretty text-sm font-semibold">{message}</p>
         </Card>
       </div>
       {children}
@@ -634,7 +624,7 @@ function RecoverStep({
         </Button>
         <Button
           variant="link"
-          className="h-auto gap-1 p-0 text-caption text-muted-foreground"
+          className="h-auto gap-1 p-0 text-sm text-muted-foreground"
           onClick={secondary.onClick}
         >
           {secondary.label}
@@ -679,7 +669,7 @@ function MacroSuggestion({
   const suggestion = macroCalorieSuggestion(useMealTotals(control));
   if (suggestion === null) return null;
   return (
-    <Text variant="caption" tone="muted" className="flex items-center gap-2">
+    <p className="flex items-center gap-2 text-sm text-muted-foreground">
       <span>By macros that&apos;s {suggestion} kcal.</span>
       <Button
         type="button"
@@ -689,6 +679,6 @@ function MacroSuggestion({
       >
         Use it
       </Button>
-    </Text>
+    </p>
   );
 }

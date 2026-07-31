@@ -1,7 +1,6 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { Text } from '@/components/ui/text';
 import NumberFlow from '@number-flow/react';
 import {
   createMealRequestSchema,
@@ -129,9 +128,7 @@ export function MealTotalsFields({
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
         <FormGroupLabel>Nutrition</FormGroupLabel>
-        <Text variant="caption" tone="muted">
-          macros optional
-        </Text>
+        <p className="text-sm text-muted-foreground">macros optional</p>
       </div>
 
       {/* One row of four. Calories leads — it is the only required figure and
@@ -185,9 +182,12 @@ function NutrientField({
 } & React.ComponentProps<typeof InputGroupInput>) {
   return (
     <Field className="gap-1.5" data-invalid={!!error || undefined}>
-      <Text variant="overline" tone="muted" render={<label htmlFor={id} />}>
+      <label
+        htmlFor={id}
+        className="text-xs font-bold tracking-wider text-muted-foreground uppercase"
+      >
         {label}
-      </Text>
+      </label>
       {/* Calories leads — the only required figure and the only one the
           dashboard spends — so it carries the accent while the macros stay on
           the stock field surface. */}
@@ -240,15 +240,15 @@ export function MealTotalsSummary({
           // A compact stat tile: self-padding, tighter radius and gap.
           className="items-center gap-0.5 rounded-lg px-4 py-3"
         >
-          <Text variant="overline" tone="muted">
+          <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {label}
-          </Text>
-          <Text variant="title" numeric className="flex items-baseline gap-1">
+          </span>
+          <span className="flex items-baseline gap-1 text-lg font-bold tabular-nums">
             <NumberFlow value={value} />
-            <Text variant="caption" tone="muted">
+            <span className="text-sm font-normal text-muted-foreground">
               {unit}
-            </Text>
-          </Text>
+            </span>
+          </span>
         </Card>
       ))}
     </div>
@@ -337,13 +337,12 @@ export function MealItemsFields({
                 one — it arrives nameless, and the schema requires a name — so
                 that case keeps its input. */}
             {field.name ? (
-              <Text
-                variant="label"
+              <span
                 title={field.name}
-                className="min-w-24 grow-2 basis-0 truncate"
+                className="min-w-24 grow-2 basis-0 truncate text-sm font-semibold"
               >
                 {field.name}
-              </Text>
+              </span>
             ) : (
               <Input
                 aria-label={`Item ${index + 1} name`}
@@ -357,15 +356,12 @@ export function MealItemsFields({
             {/* Read-only: it is what makes the calorie figure checkable
                 ("Rice — 196 kcal" can't be judged, "Rice, 150 g — 196 kcal"
                 can), but the totals are what the user actually corrects. */}
-            <Text
-              variant="caption"
-              tone="muted"
-              numeric
+            <span
               title={field.quantityDescription}
-              className="min-w-0 shrink truncate text-right"
+              className="min-w-0 shrink truncate text-right text-sm tabular-nums text-muted-foreground"
             >
               {field.quantityDescription}
-            </Text>
+            </span>
             <Button
               type="button"
               variant="ghost"
