@@ -5,7 +5,6 @@ import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { textVariants } from '@/components/ui/text';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 type DrawerContextProps = {
@@ -263,16 +262,15 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 /**
- * `title`, not `heading`: the display levels are for page-level headings, and
- * 26px Fredoka in a sheet's own title bar competes with the content under it.
- * Call sites pass placement, never type — this is the one place the drawer
- * title's look is decided.
+ * `text-lg`, not the page scale: 24px Fredoka in a sheet's own title bar
+ * competes with the content under it. Call sites pass placement, never type —
+ * this is the one place the drawer title's look is decided.
  */
 function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn(textVariants({ variant: 'title' }), className)}
+      className={cn('text-lg font-bold', className)}
       {...props}
     />
   );
@@ -280,17 +278,12 @@ function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
 
 function DrawerDescription({
   className,
-  tone = 'muted',
   ...props
-}: DrawerPrimitive.Description.Props & { tone?: 'muted' | 'default' }) {
+}: DrawerPrimitive.Description.Props) {
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn(
-        textVariants({ variant: 'caption', tone }),
-        'text-balance',
-        className,
-      )}
+      className={cn('text-sm text-balance text-muted-foreground', className)}
       {...props}
     />
   );

@@ -73,6 +73,9 @@ const eslintConfig = defineConfig([
       'src/components/empty-state.tsx',
       'src/components/goal-reached-overlay.tsx',
       'src/components/user-menu.tsx',
+      // #107 deleted the style-only wrappers, so the row `ListRow` used to draw
+      // is written at its one call site. Same one step as everything above.
+      'src/components/weight-history-row.tsx',
     ],
     plugins: { local },
     rules: {

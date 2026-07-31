@@ -23,15 +23,44 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
+import { cn } from '@/lib/utils';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { DetailList, DetailRow } from '@/components/ui/detail-list';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
+
+/**
+ * One label/value pair of the details list. The dividers live on the `<dl>`
+ * rather than as a `border-b … last:border-b-0` on every row. `numeric` gives
+ * the value tabular figures — a weight, an age.
+ */
+function DetailRow({
+  label,
+  value,
+  numeric = true,
+}: {
+  label: string;
+  value: React.ReactNode;
+  numeric?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5">
+      <dt className="text-sm font-semibold">{label}</dt>
+      <dd
+        className={cn(
+          'text-sm font-semibold text-muted-foreground',
+          numeric && 'tabular-nums',
+        )}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
 
 type PersonalDetailsSectionProps = {
   profileData: ProfileResponse | null;
@@ -126,7 +155,7 @@ export function PersonalDetailsSection({
     <section className="flex flex-col gap-2.5">
       <h2 className="text-sm text-muted-foreground">Personal details</h2>
       <Card className="gap-0 overflow-hidden py-0">
-        <DetailList>
+        <dl className="divide-y divide-border">
           <DetailRow
             label="Sex"
             value={profileData ? SEX_LABELS[profileData.sex] : '—'}
@@ -154,7 +183,7 @@ export function PersonalDetailsSection({
                 : '—'
             }
           />
-        </DetailList>
+        </dl>
       </Card>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>

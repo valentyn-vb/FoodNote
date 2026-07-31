@@ -213,7 +213,10 @@ export function GoalReachedOverlay() {
         {view === 'target-input' && (
           <>
             <DialogHeader className="gap-2">
-              <DialogTitle variant="heading">
+              {/* Page-scale, unlike the choice view's dialog title above: this
+                  view is a single question, and it is the only DialogTitle in
+                  the app that overrides the component's own level. */}
+              <DialogTitle className="font-heading text-2xl font-semibold">
                 What&apos;s your new target?
               </DialogTitle>
             </DialogHeader>

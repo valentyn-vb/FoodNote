@@ -5,7 +5,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeightEntryResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
-import { ListRow } from '@/components/ui/list-row';
+import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
@@ -35,40 +35,46 @@ export function WeightHistoryRow({
   }
 
   return (
-    // The same object as MealRow, so the same component.
-    <ListRow
-      title={`${entry.weightKg} kg`}
-      numeric
-      meta={formatEntryDate(entry.recordedAt)}
-      end={
-        <>
-          <WeightDrawer
-            mode="edit"
-            entry={entry}
-            onChanged={onChanged}
-            triggerLabel="Edit entry"
-            trigger={<Button variant="ghost" size="icon-sm" />}
-          >
-            <Pencil size={16} />
-          </WeightDrawer>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Delete entry"
-            // Stated as the constraint, not as a claim about the journal:
-            // `canDelete` is derived from the provider's 60-day window, so an
-            // older entry outside it would make "your only entry" false. The
-            // rule belongs in weights.service.remove() — this only fails closed.
-            title={
-              canDelete ? undefined : 'Your dashboard needs at least one weight'
-            }
-            disabled={busy || !canDelete}
-            onClick={handleDelete}
-          >
-            {busy ? <Spinner /> : <Trash2 size={16} />}
-          </Button>
-        </>
-      }
-    />
+    // One line of the history: a fixed-height surface that never flexes,
+    // because inside the drawer's bounded scrolling column a row would squash
+    // before the column scrolled. Tighter radius than the card default — 20px
+    // on a 64px row reads as a pill.
+    <Card className="shrink-0 flex-row items-center justify-between gap-3 rounded-md px-4 py-3.5">
+      <div className="flex flex-col gap-0.5">
+        <div className="text-sm font-semibold tabular-nums">
+          {entry.weightKg} kg
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {formatEntryDate(entry.recordedAt)}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <WeightDrawer
+          mode="edit"
+          entry={entry}
+          onChanged={onChanged}
+          triggerLabel="Edit entry"
+          trigger={<Button variant="ghost" size="icon-sm" />}
+        >
+          <Pencil size={16} />
+        </WeightDrawer>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Delete entry"
+          // Stated as the constraint, not as a claim about the journal:
+          // `canDelete` is derived from the provider's 60-day window, so an
+          // older entry outside it would make "your only entry" false. The
+          // rule belongs in weights.service.remove() — this only fails closed.
+          title={
+            canDelete ? undefined : 'Your dashboard needs at least one weight'
+          }
+          disabled={busy || !canDelete}
+          onClick={handleDelete}
+        >
+          {busy ? <Spinner /> : <Trash2 size={16} />}
+        </Button>
+      </div>
+    </Card>
   );
 }

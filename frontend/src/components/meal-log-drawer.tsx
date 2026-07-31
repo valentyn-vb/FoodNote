@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Medallion } from '@/components/ui/medallion';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { Pencil, TriangleAlert } from 'lucide-react';
@@ -299,7 +298,9 @@ export function MealLogDrawer({
         {step === 'input' && (
           <StepPanel key="input">
             <div className="flex flex-col gap-3 px-5 pt-5">
-              <DrawerDescription tone="default">
+              {/* Full-strength, not muted: here the description labels the
+                  textarea under it rather than explaining the sheet. */}
+              <DrawerDescription className="text-foreground">
                 Describe what you ate
               </DrawerDescription>
               <Textarea
@@ -360,7 +361,8 @@ export function MealLogDrawer({
               aria-live="polite"
               className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-12"
             >
-              <Medallion size="lg">
+              {/* The round wash the mascot waits in. */}
+              <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-accent">
                 <Image
                   src="/mascot/defaultlogo.png"
                   alt=""
@@ -368,7 +370,7 @@ export function MealLogDrawer({
                   height={104}
                   className="size-26"
                 />
-              </Medallion>
+              </div>
               <p className="text-sm font-semibold">Reading your meal…</p>
               <Progress indeterminate size="sm" className="w-40" />
               <Button
@@ -591,7 +593,9 @@ function RecoverStep({
   return (
     <>
       <div className="flex flex-col items-center gap-3.5 px-6 pt-9 pb-2">
-        <Medallion tone="danger">
+        {/* The same wash, tinted by the failure: the mascot sits in it while
+            the panel below says what went wrong. */}
+        <div className="flex size-30 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]">
           <Image
             src="/mascot/recover.webp"
             alt=""
@@ -599,7 +603,7 @@ function RecoverStep({
             height={96}
             className="size-24"
           />
-        </Medallion>
+        </div>
         {/* Announced and framed as a failure: the mascot alone reads as a
             friendly illustration, so nothing told the user the parse had not
             worked. The tinted panel and the icon carry that, and `role=alert`

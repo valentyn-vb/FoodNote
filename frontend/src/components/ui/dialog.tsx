@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 
 import { cn } from '@/lib/utils';
-import { textVariants } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { XIcon } from 'lucide-react';
 
@@ -117,15 +116,11 @@ function DialogFooter({
   );
 }
 
-function DialogTitle({
-  className,
-  variant = 'title',
-  ...props
-}: DialogPrimitive.Title.Props & { variant?: 'title' | 'heading' }) {
+function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(textVariants({ variant }), className)}
+      className={cn('text-lg font-bold', className)}
       {...props}
     />
   );
@@ -139,8 +134,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        textVariants({ variant: 'caption', tone: 'muted' }),
-        '*:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
+        'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
         className,
       )}
       {...props}

@@ -76,9 +76,12 @@
   /* ── Type ────────────────────────────────────────────────────────────────
      One scale, six levels. A level sets size, line-height and weight at once —
      a level is not a size. Family comes with it for the two display levels
-     (font-heading). Semantic names live here and are consumed through <Text>;
-     the default tailwind row (--text-xs/sm/base/lg) is left untouched because
-     the ui/* components themselves use it.
+     (font-heading). The default tailwind row (--text-xs/sm/base/lg) is left
+     untouched because the ui/* components themselves use it.
+     This block is on its way out. <Text> is gone (#107), so the only readers
+     left are field.tsx, label.tsx and sonner.tsx — #111 moves those three onto
+     the stock row and deletes the block. Deleting it before they move loses
+     their type silently: a missing token yields no CSS at all.
      The previous scale declared title 15px under body 16px — a heading smaller
      than its own body text, which is why call sites wrote text-[15px] by hand
      instead. Here title 18 > body 15. */
