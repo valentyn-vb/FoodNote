@@ -25,6 +25,13 @@ const WEIGHT_PADDING_KG = 1;
  * Axis domains that show the weigh-ins plus a short lead into the projection.
  * Null when there is no band to protect: one weigh-in is not a trend being
  * squeezed, and its zero-width span gives no lead to measure.
+ *
+ * Always applied, because the axis has to be built from the data rather than
+ * from the goal — the same rule Apple Health and Withings follow. A Projected
+ * Goal Date two months out took two thirds of the width and pressed sixty days
+ * of weigh-ins into the remaining third. The card's own subtitle already states
+ * the goal date in words, so the dashed line only has to point at it, not reach
+ * it.
  */
 function cropToWeighIns(data: WeightTrendPoint[]) {
   const weighIns = data.filter(
@@ -55,13 +62,11 @@ function cropToWeighIns(data: WeightTrendPoint[]) {
 export function WeightTrendChart({
   className,
   data,
-  compact = false,
 }: {
   className?: string;
   data: WeightTrendPoint[];
-  compact?: boolean;
 }) {
-  const croppedTo = compact ? cropToWeighIns(data) : null;
+  const croppedTo = cropToWeighIns(data);
 
   return (
     <EvilLineChart
@@ -79,10 +84,7 @@ export function WeightTrendChart({
       {/* Fitted, non-zero domain — body weight sits in a narrow band and a
           zero-based axis would flatten the trend into a flat line. A truncated
           scale has to be *labelled* to stay honest, hence no `hide`. */}
-      {/* Labels on the right, next to the newest reading — the edge the eye
-          lands on first, and what Apple Health and Withings both do for weight. */}
       <YAxis
-        orientation="right"
         domain={croppedTo?.weight ?? ['dataMin - 1', 'dataMax + 1']}
         allowDataOverflow={croppedTo !== null}
         tickFormatter={(kg: number) => `${Math.round(kg)}`}

@@ -148,10 +148,18 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
           height rather than fixing its own, so the row has one height. */}
       <div className="grid gap-5 xl:grid-cols-2 lg:gap-3.5">
         <Card className="gap-0 overflow-hidden p-0">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-5 pt-5 pb-4">
-            <h2 className="text-base font-semibold">
-              {isToday ? 'Logged today' : 'Logged meals'}
-            </h2>
+          {/* Title over a line of context, the shape ChartCard gives the three
+              cards beside it — this one composes Card directly because the
+              accordion runs edge to edge, which a padded body cannot do. */}
+          <div className="flex flex-wrap items-start justify-between gap-x-3 px-5 pt-5 pb-4">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-base font-semibold">
+                {isToday ? 'Logged today' : 'Logged meals'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Grouped by meal time
+              </p>
+            </div>
             {/* The day's two totals, opposite the title: the same summary
                 the meal-time rows carry, for the day as a whole. The
                 figures carry the weight, the words stay quiet.
@@ -173,9 +181,7 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
             )}
           </div>
           {selectedDayMeals.length === 0 ? (
-            <div className="border-t border-border">
-              <EmptyMeals />
-            </div>
+            <EmptyMeals />
           ) : (
             <MealGroupsAccordion meals={selectedDayMeals} />
           )}
