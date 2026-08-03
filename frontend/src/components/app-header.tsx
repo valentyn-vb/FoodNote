@@ -41,9 +41,11 @@ export function AppHeader() {
   const { onWeightSaved } = useWeight();
   const { isToday } = useMeals();
 
-  // The day picker only where a day is what the screen shows: on Profile or
-  // Meals it would be a control that changes nothing.
-  const showDayNav = pathname === '/dashboard';
+  // The day picker only where a day is what the screen shows — which is both
+  // the dashboard and /meals. #125 scoped it to the dashboard because /meals
+  // carried its own copy; with that row gone the rule reads the same on both,
+  // and one control in one place beats the same control in two (#130).
+  const showDayNav = pathname === '/dashboard' || pathname === '/meals';
 
   return (
     // Below `lg` the header is dissolved into its parent so that its first row

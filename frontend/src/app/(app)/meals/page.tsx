@@ -2,15 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DayNav } from '@/components/day-nav';
 import { EmptyState } from '@/components/empty-state';
-import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { useMeals } from '@/lib/meals-context';
-import { DesktopMealGroups } from './desktop-meal-groups';
+import { MealGroups } from './meal-groups';
 
-// One Tracking Day's meals, grouped by meal time; the day nav steps back
-// through past days. Editing a logged meal isn't wired up yet (PATCH
-// /meals/:id exists, no UI uses it), and neither is pagination.
+// One Tracking Day's meals, grouped by meal time; the shell's day nav steps back
+// through past days. Pagination isn't wired up yet.
 //
 // No fetch of its own: this route sits inside MealsProvider, whose
 // `selectedDayMeals` is already exactly this page's dataset and whose
@@ -20,13 +17,10 @@ import { DesktopMealGroups } from './desktop-meal-groups';
 export default function MealsPage() {
   const { status, retry, selectedDayMeals } = useMeals();
 
+  // No max-width: the shell owns the page frame (#127). The cap this page used
+  // to carry is what left 1440 mostly empty beside truncated meal names.
   return (
-    <div className="flex w-full flex-col gap-5  lg:max-w-6xl">
-      {/* Its own row: the header already clips between the sidebar and ~1400px (#112). */}
-      <div className="flex justify-center lg:justify-start">
-        <DayNav />
-      </div>
-
+    <div className="flex w-full flex-col gap-5">
       {status === 'error' ? (
         <MealsError onRetry={retry} />
       ) : status === 'loading' ? (
@@ -38,14 +32,7 @@ export default function MealsPage() {
           className="py-16"
         />
       ) : (
-        <>
-          {/* The accordion owns no breakpoint of its own (the dashboards use it
-              at every width), so the mobile-only scoping lives here. */}
-          <div className="lg:hidden">
-            <MealGroupsAccordion meals={selectedDayMeals} />
-          </div>
-          <DesktopMealGroups meals={selectedDayMeals} />
-        </>
+        <MealGroups meals={selectedDayMeals} />
       )}
     </div>
   );
@@ -64,18 +51,14 @@ function MealsError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// Shaped to each layout's own arrangement, so the skeleton doesn't reflow into
-// something different once the meals arrive.
+// The grid it stands in for, so the four cards don't reflow into a different
+// arrangement once the meals arrive.
 function MealsSkeleton() {
   return (
-    <>
-      {/* Mobile is one card of four collapsed rows, so it gets one block. */}
-      <Skeleton className="h-56 w-full rounded-lg lg:hidden" />
-      <div className="hidden grid-cols-2 gap-3.5 lg:grid xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-36 w-full rounded-lg" />
-        ))}
-      </div>
-    </>
+    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+      {Array.from({ length: 4 }, (_, i) => (
+        <Skeleton key={i} className="h-36 w-full rounded-lg" />
+      ))}
+    </div>
   );
 }
