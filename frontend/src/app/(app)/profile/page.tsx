@@ -43,10 +43,11 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    // No max-width: the shell owns the page frame (#127). The `max-w-xl` this
-    // page used to carry is what left a 576px column against the left edge of
-    // 1440.
-    <div className="flex w-full flex-col gap-6">
+    // Capped and left-aligned on a desktop: one column of label/value rows is
+    // unreadable at 1120px, where a row's value sits a screen away from its
+    // label. This is the one page that owns a max-width — see AGENTS.md, which
+    // records it as the exception rather than pretending the rule is absolute.
+    <div className="flex w-full max-w-xl flex-col gap-6">
       {/* Identity spans the top at every width; the edit trigger joins the row
           at `lg` instead of floating centred beneath the avatar. */}
       <div className="flex flex-col items-center gap-2.5 lg:flex-row lg:gap-4">

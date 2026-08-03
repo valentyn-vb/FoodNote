@@ -52,10 +52,19 @@ Both thresholds appear in CSS and in JS, and the pairs must agree:
 at all five, on the seeded account, before it lands. No horizontal scroll at any
 width between them.
 
-**No page owns a max-width.** The shell owns the page frame. A cap on a route is
-what left `/profile` a 576px column against the left edge of 1440 and `/meals`
-four narrow cards with truncated names. If a cap is ever wanted it belongs to
-the shell's content box, once.
+**A page owns a max-width only to keep a line readable**, and the test is what
+the content is, not how wide the viewport is. A page of cards takes the frame:
+`/meals`' `max-w-6xl` was deleted, because a cap there gave four narrow cards
+with truncated names beside an empty page. A page of label/value rows does not:
+`/profile` is `max-w-xl`, left-aligned, because stacked in one column at 1120px
+a row's value sits a screen away from its label.
+
+Both of those pages carried a cap before this map, and `/profile`'s was **the
+same 576px it has now** — which is worth being honest about. The "before"
+screenshots recorded it as a defect, and it was, but the defect was never the
+number: it was a narrow column stranded in the middle of an otherwise empty
+1440 while the page had no frame of its own. The shell gives it one. The cap
+only had to stop being the _only_ thing shaping the page.
 
 ## What this costs, and it is a real cost
 

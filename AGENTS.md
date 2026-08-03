@@ -104,8 +104,11 @@ tokens, the type row and the named divergences from upstream are in
   scroll at any of them. A Chrome window will not go below 500 CSS px, so the two
   phone widths need device emulation, not a resized window — and a `fullPage`
   screenshot captures the charts **empty**, so take viewport shots.
-- **No page owns a max-width.** The shell owns the page frame; a cap on a route
-  is what left `/profile` a 576px column against the left edge of 1440.
+- **A page owns a max-width only to keep a line readable,** and `/profile` is
+  the one that does (`max-w-xl`, left-aligned): a label/value row at 1120px puts
+  the value a screen away from its label. Otherwise the shell owns the frame — a
+  cap applied for its own sake is what left `/profile` a 576px column against the
+  left edge of 1440, and `/meals` four truncated cards with the page half empty.
 - **A NumberFlow figure needs an `sr-only` name** beside it, with the visual copy
   `aria-hidden` — it renders per-digit spans and exposes no accessible name at
   all. `spokenStat` in `app/(app)/dashboard/helpers.ts` formats them.
