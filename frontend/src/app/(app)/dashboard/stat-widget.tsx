@@ -65,7 +65,7 @@ export function StatWidget({
           />
         )}
         {caption && (
-          <div className="relative z-10 font-sans text-[12px] text-text-muted">
+          <div className="relative z-10 font-sans text-xs text-text-muted">
             {caption}
           </div>
         )}

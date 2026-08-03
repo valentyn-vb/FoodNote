@@ -7,9 +7,12 @@ import {
   computeWeightChange,
   formatDayLabel,
   formatGoalDate,
+  formatTrendDate,
+  formatTrendTick,
   isFutureDay,
   isoDaysAgo,
   mealTypeForHour,
+  monthTicks,
   todaysMeals,
   todayUtc,
   utcDay,
@@ -397,56 +400,145 @@ describe('buildWeightTrend', () => {
     projectedGoalDate: null,
   };
 
-  it('always includes a "Now" point with the current weight', () => {
+  it('returns an empty series with no weights and no projection', () => {
+    expect(buildWeightTrend([], goalReached, NOW_TREND)).toEqual([]);
+  });
+
+  it('returns one point per logged day, oldest to newest, when the target is reached', () => {
+    const weights = [
+      weight('a', '2024-07-28T08:00:00Z', 82),
+      weight('b', '2024-07-29T08:00:00Z', 81),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82 },
+      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81 },
+    ]);
+  });
+
+  it("collapses multiple same-day entries to the day's latest one", () => {
+    const weights = [
+      weight('morning', '2024-07-29T08:00:00Z', 82),
+      weight('evening', '2024-07-29T20:00:00Z', 81),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-29T20:00:00Z'), actual: 81 },
+    ]);
+  });
+
+  it('orders points ascending by day regardless of input order', () => {
+    const weights = [
+      weight('b', '2024-07-29T08:00:00Z', 81),
+      weight('a', '2024-07-28T08:00:00Z', 82),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.map((p) => p.t)).toEqual([
+      Date.parse('2024-07-28T08:00:00Z'),
+      Date.parse('2024-07-29T08:00:00Z'),
+    ]);
+  });
+
+  it('returns a two-point projection from "now" when there are no weights but a goal date exists', () => {
     const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now');
-    expect(nowPoint?.actual).toBe(80);
+    expect(trend).toEqual([
+      { t: NOW_TREND.getTime(), projected: 80 },
+      { t: Date.parse('2024-12-31T00:00:00Z'), projected: 75 },
+    ]);
   });
 
-  it('has 8 points total (6 historical + Now + projection) with a goal date', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    expect(trend).toHaveLength(8);
-  });
-
-  it('has 7 points total (6 historical + Now) when the target is reached', () => {
-    const trend = buildWeightTrend([], goalReached, NOW_TREND);
-    expect(trend).toHaveLength(7);
-  });
-
-  it('sets "Now" as the projection start when a goal date exists', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now')!;
-    expect(nowPoint.projected).toBe(80); // projected starts from current weight
-  });
-
-  it('does not set projected on "Now" when target is reached', () => {
-    const trend = buildWeightTrend([], goalReached, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now')!;
-    expect(nowPoint.projected).toBeUndefined();
-  });
-
-  it('fills historical buckets with the latest entry in each 7-day window', () => {
-    // Place one entry ~21 days ago (3w ago bucket)
-    const threeWeeksAgo = new Date(
-      NOW_TREND.getTime() - 21 * 86_400_000 + 3600000,
-    ).toISOString();
-    const weights = [weight('w1', threeWeeksAgo, 83)];
+  it('anchors the projection on the newest logged point, continuing its actual value', () => {
+    const weights = [
+      weight('a', '2024-07-28T08:00:00Z', 82),
+      weight('b', '2024-07-29T08:00:00Z', 81),
+    ];
     const trend = buildWeightTrend(weights, goalWithProjection, NOW_TREND);
-    const bucket = trend.find((p) => p.label === '3w ago');
-    expect(bucket?.actual).toBe(83);
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82 },
+      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81, projected: 81 },
+      { t: Date.parse('2024-12-31T00:00:00Z'), projected: 75 },
+    ]);
   });
 
-  it('leaves buckets with no entries as actual=undefined', () => {
+  it('places the projection endpoint at the target weight on the projected goal date', () => {
     const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const historicalPoints = trend.filter((p) => p.label.endsWith('w ago'));
-    expect(historicalPoints.every((p) => p.actual === undefined)).toBe(true);
+    const last = trend.at(-1)!;
+    expect(last.t).toBe(Date.parse('2024-12-31T00:00:00Z'));
+    expect(last.projected).toBe(75);
+    expect(last.actual).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatTrendTick / formatTrendDate
+// ---------------------------------------------------------------------------
+
+describe('formatTrendTick', () => {
+  it('formats an epoch ms timestamp as a short month (UTC)', () => {
+    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul');
   });
 
-  it('places the projection endpoint at the target weight', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const lastPoint = trend.at(-1)!;
-    expect(lastPoint.projected).toBe(75);
-    expect(lastPoint.actual).toBeUndefined();
+  it('returns an empty string for a non-finite input', () => {
+    expect(formatTrendTick(NaN)).toBe('');
+  });
+});
+
+describe('formatTrendDate', () => {
+  it('formats an epoch ms timestamp as "Mon D" (UTC)', () => {
+    expect(formatTrendDate(Date.UTC(2024, 6, 27))).toBe('Jul 27');
+  });
+
+  it('returns an empty string for a non-finite input', () => {
+    expect(formatTrendDate(NaN)).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// monthTicks
+// ---------------------------------------------------------------------------
+
+describe('monthTicks', () => {
+  it('returns no ticks for an empty series', () => {
+    expect(monthTicks([])).toEqual([]);
+  });
+
+  it('falls back to the endpoints when the span contains no month boundary', () => {
+    const points = [{ t: Date.UTC(2024, 6, 5) }, { t: Date.UTC(2024, 6, 20) }];
+    expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);
+  });
+
+  it('falls back to the endpoints when the span contains only one month boundary', () => {
+    const points = [{ t: Date.UTC(2024, 6, 15) }, { t: Date.UTC(2024, 7, 15) }];
+    expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);
+  });
+
+  it('returns first-of-month ticks when the span contains two or more', () => {
+    const points = [{ t: Date.UTC(2024, 6, 15) }, { t: Date.UTC(2024, 8, 15) }];
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+    ]);
+  });
+
+  it('includes a boundary that lands exactly on the first point', () => {
+    const points = [{ t: Date.UTC(2024, 7, 1) }, { t: Date.UTC(2024, 9, 1) }];
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+      Date.UTC(2024, 9, 1),
+    ]);
+  });
+
+  it('derives the span from only the first and last point, ignoring points in between', () => {
+    const points = [
+      { t: Date.UTC(2024, 6, 15) },
+      { t: Date.UTC(2024, 7, 1) },
+      { t: Date.UTC(2024, 8, 15) },
+    ];
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+    ]);
   });
 });
 
