@@ -11,15 +11,18 @@ import {
   computeWeightChange,
   formatDayLabel,
   formatGoalDate,
-  goalDirection,
+  formatTrendDate,
+  formatTrendTick,
   isFutureDay,
   isoDaysAgo,
   mealTypeForHour,
-  remainingToGoalKg,
-  splitCaloriesByMealType,
+  monthTicks,
   todaysMeals,
   todayUtc,
   utcDay,
+  goalDirection,
+  remainingToGoalKg,
+  splitCaloriesByMealType,
   weightChangeOverDays,
 } from './dashboard-transforms';
 
@@ -374,134 +377,178 @@ describe('buildWeightTrend', () => {
     projectedGoalDate: null,
   };
 
-  const daysAgo = (days: number) =>
-    new Date(NOW_TREND.getTime() - days * 86_400_000).toISOString();
+  it('returns an empty series with no weights and no projection', () => {
+    expect(buildWeightTrend([], goalReached, NOW_TREND)).toEqual([]);
+  });
 
-  it('plots one point per entry, not one per week', () => {
-    // The regression this function was rewritten for: a week of daily
-    // weigh-ins used to collapse into a single plotted point.
+  it('returns one point per logged day, oldest to newest, when the target is reached', () => {
     const weights = [
-      weight('a', daysAgo(4), 82),
-      weight('b', daysAgo(3), 81.8),
-      weight('c', daysAgo(2), 81.5),
-      weight('d', daysAgo(1), 81.4),
+      weight('a', '2024-07-28T08:00:00Z', 82),
+      weight('b', '2024-07-29T08:00:00Z', 81),
     ];
     const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    expect(trend.filter((p) => p.actual !== undefined)).toHaveLength(4);
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82, trend: 82 },
+      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81, trend: 81 },
+    ]);
   });
 
-  it('keeps entries in recorded order, oldest first', () => {
+  it("collapses multiple same-day entries to the day's latest one", () => {
     const weights = [
-      weight('new', daysAgo(1), 81),
-      weight('old', daysAgo(5), 83),
+      weight('morning', '2024-07-29T08:00:00Z', 82),
+      weight('evening', '2024-07-29T20:00:00Z', 81),
     ];
     const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    expect(trend.map((p) => p.actual)).toEqual([83, 81]);
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-29T20:00:00Z'), actual: 81 },
+    ]);
   });
 
-  it('labels each point by its own date', () => {
-    const trend = buildWeightTrend(
-      [weight('w', '2024-07-21T09:00:00.000Z', 82)],
-      goalReached,
-      NOW_TREND,
-    );
-    expect(trend[0].label).toBe('Jul 21');
+  it('orders points ascending by day regardless of input order', () => {
+    const weights = [
+      weight('b', '2024-07-29T08:00:00Z', 81),
+      weight('a', '2024-07-28T08:00:00Z', 82),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.map((p) => p.t)).toEqual([
+      Date.parse('2024-07-28T08:00:00Z'),
+      Date.parse('2024-07-29T08:00:00Z'),
+    ]);
   });
 
-  it('falls back to the current weight when the journal is empty', () => {
-    const trend = buildWeightTrend([], goalReached, NOW_TREND);
-    expect(trend).toHaveLength(1);
-    expect(trend[0].actual).toBe(75);
+  it('returns a two-point projection from "now" when there are no weights but a goal date exists', () => {
+    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
+    expect(trend).toEqual([
+      { t: NOW_TREND.getTime(), projected: 80 },
+      { t: Date.parse('2024-12-31T00:00:00Z'), projected: 75 },
+    ]);
   });
 
-  it('starts the projection from the last actual point', () => {
-    const weights = [weight('w', daysAgo(1), 81.4)];
+  it('anchors the projection on the newest logged point, continuing its actual value', () => {
+    const weights = [
+      weight('a', '2024-07-28T08:00:00Z', 82),
+      weight('b', '2024-07-29T08:00:00Z', 81),
+    ];
     const trend = buildWeightTrend(weights, goalWithProjection, NOW_TREND);
-    const lastActual = trend.find((p) => p.actual !== undefined)!;
-    expect(lastActual.projected).toBe(81.4);
+    // Two readings define the fit exactly, so each trend value equals its own
+    // reading; the projection point carries none, being no reading of anything.
+    expect(trend).toEqual([
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82, trend: 82 },
+      {
+        t: Date.parse('2024-07-29T08:00:00Z'),
+        actual: 81,
+        projected: 81,
+        trend: 81,
+      },
+      { t: Date.parse('2024-12-31T00:00:00Z'), projected: 75 },
+    ]);
   });
 
-  it('places the projection endpoint at the target weight', () => {
-    const trend = buildWeightTrend(
-      [weight('w', daysAgo(1), 81.4)],
-      goalWithProjection,
-      NOW_TREND,
-    );
+  it('carries no trend line below two readings', () => {
+    const weights = [weight('a', '2024-07-28T08:00:00Z', 82)];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.at(0)?.trend).toBeUndefined();
+  });
+
+  it('fits the trend over elapsed time, not over the number of weigh-ins', () => {
+    // Two readings a day apart, then one nine days later. Over series
+    // positions the third reading would be one step from the second and the
+    // fit would follow the early pair; over instants the long gap carries the
+    // weight it actually spans, so the line runs through the outer readings.
+    const weights = [
+      weight('a', '2024-07-01T08:00:00Z', 84),
+      weight('b', '2024-07-02T08:00:00Z', 83),
+      weight('c', '2024-07-11T08:00:00Z', 80),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    const fitted = trend.map((p) => p.trend);
+
+    // A fit over positions would put the middle point at 82.0 (evenly spaced);
+    // over instants it sits close to the straight run from 84 to 80.
+    expect(fitted[0]).toBeCloseTo(83.7, 1);
+    expect(fitted[1]).toBeCloseTo(83.3, 1);
+    expect(fitted[2]).toBeCloseTo(80.0, 1);
+  });
+
+  it('places the projection endpoint at the target weight on the projected goal date', () => {
+    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
     const last = trend.at(-1)!;
+    expect(last.t).toBe(Date.parse('2024-12-31T00:00:00Z'));
     expect(last.projected).toBe(75);
     expect(last.actual).toBeUndefined();
-    expect(last.label).toBe('Dec 31');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatTrendTick / formatTrendDate
+// ---------------------------------------------------------------------------
+
+describe('formatTrendTick', () => {
+  it('formats an epoch ms timestamp as a short month (UTC)', () => {
+    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul');
   });
 
-  it('draws no projection once the target is reached', () => {
-    const trend = buildWeightTrend(
-      [weight('w', daysAgo(1), 75)],
-      goalReached,
-      NOW_TREND,
-    );
-    expect(trend.every((p) => p.projected === undefined)).toBe(true);
+  it('returns an empty string for a non-finite input', () => {
+    expect(formatTrendTick(NaN)).toBe('');
+  });
+});
+
+describe('formatTrendDate', () => {
+  it('formats an epoch ms timestamp as "Mon D" (UTC)', () => {
+    expect(formatTrendDate(Date.UTC(2024, 6, 27))).toBe('Jul 27');
   });
 
-  it('carries a straight least-squares fit through the readings', () => {
-    // A perfectly linear journal: the fit must reproduce it exactly, and the
-    // step between consecutive points must be constant.
-    const weights = [
-      weight('a', daysAgo(4), 84),
-      weight('b', daysAgo(3), 83),
-      weight('c', daysAgo(2), 82),
-      weight('d', daysAgo(1), 81),
+  it('returns an empty string for a non-finite input', () => {
+    expect(formatTrendDate(NaN)).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// monthTicks
+// ---------------------------------------------------------------------------
+
+describe('monthTicks', () => {
+  it('returns no ticks for an empty series', () => {
+    expect(monthTicks([])).toEqual([]);
+  });
+
+  it('falls back to the endpoints when the span contains no month boundary', () => {
+    const points = [{ t: Date.UTC(2024, 6, 5) }, { t: Date.UTC(2024, 6, 20) }];
+    expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);
+  });
+
+  it('falls back to the endpoints when the span contains only one month boundary', () => {
+    const points = [{ t: Date.UTC(2024, 6, 15) }, { t: Date.UTC(2024, 7, 15) }];
+    expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);
+  });
+
+  it('returns first-of-month ticks when the span contains two or more', () => {
+    const points = [{ t: Date.UTC(2024, 6, 15) }, { t: Date.UTC(2024, 8, 15) }];
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+    ]);
+  });
+
+  it('includes a boundary that lands exactly on the first point', () => {
+    const points = [{ t: Date.UTC(2024, 7, 1) }, { t: Date.UTC(2024, 9, 1) }];
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+      Date.UTC(2024, 9, 1),
+    ]);
+  });
+
+  it('derives the span from only the first and last point, ignoring points in between', () => {
+    const points = [
+      { t: Date.UTC(2024, 6, 15) },
+      { t: Date.UTC(2024, 7, 1) },
+      { t: Date.UTC(2024, 8, 15) },
     ];
-    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    expect(trend.map((p) => p.trend)).toEqual([84, 83, 82, 81]);
-  });
-
-  it('smooths a noisy reading rather than following it', () => {
-    const weights = [
-      weight('a', daysAgo(4), 84),
-      weight('b', daysAgo(3), 83),
-      weight('c', daysAgo(2), 88), // a water-weight spike
-      weight('d', daysAgo(1), 81),
-    ];
-    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    const spike = trend[2];
-    expect(spike.actual).toBe(88);
-    expect(spike.trend).toBeLessThan(88);
-  });
-
-  it('stays straight across a gap in the journal', () => {
-    // Two readings a day apart, then one twenty days later. The axis gives all
-    // three an equal slot, so the fit steps evenly too.
-    const weights = [
-      weight('a', daysAgo(22), 84),
-      weight('b', daysAgo(21), 83),
-      weight('c', daysAgo(1), 63),
-    ];
-    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    const steps = [
-      trend[1].trend! - trend[0].trend!,
-      trend[2].trend! - trend[1].trend!,
-    ];
-    expect(steps[0]).toBeCloseTo(steps[1], 5);
-  });
-
-  it('has no trend below two readings', () => {
-    const trend = buildWeightTrend(
-      [weight('w', daysAgo(1), 81)],
-      goalReached,
-      NOW_TREND,
-    );
-    expect(trend[0].trend).toBeUndefined();
-  });
-
-  it('keeps two entries on the same day as two points', () => {
-    // The journal is append-only and allows any number of entries per day, so
-    // a morning and an evening weigh-in are two readings, not one.
-    const weights = [
-      weight('am', '2024-07-29T07:00:00.000Z', 81.9),
-      weight('pm', '2024-07-29T20:00:00.000Z', 81.2),
-    ];
-    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
-    expect(trend.map((p) => p.actual)).toEqual([81.9, 81.2]);
+    expect(monthTicks(points)).toEqual([
+      Date.UTC(2024, 7, 1),
+      Date.UTC(2024, 8, 1),
+    ]);
   });
 });
 

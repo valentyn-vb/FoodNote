@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import type { WeightEntryResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
+import type { WeightEntryResponse } from '@foodnote/shared';
+import { Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { WeightLogDrawer } from './weight-log-drawer';
 
 export function WeightHistoryRow({
@@ -69,7 +69,7 @@ export function WeightHistoryRow({
         <Button
           variant="ghost"
           size="icon-sm"
-          className="touch-target"
+          className="touch-target text-text-muted"
           aria-label="Delete entry"
           // Stated as the constraint, not as a claim about the journal:
           // `canDelete` is derived from the provider's 60-day window, so an

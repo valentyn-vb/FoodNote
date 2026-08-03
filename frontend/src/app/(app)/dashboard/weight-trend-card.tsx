@@ -1,7 +1,7 @@
 'use client';
 
 import type { WeightEntryResponse } from '@foodnote/shared';
-import { WeightTrendChart } from '@/components/charts';
+import { WeightTrendChart } from '@/components/weight-trend-chart';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';

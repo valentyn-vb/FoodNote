@@ -19,42 +19,9 @@ import {
 
 const DAY_MS = 86_400_000;
 
-// Module-level, not per call: constructing an Intl formatter resolves the locale
-// and compiles a pattern, which is the expensive half. `buildWeightTrend` calls
-// DAY_LABEL once per Weight Entry across a 60-day window, inside a memo that
-// recomputes on every save and every day step.
-const DAY_MONTH = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-
-const WEEKDAY_MONTH_DAY = new Intl.DateTimeFormat('en-US', {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-
-const WEEKDAY = new Intl.DateTimeFormat('en-US', {
-  weekday: 'short',
-  timeZone: 'UTC',
-});
-
-const TIME_OF_DAY = new Intl.DateTimeFormat('en-US', {
-  hour: 'numeric',
-  minute: '2-digit',
-});
-
-const DATE_AND_TIME = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
-});
-
 export type WeightTrendPoint = {
-  label: string;
+  /** Epoch ms. A real time axis, so a week of elapsed time reads as a week. */
+  t: number;
   actual?: number;
   projected?: number;
   /** Least-squares fit through the actual readings — absent below two of them. */
@@ -100,7 +67,7 @@ export function formatDayLabel(isoDate: string, now: Date): string {
   const today = todayUtc(now);
   if (isoDate === today) return 'Today';
   if (isoDate === addDays(today, -1)) return 'Yesterday';
-  return WEEKDAY_MONTH_DAY.format(new Date(`${isoDate}T00:00:00Z`));
+  return utcWeekdayMonthDay.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
 function round1(n: number): number {
@@ -115,19 +82,60 @@ export function mealTypeForHour(hour: number): MealType {
   return 'snack';
 }
 
+/**
+ * The four label shapes this module formats dates in. Built once at module
+ * scope: `Intl.DateTimeFormat` construction is the expensive half of formatting,
+ * and the trend formatters run per axis tick and per tooltip render.
+ *
+ * The UTC pair is deliberate, not incidental — a Tracking Day is a UTC calendar
+ * day (see the module header), so a date-only label has to be read in UTC or it
+ * shifts by one day either side of midnight. The local pair is equally
+ * deliberate: a *logged-at* timestamp is an instant, and the reader wants it in
+ * the clock they were holding when they logged it.
+ */
+const utcMonth = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  timeZone: 'UTC',
+});
+const utcMonthDay = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const localTime = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const localMonthDayTime = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const utcWeekdayMonthDay = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const utcWeekday = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  timeZone: 'UTC',
+});
+
 /** Projected goal date as "Sep 19" (UTC). */
 export function formatGoalDate(date: string): string {
-  return DAY_MONTH.format(new Date(`${date}T00:00:00Z`));
+  return utcMonthDay.format(new Date(`${date}T00:00:00Z`));
 }
 
 /** A logged-at label for a meal row, in the viewer's local time ("12:40 PM"). */
 export function formatMealTime(iso: string): string {
-  return TIME_OF_DAY.format(new Date(iso));
+  return localTime.format(new Date(iso));
 }
 
 /** A weight entry's logged-at label, in the viewer's local time ("Jul 27, 3:06 PM"). */
 export function formatEntryDate(iso: string): string {
-  return DATE_AND_TIME.format(new Date(iso));
+  return localMonthDayTime.format(new Date(iso));
 }
 
 // <input type="datetime-local"> has no timezone of its own — it's read/written
@@ -207,7 +215,7 @@ export function bucketDailyCalories(
     const kcal = meals
       .filter((m) => utcDay(m.recordedAt) === bucketDate)
       .reduce((sum, m) => sum + m.totalCalories, 0);
-    return { day: WEEKDAY.format(new Date(dayMs)), kcal };
+    return { day: utcWeekday.format(new Date(dayMs)), kcal };
   });
 }
 
@@ -215,6 +223,51 @@ type GoalBlock = Pick<
   DashboardResponse['goal'],
   'currentWeightKg' | 'targetWeightKg' | 'projectedGoalDate'
 >;
+
+// Recharts calls tick/label formatters with placeholder values during layout,
+// so both of these render a non-finite input as empty rather than throwing
+// RangeError and taking the dashboard down with it.
+
+/** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
+export function formatTrendTick(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return utcMonth.format(new Date(t));
+}
+
+/** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */
+export function formatTrendDate(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return utcMonthDay.format(new Date(t));
+}
+
+/**
+ * First-of-month tick positions across a series' span.
+ *
+ * Letting Recharts auto-tick a time axis puts ticks at arbitrary epochs, so the
+ * labels landed on whatever dates entries happened to exist ("Jun 20", "Jul 28")
+ * — a tick position that encodes nothing. Month boundaries are regular and
+ * mean something. Falls back to the endpoints when a span is too short to
+ * contain two boundaries (a reached target with under a month of entries).
+ */
+export function monthTicks(points: WeightTrendPoint[]): number[] {
+  const first = points.at(0)?.t;
+  const last = points.at(-1)?.t;
+  if (first === undefined || last === undefined) return [];
+
+  const ticks: number[] = [];
+  const start = new Date(first);
+  let t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1);
+  if (t < first) {
+    t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1);
+  }
+  while (t <= last) {
+    ticks.push(t);
+    const cursor = new Date(t);
+    t = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1);
+  }
+
+  return ticks.length >= 2 ? ticks : [first, last];
+}
 
 /**
  * Ordinary least squares through `[x, y]` pairs, returned as the line itself.
@@ -241,65 +294,64 @@ function fitLine(pairs: [number, number][]): ((x: number) => number) | null {
 }
 
 /**
- * Weight-trend series: one point per Weight Entry, in the order they were
- * recorded and labelled by date, followed by a two-point projection to the
- * target at the Projected Goal Date. A reached target (null projectedGoalDate)
- * draws the actual line alone.
+ * Weight-trend series on a true time axis: one point per Tracking Day, plus a
+ * two-point projection from the newest entry to the target at the Projected
+ * Goal Date. A reached target (null projectedGoalDate) shows logged points only.
  *
- * One point per entry, and not the six rolling weekly buckets this used to
- * build. Those kept only the latest entry in each 7-day window and always drew
- * six of them, so a week of daily weigh-ins — the shape a real journal has
- * when someone has just started — collapsed into a single plotted point with
- * five empty ones beside it, and the card read as a chart that had failed to
- * load. Bucketing suited the seeded account, whose entries are spread across
- * weeks, and nothing else.
+ * Deliberately not bucketed into "N weeks ago" categories (#68). Even category
+ * spacing drew the Now→goal-date segment — routinely months — as wide as one
+ * week, exaggerating the projected slope into a cliff, and the `1w ago` bucket
+ * spanned `[now-7d, now)` so it re-plotted today's entry as a second point.
  *
- * An empty journal still yields a point, from the authoritative Current
- * Weight: the goal block has a weight even when the 60-day window came back
- * empty, and a chart with nothing in it would be the worse answer.
+ * One point per day matters because the journal is append-only and allows any
+ * number of entries per day (ADR-0004). Plotting each of them put two weights
+ * at effectively one instant, drawing a vertical segment — a claim that the
+ * user weighed two things at once. The day's *last* entry wins, so the final
+ * point equals Current Weight and the chart agrees with the tile above it.
  *
  * Each reading also carries the least-squares line through all of them, which
  * is what the day-to-day noise of a bathroom scale hides: water weight moves a
- * reading by more than a week of a 0.5 kg/week plan does.
+ * reading by more than a week of a 0.5 kg/week plan does. The fit is over
+ * instants, not over positions in the series — on this axis a gap in the
+ * journal is real elapsed time, and a fit over positions would tilt the line by
+ * however often the user happened to weigh in.
  */
 export function buildWeightTrend(
   weights: WeightEntryResponse[],
   goal: GoalBlock,
   now: Date,
 ): WeightTrendPoint[] {
-  const sorted = [...weights].sort((a, b) =>
+  const latestPerDay = new Map<string, WeightEntryResponse>();
+  for (const w of [...weights].sort((a, b) =>
     a.recordedAt.localeCompare(b.recordedAt),
+  )) {
+    latestPerDay.set(utcDay(w.recordedAt), w); // ascending, so the last wins
+  }
+
+  const readings = [...latestPerDay.values()].map(
+    (w) => [Date.parse(w.recordedAt), w.weightKg] as [number, number],
   );
+  const fit = fitLine(readings);
 
-  // Fitted over positions in the series, not over instants. The chart's x axis
-  // is categorical — every reading gets an equal slot whatever the gap before
-  // it — so a fit over timestamps renders as a bend at each irregular gap, and
-  // a line that is meant to read as "the direction, with the noise removed"
-  // has no business being the second wobbly line on the card.
-  const fit = fitLine(sorted.map((entry, i) => [i, entry.weightKg]));
-
-  const points: WeightTrendPoint[] = sorted.map((entry, i) => ({
-    label: formatGoalDate(utcDay(entry.recordedAt)),
-    actual: entry.weightKg,
-    trend: fit?.(i),
+  const points: WeightTrendPoint[] = readings.map(([t, weightKg]) => ({
+    t,
+    actual: weightKg,
+    trend: fit?.(t),
   }));
 
-  if (points.length === 0) {
-    points.push({
-      label: formatGoalDate(todayUtc(now)),
-      actual: goal.currentWeightKg,
-    });
-  }
+  if (!goal.projectedGoalDate) return points;
 
-  if (goal.projectedGoalDate) {
-    // The projection continues from the last actual point, so the dashed line
-    // picks up exactly where the solid one ends rather than starting in space.
-    points[points.length - 1].projected = points[points.length - 1].actual;
-    points.push({
-      label: formatGoalDate(goal.projectedGoalDate),
-      projected: goal.targetWeightKg,
-    });
-  }
+  // Anchor the projection on the newest logged point so the dashed line
+  // continues the solid one instead of starting beside it. With no entries in
+  // the window, fall back to the server's Current Weight at now.
+  const anchor = points.at(-1);
+  if (anchor) anchor.projected = anchor.actual;
+  else points.push({ t: now.getTime(), projected: goal.currentWeightKg });
+
+  points.push({
+    t: Date.parse(`${goal.projectedGoalDate}T00:00:00Z`),
+    projected: goal.targetWeightKg,
+  });
 
   return points;
 }

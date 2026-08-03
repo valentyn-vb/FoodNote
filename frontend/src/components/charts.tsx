@@ -1,101 +1,18 @@
 'use client';
 
 import {
-  Dot,
-  EvilLineChart,
-  Grid as LineGrid,
-  Legend as LineLegend,
-  Line,
-  Tooltip as LineTooltip,
-  XAxis as LineXAxis,
-  YAxis,
-} from '@/components/evilcharts/charts/line-chart';
-import {
   Bar,
-  EvilBarChart,
   Grid as BarGrid,
   Tooltip as BarTooltip,
+  EvilBarChart,
   XAxis,
 } from '@/components/evilcharts/charts/bar-chart';
-import { ReferenceLine } from 'recharts';
+import { calorieConfig } from '@/lib/chart-config';
 import type {
   CalorieSplitSegment,
   DailyCaloriePoint,
-  WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
-
-// Sized by the caller — a height is layout. Colours come from the roles by what
-// the data means: weight is progress toward the goal, calories are the day's own
-// metric.
-
-// Same metric, same color — solid vs dashed is what tells "actual" from
-// "projected" apart, per the H03 "Weight trend & projection" annotation.
-const weightConfig = {
-  actual: { label: 'Actual', colors: { light: ['var(--success)'] } },
-  projected: {
-    label: 'Projected',
-    colors: { light: ['var(--success)'] },
-  },
-  // The fit is a different statement from the readings, so it gets a different
-  // colour rather than a third weight of the same green.
-  trend: { label: 'Trend', colors: { light: ['var(--brand-ink)'] } },
-};
-
-const calorieConfig = {
-  kcal: { label: 'kcal', colors: { light: ['var(--primary)'] } },
-};
-
-export function WeightTrendChart({
-  className,
-  data,
-}: {
-  className?: string;
-  data: WeightTrendPoint[];
-}) {
-  return (
-    <EvilLineChart
-      data={data}
-      config={weightConfig}
-      className={className}
-      curveType="monotone"
-    >
-      <LineGrid />
-      {/* Fitted domain — kg values sit in a ~1.5 kg band; a zero-based axis
-          would flatten the trend into a straight line. Shown, not hidden: a
-          weight line without a scale beside it says only "downwards". */}
-      <YAxis
-        domain={['dataMin - 0.4', 'dataMax + 0.4']}
-        tickFormatter={(kg: number) => `${Math.round(kg)}`}
-        unit=" kg"
-        width={52}
-      />
-      {/* Dates, thinned by width rather than by count: one point per weigh-in
-          means the tick count varies with how often the user steps on the
-          scale, and `minTickGap` is what keeps them from colliding. */}
-      <LineXAxis dataKey="label" minTickGap={40} />
-      {/* `projected` is absent until the last actual point, so it picks up
-          right where `actual` stops without connectNulls. */}
-      <Line dataKey="actual" lineProps={{ strokeWidth: 2.5 }}>
-        {/* A marker per weigh-in: the readings are the data, the line between
-            them is the interpolation. */}
-        <Dot variant="border" />
-      </Line>
-      {/* Thinner and dotless, under the readings it summarises. */}
-      <Line
-        dataKey="trend"
-        curveType="linear"
-        lineProps={{ strokeWidth: 1.5 }}
-      />
-      <Line
-        dataKey="projected"
-        strokeVariant="dashed"
-        lineProps={{ strokeWidth: 2.5 }}
-      />
-      <LineTooltip />
-      <LineLegend />
-    </EvilLineChart>
-  );
-}
+import { ReferenceLine } from 'recharts';
 
 export function DailyCaloriesChart({
   className,
