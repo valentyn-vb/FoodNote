@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import type { WeightEntryResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
+import type { WeightEntryResponse } from '@foodnote/shared';
+import { Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { WeightLogDrawer } from './weight-log-drawer';
 
 export function WeightHistoryRow({
@@ -71,6 +71,7 @@ export function WeightHistoryRow({
             canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
           disabled={busy || !canDelete}
+          className="text-text-muted"
           onClick={handleDelete}
         >
           {busy ? <Spinner /> : <Trash2 size={16} />}

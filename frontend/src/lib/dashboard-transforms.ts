@@ -20,7 +20,8 @@ import {
 const DAY_MS = 86_400_000;
 
 export type WeightTrendPoint = {
-  label: string;
+  /** Epoch ms. A real time axis, so a week of elapsed time reads as a week. */
+  t: number;
   actual?: number;
   projected?: number;
 };
@@ -84,13 +85,40 @@ export function mealTypeForHour(hour: number): MealType {
   return 'snack';
 }
 
+/**
+ * The four label shapes this module formats dates in. Built once at module
+ * scope: `Intl.DateTimeFormat` construction is the expensive half of formatting,
+ * and the trend formatters run per axis tick and per tooltip render.
+ *
+ * The UTC pair is deliberate, not incidental — a Tracking Day is a UTC calendar
+ * day (see the module header), so a date-only label has to be read in UTC or it
+ * shifts by one day either side of midnight. The local pair is equally
+ * deliberate: a *logged-at* timestamp is an instant, and the reader wants it in
+ * the clock they were holding when they logged it.
+ */
+const utcMonth = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  timeZone: 'UTC',
+});
+const utcMonthDay = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const localTime = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const localMonthDayTime = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
 /** Projected goal date as "Sep 19" (UTC). */
 export function formatGoalDate(date: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`));
+  return utcMonthDay.format(new Date(`${date}T00:00:00Z`));
 }
 
 /** Whole weeks from `now` until a goal date (never negative). */
@@ -101,20 +129,12 @@ export function weeksUntil(date: string, now: Date): number {
 
 /** A logged-at label for a meal row, in the viewer's local time ("12:40 PM"). */
 export function formatMealTime(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(iso));
+  return localTime.format(new Date(iso));
 }
 
 /** A weight entry's logged-at label, in the viewer's local time ("Jul 27, 3:06 PM"). */
 export function formatEntryDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(iso));
+  return localMonthDayTime.format(new Date(iso));
 }
 
 // <input type="datetime-local"> has no timezone of its own — it's read/written
@@ -207,56 +227,97 @@ type GoalBlock = Pick<
   'currentWeightKg' | 'targetWeightKg' | 'projectedGoalDate'
 >;
 
+// Recharts calls tick/label formatters with placeholder values during layout,
+// so both of these render a non-finite input as empty rather than throwing
+// RangeError and taking the dashboard down with it.
+
+/** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
+export function formatTrendTick(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return utcMonth.format(new Date(t));
+}
+
+/** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */
+export function formatTrendDate(t: number): string {
+  if (!Number.isFinite(t)) return '';
+  return utcMonthDay.format(new Date(t));
+}
+
 /**
- * Weight-trend series: up to six rolling weekly buckets (latest entry in each
- * 7-day window, gaps allowed) ending at "Now" (the authoritative Current
- * Weight), plus a two-point projection line from Now to the target at the
- * Projected Goal Date. A fresh account (one entry) shows a single actual point
- * and the projection; a reached target (null projectedGoalDate) shows the
- * actual line only.
+ * First-of-month tick positions across a series' span.
+ *
+ * Letting Recharts auto-tick a time axis puts ticks at arbitrary epochs, so the
+ * labels landed on whatever dates entries happened to exist ("Jun 20", "Jul 28")
+ * — a tick position that encodes nothing. Month boundaries are regular and
+ * mean something. Falls back to the endpoints when a span is too short to
+ * contain two boundaries (a reached target with under a month of entries).
+ */
+export function monthTicks(points: WeightTrendPoint[]): number[] {
+  const first = points.at(0)?.t;
+  const last = points.at(-1)?.t;
+  if (first === undefined || last === undefined) return [];
+
+  const ticks: number[] = [];
+  const start = new Date(first);
+  let t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1);
+  if (t < first) {
+    t = Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1);
+  }
+  while (t <= last) {
+    ticks.push(t);
+    const cursor = new Date(t);
+    t = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1);
+  }
+
+  return ticks.length >= 2 ? ticks : [first, last];
+}
+
+/**
+ * Weight-trend series on a true time axis: one point per Tracking Day, plus a
+ * two-point projection from the newest entry to the target at the Projected
+ * Goal Date. A reached target (null projectedGoalDate) shows logged points only.
+ *
+ * Deliberately not bucketed into "N weeks ago" categories (#68). Even category
+ * spacing drew the Now→goal-date segment — routinely months — as wide as one
+ * week, exaggerating the projected slope into a cliff, and the `1w ago` bucket
+ * spanned `[now-7d, now)` so it re-plotted today's entry as a second point.
+ *
+ * One point per day matters because the journal is append-only and allows any
+ * number of entries per day (ADR-0004). Plotting each of them put two weights
+ * at effectively one instant, drawing a vertical segment — a claim that the
+ * user weighed two things at once. The day's *last* entry wins, so the final
+ * point equals Current Weight and the chart agrees with the tile above it.
  */
 export function buildWeightTrend(
   weights: WeightEntryResponse[],
   goal: GoalBlock,
   now: Date,
 ): WeightTrendPoint[] {
-  const nowMs = now.getTime();
-  const sorted = [...weights].sort((a, b) =>
+  const latestPerDay = new Map<string, WeightEntryResponse>();
+  for (const w of [...weights].sort((a, b) =>
     a.recordedAt.localeCompare(b.recordedAt),
-  );
-  const points: WeightTrendPoint[] = [];
-
-  for (let i = 6; i >= 1; i--) {
-    const windowEnd = nowMs - (i - 1) * 7 * DAY_MS;
-    const windowStart = nowMs - i * 7 * DAY_MS;
-    const inWindow = sorted.filter((w) => {
-      const t = Date.parse(w.recordedAt);
-      return t >= windowStart && t < windowEnd;
-    });
-    const latest = inWindow.at(-1);
-    points.push({
-      label: `${i}w ago`,
-      actual: latest?.weightKg,
-    });
+  )) {
+    latestPerDay.set(utcDay(w.recordedAt), w); // ascending, so the last wins
   }
 
-  const nowPoint: WeightTrendPoint = {
-    label: 'Now',
-    actual: goal.currentWeightKg,
-  };
-  if (goal.projectedGoalDate) {
-    // The projection continues from the current weight, so the dashed line
-    // picks up exactly where the solid actual line ends.
-    nowPoint.projected = goal.currentWeightKg;
-  }
-  points.push(nowPoint);
+  const points: WeightTrendPoint[] = [...latestPerDay.values()].map((w) => ({
+    t: Date.parse(w.recordedAt),
+    actual: w.weightKg,
+  }));
 
-  if (goal.projectedGoalDate) {
-    points.push({
-      label: formatGoalDate(goal.projectedGoalDate),
-      projected: goal.targetWeightKg,
-    });
-  }
+  if (!goal.projectedGoalDate) return points;
+
+  // Anchor the projection on the newest logged point so the dashed line
+  // continues the solid one instead of starting beside it. With no entries in
+  // the window, fall back to the server's Current Weight at now.
+  const anchor = points.at(-1);
+  if (anchor) anchor.projected = anchor.actual;
+  else points.push({ t: now.getTime(), projected: goal.currentWeightKg });
+
+  points.push({
+    t: Date.parse(`${goal.projectedGoalDate}T00:00:00Z`),
+    projected: goal.targetWeightKg,
+  });
 
   return points;
 }

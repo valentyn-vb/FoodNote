@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-import NumberFlow from '@number-flow/react';
 import { Card } from '@/components/ui/card';
+import NumberFlow from '@number-flow/react';
+import Image from 'next/image';
 
 // Matches what NumberFlow renders, so the spoken value and the visible digits
 // cannot disagree. The locale is pinned rather than left to the browser: the
@@ -16,11 +16,14 @@ export function StatWidget({
   label,
   value,
   suffix = '',
+  caption,
   mascotSrc,
 }: {
   label: string;
   value: string | number;
   suffix?: string;
+  /** Small muted line under the value — a comparison baseline, not a unit. */
+  caption?: string;
   mascotSrc?: string;
 }) {
   const spoken = `${label}: ${
@@ -60,6 +63,11 @@ export function StatWidget({
             locales="en-US"
             format={{ maximumFractionDigits: 1 }}
           />
+        )}
+        {caption && (
+          <div className="relative z-10 font-sans text-xs text-text-muted">
+            {caption}
+          </div>
         )}
       </div>
       {mascotSrc && (

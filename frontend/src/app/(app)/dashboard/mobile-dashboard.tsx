@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
+import { DailyCaloriesChart } from '@/components/charts';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
@@ -8,11 +9,11 @@ import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WeightLogDrawer } from '@/components/weight-log-drawer';
+import { WeightTrendChart } from '@/components/weight-trend-chart';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { initialsOf } from '@/lib/user-display';
@@ -44,7 +45,6 @@ export function MobileDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
     onWeightSaved,
     onWeightsChanged,
   } = useWeight();
@@ -126,12 +126,15 @@ export function MobileDashboard() {
               <h2 className="text-base font-semibold">Weight trend</h2>
               <div className="flex items-center gap-2">
                 {weightReady && (
-                  <span className="text-sm text-success-text tabular-nums">
+                  <div className="flex items-baseline gap-1 font-sans text-base font-medium text-secondary-deep">
                     <NumberFlow
-                      value={weightChangeKg}
-                      suffix=" kg this month"
+                      value={gate.goal.currentWeightKg}
+                      suffix=" kg"
                     />
-                  </span>
+                    <span className="text-text-muted">
+                      from {gate.goal.startWeightKg} kg
+                    </span>
+                  </div>
                 )}
                 {weightReady && (
                   <WeightHistoryDrawer
@@ -151,6 +154,7 @@ export function MobileDashboard() {
                 <WeightTrendChart
                   className="aspect-auto h-[110px] w-full flex-none"
                   data={weightTrend}
+                  compact
                 />
               ) : weightStatus === 'error' ? (
                 <InlineError onRetry={retryWeight} />

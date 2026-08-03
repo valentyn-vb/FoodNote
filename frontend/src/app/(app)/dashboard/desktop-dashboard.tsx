@@ -1,19 +1,16 @@
 'use client';
 
-import { History } from 'lucide-react';
+import { DailyCaloriesChart, RemainingTodayRing } from '@/components/charts';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  DailyCaloriesChart,
-  RemainingTodayRing,
-  WeightTrendChart,
-} from '@/components/charts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WeightTrendChart } from '@/components/weight-trend-chart';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
+import { History } from 'lucide-react';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -40,7 +37,6 @@ export function DesktopDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
     onWeightsChanged,
   } = useWeight();
 
@@ -72,8 +68,9 @@ export function DesktopDashboard() {
             {weightStatus === 'ready' ? (
               <StatWidget
                 label="Weight change"
-                value={weightChangeKg}
+                value={gate.goal.currentWeightKg}
                 suffix=" kg"
+                caption={`started at ${gate.goal.startWeightKg} kg`}
               />
             ) : (
               <TileSkeleton />
