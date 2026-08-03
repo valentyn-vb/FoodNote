@@ -266,27 +266,55 @@ export function buildWeightTrend(
  * carry-forward (the latest entry at or before each anchor). Not enough
  * history for a period → 0.0 kg, so a fresh account reads honestly.
  */
+/**
+ * The logged weight at or before `now - days` (carry-forward). Undefined when
+ * no entry is that old yet — the shared primitive both functions below build
+ * on, so the "how far back does history reach" check exists in one place.
+ */
+function weightDaysAgo(
+  weights: WeightEntryResponse[],
+  now: Date,
+  days: number,
+): number | undefined {
+  const sorted = [...weights].sort((a, b) =>
+    a.recordedAt.localeCompare(b.recordedAt),
+  );
+  const targetMs = now.getTime() - days * DAY_MS;
+  let found: number | undefined;
+  for (const w of sorted) {
+    if (Date.parse(w.recordedAt) <= targetMs) found = w.weightKg;
+    else break;
+  }
+  return found;
+}
+
+/**
+ * Weight change over the last `days`: current weight minus the weight `days`
+ * ago. Null when no entry is that old yet — a fresh account has no 30-day
+ * change to report, a different fact than "changed by 0". #70's period table
+ * (3/7/14/30-day rows) renders null as "not enough history yet" rather than
+ * a misleading 0.0 kg.
+ */
+export function changeOverDays(
+  weights: WeightEntryResponse[],
+  currentWeightKg: number,
+  now: Date,
+  days: number,
+): number | null {
+  const past = weightDaysAgo(weights, now, days);
+  return past === undefined ? null : round1(currentWeightKg - past);
+}
+
 export function computeWeightChange(
   weights: WeightEntryResponse[],
   currentWeightKg: number,
   now: Date,
 ): { weightChangeKg: number; weightChangeLastMonthKg: number } {
-  const sorted = [...weights].sort((a, b) =>
-    a.recordedAt.localeCompare(b.recordedAt),
-  );
-  const weightAtOrBefore = (targetMs: number): number | undefined => {
-    let found: number | undefined;
-    for (const w of sorted) {
-      if (Date.parse(w.recordedAt) <= targetMs) found = w.weightKg;
-      else break;
-    }
-    return found;
-  };
-
-  const w30 = weightAtOrBefore(now.getTime() - 30 * DAY_MS);
-  const w60 = weightAtOrBefore(now.getTime() - 60 * DAY_MS);
-
+  const w30 = weightDaysAgo(weights, now, 30);
+  const w60 = weightDaysAgo(weights, now, 60);
   return {
+    // This tile's existing "no history yet" reading is 0.0 kg, not a dash —
+    // preserved as-is; changeOverDays' null is reserved for #70's table.
     weightChangeKg: w30 === undefined ? 0 : round1(currentWeightKg - w30),
     weightChangeLastMonthKg:
       w30 === undefined || w60 === undefined ? 0 : round1(w30 - w60),
