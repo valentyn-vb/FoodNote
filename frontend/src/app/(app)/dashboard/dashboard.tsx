@@ -1,79 +1,46 @@
 'use client';
 
+import type { DashboardResponse } from '@foodnote/shared';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
+import {
+  goalDirection,
+  splitCaloriesByMealType,
+} from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import NumberFlow from '@number-flow/react';
-import { History } from 'lucide-react';
-import Image from 'next/image';
+import { CurrentGoalCard } from './current-goal-card';
+import { CurrentWeightCard } from './current-weight-card';
+import { DailyCaloriesCard } from './daily-calories-card';
+import { EatenCard } from './eaten-card';
 import { EmptyMeals } from './empty-meals';
-import { fullnessMascot, spokenStat } from './helpers';
-import { StatWidget } from './stat-widget';
-import { DashboardError, DashboardSkeleton, InlineError } from './states';
+import { formatFigure } from './helpers';
+import { RemainingCard } from './remaining-card';
+import { DashboardError, DashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
-import { WeightHistoryDrawer } from './weight-history-drawer';
-
-// The label and the value are one decision, not two: they used to branch on the
-// same thing twice — once as `=== null`, once as `!` — and had to agree.
-function goalStat(goal: {
-  reachedTarget: boolean;
-  projectedGoalDate: string | null;
-}) {
-  if (goal.reachedTarget)
-    return { label: 'Goal', value: 'You hit your target' };
-  if (goal.projectedGoalDate === null)
-    return { label: 'Goal', value: 'Maintaining your weight' };
-  return {
-    label: 'Projected goal date',
-    value: `${formatGoalDate(goal.projectedGoalDate)} · ${weeksUntil(goal.projectedGoalDate, new Date())} wks`,
-  };
-}
+import { WeeklyIntakeCard } from './weekly-intake-card';
+import { WeightTrendCard } from './weight-trend-card';
 
 /**
- * The day's numbers, in six blocks and one DOM. Three bands at `lg` — the
- * numbers, the two charts side by side, the meal list full width — stacked in
- * source order below it.
+ * The day's numbers, in seven widgets and one DOM: a band of four stat cards
+ * over a band of three charts, stacked in source order on a phone.
  *
- * The two charts share a band because a narrow right-hand column was starving
- * the 7-day one: at 1024 it had 188px, under the width at which recharts starts
- * dropping weekday labels (#123). Equal columns give it about 340px there.
+ * Both bands are laid out against the **content column**, not the viewport,
+ * because the shell's sidebar is a fixed 256px — 1024 leaves 768 of usable
+ * width and 1440 leaves 1150, so a breakpoint alone would size these wrong at
+ * one end or the other. Each band says below how it handles that.
+ *
+ * Calorie widgets follow the selected Tracking Day; weight and goal are always
+ * present-state, which is what the API serves — `date` scopes only the meal
+ * window (ADR-0005). The calorie labels say which day they mean.
  */
 export function Dashboard() {
-  const {
-    eatenKcal,
-    remainingKcal,
-    progressPct,
-    goalKcal,
-    selectedDayMeals,
-    dailyCalories,
-    isToday,
-  } = useMeals();
-  const {
-    status: weightStatus,
-    retry: retryWeight,
-    entries: weightEntries,
-    weightTrend,
-    weightChangeKg,
-    onWeightsChanged,
-  } = useWeight();
-
   const gate = useDashboardGate();
-  const weightReady = weightStatus === 'ready';
-
-  const remainingLabel = isToday ? 'Remaining today' : 'Remaining';
-  const eatenLabel = isToday ? 'Eaten today' : 'Eaten';
-  const goalLabel = isToday ? 'Goal' : 'Current goal';
 
   return (
-    <div className="flex flex-col gap-5 lg:gap-4">
+    <div className="flex grow flex-col gap-5 lg:gap-4">
       {/* Outside the gate, so stepping the day is still possible while the day
           it stepped to is loading or has failed. */}
       <div className="flex justify-center">
@@ -85,138 +52,156 @@ export function Dashboard() {
       ) : gate.state === 'loading' ? (
         <DashboardSkeleton />
       ) : (
-        <>
-          {/* Twice the widget's width at `lg`: this card carries three numbers
-              and the widget carries one. */}
-          <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
-            <Card className="gap-2.5 p-5 lg:grow-2 lg:basis-0">
-              {/* Three figures, three names — see `spokenStat`. */}
-              <span className="sr-only">
-                {spokenStat(remainingLabel, remainingKcal, ' kcal')}
-              </span>
-              <span className="sr-only">
-                {spokenStat(eatenLabel, eatenKcal)}
-              </span>
-              <span className="sr-only">{spokenStat(goalLabel, goalKcal)}</span>
+        <DashboardBands goal={gate.goal} />
+      )}
 
-              <span
-                aria-hidden="true"
-                className="text-sm text-muted-foreground"
-              >
-                {remainingLabel}
-              </span>
-              <div
-                aria-hidden="true"
-                className="font-heading text-4xl font-semibold tabular-nums"
-              >
-                <NumberFlow value={remainingKcal} suffix=" kcal" />
-              </div>
-              <Progress value={progressPct} />
-              <div aria-hidden="true" className="flex justify-between">
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
-                  <Image
-                    src={fullnessMascot(eatenKcal, goalKcal)}
-                    alt=""
-                    width={20}
-                    height={20}
-                  />
-                  <NumberFlow value={eatenKcal} /> eaten
-                </span>
-                <span className="text-sm text-muted-foreground tabular-nums">
-                  {goalLabel} <NumberFlow value={goalKcal} />
-                </span>
-              </div>
-            </Card>
+      {/* Last at every width, and outside the gate so it doesn't appear from
+          nowhere when the data lands — it says the numbers are estimates, which
+          is true of the skeleton's numbers too.
 
-            <StatWidget
-              // Centred at `lg` only: stretched to the hero's height, a label
-              // and a date pinned to the top read as a card that failed to
-              // finish loading.
-              className="lg:grow lg:basis-0 lg:justify-center"
-              {...goalStat(gate.goal)}
-            />
-          </div>
+          `mt-auto` pins it to the bottom of the screen when the day is short
+          enough to leave room, and lets it sit at the end of the page when it
+          isn't. Not `sticky`: a footnote that follows the scroll is a band
+          across every screen, and this one is worth reading once. */}
+      <Disclaimer className="mt-auto" />
+    </div>
+  );
+}
 
-          <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
-            <section className="flex flex-col gap-2.5 lg:grow lg:basis-0">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-base font-semibold">Weight trend</h2>
-                {/* The change belongs beside the chart that explains it, not
-                    three blocks away as a widget of its own. */}
-                {weightReady && (
-                  <div className="flex items-center gap-2">
-                    <span className="sr-only">
-                      {spokenStat('Weight change', weightChangeKg, ' kg')}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="text-sm text-success-text tabular-nums"
-                    >
-                      <NumberFlow
-                        value={weightChangeKg}
-                        suffix=" kg this month"
-                      />
-                    </span>
-                    <WeightHistoryDrawer
-                      entries={weightEntries}
-                      onWeightsChanged={onWeightsChanged}
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="touch-target"
-                        >
-                          <History />
-                        </Button>
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-              <Card className="h-40 p-4 lg:h-64 lg:p-5">
-                {weightReady ? (
-                  <WeightTrendChart
-                    className="aspect-auto min-h-0 w-full grow basis-0"
-                    data={weightTrend}
-                  />
-                ) : weightStatus === 'error' ? (
-                  <InlineError onRetry={retryWeight} />
-                ) : (
-                  <Skeleton className="min-h-0 w-full grow basis-0" />
-                )}
-              </Card>
-            </section>
+/**
+ * The six blocks themselves, rendered only in the gate's 'ready' state — which
+ * is what makes `goal`, and the direction derived from it, non-null by type
+ * rather than by a second check the layout would have to repeat.
+ */
+function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
+  const {
+    eatenKcal,
+    remainingKcal,
+    progressPct,
+    goalKcal,
+    macros,
+    selectedDayMeals,
+    dailyCalories,
+    isToday,
+  } = useMeals();
+  const {
+    status: weightStatus,
+    retry: retryWeight,
+    entries: weightEntries,
+    weightTrend,
+    weightChangeKg,
+    weekChangeKg,
+    onWeightsChanged,
+  } = useWeight();
 
-            {/* One height per step across the band: two charts side by side
-                that disagree on height read as a mistake. */}
-            <section className="flex flex-col gap-2.5 lg:grow lg:basis-0">
-              <h2 className="text-base font-semibold">
-                Daily calories (7 days)
-              </h2>
-              <Card className="h-40 p-4 lg:h-64 lg:p-5">
-                <DailyCaloriesChart
-                  className="aspect-auto min-h-0 w-full grow basis-0"
-                  data={dailyCalories}
-                />
-              </Card>
-            </section>
-          </div>
+  const direction = goalDirection(
+    goal.startWeightKg,
+    goal.targetWeightKg,
+    goal.preferredWeeklyChangeKg,
+  );
 
-          <section className="flex flex-col gap-2.5">
-            <h2 className="text-sm font-semibold lg:text-base">
+  return (
+    <>
+      {/* Two pairs, not four cards. The row has to be 1, 2 or 4 columns
+          wide — three leaves an orphan on a second row — and no single
+          breakpoint gets that right, because the shell's sidebar is a fixed
+          256px: the content column is 768 at 1024 and 1150 at 1440, and
+          four cards fit only in the second. So the pairs wrap on width and
+          each pair splits in two, which can never produce three. */}
+      {/* `min(30rem,100%)`, not a bare 30rem: a minmax floor is a hard
+          minimum, so a 480px track on a 360px phone lays the page out 496
+          wide and clips the right edge off every card. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(30rem,100%),1fr))] gap-5 lg:gap-3.5">
+        <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+          <RemainingCard
+            label={isToday ? 'Remaining today' : 'Remaining'}
+            remainingKcal={remainingKcal}
+            eatenKcal={eatenKcal}
+            goalKcal={goalKcal}
+            progressPct={progressPct}
+          />
+          <EatenCard
+            label={isToday ? 'Eaten today' : 'Eaten'}
+            eatenKcal={eatenKcal}
+            {...macros}
+          />
+        </div>
+        <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+          <CurrentWeightCard
+            currentWeightKg={goal.currentWeightKg}
+            targetWeightKg={goal.targetWeightKg}
+            weekChangeKg={weekChangeKg}
+            direction={direction}
+          />
+          <CurrentGoalCard
+            direction={direction}
+            calorieTarget={goalKcal}
+            pace={goal.preferredWeeklyChangeKg}
+            projectedGoalDate={goal.projectedGoalDate}
+            reachedTarget={goal.reachedTarget}
+          />
+        </div>
+      </div>
+
+      {/* The day's own two blocks: what was eaten, and where it went.
+          Two across from `md`; the ring stretches to the meal list's
+          height rather than fixing its own, so the row has one height. */}
+      <div className="grid gap-5 xl:grid-cols-2 lg:gap-3.5">
+        <Card className="gap-0 overflow-hidden p-0">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-5 pt-5 pb-4">
+            <h2 className="text-base font-semibold">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {selectedDayMeals.length === 0 ? (
+            {/* The day's two totals, opposite the title: the same summary
+                the meal-time rows carry, for the day as a whole. The
+                figures carry the weight, the words stay quiet. */}
+            <p className="text-sm text-muted-foreground tabular-nums">
+              <span className="font-semibold text-foreground">
+                {selectedDayMeals.length}
+              </span>
+              {selectedDayMeals.length === 1 ? ' meal · ' : ' meals · '}
+              <span className="font-semibold text-foreground">
+                {formatFigure(eatenKcal)}
+              </span>
+              {' kcal'}
+            </p>
+          </div>
+          {selectedDayMeals.length === 0 ? (
+            <div className="border-t border-border">
               <EmptyMeals />
-            ) : (
-              <MealGroupsAccordion meals={selectedDayMeals} />
-            )}
-          </section>
+            </div>
+          ) : (
+            <MealGroupsAccordion meals={selectedDayMeals} />
+          )}
+        </Card>
+        <DailyCaloriesCard
+          className="min-h-72"
+          segments={splitCaloriesByMealType(selectedDayMeals, remainingKcal)}
+          remainingKcal={remainingKcal}
+        />
+      </div>
 
-          {/* A footnote, so it is last at every width. */}
-          <Disclaimer />
-        </>
-      )}
-    </div>
+      {/* The two week-scale charts, side by side. Never three across:
+          the shell's sidebar is a fixed 256px, so at 1024 the content
+          column is 768 and a third of it is 169px — under the ~188 at
+          which recharts starts dropping weekday labels (#123). */}
+      <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+        <WeightTrendCard
+          className="h-72"
+          status={weightStatus}
+          onRetry={retryWeight}
+          entries={weightEntries}
+          onWeightsChanged={onWeightsChanged}
+          trend={weightTrend}
+          monthChangeKg={weightChangeKg}
+          projectedGoalDate={goal.projectedGoalDate}
+        />
+        <WeeklyIntakeCard
+          className="h-72"
+          data={dailyCalories}
+          calorieTarget={goalKcal}
+        />
+      </div>
+    </>
   );
 }

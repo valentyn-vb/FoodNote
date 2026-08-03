@@ -5,13 +5,11 @@ import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
 
 /**
- * The single place the dashboard decides whether it can render. Mobile and
- * desktop are separate layouts over the same route (see page.tsx) and render
- * simultaneously behind breakpoint classes, so they share this decision instead
- * of each re-deriving it — only their skeletons differ.
+ * The single place the dashboard decides whether it can render: the error, the
+ * skeleton and the six blocks are the three states of one tree (ADR-0011).
  *
  * A discriminated union rather than a bag of fields, so `goal` is known
- * non-null in the 'ready' state and the layouts need no second null check.
+ * non-null in the 'ready' state and the layout needs no second null check.
  */
 export type DashboardGate =
   | { state: 'error'; retryAll: () => void }

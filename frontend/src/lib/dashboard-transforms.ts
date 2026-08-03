@@ -120,12 +120,6 @@ export function formatGoalDate(date: string): string {
   return DAY_MONTH.format(new Date(`${date}T00:00:00Z`));
 }
 
-/** Whole weeks from `now` until a goal date (never negative). */
-export function weeksUntil(date: string, now: Date): number {
-  const diff = Date.parse(`${date}T00:00:00Z`) - now.getTime();
-  return Math.max(0, Math.ceil(diff / (7 * DAY_MS)));
-}
-
 /** A logged-at label for a meal row, in the viewer's local time ("12:40 PM"). */
 export function formatMealTime(iso: string): string {
   return TIME_OF_DAY.format(new Date(iso));

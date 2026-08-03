@@ -20,7 +20,6 @@ import {
   todaysMeals,
   todayUtc,
   utcDay,
-  weeksUntil,
   weightChangeOverDays,
 } from './dashboard-transforms';
 
@@ -257,36 +256,6 @@ describe('formatGoalDate', () => {
   it('does not shift the day due to timezone (UTC-anchored)', () => {
     // The date is always interpreted as midnight UTC — no local-TZ shift.
     expect(formatGoalDate('2024-12-31')).toBe('Dec 31');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// weeksUntil
-// ---------------------------------------------------------------------------
-
-describe('weeksUntil', () => {
-  // Use midnight UTC as `now` to avoid fractional-day edge cases.
-  const anchor = new Date('2024-07-30T00:00:00Z');
-
-  it('returns 1 for exactly one week ahead', () => {
-    expect(weeksUntil('2024-08-06', anchor)).toBe(1);
-  });
-
-  it('returns 2 for exactly two weeks ahead', () => {
-    expect(weeksUntil('2024-08-13', anchor)).toBe(2);
-  });
-
-  it('rounds up a partial week', () => {
-    // 8 days → ceil(8/7) = 2
-    expect(weeksUntil('2024-08-07', anchor)).toBe(2);
-  });
-
-  it('returns 0 for a past date (never negative)', () => {
-    expect(weeksUntil('2024-07-01', anchor)).toBe(0);
-  });
-
-  it('returns 0 for yesterday', () => {
-    expect(weeksUntil('2024-07-29', anchor)).toBe(0);
   });
 });
 

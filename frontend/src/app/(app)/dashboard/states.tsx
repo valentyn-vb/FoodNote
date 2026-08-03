@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Shown when GET /dashboard fails — the tiles are the backbone, so without
@@ -35,33 +34,41 @@ export function InlineError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// One skeleton, shaped to the bands it stands in for, so nothing reflows into
-// a different arrangement once the data lands.
+// One plain rectangle per card, in the same three bands and at the heights the
+// cards settle to, so the page doesn't re-lay-out when the data lands.
+//
+// The stat rectangle is 180 from `md` up, where the four cards share a row and
+// stretch to the tallest of them, and 176 on a phone, where they stack and keep
+// their own heights (164–180). Measured, not guessed: the bands come out equal
+// at 1440 and within 4–5px at every other step.
+//
+// The meal list is the one card a rectangle cannot match, because its height is
+// the data — 251 empty, taller with meals logged. It gets the same 288 as the
+// ring beside it, which is what an empty day settles to in that row.
 export function DashboardSkeleton() {
   return (
     <>
-      <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
-        <Card className="gap-3 p-5 lg:grow-2 lg:basis-0">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-9 w-40" />
-          <Skeleton className="rounded-full h-2 w-full" />
-        </Card>
-        <Card className="gap-1.5 rounded-lg px-4.5 py-4 lg:grow lg:basis-0">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-7 w-20" />
-        </Card>
-      </div>
-      <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
-        <div className="flex flex-col gap-2.5 lg:grow lg:basis-0">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="rounded-xl h-40 w-full lg:h-64" />
+      {/* Two pairs, matching the real band exactly — see Dashboard for why the
+          column count is 1, 2 or 4 and never 3. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(30rem,100%),1fr))] gap-5 lg:gap-3.5">
+        <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+          <Skeleton className="h-44 w-full rounded-xl md:h-45" />
+          <Skeleton className="h-44 w-full rounded-xl md:h-45" />
         </div>
-        <div className="flex flex-col gap-2.5 lg:grow lg:basis-0">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="rounded-xl h-40 w-full lg:h-64" />
+        <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+          <Skeleton className="h-44 w-full rounded-xl md:h-45" />
+          <Skeleton className="h-44 w-full rounded-xl md:h-45" />
         </div>
       </div>
-      <Skeleton className="rounded-xl h-56 w-full" />
+      {/* The meal list beside the ring, then the two week-scale charts. */}
+      <div className="grid gap-5 xl:grid-cols-2 lg:gap-3.5">
+        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </div>
+      <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </div>
     </>
   );
 }
