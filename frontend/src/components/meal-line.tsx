@@ -26,14 +26,17 @@ export function MealLine({ meal }: { meal: MealResponse }) {
           {formatMealTime(meal.recordedAt)}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      {/* `gap-3`: two 44px touch targets on 32px icons need 12px between
+          them to stop overlapping, and an overlap hands the tap to
+          whichever won on source order. */}
+      <div className="flex shrink-0 items-center gap-3">
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label={`Edit ${meal.mealName}`}
           onClick={() => setEditOpen(true)}
-          className="text-muted-foreground"
+          className="touch-target text-muted-foreground"
         >
           <PencilIcon />
         </Button>
@@ -49,7 +52,7 @@ export function MealLine({ meal }: { meal: MealResponse }) {
           size="icon-sm"
           aria-label={`Delete ${meal.mealName}`}
           onClick={() => deleteMeal(meal)}
-          className="text-muted-foreground"
+          className="touch-target text-muted-foreground"
         >
           <Trash2Icon />
         </Button>

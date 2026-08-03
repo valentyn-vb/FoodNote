@@ -1,5 +1,6 @@
 'use client';
 
+import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,12 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-5 lg:gap-4">
+      {/* Outside the gate, so stepping the day is still possible while the day
+          it stepped to is loading or has failed. */}
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
+
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (
@@ -156,7 +163,11 @@ export function Dashboard() {
                       entries={weightEntries}
                       onWeightsChanged={onWeightsChanged}
                       trigger={
-                        <Button variant="ghost" size="icon-sm">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="touch-target"
+                        >
                           <History />
                         </Button>
                       }

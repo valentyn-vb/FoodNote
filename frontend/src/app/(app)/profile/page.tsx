@@ -66,18 +66,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Two independently editable things, so two columns from `lg`.
-          `items-start`, so the shorter card doesn't stretch to the taller. */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      {/* One column at every width. Two were tried (#131) and reversed: the
+          sections stack. */}
+      <div className="flex flex-col gap-4">
         <CurrentPlanSection
-          className="lg:grow lg:basis-0"
           profileData={profileData}
           loading={loading}
           onProfileChange={setProfileData}
         />
 
         <PersonalDetailsSection
-          className="lg:grow lg:basis-0"
           profileData={profileData}
           loading={loading}
           onProfileChange={setProfileData}

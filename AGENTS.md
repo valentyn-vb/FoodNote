@@ -109,6 +109,13 @@ tokens, the type row and the named divergences from upstream are in
 - **A NumberFlow figure needs an `sr-only` name** beside it, with the visual copy
   `aria-hidden` — it renders per-digit spans and exposes no accessible name at
   all. `spokenStat` in `app/(app)/dashboard/helpers.ts` formats them.
+- **An icon-only control carries `touch-target`.** The utility centres an
+  invisible 44px box on a control drawn smaller — the criterion measures the hit
+  area, not the ink, so `ui/**` keeps upstream's size scale and stays diffable.
+  Only icon-only: a wide, short button is not what a thumb misses. Two of them
+  on neighbouring controls **overlap**, and an overlap hands the tap to whichever
+  won on source order, so the gap between them must clear the overflow —
+  `meal-line.tsx` and `day-nav.tsx` both widened theirs for this.
 - **A dialog caps its own height.** Upstream's `DialogContent` has neither a cap
   nor a scroller, so on a short viewport — a phone with the keyboard up — it
   grows past both edges and its submit button becomes unreachable. Write

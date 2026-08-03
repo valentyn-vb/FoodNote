@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DayNav } from '@/components/day-nav';
 import { EmptyState } from '@/components/empty-state';
 import { useMeals } from '@/lib/meals-context';
 import { MealGroups } from './meal-groups';
@@ -21,6 +22,12 @@ export default function MealsPage() {
   // to carry is what left 1440 mostly empty beside truncated meal names.
   return (
     <div className="flex w-full flex-col gap-5">
+      {/* Outside the status branch: the day can be stepped while the day it
+          stepped to is loading or has failed. */}
+      <div className="flex justify-center">
+        <DayNav />
+      </div>
+
       {status === 'error' ? (
         <MealsError onRetry={retry} />
       ) : status === 'loading' ? (

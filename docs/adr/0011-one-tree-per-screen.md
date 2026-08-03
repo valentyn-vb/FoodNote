@@ -92,11 +92,14 @@ destructures them, so they land on a `<div>` and do nothing.
 ## Consequences
 
 - The console lost 22 warnings per dashboard load.
-- `AppHeader` is `display: contents` below `lg` so that its **first row alone**
-  can be sticky. A sticky box sticks inside its parent, so a two-row header would
-  have pinned the day nav along with the chrome and spent 128px of an 800px
-  viewport. This costs nothing semantically here because `SidebarInset` already
-  renders the page's `<main>`, so that `<header>` was never a `banner` landmark.
+- The header is one row and simply sticky. It briefly was not: while the day
+  picker lived in it, the header carried a second row below `lg` and had to be
+  `display: contents` there so that the chrome row alone could stick — a sticky
+  box sticks inside its parent, so a two-row header pins both. Moving the picker
+  onto the two pages that show a day removed the need for the trick, which is
+  worth recording as the cheaper answer to a layout that fights sticky
+  positioning: take the second row out of the sticky element rather than
+  dissolving the element.
 - A figure rendered by NumberFlow **must** carry an `sr-only` name with its
   visual copy `aria-hidden`, since there is now only one place for it to live.
   `spokenStat` in the dashboard's `helpers.ts` is the shared formatter.
@@ -104,3 +107,7 @@ destructures them, so they land on a `<div>` and do nothing.
   passed unchanged through all five screen migrations.
 - Two thresholds mean the 768–1023 band is a real step with its own answers —
   the sidebar is an icon rail there, `/meals` is two columns, `/profile` is one.
+- A 44px touch target is a **hit area**, not a size: `touch-target` in
+  `globals.css` centres an invisible box on an icon-only control, so the visual
+  scale stays upstream's. Two of them on neighbouring controls overlap, which is
+  why `meal-line.tsx` and `day-nav.tsx` carry wider gaps than their look needs.

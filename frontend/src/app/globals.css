@@ -143,6 +143,28 @@
   --sidebar-ring: var(--ring);
 }
 
+/* A 44px touch target on a control that is drawn smaller. The criterion
+   measures the hit area, not the ink, so the control keeps its stock shadcn
+   size and this centres an invisible box on it — which is why `ui/**` stays
+   diffable. Opt-in, and only for icon-only controls: a wide, short button is
+   not what a thumb misses, and two of these on adjacent controls overlap, so
+   the gap between them has to clear the overflow (see meal-line, day-nav). */
+@utility touch-target {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 100%;
+    height: 100%;
+    min-width: --spacing(11);
+    min-height: --spacing(11);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
