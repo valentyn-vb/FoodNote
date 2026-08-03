@@ -56,7 +56,9 @@ export default function ProfilePage() {
       </div>
       <Separator className="lg:hidden" />
 
-      <div className="mb-2.5 flex flex-col items-center lg:flex-row lg:items-center lg:gap-4">
+      {/* `pt-5` clears the mobile Separator above; at lg+ that rule is hidden
+          and the shell's own `main` padding already spaces this block. */}
+      <div className="mb-2.5 flex flex-col items-center pt-5 lg:flex-row lg:items-center lg:gap-4 lg:pt-0">
         <Avatar className="size-18">
           {/* The stock fallback is a grey wash at 14px — it reads as a
                 missing image at this size, not as a person. */}
@@ -71,7 +73,10 @@ export default function ProfilePage() {
       </div>
       <EditProfileDialog />
 
-      <div className="flex flex-col gap-4">
+      {/* `mt-6`: Edit profile belongs to the identity block above it, so it
+          needs more air below than the 4 between the two sections — otherwise
+          it reads as a heading for Current plan. */}
+      <div className="mt-6 flex flex-col gap-4">
         <CurrentPlanSection
           profileData={profileData}
           loading={loading}

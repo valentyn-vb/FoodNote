@@ -84,7 +84,9 @@ Not everything in it was the boundary, and the parts that were not are kept:
 - **No dark mode.** Removed, not disabled. Adding one back is a design effort.
 - **The contrast findings**, which are measurements and do not depend on where
   style lives: `#F5A65C` reads 2.0:1 as text and is a fill; brand text is
-  `--brand-ink` at 4.9:1; a filled button's label is the app's own ink at 7.3:1.
+  `--brand-ink` at 5.0:1. A filled button's label was the app's own ink at
+  7.3:1; on review of #106 the team chose white on the same fill, which is
+  2.0:1 — see "The one contrast exception" below.
 
 ## What 0009 got right that this ADR pays for
 
@@ -135,12 +137,46 @@ ring-foreground/10`. A ring means focus and invalid state here, so a card and
   selector; the background one carries `!` because it has an `!important` to
   beat, not because it is winning an argument with a call site.
 - **`Button variant="link"` reads `text-brand-ink`,** not `text-primary`:
-  `--primary` is the fill orange and fails contrast as text.
+  `--primary` is the fill orange and fails contrast as text. This one shipped
+  wrong — the variant carried `text-secondary-foreground`, so a link rendered as
+  plain body text, which is what the #106 review saw on `/profile`'s two Edit
+  triggers. Upstream's `underline-offset-4 hover:underline` is kept as-is; only
+  the colour diverges.
+- **The active sidebar row tints its icon too:**
+  `data-active:[&_svg]:text-brand-ink` beside the row's own `data-active:`
+  colour. The blanket `[&_svg]:text-muted-foreground` targets the `svg`
+  directly, so an inherited colour on the row could never reach it and the
+  active row read as a brand-coloured label with a grey icon. The fix is a
+  selector of the same shape one attribute narrower, not an `!important`.
 - **`dark:` rules are dropped** from registry files. This app has no dark mode,
   and a rule that can never match is a rule nobody can verify.
 - **`ring-[3px]` and the tooltip arrow's `rounded-[2px]` are upstream's**, which
   is why the lint rule allows an untokenised _length_ inside `ui/**` — but never
   a colour literal or a hardcoded type value.
+
+## The one contrast exception
+
+Everything else in this palette is held to 4.5:1, and the measurements above are
+what that claim rests on. A filled button's label is not: it is **white on
+`#f5a65c`, which measures 2.00:1**.
+
+This is a team decision taken on review of #106 with the number known, not an
+oversight. The label was `--foreground` at 7.3:1, and the reviewer read that as
+black-on-orange. Both alternatives were measured before the choice was made:
+
+- Darken the fill so white earns 4.5:1 — `oklch(0.577 0.13 62.2)` (`#ae6508`) is
+  the lightest this hue and chroma go while clearing it. Rejected: at that
+  lightness the brand orange reads brown, and it is 1.17:1 from `--brand-ink`,
+  which would have collapsed the fill/text pair the palette is built on.
+- Keep the dark label. Rejected by the team on look.
+
+Two things follow, and they are the reason this is written down rather than left
+in a comment. **It is not precedent** — 4.5:1 still governs every other pair
+here, and `--brand-ink` exists precisely so brand-coloured _text_ has a value
+that passes. And **it is not a defect to fix**: a future contrast audit will
+flag this pair, and the answer is that the team owns it, not that someone
+forgot. Reopening it means reopening the fill colour, which is a design
+conversation, not a token pass.
 
 ## Alternatives rejected
 

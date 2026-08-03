@@ -411,7 +411,11 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
           </DrawerBody>
           <StepFooter
             primary={{
-              label: 'Parse with AI',
+              label: (
+                <>
+                  Parse with AI <span aria-hidden="true">✨</span>
+                </>
+              ),
               type: 'submit',
               form: PARSE_FORM_ID,
               disabled: !parseForm.formState.isValid,
@@ -841,8 +845,11 @@ function ExampleChips({
           key={example}
           type="button"
           variant="outline"
+          size="sm"
           onClick={() => onPick(example)}
-          className="rounded-full"
+          // A suggestion, not a peer of the Parse action: muted at rest, and
+          // `outline`'s own `hover:text-foreground` brings it back on approach.
+          className="rounded-full text-muted-foreground"
         >
           {example}
         </Button>
@@ -859,7 +866,9 @@ function StepFooter({
   secondary,
 }: {
   primary: {
-    label: string;
+    /** A node, not a string, so a label can carry decoration the accessible
+        name must not — see the AI step's `aria-hidden` sparkle. */
+    label: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     type?: 'button' | 'submit';

@@ -53,24 +53,35 @@ and washes are derived rather than held as tokens.
 | Role                                                     | For                                                                   |
 | -------------------------------------------------------- | --------------------------------------------------------------------- |
 | `--background`                                           | the page                                                              |
-| `--foreground`                                           | all primary text (13.6:1)                                             |
+| `--foreground`                                           | all primary text (13.9:1)                                             |
 | `--card`, `--popover` (+ `-foreground`)                  | surfaces                                                              |
 | `--primary`                                              | the brand **fill**: CTA, mascot, mesh, the chart arc                  |
-| `--primary-foreground`                                   | its label — the app's own ink, 7.3:1                                  |
+| `--primary-foreground`                                   | its label — white, 2.0:1, the one exception below                     |
 | `--secondary`, `--accent` (+ `-foreground`)              | button surface, warm wash                                             |
 | `--muted`, `--muted-foreground`                          | a passive surface; secondary text (5.3:1)                             |
 | `--border`, `--input`                                    | structure                                                             |
 | `--ring`                                                 | focus — warm, but not the fill: the fill is 2.0:1 where 3:1 is wanted |
 | `--destructive`                                          | error and over-target                                                 |
-| `--brand-ink`                                            | brand **text**: links, active nav, an emphasized figure (4.9:1)       |
+| `--brand-ink`                                            | brand **text**: links, active nav, an emphasized figure (5.0:1)       |
 | `--success`, `--warning`                                 | "on plan" and "worth a look" — fills, borders, icons                  |
 | `--success-text`, `--warning-text`, `--destructive-text` | text on the matching wash                                             |
 | `--chart-1..5`                                           | decoration: 1 the brand orange, 2 mint, 3 coral, 4–5 unused           |
 | `--sidebar-*`                                            | compatibility shims `shadcn add sidebar` greps for                    |
 
 **Brand and text is the one rule worth memorising:** the brand hue fills and
-carries dark text; it does not _become_ text unless it is `--brand-ink`. On
-white, `#f5a65c` reads 2.0:1 and `#e08a3c` 2.67:1, against a 4.5:1 threshold.
+does not _become_ text unless it is `--brand-ink`. On white, `#f5a65c` reads
+2.0:1 and `#e08a3c` 2.67:1, against a 4.5:1 threshold.
+
+**The one deliberate exception, and the only one.** A filled button's label is
+**white on `#f5a65c` at 2.00:1** — below the 4.5:1 every other pair here meets.
+It was the app's own ink at 7.3:1 until the team asked for white on review of
+#106, with the number on the table. The alternative was measured too: white
+earns its 4.5:1 once the fill drops to `oklch(0.577 0.13 62.2)` (`#ae6508`), and
+that was rejected as too brown to be the brand. So `--primary` keeps the
+handoff's orange and `--primary-foreground` is white. Treat this as a decision
+the team owns rather than a defect to fix, and do not cite it as precedent: the
+threshold still holds everywhere else, including `--brand-ink`, which exists
+precisely so brand-coloured _text_ has something that passes.
 
 **Washes are derived, not stored.** `--success-surface` and friends were deleted
 in favour of `color-mix(in oklch, var(--success), var(--card) 90%)`, which

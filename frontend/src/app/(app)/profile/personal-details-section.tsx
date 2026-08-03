@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { Edit2Icon } from 'lucide-react';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
 
@@ -189,9 +190,15 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          render={<Button variant="link" />}
+          render={
+            <Button variant="outline" className="mx-auto w-fit" size="sm" />
+          }
         >
-          {(loading || saving) && <Spinner />}
+          {loading || saving ? (
+            <Spinner />
+          ) : (
+            <Edit2Icon className="size-3 mr-1" />
+          )}
           Edit details
         </DialogTrigger>
         <DialogContent>

@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { AuthTextField } from '../../(auth)/auth-text-field';
+import { Edit2Icon } from 'lucide-react';
 
 const EDIT_PROFILE_FORM_ID = 'edit-profile-form';
 
@@ -59,8 +60,11 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        render={<Button variant="link" className="h-auto gap-1 p-0" />}
+        render={
+          <Button variant="outline" className="mx-auto w-fit" size="sm" />
+        }
       >
+        <Edit2Icon className="size-3 mr-1" />
         Edit profile
       </DialogTrigger>
       <DialogContent>

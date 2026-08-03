@@ -89,16 +89,21 @@
 }
 
 :root {
-  --background: oklch(0.975 0.009 78.3);
+  --background: oklch(0.982 0.009 78.3);
   --foreground: oklch(0.283 0.045 52.1);
   --card: oklch(1 0 90);
   --card-foreground: var(--foreground);
   --popover: oklch(1 0 90);
   --popover-foreground: var(--foreground);
-  /* The label on the brand fill is the app's own ink at 7.3:1 — better than
-     white on any orange dark enough to take it. */
+  /* The handoff's fill orange, with a white label — a team decision on review
+     of #106, taken with the number known: white on this orange measures
+     2.00:1, against the 4.5:1 the rest of this file is held to. The label was
+     the app's own ink at 7.3:1 before. Darkening the orange to 0.577 is what
+     would earn white the 4.5:1, and it was rejected as too brown. So this is
+     the one deliberate contrast exception in the palette; don't "fix" it
+     without asking, and don't cite it as precedent for another. */
   --primary: oklch(0.788 0.13 62.2);
-  --primary-foreground: var(--foreground);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.986 0.006 75.4);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.968 0.015 70.9);

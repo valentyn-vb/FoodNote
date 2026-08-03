@@ -93,7 +93,15 @@ export function FigureField({
       >
         {label}
       </FormLabel>
-      <InputGroup className={accent ? 'border-primary bg-accent' : undefined}>
+      <InputGroup
+        className={cn(
+          // Four adjacent cells in a dense row: upstream's `shadow-xs` on each
+          // read as grime along the seams rather than as depth. A single field
+          // on its own page keeps it.
+          compact && 'shadow-none',
+          accent && 'border-primary bg-accent',
+        )}
+      >
         <InputGroupInput
           id={id}
           aria-invalid={!!error || undefined}
