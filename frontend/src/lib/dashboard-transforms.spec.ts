@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import type { MealResponse, WeightEntryResponse } from '@foodnote/shared';
+import type {
+  MealResponse,
+  MealType,
+  WeightEntryResponse,
+} from '@foodnote/shared';
 import {
   addDays,
   bucketDailyCalories,
@@ -7,13 +11,17 @@ import {
   computeWeightChange,
   formatDayLabel,
   formatGoalDate,
+  goalDirection,
   isFutureDay,
   isoDaysAgo,
   mealTypeForHour,
+  remainingToGoalKg,
+  splitCaloriesByMealType,
   todaysMeals,
   todayUtc,
   utcDay,
   weeksUntil,
+  weightChangeOverDays,
 } from './dashboard-transforms';
 
 // ---------------------------------------------------------------------------
@@ -397,56 +405,134 @@ describe('buildWeightTrend', () => {
     projectedGoalDate: null,
   };
 
-  it('always includes a "Now" point with the current weight', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now');
-    expect(nowPoint?.actual).toBe(80);
+  const daysAgo = (days: number) =>
+    new Date(NOW_TREND.getTime() - days * 86_400_000).toISOString();
+
+  it('plots one point per entry, not one per week', () => {
+    // The regression this function was rewritten for: a week of daily
+    // weigh-ins used to collapse into a single plotted point.
+    const weights = [
+      weight('a', daysAgo(4), 82),
+      weight('b', daysAgo(3), 81.8),
+      weight('c', daysAgo(2), 81.5),
+      weight('d', daysAgo(1), 81.4),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.filter((p) => p.actual !== undefined)).toHaveLength(4);
   });
 
-  it('has 8 points total (6 historical + Now + projection) with a goal date', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    expect(trend).toHaveLength(8);
+  it('keeps entries in recorded order, oldest first', () => {
+    const weights = [
+      weight('new', daysAgo(1), 81),
+      weight('old', daysAgo(5), 83),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.map((p) => p.actual)).toEqual([83, 81]);
   });
 
-  it('has 7 points total (6 historical + Now) when the target is reached', () => {
+  it('labels each point by its own date', () => {
+    const trend = buildWeightTrend(
+      [weight('w', '2024-07-21T09:00:00.000Z', 82)],
+      goalReached,
+      NOW_TREND,
+    );
+    expect(trend[0].label).toBe('Jul 21');
+  });
+
+  it('falls back to the current weight when the journal is empty', () => {
     const trend = buildWeightTrend([], goalReached, NOW_TREND);
-    expect(trend).toHaveLength(7);
+    expect(trend).toHaveLength(1);
+    expect(trend[0].actual).toBe(75);
   });
 
-  it('sets "Now" as the projection start when a goal date exists', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now')!;
-    expect(nowPoint.projected).toBe(80); // projected starts from current weight
-  });
-
-  it('does not set projected on "Now" when target is reached', () => {
-    const trend = buildWeightTrend([], goalReached, NOW_TREND);
-    const nowPoint = trend.find((p) => p.label === 'Now')!;
-    expect(nowPoint.projected).toBeUndefined();
-  });
-
-  it('fills historical buckets with the latest entry in each 7-day window', () => {
-    // Place one entry ~21 days ago (3w ago bucket)
-    const threeWeeksAgo = new Date(
-      NOW_TREND.getTime() - 21 * 86_400_000 + 3600000,
-    ).toISOString();
-    const weights = [weight('w1', threeWeeksAgo, 83)];
+  it('starts the projection from the last actual point', () => {
+    const weights = [weight('w', daysAgo(1), 81.4)];
     const trend = buildWeightTrend(weights, goalWithProjection, NOW_TREND);
-    const bucket = trend.find((p) => p.label === '3w ago');
-    expect(bucket?.actual).toBe(83);
-  });
-
-  it('leaves buckets with no entries as actual=undefined', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const historicalPoints = trend.filter((p) => p.label.endsWith('w ago'));
-    expect(historicalPoints.every((p) => p.actual === undefined)).toBe(true);
+    const lastActual = trend.find((p) => p.actual !== undefined)!;
+    expect(lastActual.projected).toBe(81.4);
   });
 
   it('places the projection endpoint at the target weight', () => {
-    const trend = buildWeightTrend([], goalWithProjection, NOW_TREND);
-    const lastPoint = trend.at(-1)!;
-    expect(lastPoint.projected).toBe(75);
-    expect(lastPoint.actual).toBeUndefined();
+    const trend = buildWeightTrend(
+      [weight('w', daysAgo(1), 81.4)],
+      goalWithProjection,
+      NOW_TREND,
+    );
+    const last = trend.at(-1)!;
+    expect(last.projected).toBe(75);
+    expect(last.actual).toBeUndefined();
+    expect(last.label).toBe('Dec 31');
+  });
+
+  it('draws no projection once the target is reached', () => {
+    const trend = buildWeightTrend(
+      [weight('w', daysAgo(1), 75)],
+      goalReached,
+      NOW_TREND,
+    );
+    expect(trend.every((p) => p.projected === undefined)).toBe(true);
+  });
+
+  it('carries a straight least-squares fit through the readings', () => {
+    // A perfectly linear journal: the fit must reproduce it exactly, and the
+    // step between consecutive points must be constant.
+    const weights = [
+      weight('a', daysAgo(4), 84),
+      weight('b', daysAgo(3), 83),
+      weight('c', daysAgo(2), 82),
+      weight('d', daysAgo(1), 81),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.map((p) => p.trend)).toEqual([84, 83, 82, 81]);
+  });
+
+  it('smooths a noisy reading rather than following it', () => {
+    const weights = [
+      weight('a', daysAgo(4), 84),
+      weight('b', daysAgo(3), 83),
+      weight('c', daysAgo(2), 88), // a water-weight spike
+      weight('d', daysAgo(1), 81),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    const spike = trend[2];
+    expect(spike.actual).toBe(88);
+    expect(spike.trend).toBeLessThan(88);
+  });
+
+  it('stays straight across a gap in the journal', () => {
+    // Two readings a day apart, then one twenty days later. The axis gives all
+    // three an equal slot, so the fit steps evenly too.
+    const weights = [
+      weight('a', daysAgo(22), 84),
+      weight('b', daysAgo(21), 83),
+      weight('c', daysAgo(1), 63),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    const steps = [
+      trend[1].trend! - trend[0].trend!,
+      trend[2].trend! - trend[1].trend!,
+    ];
+    expect(steps[0]).toBeCloseTo(steps[1], 5);
+  });
+
+  it('has no trend below two readings', () => {
+    const trend = buildWeightTrend(
+      [weight('w', daysAgo(1), 81)],
+      goalReached,
+      NOW_TREND,
+    );
+    expect(trend[0].trend).toBeUndefined();
+  });
+
+  it('keeps two entries on the same day as two points', () => {
+    // The journal is append-only and allows any number of entries per day, so
+    // a morning and an evening weigh-in are two readings, not one.
+    const weights = [
+      weight('am', '2024-07-29T07:00:00.000Z', 81.9),
+      weight('pm', '2024-07-29T20:00:00.000Z', 81.2),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.map((p) => p.actual)).toEqual([81.9, 81.2]);
   });
 });
 
@@ -531,5 +617,167 @@ describe('computeWeightChange', () => {
       NOW_WEIGHT,
     );
     expect(result.weightChangeKg).toBe(-3.0); // 80 − 83
+  });
+});
+
+// ---------------------------------------------------------------------------
+// weightChangeOverDays
+// ---------------------------------------------------------------------------
+
+describe('weightChangeOverDays', () => {
+  const NOW_WINDOW = new Date('2024-07-30T00:00:00Z');
+  const daysAgo = (days: number) =>
+    new Date(NOW_WINDOW.getTime() - days * 86_400_000).toISOString();
+
+  it('returns null when the journal does not reach back that far', () => {
+    // Distinct from 0: a fresh account has made no comparison, not a flat one.
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(2), 81)], 80, NOW_WINDOW, 7),
+    ).toBeNull();
+  });
+
+  it('returns null on an empty journal', () => {
+    expect(weightChangeOverDays([], 80, NOW_WINDOW, 7)).toBeNull();
+  });
+
+  it('measures against the entry in effect a week ago', () => {
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(7), 80.6)], 80, NOW_WINDOW, 7),
+    ).toBe(-0.6);
+  });
+
+  it('carries the latest entry at or before the anchor forward', () => {
+    // Nothing was logged on the anchor day itself; the 10-day-old entry stands.
+    const entries = [
+      weight('old', daysAgo(10), 82),
+      weight('new', daysAgo(1), 80),
+    ];
+    expect(weightChangeOverDays(entries, 80, NOW_WINDOW, 7)).toBe(-2.0);
+  });
+
+  it('reports a gain as a positive number', () => {
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(7), 79.5)], 80, NOW_WINDOW, 7),
+    ).toBe(0.5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// goalDirection
+// ---------------------------------------------------------------------------
+
+describe('goalDirection', () => {
+  it('is maintenance whenever the pace is 0, whatever the weights say', () => {
+    expect(goalDirection(80, 75, 0)).toBe('maintain');
+  });
+
+  it('reads the direction from the target against the start weight', () => {
+    expect(goalDirection(80, 75, 0.5)).toBe('lose');
+    expect(goalDirection(70, 75, 0.5)).toBe('gain');
+  });
+
+  it('survives overshooting the target', () => {
+    // Current weight is irrelevant here by design — a loss plan whose target
+    // was passed is still a loss plan.
+    expect(goalDirection(80, 75, 0.5)).toBe('lose');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// remainingToGoalKg
+// ---------------------------------------------------------------------------
+
+describe('remainingToGoalKg', () => {
+  it('measures in the goal direction', () => {
+    expect(remainingToGoalKg(74.5, 72, 'lose')).toBe(2.5);
+    expect(remainingToGoalKg(70, 75, 'gain')).toBe(5);
+  });
+
+  it('clamps an overshoot to 0 rather than counting back up', () => {
+    expect(remainingToGoalKg(71, 72, 'lose')).toBe(0);
+    expect(remainingToGoalKg(76, 75, 'gain')).toBe(0);
+  });
+
+  it('is null on a maintenance plan', () => {
+    expect(remainingToGoalKg(74.5, 74.5, 'maintain')).toBeNull();
+  });
+
+  it('rounds to 1 decimal place', () => {
+    expect(remainingToGoalKg(74.56, 72, 'lose')).toBe(2.6);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// splitCaloriesByMealType
+// ---------------------------------------------------------------------------
+
+describe('splitCaloriesByMealType', () => {
+  const DAY = '2024-07-30';
+
+  function typedMeal(
+    id: string,
+    mealType: MealType,
+    totalCalories: number,
+  ): MealResponse {
+    return { ...meal(id, `${DAY}T12:00:00.000Z`, totalCalories), mealType };
+  }
+
+  it('keeps the contract order of meal types', () => {
+    const segments = splitCaloriesByMealType(
+      [
+        typedMeal('d', 'dinner', 300),
+        typedMeal('b', 'breakfast', 200),
+        typedMeal('s', 'snack', 100),
+        typedMeal('l', 'lunch', 400),
+      ],
+      1000,
+    );
+    expect(segments.map((s) => s.key)).toEqual([
+      'breakfast',
+      'lunch',
+      'dinner',
+      'snack',
+      'remaining',
+    ]);
+  });
+
+  it('sums several meals of the same type', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('a', 'lunch', 300), typedMeal('b', 'lunch', 250)],
+      1450,
+    );
+    expect(segments.find((s) => s.key === 'lunch')?.kcal).toBe(550);
+  });
+
+  it('drops meal times with nothing logged', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 400)],
+      1600,
+    );
+    expect(segments.map((s) => s.key)).toEqual(['breakfast', 'remaining']);
+  });
+
+  it('takes the remainder from the read model rather than re-deriving it', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 400)],
+      1600,
+    );
+    expect(segments.find((s) => s.key === 'remaining')?.kcal).toBe(1600);
+  });
+
+  it('keeps a zero remainder so a day on target still closes the ring', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 2000)],
+      0,
+    );
+    expect(segments.at(-1)).toEqual({ key: 'remaining', kcal: 0 });
+  });
+
+  it('floors the remainder at 0 when the day went over', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 2400)],
+      -400,
+    );
+    expect(segments.at(-1)?.kcal).toBe(0);
   });
 });
