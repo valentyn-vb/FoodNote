@@ -35,7 +35,6 @@ export function DesktopDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
     onWeightsChanged,
   } = useWeight();
 
@@ -71,8 +70,9 @@ export function DesktopDashboard() {
             {weightStatus === 'ready' ? (
               <StatWidget
                 label="Weight change"
-                value={weightChangeKg}
+                value={gate.goal.currentWeightKg}
                 suffix=" kg"
+                caption={`started at ${gate.goal.startWeightKg} kg`}
               />
             ) : (
               <TileSkeleton />

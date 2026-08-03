@@ -41,7 +41,6 @@ export function MobileDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
     onWeightSaved,
     onWeightsChanged,
   } = useWeight();
@@ -130,11 +129,14 @@ export function MobileDashboard() {
               </h2>
               <div className="flex items-center gap-2">
                 {weightReady && (
-                  <div className="font-sans text-[12px] font-medium text-secondary-deep">
+                  <div className="flex items-baseline gap-1 font-sans text-[12px] font-medium text-secondary-deep">
                     <NumberFlow
-                      value={weightChangeKg}
-                      suffix=" kg this month"
+                      value={gate.goal.currentWeightKg}
+                      suffix=" kg"
                     />
+                    <span className="text-text-muted">
+                      from {gate.goal.startWeightKg} kg
+                    </span>
                   </div>
                 )}
                 {weightReady && (
