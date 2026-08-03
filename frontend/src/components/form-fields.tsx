@@ -91,7 +91,12 @@ export function FigureField({
         htmlFor={id}
         className={compact ? 'tracking-wider text-muted-foreground' : undefined}
       >
-        {label}
+        {/* The unit is visible inside the box, but `InputGroupAddon` is a
+            `role="group"` beside the control — it reaches no accessible name.
+            Without this the field announces as "Weight", and 74.2 is of
+            nothing. Sighted users already have the addon, so the copy here is
+            hidden rather than shown twice. */}
+        {label} <span className="sr-only">({unit})</span>
       </FormLabel>
       <InputGroup
         className={cn(

@@ -30,8 +30,11 @@ test('logging a weight moves the change stat', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Log weight' }).first().click();
   // A step large enough that no rounding or jitter in the seeded journal could
-  // produce the same figure by accident.
-  await page.getByLabel('Weight (kg)').fill('74.2');
+  // produce the same figure by accident, and it must stay *above* the seeded
+  // 75 kg goal: reaching a goal raises GoalReachedOverlay, which is
+  // deliberately non-dismissable, so every later test in the run dies on a
+  // click it can't reach. The seed's latest weight is 88.
+  await page.getByLabel('Weight (kg)').fill('84.2');
   await page.getByRole('button', { name: 'Save weight' }).click();
 
   await expect(changeStat).not.toHaveText(before ?? '');
