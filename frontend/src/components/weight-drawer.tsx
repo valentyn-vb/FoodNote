@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -73,23 +73,22 @@ export function WeightDrawer(props: WeightDrawerProps) {
   const form = useForm<WeightFormValues>({
     resolver: zodResolver(weightFormSchema),
   });
-
-  function handleOpenChange(next: boolean) {
-    if (next) {
-      form.reset(
-        mode === 'edit'
-          ? {
-              weightKg: String(props.entry.weightKg),
-              recordedAt: toDatetimeLocal(props.entry.recordedAt),
-            }
-          : {
-              weightKg: '',
-              recordedAt: toDatetimeLocal(new Date().toISOString()),
-            },
-      );
-    }
-    setOpen(next);
-  }
+  const { reset } = form;
+  const entry = mode === 'edit' ? props.entry : undefined;
+  useEffect(() => {
+    if (!open) return;
+    reset(
+      entry
+        ? {
+            weightKg: String(entry.weightKg),
+            recordedAt: toDatetimeLocal(entry.recordedAt),
+          }
+        : {
+            weightKg: '',
+            recordedAt: toDatetimeLocal(new Date().toISOString()),
+          },
+    );
+  }, [open, entry, reset]);
 
   async function handleSubmit(values: WeightFormValues) {
     const weightKg = parsedWeightKg(values);
@@ -132,7 +131,7 @@ export function WeightDrawer(props: WeightDrawerProps) {
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
+    <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
       {/* Nothing to render when the caller drives `open` itself: it brought its
           own trigger, and an empty one here would sit in the tab order. */}
       {controlledOpen === undefined && (

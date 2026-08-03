@@ -5,6 +5,7 @@ import {
   DailyCaloriesChart,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
+import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
@@ -19,7 +20,6 @@ import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -34,7 +34,7 @@ export function MobileDashboard() {
     remainingKcal,
     progressPct,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
     isToday,
   } = useMeals();
@@ -188,10 +188,10 @@ export function MobileDashboard() {
             <h2 className="font-sans text-caption font-medium text-text">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {todayMeals.length === 0 ? (
+            {selectedDayMeals.length === 0 ? (
               <EmptyMeals />
             ) : (
-              <MealGroupsAccordion meals={todayMeals} />
+              <MealGroupsAccordion meals={selectedDayMeals} />
             )}
           </div>
 

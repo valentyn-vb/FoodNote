@@ -17,7 +17,9 @@ import {
 } from '@/lib/dashboard-transforms';
 
 /**
- * ‹ [Today / date label] › navigation bar for the dashboard.
+ * ‹ [Today / date label] › navigation bar for the selected Tracking Day. Shared
+ * by the dashboard and /meals off one `selectedDate`, so stepping the day on
+ * either moves both.
  *
  * - Right arrow is disabled when the displayed day is already today.
  * - Future dates in the calendar picker are disabled.
@@ -55,7 +57,7 @@ export function DayNav() {
 
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
-          className="min-w-24 rounded-md px-2.5 py-1 font-sans text-[13.5px] font-medium text-text hover:bg-[#F5F3EF] focus:outline-none"
+          className="min-w-24 rounded-md px-2.5 py-1 font-sans text-[13.5px] font-medium text-text hover:bg-track focus:outline-none"
           aria-label="Pick a date"
         >
           {formatDayLabel(selectedDate, now)}

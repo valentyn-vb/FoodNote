@@ -94,10 +94,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === '/meals'}
                     tooltip="Meals"
-                    render={
-                      isToday ? <Link href="/meals" /> : <button disabled />
-                    }
-                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
+                    render={<Link href="/meals" />}
                   >
                     <NotebookText />
                     <span>Meals</span>
@@ -107,8 +104,6 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     tooltip="Log a meal"
                     onClick={() => setMealDrawerOpen(true)}
-                    disabled={!isToday}
-                    className={!isToday ? 'cursor-not-allowed opacity-40' : ''}
                   >
                     <UtensilsCrossed />
                     <span>Log a meal</span>

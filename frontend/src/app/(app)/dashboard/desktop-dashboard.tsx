@@ -5,6 +5,7 @@ import {
   RemainingTodayRingCard,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
+import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
@@ -14,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -32,7 +32,7 @@ export function DesktopDashboard() {
     eatenKcal,
     remainingKcal,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
     isToday,
   } = useMeals();
@@ -146,10 +146,10 @@ export function DesktopDashboard() {
                   {isToday ? 'Logged today' : 'Logged meals'}
                 </h2>
                 <div className="flex flex-col gap-2.5">
-                  {todayMeals.length === 0 ? (
+                  {selectedDayMeals.length === 0 ? (
                     <EmptyMeals />
                   ) : (
-                    <MealGroupsAccordion meals={todayMeals} />
+                    <MealGroupsAccordion meals={selectedDayMeals} />
                   )}
                   <MealLogDrawer triggerClassName="ml-auto h-10 text-label font-semibold">
                     Log a meal
