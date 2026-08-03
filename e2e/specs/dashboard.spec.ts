@@ -19,13 +19,16 @@ test('the dashboard shows today’s numbers', async ({ page }) => {
 
   await expect(page.getByText(stat('Remaining today'))).toBeVisible();
   await expect(page.getByText(stat('Eaten today'))).toBeVisible();
-  await expect(page.getByText(stat('Weight change'))).toBeVisible();
+  await expect(page.getByText(stat('Change this week'))).toBeVisible();
 });
 
 test('logging a weight moves the change stat', async ({ page }) => {
   await page.goto('/dashboard');
 
-  const changeStat = page.getByText(stat('Weight change'));
+  // The rolling 7-day delta, on the Current weight card. The seeded journal
+  // reaches further back than a week, so the comparison is defined and a new
+  // entry has to move it.
+  const changeStat = page.getByText(stat('Change this week'));
   const before = await changeStat.textContent();
 
   await page.getByRole('button', { name: 'Log weight' }).first().click();
