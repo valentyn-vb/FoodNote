@@ -13,6 +13,7 @@ import type {
   DailyCaloriePoint,
 } from '@/lib/dashboard-transforms';
 import { ReferenceLine } from 'recharts';
+import { cn } from '@/lib/utils';
 
 export function DailyCaloriesChart({
   className,
@@ -25,7 +26,13 @@ export function DailyCaloriesChart({
   target: number;
 }) {
   return (
-    <EvilBarChart data={data} config={calorieConfig} className={className}>
+    <EvilBarChart
+      data={data}
+      config={calorieConfig}
+      // See WeightTrendChart: recharts' own <svg> is focusable, and a focus
+      // ring the width of the card reads as an error state.
+      className={cn('[&_.recharts-surface]:outline-none', className)}
+    >
       <BarGrid />
       {/* Seven days is the whole domain, so every one of them gets a label.
           Left to recharts' `preserveEnd` against the default `minTickGap` of 8,
