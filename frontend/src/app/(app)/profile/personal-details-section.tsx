@@ -173,7 +173,10 @@ export function PersonalDetailsSection({
             )}
             Edit details
           </DialogTrigger>
-          <DialogContent>
+          {/* See edit-profile-dialog: upstream's DialogContent has no height
+              cap, so with a keyboard up this one lost both its title and its
+              "Save changes" off opposite edges. */}
+          <DialogContent className="max-h-[85dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit details</DialogTitle>
               <DialogDescription>
