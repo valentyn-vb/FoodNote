@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
+import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
@@ -20,7 +21,6 @@ import NumberFlow from '@number-flow/react';
 import { History } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { DayNav } from './day-nav';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -35,7 +35,7 @@ export function MobileDashboard() {
     remainingKcal,
     progressPct,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
     isToday,
   } = useMeals();
@@ -176,10 +176,10 @@ export function MobileDashboard() {
             <h2 className="text-sm font-semibold">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {todayMeals.length === 0 ? (
+            {selectedDayMeals.length === 0 ? (
               <EmptyMeals />
             ) : (
-              <MealGroupsAccordion meals={todayMeals} />
+              <MealGroupsAccordion meals={selectedDayMeals} />
             )}
           </div>
 

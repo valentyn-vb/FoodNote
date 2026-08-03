@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useWeight } from '@/lib/weight-context';
 import { TrendingDownIcon, UtensilsIcon } from 'lucide-react';
-import { DayNav } from '@/app/(app)/dashboard/day-nav';
+import { DayNav } from '@/components/day-nav';
+import { useMeals } from '@/lib/meals-context';
 
 /** The route's own name. Prefix-matched, so a future `/meals/:id` still reads
     "Meals" rather than falling through to the app name. */
@@ -39,6 +40,7 @@ function titleFor(pathname: string): string {
 export function AppHeader() {
   const pathname = usePathname();
   const { onWeightSaved } = useWeight();
+  const { isToday } = useMeals();
 
   return (
     // Three columns with equal 1fr sides: the day picker sits on the header's
@@ -63,7 +65,16 @@ export function AppHeader() {
           mode="create"
           onWeightSaved={onWeightSaved}
           trigger={
-            <Button variant="outline" size="lg" className="px-6">
+            // A weight is always stamped "now" on create, so it cannot be
+            // logged onto the day the nav is showing. Off today the action is
+            // disabled rather than silently writing to today (#119) — the gate
+            // the sidebar carried before these actions moved up here.
+            <Button
+              variant="outline"
+              size="lg"
+              disabled={!isToday}
+              className="px-6"
+            >
               <TrendingDownIcon />
               Log weight
             </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -78,22 +78,26 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
     resolver: zodResolver(weightFormSchema),
   });
 
-  function handleOpenChange(next: boolean) {
-    if (next) {
-      form.reset(
-        mode === 'edit'
-          ? {
-              weightKg: String(props.entry.weightKg),
-              recordedAt: toDatetimeLocal(props.entry.recordedAt),
-            }
-          : {
-              weightKg: '',
-              recordedAt: toDatetimeLocal(new Date().toISOString()),
-            },
-      );
-    }
-    setOpen(next);
-  }
+  const { reset } = form;
+  const entry = mode === 'edit' ? props.entry : undefined;
+  // Seeding on the `open` value rather than inside an onOpenChange handler:
+  // when the caller drives `open` (the desktop sidebar's Log weight), no
+  // handler of ours ever runs, so the form kept whatever the last mount left
+  // in it and submitting did nothing (#119).
+  useEffect(() => {
+    if (!open) return;
+    reset(
+      entry
+        ? {
+            weightKg: String(entry.weightKg),
+            recordedAt: toDatetimeLocal(entry.recordedAt),
+          }
+        : {
+            weightKg: '',
+            recordedAt: toDatetimeLocal(new Date().toISOString()),
+          },
+    );
+  }, [open, entry, reset]);
 
   async function handleSubmit(values: WeightFormValues) {
     const weightKg = parsedWeightKg(values);
@@ -170,7 +174,7 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
 
   if (isDesktop) {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={setOpen}>
         {showTrigger && <DialogTrigger render={trigger} />}
         {/* `p-0 gap-0` and a flex column, so the body scrolls between a pinned
             header and footer exactly as it does in the sheet — the stock
@@ -193,7 +197,7 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
+    <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
       {showTrigger && <DrawerTrigger render={trigger} />}
       <DrawerContent>
         {/* #39 factored this header — centred title plus close button — into

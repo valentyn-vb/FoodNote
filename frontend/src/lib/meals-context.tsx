@@ -16,6 +16,7 @@ import type {
   CreateMealRequest,
   DashboardResponse,
   MealResponse,
+  UpdateMealRequest,
 } from '@foodnote/shared';
 import { dashboard as dashboardApi, meals as mealsApi } from '@/lib/api-client';
 import {
@@ -54,9 +55,14 @@ type MealsContextValue = {
   // maintenance plan. Null until the dashboard has loaded.
   maintenanceKcal: number | null;
   goal: GoalBlock | null;
-  todayMeals: MealResponse[];
+  selectedDayMeals: MealResponse[];
   dailyCalories: DailyCaloriePoint[];
-  saveMeal: (draft: CreateMealRequest) => void;
+  /** Logs onto `day` (UTC 'YYYY-MM-DD'); omitted, onto the day being viewed. */
+  saveMeal: (draft: CreateMealRequest, day?: string) => void;
+  deleteMeal: (meal: MealResponse) => void;
+  /** Patches a meal in place. Its recordedAt and source are never touched, so
+      an edit can't move a meal to another day or rewrite its provenance. */
+  updateMeal: (meal: MealResponse, patch: UpdateMealRequest) => void;
   // Weight saves recompute the goal block server-side (projected date and
   // reachedTarget both depend on the new weight), so WeightProvider — nested
   // inside this one — calls this after POST /weights to refresh the goal tile
@@ -159,45 +165,64 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Bound to the created meal (not just its id) so no render-time ref is needed
-  // to recover the totals for the delta + rollback.
-  const undoMeal = useCallback((meal: MealResponse) => {
+  // One optimistic DELETE behind both entry points — a meal line's trash
+  // control and the save toast's Undo. They differ only in what a failed round
+  // trip should say, since "couldn't undo" and "couldn't delete" are different
+  // news. Bound to the whole meal (not just its id) so no render-time ref is
+  // needed to recover the totals for the delta + rollback.
+  const removeMeal = useCallback((meal: MealResponse, failure: string) => {
     setMeals((prev) => prev.filter((m) => m.id !== meal.id));
     setDashboard((d) => (d ? applyMealDelta(d, meal, -1) : d));
     mealsApi.remove(meal.id).catch(() => {
       setMeals((prev) => [meal, ...prev]);
       setDashboard((d) => (d ? applyMealDelta(d, meal, 1) : d));
-      toast.error("Couldn't undo — your meal is still saved.");
+      toast.error(failure);
     });
   }, []);
 
-  const saveMeal = useCallback(
-    (draft: CreateMealRequest) => {
-      // Meal logging is only allowed for today — the drawer is disabled for
-      // past dates, but guard here too for safety.
-      if (selectedDateRef.current !== todayUtc(new Date())) return;
-      const tempId = `temp-${crypto.randomUUID()}`;
-      const optimistic: MealResponse = {
-        id: tempId,
-        mealName: draft.mealName,
-        mealType: draft.mealType,
-        recordedAt: draft.recordedAt,
-        totalCalories: draft.totalCalories,
-        proteinGrams: draft.proteinGrams,
-        carbsGrams: draft.carbsGrams,
-        fatGrams: draft.fatGrams,
-        source: draft.source,
-        items: draft.items ?? [],
-      };
-      // Optimistic: bump the tiles and show the meal immediately so NumberFlow
-      // animates now, not after the round trip.
-      setMeals((prev) => [optimistic, ...prev]);
-      setDashboard((d) => (d ? applyMealDelta(d, draft, 1) : d));
+  const undoMeal = useCallback(
+    (meal: MealResponse) =>
+      removeMeal(meal, "Couldn't undo — your meal is still saved."),
+    [removeMeal],
+  );
 
+  const deleteMeal = useCallback(
+    (meal: MealResponse) =>
+      removeMeal(meal, "Couldn't delete your meal. Please try again."),
+    [removeMeal],
+  );
+
+  const updateMeal = useCallback(
+    (meal: MealResponse, patch: UpdateMealRequest) => {
       mealsApi
-        .create(draft)
+        .update(meal.id, patch)
+        .then((saved) => {
+          setMeals((prev) => prev.map((m) => (m.id === saved.id ? saved : m)));
+          refetchDashboard();
+        })
+        .catch(() =>
+          toast.error("Couldn't save your changes. Please try again."),
+        );
+    },
+    [refetchDashboard],
+  );
+
+  const saveMeal = useCallback(
+    (draft: CreateMealRequest, day?: string) => {
+      // Only the day part of the drawer's `new Date()` stamp is replaced — the
+      // time of day is what orders meals inside a Tracking Day.
+      const trackingDay = day ?? selectedDateRef.current;
+      const meal: CreateMealRequest = {
+        ...draft,
+        recordedAt: `${trackingDay}T${draft.recordedAt.slice(11)}`,
+      };
+      // The saved meal only enters the list once the server has given it an id,
+      // so nothing in the UI is ever holding a meal that doesn't exist yet.
+      mealsApi
+        .create(meal)
         .then((created) => {
-          setMeals((prev) => prev.map((m) => (m.id === tempId ? created : m)));
+          setMeals((prev) => [created, ...prev]);
+          refetchDashboard();
           // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
           toast.success('Meal saved', {
             icon: (
@@ -211,13 +236,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             action: { label: 'Undo', onClick: () => undoMeal(created) },
           });
         })
-        .catch(() => {
-          setMeals((prev) => prev.filter((m) => m.id !== tempId));
-          setDashboard((d) => (d ? applyMealDelta(d, draft, -1) : d));
-          toast.error("Couldn't save your meal. Please try again.");
-        });
+        .catch(() => toast.error("Couldn't save your meal. Please try again."));
     },
-    [undoMeal],
+    [undoMeal, refetchDashboard],
   );
 
   const value = useMemo<MealsContextValue>(() => {
@@ -238,11 +259,13 @@ export function MealsProvider({ children }: { children: ReactNode }) {
           ? Math.min(100, Math.round((eatenKcal / goalKcal) * 100))
           : 0,
       goal: dashboard?.goal ?? null,
-      todayMeals: dashboard ? todaysMeals(meals, dashboard.date) : [],
+      selectedDayMeals: dashboard ? todaysMeals(meals, dashboard.date) : [],
       dailyCalories: dashboard
         ? bucketDailyCalories(meals, dashboard.date)
         : [],
       saveMeal,
+      deleteMeal,
+      updateMeal,
       refetchDashboard,
     };
   }, [
@@ -253,6 +276,8 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     selectedDate,
     setSelectedDate,
     saveMeal,
+    deleteMeal,
+    updateMeal,
     refetchDashboard,
   ]);
 

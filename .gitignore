@@ -23,3 +23,9 @@ skills-lock.json
 # The designer's handoff prototype: a reference to look at, not a repo artifact.
 # ADR 0009 cites it by description rather than by path for this reason.
 design_handoff_foodnote/
+
+# End-to-end suite artifacts — the run's seeded identities and captured
+# sessions, plus Playwright's own output. All regenerated per run.
+e2e/.auth/
+e2e/test-results/
+e2e/playwright-report/

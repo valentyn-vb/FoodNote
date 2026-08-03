@@ -5,12 +5,19 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `frontend/` — Next.js App Router + Tailwind, port 3000
 - `backend/` — NestJS API (TypeORM + PostgreSQL), port 3001, routes under `/api`
 - `shared/` — `@foodnote/shared` Zod schemas, the API contract for both apps
+- `e2e/` — the Playwright smoke net. Its own workspace rather than `frontend/e2e/`:
+  it boots Postgres, Nest **and** a Next build, so it belongs to all three
 
 ## Commands
 
 - `npm run dev` — shared (watch) + backend + frontend
 - `npm test` / `npm run format:check` — must pass before a PR
 - `npm run db:up` — start local Postgres 16 (Docker, waits for healthy); `db:down` / `db:logs` to stop / tail
+- `npm run test:e2e` — the smoke net. Needs Docker; creates the `foodnote_e2e`
+  database, builds `shared` and `backend`, seeds a fresh account for the run,
+  then starts both servers itself. Deliberately outside `npm test`: the default
+  test command should not require Docker and a production build, or it stops
+  being run locally
 
 ## Rules
 

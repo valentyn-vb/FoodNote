@@ -5,7 +5,8 @@
   "workspaces": [
     "shared",
     "backend",
-    "frontend"
+    "frontend",
+    "e2e"
   ],
   "scripts": {
     "dev": "npm run build -w shared && concurrently -n shared,api,web -c blue,green,magenta \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
@@ -16,7 +17,8 @@
     "test": "npm test -w shared && npm test -w backend && npm test -w frontend",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "npm run lint -w backend && npm run lint -w frontend"
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "test:e2e": "npm run test:e2e -w e2e"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
