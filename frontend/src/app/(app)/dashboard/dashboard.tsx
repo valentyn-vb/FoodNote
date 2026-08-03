@@ -3,6 +3,7 @@
 import type { DashboardResponse } from '@foodnote/shared';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
+import { EmptyMeals } from '@/components/empty-meals';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { Card } from '@/components/ui/card';
 import {
@@ -15,7 +16,6 @@ import { CurrentGoalCard } from './current-goal-card';
 import { CurrentWeightCard } from './current-weight-card';
 import { DailyCaloriesCard } from './daily-calories-card';
 import { EatenCard } from './eaten-card';
-import { EmptyMeals } from './empty-meals';
 import { formatFigure } from './helpers';
 import { RemainingCard } from './remaining-card';
 import { DashboardError, DashboardSkeleton } from './states';
@@ -154,17 +154,23 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
             </h2>
             {/* The day's two totals, opposite the title: the same summary
                 the meal-time rows carry, for the day as a whole. The
-                figures carry the weight, the words stay quiet. */}
-            <p className="text-sm text-muted-foreground tabular-nums">
-              <span className="font-semibold text-foreground">
-                {selectedDayMeals.length}
-              </span>
-              {selectedDayMeals.length === 1 ? ' meal · ' : ' meals · '}
-              <span className="font-semibold text-foreground">
-                {formatFigure(eatenKcal)}
-              </span>
-              {' kcal'}
-            </p>
+                figures carry the weight, the words stay quiet.
+
+                Absent on an empty day rather than reading "0 meals · 0 kcal":
+                the empty state below already says nothing was logged, and a
+                row of zeroes beside it states it a second time. */}
+            {selectedDayMeals.length > 0 && (
+              <p className="text-sm text-muted-foreground tabular-nums">
+                <span className="font-semibold text-foreground">
+                  {selectedDayMeals.length}
+                </span>
+                {selectedDayMeals.length === 1 ? ' meal · ' : ' meals · '}
+                <span className="font-semibold text-foreground">
+                  {formatFigure(eatenKcal)}
+                </span>
+                {' kcal'}
+              </p>
+            )}
           </div>
           {selectedDayMeals.length === 0 ? (
             <div className="border-t border-border">

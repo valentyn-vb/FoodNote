@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DayNav } from '@/components/day-nav';
-import { EmptyState } from '@/components/empty-state';
+import { EmptyMeals } from '@/components/empty-meals';
 import { useMeals } from '@/lib/meals-context';
 import { MealGroups } from './meal-groups';
 
@@ -33,11 +33,10 @@ export default function MealsPage() {
       ) : status === 'loading' ? (
         <MealsSkeleton />
       ) : selectedDayMeals.length === 0 ? (
-        <EmptyState
-          mascotSrc="/mascot/accompany.webp"
-          caption="Nothing logged yet — your first meal starts the day."
-          className="py-16"
-        />
+        // A border here and not on the dashboard: this one stands on the page
+        // with nothing around it, so without an edge the mascot floats in the
+        // middle of an empty screen.
+        <EmptyMeals className="rounded-lg border border-dashed py-16" />
       ) : (
         <MealGroups meals={selectedDayMeals} />
       )}
