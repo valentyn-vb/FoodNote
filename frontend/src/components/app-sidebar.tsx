@@ -125,16 +125,24 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
+                  // Collapsed, the row is the avatar and nothing else: the
+                  // frame and the fill go with it. Upstream shrinks the button
+                  // to size-8, which is the avatar's own size, so a rectangular
+                  // border around it clipped the circle against `rounded-sm`
+                  // and read as a half-round shape under the face.
                   <SidebarMenuButton
                     size="lg"
-                    className="bg-primary/5 border border-text-foreground h-14"
+                    className="h-14 border border-text-foreground bg-primary/5 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
                   />
                 }
               >
                 <Avatar className="size-8">
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left">
+                {/* Hidden rather than left to collapse to zero width: as flex
+                    children they still took a share of a 32px row and pushed
+                    the avatar off its centre. */}
+                <div className="grid flex-1 text-left group-data-[collapsible=icon]:hidden">
                   <span className="truncate text-sm font-semibold">
                     {fullName}
                   </span>
@@ -142,7 +150,7 @@ export function AppSidebar() {
                     {authUser?.email}
                   </span>
                 </div>
-                <ChevronsUpDownIcon className="ml-auto size-4" />
+                <ChevronsUpDownIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
               </DropdownMenuTrigger>
               {/* Beside the rail on a desktop; above the row in the sheet,
                   where "right" puts the menu outside the sheet entirely. */}
