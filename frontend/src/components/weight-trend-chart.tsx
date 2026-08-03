@@ -76,8 +76,18 @@ export function WeightTrendChart({
         lineProps={{ strokeWidth: 2 }}
       />
       {/* The tooltip keeps day precision — months are the axis unit, not the
-          resolution the data was recorded at. */}
-      <Tooltip labelFormatter={(label) => formatTrendDate(Number(label))} />
+          resolution the data was recorded at.
+          evilcharts/ui/tooltip.tsx's ChartTooltipContent doesn't pass the
+          x-axis value as labelFormatter's first argument — it passes the
+          series' config label ("Logged"/"Projected") instead, so
+          `formatTrendDate(Number(label))` silently formatted NaN into ''.
+          The real value is on the second argument, in the hovered point's
+          own data (`payload[0].payload.t`). */}
+      <Tooltip
+        labelFormatter={(_, payload) =>
+          formatTrendDate(Number(payload?.[0]?.payload?.t))
+        }
+      />
       <Legend />
     </EvilLineChart>
   );
