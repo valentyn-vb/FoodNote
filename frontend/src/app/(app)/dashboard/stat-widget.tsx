@@ -1,39 +1,25 @@
 'use client';
 
-import Image from 'next/image';
 import NumberFlow from '@number-flow/react';
 import { Card } from '@/components/ui/card';
-
-// Matches what NumberFlow renders, so the spoken value and the visible digits
-// cannot disagree. The locale is pinned rather than left to the browser: the
-// component server-renders, and a server whose locale differs from the visitor's
-// would otherwise produce a hydration mismatch on every stat.
-const NUMBER_FORMAT = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 1,
-});
+import { cn } from '@/lib/utils';
+import { spokenStat } from './helpers';
 
 export function StatWidget({
   label,
   value,
   suffix = '',
-  mascotSrc,
+  className,
 }: {
   label: string;
   value: string | number;
   suffix?: string;
-  mascotSrc?: string;
+  className?: string;
 }) {
-  const spoken = `${label}: ${
-    typeof value === 'string' ? value : NUMBER_FORMAT.format(value)
-  }${suffix}`;
+  const spoken = spokenStat(label, value, suffix);
 
   return (
-    // `isolate`, so the z-0/z-10 pair below orders the label against the
-    // mascot and nothing else. `relative` alone leaves z-index:auto, which is
-    // not a stacking context: the label then competed with the shell's sticky
-    // header at the same z-10, won on source order, and scrolled over it —
-    // which reads as a see-through header.
-    <Card className="relative isolate gap-1.5 rounded-lg px-4.5 py-4">
+    <Card className={cn('gap-1.5 rounded-lg px-4.5 py-4', className)}>
       {/* NumberFlow splits a number into per-digit animated spans and exposes no
           accessible name, so a screen reader currently reads these tiles as a
           label followed by scattered digits. One sr-only string carries the
@@ -41,10 +27,7 @@ export function StatWidget({
           which is also what makes the value assertable without betting on an
           animation library's internal markup. */}
       <span className="sr-only">{spoken}</span>
-      <span
-        aria-hidden="true"
-        className="relative z-10 text-sm text-muted-foreground"
-      >
+      <span aria-hidden="true" className="text-sm text-muted-foreground">
         {label}
       </span>
       <div
@@ -62,15 +45,6 @@ export function StatWidget({
           />
         )}
       </div>
-      {mascotSrc && (
-        <Image
-          src={mascotSrc}
-          alt=""
-          width={76}
-          height={76}
-          className="absolute -bottom-2 left-[62%] z-0 -translate-x-1/2 opacity-85"
-        />
-      )}
     </Card>
   );
 }

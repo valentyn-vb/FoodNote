@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 // Shown when GET /dashboard fails — the tiles are the backbone, so without
 // them the whole view is unusable. Retry re-runs both the dashboard and the
@@ -20,9 +21,9 @@ export function DashboardError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function TileSkeleton() {
+export function TileSkeleton({ className }: { className?: string }) {
   return (
-    <Card className="gap-1.5 rounded-lg px-4.5 py-4">
+    <Card className={cn('gap-1.5 rounded-lg px-4.5 py-4', className)}>
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-7 w-20" />
     </Card>
@@ -44,48 +45,30 @@ export function InlineError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function DesktopDashboardSkeleton() {
+// One skeleton, shaped to the bands it stands in for, so nothing reflows into
+// a different arrangement once the data lands.
+export function DashboardSkeleton() {
   return (
     <>
-      <div className="flex gap-3.5">
-        <TileSkeleton />
-        <TileSkeleton />
-        <TileSkeleton />
-        <TileSkeleton />
+      <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
+        <Card className="gap-3 p-5 lg:grow-2 lg:basis-0">
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="rounded-full h-2 w-full" />
+        </Card>
+        <TileSkeleton className="lg:grow lg:basis-0" />
       </div>
-      <div className="flex min-h-0 grow basis-0 gap-3.5">
-        <div className="flex min-h-0 grow-2 basis-0 flex-col gap-3.5">
-          <Card className="grow-2 basis-0 p-6">
-            <Skeleton className="h-full w-full" />
-          </Card>
-          <Card className="grow basis-0 p-6">
-            <Skeleton className="h-full w-full" />
-          </Card>
+      <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
+        <div className="flex flex-col gap-2.5 lg:grow lg:basis-0">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="rounded-xl h-40 w-full lg:h-64" />
         </div>
-        <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
-          <Card className="h-44 shrink-0 p-5">
-            <Skeleton className="rounded-full mx-auto size-28" />
-          </Card>
-          <Card className="grow basis-0 p-5">
-            <Skeleton className="h-full w-full" />
-          </Card>
+        <div className="flex flex-col gap-2.5 lg:grow lg:basis-0">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="rounded-xl h-40 w-full lg:h-64" />
         </div>
       </div>
-    </>
-  );
-}
-
-export function MobileDashboardSkeleton() {
-  return (
-    <>
-      <Card className="gap-3 p-5">
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-9 w-40" />
-        <Skeleton className="rounded-full h-2 w-full" />
-      </Card>
-      <Skeleton className="h-11 w-full" />
-      <Skeleton className="rounded-xl h-32 w-full" />
-      <Skeleton className="rounded-xl h-36 w-full" />
+      <Skeleton className="rounded-xl h-56 w-full" />
     </>
   );
 }
