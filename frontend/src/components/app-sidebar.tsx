@@ -68,17 +68,24 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {/* Collapsed, the rail is 3rem and SidebarHeader's own `p-2` leaves
-            exactly the mascot's 32px — so the row drops its `px-4` there and
-            centres, and the wordmark goes. With the padding kept, the logo
-            was pushed past the edge and `overflow-hidden` cut it in half. */}
-        <div className="flex h-18 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        {/* Sized by padding to match AppHeader, so the wordmark and the route
+            title sit on one line and the logo row ends where the header's
+            border does. The header's row is 64 below `lg` (`py-3`) and 72 at
+            `lg` (`lg:py-4` around a 40px button), so this one is 32px of mascot
+            + SidebarHeader's own `p-2` + `py-2 lg:py-3` to match at both steps.
+            Collapsed, the rail is 3rem and that `p-2` leaves exactly the
+            mascot's 32px — so the row drops its `px-4` there and centres, and
+            the wordmark goes. With the padding kept, the logo was pushed past
+            the edge and `overflow-hidden` cut it in half. */}
+        <div className="flex items-center gap-2 overflow-hidden px-4 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 lg:py-3">
           <Image
             src="/mascot/default.webp"
             alt="FoodNote mascot"
             width={32}
             height={32}
-            className="shrink-0 rounded-full"
+            // `size-8` as well as the intrinsic 32: the row's height is its
+            // padding plus this, and the intrinsic box rounds to 31.
+            className="size-8 shrink-0 rounded-full"
           />
           <span className="truncate text-lg font-bold group-data-[collapsible=icon]:hidden">
             FoodNote
