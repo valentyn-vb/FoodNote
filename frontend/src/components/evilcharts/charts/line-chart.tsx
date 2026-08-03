@@ -494,6 +494,9 @@ type TooltipProps = {
   roundness?: TooltipRoundness; // border-radius of the tooltip
   defaultIndex?: number; // data index shown by default with no hover
   cursor?: boolean; // whether the vertical cursor line follows the pointer
+  // Formats the heading. Needed by any numeric/time x-axis, where the raw
+  // dataKey value (e.g. an epoch) is not what the reader should see.
+  labelFormatter?: ComponentProps<typeof ChartTooltipContent>['labelFormatter'];
 };
 
 /**
@@ -505,6 +508,7 @@ export function Tooltip({
   roundness,
   defaultIndex,
   cursor = true,
+  labelFormatter,
 }: TooltipProps) {
   const { isLoading, selectedDataKey } = useLineChart();
 
@@ -521,6 +525,7 @@ export function Tooltip({
           selected={selectedDataKey}
           roundness={roundness}
           variant={variant}
+          labelFormatter={labelFormatter}
         />
       }
     />

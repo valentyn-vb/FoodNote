@@ -1,14 +1,6 @@
 'use client';
 
 import {
-  EvilLineChart,
-  Grid as LineGrid,
-  Legend as LineLegend,
-  Line,
-  Tooltip as LineTooltip,
-  YAxis,
-} from '@/components/evilcharts/charts/line-chart';
-import {
   Bar,
   EvilBarChart,
   Grid as BarGrid,
@@ -24,59 +16,15 @@ import {
 } from 'recharts';
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
+import { WeightTrendChart } from '@/components/weight-trend-chart';
+import { calorieConfig } from '@/lib/chart-config';
 import type {
   DailyCaloriePoint,
   WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
 // Shared by the mobile and desktop dashboard layouts — same chart, sized by
-// className. Colors come from the FoodNote tokens, not EvilCharts defaults.
-
-// Same metric, same color — solid vs dashed is what tells "actual" from
-// "projected" apart, per the H03 "Weight trend & projection" annotation.
-const weightConfig = {
-  actual: { label: 'Actual', colors: { light: ['var(--fn-secondary)'] } },
-  projected: {
-    label: 'Projected',
-    colors: { light: ['var(--fn-secondary)'] },
-  },
-};
-
-const calorieConfig = {
-  kcal: { label: 'kcal', colors: { light: ['var(--fn-primary)'] } },
-};
-
-export function WeightTrendChart({
-  className,
-  data,
-}: {
-  className?: string;
-  data: WeightTrendPoint[];
-}) {
-  return (
-    <EvilLineChart
-      data={data}
-      config={weightConfig}
-      className={className}
-      curveType="monotone"
-    >
-      <LineGrid />
-      {/* Fitted domain — kg values sit in a ~1.5 kg band; a zero-based axis
-          would flatten the trend into a straight line. */}
-      <YAxis hide domain={['dataMin - 0.4', 'dataMax + 0.4']} />
-      {/* `projected` starts null/absent until "Now", so it picks up right
-          where `actual` stops without connectNulls. */}
-      <Line dataKey="actual" lineProps={{ strokeWidth: 2.5 }} />
-      <Line
-        dataKey="projected"
-        strokeVariant="dashed"
-        lineProps={{ strokeWidth: 2.5 }}
-      />
-      <LineTooltip />
-      <LineLegend />
-    </EvilLineChart>
-  );
-}
+// className. Series colors and labels live in lib/chart-config.ts.
 
 export function DailyCaloriesChart({
   className,

@@ -9,11 +9,14 @@ export function StatWidget({
   label,
   value,
   suffix = '',
+  caption,
   mascotSrc,
 }: {
   label: string;
   value: string | number;
   suffix?: string;
+  /** Small muted line under the value — a comparison baseline, not a unit. */
+  caption?: string;
   mascotSrc?: string;
 }) {
   return (
@@ -32,6 +35,11 @@ export function StatWidget({
           format={{ maximumFractionDigits: 1 }}
           className="font-display text-heading-lg font-semibold text-text"
         />
+      )}
+      {caption && (
+        <div className="relative z-10 font-sans text-[12px] text-text-muted">
+          {caption}
+        </div>
       )}
       {mascotSrc && (
         <Image

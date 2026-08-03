@@ -1,22 +1,21 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Disclaimer } from '@/components/disclaimer';
 import {
   DailyCaloriesChart,
   RemainingTodayRingCard,
   WeightTrendCard,
 } from '@/components/dashboard-charts';
+import { Disclaimer } from '@/components/disclaimer';
+import { Card } from '@/components/ui/card';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
-import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
-import { CARD_CLASS, fullnessMascot } from './helpers';
-import { StatWidget } from './stat-widget';
 import { EmptyMeals } from './empty-meals';
+import { CARD_CLASS, fullnessMascot } from './helpers';
 import { MealRow } from './meal-row';
-import { WeightHistoryDrawer } from './weight-history-drawer';
+import { StatWidget } from './stat-widget';
 import {
   DashboardError,
   DesktopDashboardSkeleton,
@@ -24,6 +23,7 @@ import {
   TileSkeleton,
 } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
+import { WeightHistoryDrawer } from './weight-history-drawer';
 
 const WEIGHT_TREND_CARD_CLASS = `${CARD_CLASS} grow-2 basis-0 gap-3 px-6 py-5.5`;
 
@@ -35,15 +35,10 @@ export function DesktopDashboard() {
     retry: retryWeight,
     entries: weightEntries,
     weightTrend,
-    weightChangeKg,
-    weightChangeLastMonthKg,
     onWeightsChanged,
   } = useWeight();
 
   const gate = useDashboardGate();
-  // "Yesterday" is the second-to-last entry of the 7-day series (last = today).
-  const eatenYesterday = dailyCalories.at(-2)?.kcal ?? 0;
-  const remainingYesterday = Math.max(0, goalKcal - eatenYesterday);
 
   return (
     <div className="hidden flex-col gap-5.5 overflow-clip bg-bg px-10 py-8 lg:flex lg:h-screen">
@@ -75,8 +70,9 @@ export function DesktopDashboard() {
             {weightStatus === 'ready' ? (
               <StatWidget
                 label="Weight change"
-                value={weightChangeKg}
+                value={gate.goal.currentWeightKg}
                 suffix=" kg"
+                caption={`started at ${gate.goal.startWeightKg} kg`}
               />
             ) : (
               <TileSkeleton />
