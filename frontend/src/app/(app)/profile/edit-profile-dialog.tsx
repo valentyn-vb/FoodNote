@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogClose,
@@ -17,11 +18,11 @@ import {
   type UpdateAccountRequest,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { AuthTextField } from '../../(auth)/auth-text-field';
+import { Edit2Icon } from 'lucide-react';
 
 const EDIT_PROFILE_FORM_ID = 'edit-profile-form';
 
@@ -59,16 +60,17 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        className="h-auto p-0 font-sans  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+        render={
+          <Button variant="outline" className="mx-auto w-fit" size="sm" />
+        }
       >
+        <Edit2Icon className="size-3 mr-1" />
         Edit profile
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-sans text-title font-semibold text-text">
-            Edit profile
-          </DialogTitle>
-          <DialogDescription className="font-sans text-caption text-text-muted">
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
             Update the name shown across your account.
           </DialogDescription>
         </DialogHeader>
@@ -77,7 +79,7 @@ export function EditProfileDialog() {
           id={EDIT_PROFILE_FORM_ID}
           onSubmit={form.handleSubmit(handleSave)}
           noValidate
-          className="flex flex-col gap-5 px-5 pt-4.5"
+          className="flex flex-col gap-6"
         >
           <AuthTextField
             control={form.control}
@@ -93,18 +95,13 @@ export function EditProfileDialog() {
           />
         </form>
 
-        <DialogFooter className="flex-row justify-end gap-2.5">
+        <DialogFooter className="flex-row justify-end gap-2">
           <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>
-          <Button
-            type="submit"
-            form={EDIT_PROFILE_FORM_ID}
-            variant="cta"
-            disabled={saving}
-          >
-            {saving && <Loader2 className="size-4 animate-spin" />}
-            Save
+          <Button type="submit" form={EDIT_PROFILE_FORM_ID} disabled={saving}>
+            {saving && <Spinner />}
+            Update profile
           </Button>
         </DialogFooter>
       </DialogContent>

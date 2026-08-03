@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { weightKgSchema } from '@foodnote/shared';
 import { type UseFormReturn } from 'react-hook-form';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
-import { InputField } from './form-fields';
+import { FieldDescription } from '@/components/ui/field';
+import { FigureField, InputField } from './form-fields';
 
 // weightKg stays a string end to end (not a transform to number) so the
 // component never needs a manual parse: the comma-decimal check ("71,4",
@@ -55,17 +56,26 @@ export function WeightForm({
       id={WEIGHT_FORM_ID}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-3 px-5 pt-2"
+      // No padding of its own: inside the drawer `DrawerBody` owns all four
+      // edges, and inside the desktop dialog its wrapper does — the same rule
+      // the meal steps follow. Its own `px-5 pt-2` fought both.
+      className="flex flex-col gap-3"
     >
-      <InputField
+      {/* The same field the meal totals use, unit in the box and all, but with
+          the standard label and the stock surface: one field on its own screen
+          doesn't need the accent that marks the leading figure of a row.
+          `type="text"` with a decimal keypad, not `number` — the comma-decimal
+          check lives in the schema above, and a number input would drop "71,4"
+          before Zod ever saw it. */}
+      <FigureField
         id="weightKg"
-        label="Weight (kg)"
+        label="Weight"
+        unit="kg"
         type="text"
         inputMode="decimal"
         autoFocus
         placeholder="e.g. 71.4"
         error={errors.weightKg?.message}
-        className="h-12 text-center font-display text-[22px] font-semibold [font-variant-numeric:tabular-nums]"
         {...register('weightKg')}
       />
       {showDate ? (
@@ -78,9 +88,9 @@ export function WeightForm({
           {...register('recordedAt')}
         />
       ) : (
-        <div className="font-sans text-[12px] text-text-muted">
+        <FieldDescription>
           Each save adds a new entry to your weight journal.
-        </div>
+        </FieldDescription>
       )}
     </form>
   );

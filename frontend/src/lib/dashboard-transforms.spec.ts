@@ -42,7 +42,11 @@ function meal(
   };
 }
 
-function weight(id: string, recordedAt: string, weightKg: number): WeightEntryResponse {
+function weight(
+  id: string,
+  recordedAt: string,
+  weightKg: number,
+): WeightEntryResponse {
   return { id, recordedAt, weightKg };
 }
 
@@ -297,9 +301,9 @@ describe('todaysMeals', () => {
 
   it('returns an empty array when no meals match', () => {
     expect(todaysMeals([], DATE)).toEqual([]);
-    expect(
-      todaysMeals([meal('x', '2024-07-29T10:00:00Z', 400)], DATE),
-    ).toEqual([]);
+    expect(todaysMeals([meal('x', '2024-07-29T10:00:00Z', 400)], DATE)).toEqual(
+      [],
+    );
   });
 
   it('sorts newest first', () => {

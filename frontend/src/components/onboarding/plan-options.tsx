@@ -2,7 +2,6 @@
 
 import { RadioGroup } from '@/components/ui/radio-group';
 import type { Pace, PlanOption } from '@foodnote/shared';
-import { DEFAULT_PLAN_PACE } from './form-schema';
 import { PlanOptionCard } from './plan-option-card';
 
 type PlanOptionsProps = {
@@ -20,7 +19,7 @@ export function PlanOptions({
 }: PlanOptionsProps) {
   if (options.length === 0) {
     return (
-      <p className="font-sans text-label text-text-muted">
+      <p className="text-sm text-muted-foreground">
         No safe plan reaches this target from your current weight. Try a smaller
         change.
       </p>
@@ -29,6 +28,9 @@ export function PlanOptions({
 
   return (
     <RadioGroup
+      // Two abreast once the container clears 32rem — below that the cards'
+      // 2xl figure has nowhere to go and they stack.
+      className="@lg:grid-cols-2"
       value={value !== null ? String(value) : ''}
       onValueChange={(next) => onValueChange(Number(next) as Pace)}
     >

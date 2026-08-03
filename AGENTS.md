@@ -26,6 +26,7 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `CONTEXT.md` is the domain glossary (the ubiquitous language) — use its terms in code, tests, and docs, and update it when the model changes; architectural decisions are recorded in `docs/adr/`
 - adding, removing, or changing an endpoint means updating the OpenAPI docs (`backend/src/docs/openapi.ts`, served at `/api/docs`) in the same change — schemas come from `shared/`, so only the route wiring needs a new entry
 - every form — including a single field inside a drawer or dialog — follows **Forms** below
+- comment only what the code can't say: a constraint, a measured value, a decision that reads as a mistake. Never restate the line below it, and don't narrate a change — that belongs in the commit
 
 ## Forms
 
@@ -44,9 +45,48 @@ The frontend is shadcn `base-vega` on Base UI (`frontend/components.json`; check
 
 ## Styling
 
-Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. The theme is the source of truth for colour, elevation, radius and type — a utility class is how you _use_ it, never where you _define_ it.
+Tailwind v4, tokens in `@theme` in `frontend/src/app/globals.css`. **A value
+comes from the theme; a utility built from a theme value is legal anywhere.**
+There is no `ui/**` boundary — that was [ADR
+0009](docs/adr/0009-visual-style-lives-in-components.md), superseded by [ADR
+0010](docs/adr/0010-values-come-from-the-theme.md), which says what it cost. The
+tokens, the type row and the named divergences from upstream are in
+[the spec](docs/design/styling-rewrite-spec.md).
 
-- **Never export a className string.** A look shared by two call sites is a `cva` variant on the `ui/` component (as `Button` already does — `variant="cta"`), so callers write `<Card variant="tile">`. `CARD_CLASS` / `STAT_TILE_CLASS` in `app/(app)/dashboard/helpers.ts` are the pattern to delete, not to copy: a class-string constant is a component variant that never got written, and `cn()` merge order makes it silently overridable at every call site.
-- **Cancelling a `ui/` component's own defaults is the tell.** `ring-0 py-0` exists in `CARD_CLASS` only to undo `Card`'s `ring-1 ring-foreground/10` and `py-(--card-spacing)`. When a call site fights the component, the variant belongs _in_ the component.
-- **Don't re-implement reduced motion.** `globals.css` collapses every CSS animation and transition under `prefers-reduced-motion: reduce`, app-wide. Write normal transitions and let the rule handle it. Two exceptions: motion driven from JS (a render loop, an animation library) must check the preference at its source, and motion that _is_ the information — a busy indicator — needs an explicit exemption alongside the existing ones.
-- **No arbitrary value that hardcodes a color or an elevation** — `shadow-[0_1px_3px_#0000000a]`, `bg-[#F0EEE9]`, `text-[#333333]` all bypass the theme and can't be themed, audited for contrast, or changed in one place. If the value is missing, add the token to `@theme` and use the generated utility (`shadow-card`). Note there are **no `--shadow-*` tokens yet** — the first change that needs one adds it.
+- **Write utilities, not variants:** `<h2 className="text-sm font-semibold">`,
+  not a level, a tone or a `<Text>`. There is no semantic type scale and no
+  `Text` component; the row is tailwind's own, with a weight class beside it.
+- **What is forbidden is a literal.** `frontend/eslint-rules/no-literal-values.js`
+  errors on a colour literal (`#hex`, `rgb()`, `oklch()`) **anywhere in a
+  `.tsx`** — including inside `style={{}}` and a chart prop — and on an arbitrary
+  value in a visual group that references no token. So `text-[13px]` and
+  `shadow-[0_1px_2px_rgba(0,0,0,.04)]` are errors, and
+  `rounded-[calc(var(--radius)-5px)]` and `bg-[color-mix(in_oklch,var(--card),var(--foreground)_5%)]`
+  are not. Layout and variants (`data-[state=open]:`, `has-[…]`) are untouched.
+- **If the value you need isn't there, add the token** to `@theme` and use the
+  generated utility. A _missing_ token yields no CSS at all rather than a
+  default, so deleting one silently removes the rule that used it — and a token
+  name can be held as a string (`goal-reached-overlay.tsx` resolves several
+  through `getComputedStyle`), where no type error will find it.
+- **`ui/**` holds only what `shadcn add` brought,** at upstream's variants. Add
+  components with `npx shadcn@latest add <name> -c frontend`, never by hand. A
+  component that _draws_ rather than styles goes in `components/`. Don't invent a
+  variant: write the look at the call site that wants it.
+- **Never export a className string.** A look shared by two call sites is a
+  component, not a constant. Five such constants were deleted from this repo, one
+  written a day after four others were — the lint rule rejects any `*_CLASS`
+  identifier. A component that needs a styled part takes the element:
+  `trigger={<Button …/>}`.
+- **Two families, and Fredoka is explicit.** `font-heading` is applied at
+  display-scale call sites — a page title, a large figure. A heading's rank does
+  not imply a face: an `h2` of running text is not in Fredoka.
+- **Don't re-implement reduced motion.** `globals.css` collapses every CSS
+  animation and transition under `prefers-reduced-motion: reduce`, app-wide. Two
+  exceptions: motion driven from JS must check the preference at its source, and
+  motion that _is_ the information — a busy indicator — needs an explicit
+  exemption alongside the existing ones.
+- **There is no dark mode.** It was removed, not disabled: no `.dark`, no
+  `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
+- **After changing `@theme`, `rm -rf frontend/.next`.** Turbopack serves stale
+  token CSS even across a dev-server restart, and a colour that "didn't arrive"
+  is the cache far more often than the code.

@@ -17,6 +17,7 @@
     "test": "npm test -w shared && npm test -w backend && npm test -w frontend",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
     "test:e2e": "npm run test:e2e -w e2e"
   },
   "devDependencies": {

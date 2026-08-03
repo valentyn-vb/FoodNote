@@ -238,16 +238,29 @@ function DrawerTitleBar({
       ) : (
         <div />
       )}
-      <DrawerTitle className="col-start-2 justify-self-center font-sans text-[15px] font-semibold text-text">
+      <DrawerTitle className="col-start-2 justify-self-center">
         {children}
       </DrawerTitle>
       <DrawerClose
         aria-label="Close drawer"
-        className="col-start-3 flex size-5 items-center justify-self-end justify-center"
+        className="col-start-3 -my-1.5 flex size-8 items-center justify-self-end justify-center"
       >
-        <XIcon size={20} className="text-text-soft" strokeWidth={2} />
+        <XIcon size={20} className="text-muted-foreground" strokeWidth={2} />
       </DrawerClose>
     </DrawerHeader>
+  );
+}
+
+function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="drawer-body"
+      className={cn(
+        'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4',
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -261,11 +274,16 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+/**
+ * `text-lg`, not the page scale: 24px Fredoka in a sheet's own title bar
+ * competes with the content under it. Call sites pass placement, never type —
+ * this is the one place the drawer title's look is decided.
+ */
 function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('font-heading font-medium text-foreground', className)}
+      className={cn('text-lg font-bold', className)}
       {...props}
     />
   );
@@ -294,6 +312,7 @@ export {
   DrawerContent,
   DrawerHeader,
   DrawerTitleBar,
+  DrawerBody,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,

@@ -36,7 +36,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       id={DETAILS_FORM_ID}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-5 px-5 pt-4.5"
+      className="flex flex-col gap-5"
     >
       <div className="flex gap-3">
         <InputField
@@ -96,7 +96,9 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
               onValueChange={field.onChange}
               items={ACTIVITY_LEVEL_LABELS}
             >
-              <SelectTrigger className="h-11.5 w-full border-border bg-surface px-3.5 font-sans text-[14.5px] text-text shadow-hairline">
+              {/* `w-fit` is the stock trigger's default; a select filling a
+                  form row is layout, not a variant. */}
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select activity level" />
               </SelectTrigger>
               <SelectContent>

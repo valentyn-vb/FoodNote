@@ -24,10 +24,10 @@ export function DesktopMealGroups({ meals }: { meals: MealResponse[] }) {
           className="gap-0 self-start rounded-lg border border-border py-0 ring-0"
         >
           <div className="flex flex-col gap-0.5 px-4 py-3">
-            <h2 className="font-sans text-label font-semibold text-text capitalize">
+            <h2 className="text-sm font-semibold capitalize">
               {group.mealType}
             </h2>
-            <div className="font-sans text-caption text-text-muted [font-variant-numeric:tabular-nums]">
+            <div className="text-sm text-muted-foreground tabular-nums">
               {formatGroupSummary(group)}
             </div>
           </div>

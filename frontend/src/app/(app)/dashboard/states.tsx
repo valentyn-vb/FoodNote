@@ -10,9 +10,9 @@ export function DashboardError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex grow basis-0 flex-col items-center justify-center gap-4 py-16">
       <Image src="/mascot/recover.webp" alt="" width={72} height={72} />
-      <div className="max-w-64 text-center font-sans text-caption text-text-muted">
+      <p className="max-w-64 text-center text-sm text-muted-foreground">
         Couldn&apos;t load your dashboard.
-      </div>
+      </p>
       <Button variant="outline" onClick={onRetry}>
         Try again
       </Button>
@@ -22,7 +22,7 @@ export function DashboardError({ onRetry }: { onRetry: () => void }) {
 
 export function TileSkeleton() {
   return (
-    <Card variant="tile">
+    <Card className="gap-1.5 rounded-lg px-4.5 py-4">
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-7 w-20" />
     </Card>
@@ -34,10 +34,10 @@ export function TileSkeleton() {
 export function InlineError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 py-4">
-      <span className="font-sans text-[12px] text-text-muted">
+      <p className="text-sm text-muted-foreground">
         Couldn&apos;t load weight data.
-      </span>
-      <Button variant="link" onClick={onRetry} className="h-auto p-0">
+      </p>
+      <Button variant="link" className="h-auto gap-1 p-0" onClick={onRetry}>
         Try again
       </Button>
     </div>
@@ -55,18 +55,18 @@ export function DesktopDashboardSkeleton() {
       </div>
       <div className="flex min-h-0 grow basis-0 gap-3.5">
         <div className="flex min-h-0 grow-2 basis-0 flex-col gap-3.5">
-          <Card variant="panel" className="grow-2 basis-0 p-6">
+          <Card className="grow-2 basis-0 p-6">
             <Skeleton className="h-full w-full" />
           </Card>
-          <Card variant="panel" className="grow basis-0 p-6">
+          <Card className="grow basis-0 p-6">
             <Skeleton className="h-full w-full" />
           </Card>
         </div>
         <div className="flex min-h-0 grow basis-0 flex-col gap-3.5">
-          <Card variant="panel" className="h-44 shrink-0 p-5">
-            <Skeleton className="mx-auto size-28 rounded-full" />
+          <Card className="h-44 shrink-0 p-5">
+            <Skeleton className="rounded-full mx-auto size-28" />
           </Card>
-          <Card variant="panel" className="grow basis-0 p-5">
+          <Card className="grow basis-0 p-5">
             <Skeleton className="h-full w-full" />
           </Card>
         </div>
@@ -78,14 +78,14 @@ export function DesktopDashboardSkeleton() {
 export function MobileDashboardSkeleton() {
   return (
     <>
-      <Card variant="panel" className="gap-3 p-5">
+      <Card className="gap-3 p-5">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-9 w-40" />
-        <Skeleton className="h-2 w-full rounded-full" />
+        <Skeleton className="rounded-full h-2 w-full" />
       </Card>
       <Skeleton className="h-11 w-full" />
-      <Skeleton className="h-32 w-full rounded-lg" />
-      <Skeleton className="h-36 w-full rounded-lg" />
+      <Skeleton className="rounded-xl h-32 w-full" />
+      <Skeleton className="rounded-xl h-36 w-full" />
     </>
   );
 }

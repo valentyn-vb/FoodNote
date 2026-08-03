@@ -17,15 +17,13 @@ import {
 import type { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { cn } from '@/lib/utils';
-import { FormGroupLabel, InputField } from './form-fields';
+import { FigureField, FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
 /**
@@ -126,12 +124,10 @@ export function MealTotalsFields({
     register(name, { valueAsNumber: true, onChange: onUserEdit });
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
-        <FormGroupLabel>Nutrition</FormGroupLabel>
-        <span className="font-sans text-[11px] text-text-muted">
-          macros optional
-        </span>
+        <FormGroupLabel>Macros</FormGroupLabel>
+        <p className="text-sm text-muted-foreground">Optional</p>
       </div>
 
       {/* One row of four. Calories leads — it is the only required figure and
@@ -166,18 +162,13 @@ export function MealTotalsFields({
 // summary and the fields doesn't move a single column.
 const NUTRIENT_GRID = 'grid grid-cols-4 gap-2';
 
-/** Micro-caps: four labels have to sit above ~110px columns and still read as
-    labels rather than as values. */
-const NUTRIENT_LABEL_CLASS =
-  'font-sans text-[10px] font-bold tracking-wide text-text-muted uppercase';
-
+/**
+ * A nutrient figure: `FigureField` plus the numeric props the value needs.
+ * `accent` goes to calories — the only required figure and the only one the
+ * dashboard spends — while the macros stay on the stock field surface.
+ */
 function NutrientField({
-  id,
-  label,
-  unit,
-  accent,
   fractional,
-  error,
   ...props
 }: {
   id: string;
@@ -189,29 +180,11 @@ function NutrientField({
   error?: string;
 } & React.ComponentProps<typeof InputGroupInput>) {
   return (
-    <Field className="gap-1.5" data-invalid={!!error || undefined}>
-      <label htmlFor={id} className={NUTRIENT_LABEL_CLASS}>
-        {label}
-      </label>
-      <InputGroup variant={accent ? 'field-primary' : 'field'}>
-        <InputGroupInput
-          id={id}
-          aria-invalid={!!error || undefined}
-          className="px-2.5 text-center font-sans text-[14.5px] text-text tabular-nums"
-          {...(fractional ? decimalProps : integerProps)}
-          {...props}
-        />
-        <InputGroupAddon
-          align="inline-end"
-          className="pr-2 pl-0 text-[12px] font-medium text-text-muted"
-        >
-          {unit}
-        </InputGroupAddon>
-      </InputGroup>
-      {error && (
-        <span className="font-sans text-[11px] text-error">{error}</span>
-      )}
-    </Field>
+    <FigureField
+      compact
+      {...(fractional ? decimalProps : integerProps)}
+      {...props}
+    />
   );
 }
 
@@ -244,23 +217,17 @@ export function MealTotalsSummary({
       {cells.map(({ label, unit, value }) => (
         <Card
           key={label}
-          variant="tile"
-          className={cn(
-            'items-center gap-0.5 px-4 py-3',
-            // lead && 'border-primary bg-primary-tint-soft',
-          )}
+          className="items-center gap-0.5 rounded-lg px-4 py-3 shadow-none"
         >
-          <span className={NUTRIENT_LABEL_CLASS}>{label}</span>
-          <div
-            className={cn(
-              'flex items-baseline gap-1 font-semibold text-text tabular-nums text-lg',
-            )}
-          >
+          <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            {label}
+          </span>
+          <span className="flex items-baseline gap-1 text-lg font-bold tabular-nums">
             <NumberFlow value={value} />
-            <span className="font-sans text-[11px] font-medium text-text-muted">
+            <span className="text-sm font-normal text-muted-foreground">
               {unit}
             </span>
-          </div>
+          </span>
         </Card>
       ))}
     </div>
@@ -333,13 +300,14 @@ export function MealItemsFields({
       {fields.map((field, index) => (
         <Card
           key={field.id}
-          variant="panel"
           // Staggered: the parsed items are the payoff of the whole flow, and
           // a cascade reads as "here is what we found" where a simultaneous
           // appearance reads as a repaint. Capped so a ten-item parse doesn't
           // turn into a queue.
           style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
-          className="@container motion-keep-fade gap-2.5 p-3 bg-background rounded-md transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
+          // One line of a list: a fixed-height surface that never flexes, at a
+          // tighter radius than the card default.
+          className="@container motion-keep-fade bg-accent/20 shadow-none shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
         >
           <div className="flex items-center gap-2">
             {/* A parsed name is a label, not a field: what the user corrects
@@ -348,18 +316,19 @@ export function MealItemsFields({
                 one — it arrives nameless, and the schema requires a name — so
                 that case keeps its input. */}
             {field.name ? (
-              <div
+              <span
                 title={field.name}
-                className="min-w-24 grow-2 basis-0 truncate font-sans text-label font-medium text-text"
+                className="min-w-24 grow-2 basis-0 truncate text-sm font-semibold"
               >
                 {field.name}
-              </div>
+              </span>
             ) : (
               <Input
-                variant="bare"
                 aria-label={`Item ${index + 1} name`}
                 placeholder="Item name"
-                className="min-w-24 grow-2 basis-0"
+                // Reads as text until focused — an item's name, not a form
+                // field: no box, no shadow, the underline does the work.
+                className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
                 {...form.register(`items.${index}.name`)}
               />
             )}
@@ -368,7 +337,7 @@ export function MealItemsFields({
                 can), but the totals are what the user actually corrects. */}
             <span
               title={field.quantityDescription}
-              className="min-w-0 shrink truncate text-right font-sans text-[12.5px] text-text-muted tabular-nums"
+              className="min-w-0 shrink truncate text-right text-sm tabular-nums text-muted-foreground"
             >
               {field.quantityDescription}
             </span>
@@ -382,7 +351,7 @@ export function MealItemsFields({
                 onItemsChange();
               }}
             >
-              <Trash2 className="text-text-muted" />
+              <Trash2 />
             </Button>
           </div>
 
@@ -390,17 +359,19 @@ export function MealItemsFields({
               units go after a number, nutrient names before it, so kcal reads
               as the marker for this box rather than a stray unit. */}
           <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
+            {/* A compact cell in a dense row, tighter than a form field. White
+                and flat: the row already sits on a tinted wash, so a field that
+                lifts off it competes with the row, and the fill is what marks it
+                editable — the read-only name and quantity beside it are not. */}
             {ITEM_NUTRIENTS.map(({ name, label }) => (
-              <InputGroup key={name} variant="cell" className="h-9 min-w-0">
-                <InputGroupAddon
-                  align="inline-end"
-                  className="text-[12px] font-normal text-text-muted"
-                >
-                  {label}
-                </InputGroupAddon>
+              <InputGroup
+                key={name}
+                className="h-9 min-w-0 rounded-sm bg-card shadow-none"
+              >
+                <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
                 <InputGroupInput
                   aria-label={`Item ${index + 1} ${label}`}
-                  className="px-1 text-center text-[12px] text-text tabular-nums"
+                  className="px-1 text-center"
                   {...(name === 'calories' ? integerProps : decimalProps)}
                   {...form.register(`items.${index}.${name}`, {
                     valueAsNumber: true,
@@ -416,12 +387,11 @@ export function MealItemsFields({
       <Button
         type="button"
         variant="link"
-        size="inline"
+        className="h-auto w-fit gap-1 p-0"
         onClick={() => {
           append(EMPTY_ITEM);
           onItemsChange();
         }}
-        className="w-fit text-caption font-medium text-primary-deep no-underline"
       >
         + Add item
       </Button>

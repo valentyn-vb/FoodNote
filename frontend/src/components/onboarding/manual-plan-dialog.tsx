@@ -16,13 +16,13 @@ import {
   manualCalorieRange,
   paceForCalorieTarget,
   type Pace,
+  type PlanInput,
 } from '@foodnote/shared';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { OnboardingFormValues } from './form-schema';
 import {
   MANUAL_PLAN_FORM_ID,
   ManualPlanForm,
@@ -31,7 +31,7 @@ import {
 } from './manual-plan-form';
 
 type ManualPlanDialogProps = {
-  input: OnboardingFormValues;
+  input: PlanInput;
   /** Plan start date, for the derived goal date. */
   fromDate: string;
   /**
@@ -105,23 +105,12 @@ export function ManualPlanDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={
-          <Button
-            variant="link"
-            className="h-auto p-0 text-caption text-text-muted text-primary-deep hover:bg-transparent"
-          />
-        }
-      >
-        {label}
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="link" />}>{label}</DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-sans text-title font-semibold text-text">
-            {label}
-          </DialogTitle>
-          <DialogDescription className="font-sans text-caption text-text-muted">
+          <DialogTitle>{label}</DialogTitle>
+          <DialogDescription>
             Set the calories you want to eat and we&apos;ll work out the weekly
             rate and your goal date.
           </DialogDescription>
@@ -155,7 +144,7 @@ export function ManualPlanDialog({
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" form={MANUAL_PLAN_FORM_ID} variant="cta">
+            <Button type="submit" form={MANUAL_PLAN_FORM_ID}>
               Use this plan
             </Button>
           </div>

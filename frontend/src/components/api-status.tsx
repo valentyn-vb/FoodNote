@@ -15,13 +15,13 @@ export function ApiStatus() {
   }, []);
 
   if (error) {
-    return <p className="text-red-500">Backend: {error}</p>;
+    return <p className="text-sm text-destructive-text">Backend: {error}</p>;
   }
   if (!health) {
-    return <p className="text-neutral-400">Backend: checking…</p>;
+    return <p className="text-sm text-muted-foreground">Backend: checking…</p>;
   }
   return (
-    <p className="text-green-600">
+    <p className="text-sm text-success-text">
       Backend: {health.service} is {health.status} ({health.timestamp})
     </p>
   );

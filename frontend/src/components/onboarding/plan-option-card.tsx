@@ -1,5 +1,6 @@
 'use client';
 
+import { Card } from '@/components/ui/card';
 import { RadioGroupItem } from '@/components/ui/radio-group';
 import { cn, formatGoalDate, formatPace } from '@/lib/utils';
 import type { PlanOption } from '@foodnote/shared';
@@ -16,45 +17,36 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
   // like a broken value, and there is no goal date to show — formatGoalDate(null)
   // would print "Target already reached" on a plan just being started.
   const isMaintenance = option.pace === 0;
+  // Selection is carried by the surface and by the text going from muted to
+  // full weight — not by colouring the text orange, which measured 2.67:1.
+  const tone = selected ? undefined : 'text-muted-foreground';
 
   return (
-    <label
-      className={cn(
-        'flex cursor-pointer flex-col gap-1.5 rounded-md px-4.5 py-4 transition-colors duration-150',
-        selected
-          ? 'border-2 border-primary bg-primary-tint-soft shadow-selected'
-          : 'border border-border bg-surface shadow-hairline',
-      )}
+    <Card
+      data-selected={selected || undefined}
+      render={<label />}
+      // A tile you choose between: the card surface, plus a selected state
+      // driven by `data-selected`. The border keeps its width and only changes
+      // colour — thickening it on selection shifts the content half a pixel in
+      // every direction, which reads as a twitch.
+      className="cursor-pointer gap-1.5 rounded-lg px-4.5 py-4 transition-colors duration-150 data-selected:border-primary data-selected:bg-accent"
     >
       <div className="flex items-center justify-between">
-        <div
-          className={cn(
-            'font-sans text-[12.5px] font-medium',
-            selected ? 'text-primary-deep' : 'text-text-muted',
-          )}
-        >
+        <p className={cn('text-sm', tone)}>
           {isMaintenance
             ? 'Maintain your weight'
             : `${formatPace(option.pace)} kg / week`}
-        </div>
-        <RadioGroupItem
-          value={String(option.pace)}
-          className="size-4.5 border-none bg-transparent data-checked:bg-primary"
-        />
+        </p>
+        <RadioGroupItem value={String(option.pace)} />
       </div>
-      <div className="font-display text-[25px] font-semibold text-text">
+      <p className="font-heading text-2xl font-semibold tabular-nums">
         {option.dailyCalorieTarget.toLocaleString()} kcal / day
-      </div>
-      <div
-        className={cn(
-          'font-sans text-[12.5px]',
-          selected ? 'text-primary-deep' : 'text-text-muted',
-        )}
-      >
+      </p>
+      <p className={cn('text-sm', tone)}>
         {isMaintenance
           ? 'Holds your current weight'
           : `Goal date ~ ${formatGoalDate(option.projectedGoalDate)}`}
-      </div>
-    </label>
+      </p>
+    </Card>
   );
 }

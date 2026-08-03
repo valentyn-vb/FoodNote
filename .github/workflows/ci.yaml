@@ -19,7 +19,7 @@ jobs:
           cache: 'npm'
 
       - name: Install & lint
-        run: npm ci && npm run lint -w backend
+        run: npm ci && npm run lint
 
   test:
     runs-on: ubuntu-latest

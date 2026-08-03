@@ -1,7 +1,9 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -13,7 +15,6 @@ import {
 import { ApiError } from '@/lib/api-client';
 import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -86,18 +87,27 @@ export function RegisterForm() {
             autoComplete="new-password"
             description="At least 8 characters."
           />
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting && <Spinner />}
             Create account
           </Button>
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted text-center w-full">
+        <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{' '}
+          {/* A `Link` wearing the button look — see login-form. */}
           <Link
             href="/login"
-            className="font-medium text-primary-deep hover:underline"
+            className={cn(
+              buttonVariants({ variant: 'link' }),
+              'h-auto gap-1 p-0',
+            )}
           >
             Log in
           </Link>

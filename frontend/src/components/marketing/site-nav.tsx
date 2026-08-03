@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -32,13 +33,13 @@ export function SiteNav() {
       <Tooltip>
         <TooltipTrigger className="flex items-center gap-2">
           <Image
-            src="/mascot/defaultlogo.png"
+            src="/mascot/default.webp"
             alt="FoodNote mascot"
             width={28}
             height={28}
             className="rounded-full"
           />
-          <span className="font-display text-[17px] font-semibold text-text">
+          <span className="font-heading text-[17px] font-semibold text-foreground">
             FoodNote
           </span>
         </TooltipTrigger>
@@ -54,7 +55,7 @@ export function SiteNav() {
           <a
             key={section.href}
             href={section.href}
-            className="text-sm text-text/70 transition-colors hover:text-text"
+            className="text-sm text-foreground/70 transition-colors hover:text-foreground"
           >
             {section.label}
           </a>
@@ -62,15 +63,15 @@ export function SiteNav() {
       </div>
 
       <div className="flex items-center gap-1">
-        <Button
-          render={<Link href={authed ? '/dashboard' : '/login'} />}
-          nativeButton={false}
-          variant="ghost"
-          size="sm"
-          className="text-text"
+        <Link
+          href={authed ? '/dashboard' : '/login'}
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'sm' }),
+            'text-foreground',
+          )}
         >
           {authed ? 'Dashboard' : 'Log in'}
-        </Button>
+        </Link>
 
         {/* Mobile only — section links live behind a burger instead of
             competing for space in the pill; Log in stays visible either
@@ -91,7 +92,7 @@ export function SiteNav() {
                   key={section.href}
                   render={<a href={section.href} />}
                   nativeButton={false}
-                  className="rounded-md px-3 py-2 text-text hover:bg-muted"
+                  className="rounded-md px-3 py-2 text-foreground hover:bg-muted"
                 >
                   {section.label}
                 </SheetClose>

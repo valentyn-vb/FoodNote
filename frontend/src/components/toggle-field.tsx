@@ -47,11 +47,18 @@ export function ToggleField<T extends FieldValues>({
               <ToggleGroupItem
                 key={option}
                 value={option}
+                size="lg"
                 className={cn(
-                  'h-11.5 grow basis-0 border border-border font-sans text-text-muted capitalize data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-primary-tint data-[state=on]:font-semibold data-[state=on]:text-primary-deep',
+                  // One choice among a few, reading as its own option rather
+                  // than as a pressed button. Selection is on `data-pressed`,
+                  // the attribute Base UI actually emits; the border keeps its
+                  // width and only changes colour, so choosing an option
+                  // doesn't nudge it half a pixel in every direction.
+                  'grow basis-0 border border-border bg-card capitalize text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
                   // Four labels (meal types) need tighter items than two (sex)
-                  // to fit one row on a narrow screen.
-                  options.length > 2 && 'px-1 text-[12.5px]',
+                  // to fit one row on a narrow screen. Narrower, not smaller:
+                  // the type level is the same either way.
+                  options.length > 2 && 'px-1',
                 )}
               >
                 {option}
@@ -60,9 +67,7 @@ export function ToggleField<T extends FieldValues>({
           </ToggleGroup>
         )}
       />
-      {error && (
-        <FieldError className="font-sans text-[12px]">{error}</FieldError>
-      )}
+      {error && <FieldError>{error}</FieldError>}
     </Field>
   );
 }

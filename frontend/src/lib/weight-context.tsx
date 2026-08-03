@@ -131,7 +131,15 @@ export function WeightProvider({ children }: { children: ReactNode }) {
       onWeightsChanged,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, goal, status, retry, selectedDate, onWeightSaved, onWeightsChanged]);
+  }, [
+    entries,
+    goal,
+    status,
+    retry,
+    selectedDate,
+    onWeightSaved,
+    onWeightsChanged,
+  ]);
 
   return (
     <WeightContext.Provider value={value}>{children}</WeightContext.Provider>

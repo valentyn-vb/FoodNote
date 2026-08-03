@@ -4,3 +4,8 @@ dist/
 coverage/
 package-lock.json
 next-env.d.ts
+
+# The designer's handoff, kept out of git but present in working copies — not
+# ours to format, and reformatting it would make it diverge from what was
+# handed over.
+design_handoff_foodnote/

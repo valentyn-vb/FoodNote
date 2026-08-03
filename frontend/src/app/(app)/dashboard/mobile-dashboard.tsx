@@ -1,23 +1,24 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import {
-  DailyCaloriesChart,
-  WeightTrendCard,
-} from '@/components/dashboard-charts';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { WeightDrawer } from '@/components/weight-drawer';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { initialsOf } from '@/lib/user-display';
 import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
+import { History } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
@@ -52,18 +53,15 @@ export function MobileDashboard() {
   const weightReady = weightStatus === 'ready';
 
   return (
-    <div className="flex flex-col gap-5 bg-bg px-5 pt-6 pb-8 lg:hidden">
+    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:hidden">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-heading-lg font-semibold text-text">
-          Dashboard
-        </h1>
+        {/* Not "Today" any more: the day being shown is DayNav's to say. */}
+        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
         {/* The sidebar (and its profile menu) is desktop-only — on mobile the
             avatar is the only path to the profile page. */}
         <Link href="/profile" aria-label="Open profile">
           <Avatar>
-            <AvatarFallback className="bg-primary text-surface">
-              {initialsOf(user)}
-            </AvatarFallback>
+            <AvatarFallback>{initialsOf(user)}</AvatarFallback>
           </Avatar>
         </Link>
       </div>
@@ -78,23 +76,16 @@ export function MobileDashboard() {
         <MobileDashboardSkeleton />
       ) : (
         <>
-          <Card variant="panel" className="gap-2.5 p-5">
-            <h2 className="font-sans text-caption text-text-muted">
+          <Card className="gap-2.5 p-5">
+            <h2 className="text-sm text-muted-foreground">
               {isToday ? 'Remaining today' : 'Remaining'}
             </h2>
-            <NumberFlow
-              value={remainingKcal}
-              suffix=" kcal"
-              className="font-display text-[38px] font-semibold text-text"
-            />
-            <div className="h-2 shrink-0 overflow-hidden rounded-full bg-track">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
+            <div className="font-heading text-4xl font-semibold tabular-nums">
+              <NumberFlow value={remainingKcal} suffix=" kcal" />
             </div>
-            <div className="flex justify-between font-sans text-[12.5px] text-text-muted [font-variant-numeric:tabular-nums]">
-              <div className="flex items-center gap-1.5">
+            <Progress value={progressPct} />
+            <div className="flex justify-between">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
                 <Image
                   src={fullnessMascot(eatenKcal, goalKcal)}
                   alt=""
@@ -102,11 +93,11 @@ export function MobileDashboard() {
                   height={20}
                 />
                 <NumberFlow value={eatenKcal} /> eaten
-              </div>
-              <div>
+              </span>
+              <span className="text-sm text-muted-foreground tabular-nums">
                 {isToday ? 'Goal' : 'Current goal'}{' '}
                 <NumberFlow value={goalKcal} />
-              </div>
+              </span>
             </div>
           </Card>
 
@@ -132,49 +123,46 @@ export function MobileDashboard() {
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-sans text-caption font-medium text-text">
-                Weight trend
-              </h2>
+              <h2 className="text-base font-semibold">Weight trend</h2>
               <div className="flex items-center gap-2">
                 {weightReady && (
-                  <div className="font-sans text-[12px] font-medium text-secondary-deep">
+                  <span className="text-sm text-success-text tabular-nums">
                     <NumberFlow
                       value={weightChangeKg}
                       suffix=" kg this month"
                     />
-                  </div>
+                  </span>
                 )}
                 {weightReady && (
                   <WeightHistoryDrawer
                     entries={weightEntries}
                     onWeightsChanged={onWeightsChanged}
-                    triggerClassName="flex size-6 items-center justify-center rounded-md text-text-muted"
+                    trigger={
+                      <Button variant="ghost" size="icon-sm">
+                        <History />
+                      </Button>
+                    }
                   />
                 )}
               </div>
             </div>
-            {weightReady ? (
-              <WeightTrendCard
-                className="p-4"
-                chartClassName="aspect-auto h-[110px] w-full flex-none"
-                data={weightTrend}
-              />
-            ) : (
-              <Card variant="panel" className="p-4">
-                {weightStatus === 'error' ? (
-                  <InlineError onRetry={retryWeight} />
-                ) : (
-                  <Skeleton className="h-27.5 w-full" />
-                )}
-              </Card>
-            )}
+            <Card className="p-4">
+              {weightReady ? (
+                <WeightTrendChart
+                  className="aspect-auto h-[110px] w-full flex-none"
+                  data={weightTrend}
+                />
+              ) : weightStatus === 'error' ? (
+                <InlineError onRetry={retryWeight} />
+              ) : (
+                <Skeleton className="h-27.5 w-full" />
+              )}
+            </Card>
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <h2 className="font-sans text-caption font-medium text-text">
-              Daily calories (7 days)
-            </h2>
-            <Card variant="panel" className="shrink-0 px-4 pt-4 pb-3">
+            <h2 className="text-base font-semibold">Daily calories (7 days)</h2>
+            <Card className="shrink-0 px-4 pt-4 pb-3">
               <DailyCaloriesChart
                 className="aspect-auto h-30 w-full flex-none"
                 data={dailyCalories}
@@ -185,7 +173,7 @@ export function MobileDashboard() {
           <Disclaimer />
 
           <div className="flex flex-col gap-2.5">
-            <h2 className="font-sans text-caption font-medium text-text">
+            <h2 className="text-sm font-semibold">
               {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
             {selectedDayMeals.length === 0 ? (
@@ -195,17 +183,35 @@ export function MobileDashboard() {
             )}
           </div>
 
+          {/* Nothing to log into a day that has passed. */}
           {isToday && (
-            <div className="flex gap-2.5 border-t border-border pt-3">
-              <MealLogDrawer>Log a meal</MealLogDrawer>
-              <WeightDrawer
-                mode="create"
-                onWeightSaved={onWeightSaved}
-                triggerClassName="h-12.5 grow basis-0 rounded-md border border-border text-[13.5px] font-medium text-text"
-              >
-                Log weight
-              </WeightDrawer>
-            </div>
+            <>
+              <Separator />
+              <div className="flex gap-2.5">
+                {/* Twice the weight button's share of the bar — it is the action
+                    this screen exists for. */}
+                <MealLogDrawer
+                  trigger={
+                    <Button size="lg" className="grow-2 basis-0 px-8">
+                      Log a meal
+                    </Button>
+                  }
+                />
+                <WeightLogDrawer
+                  mode="create"
+                  onWeightSaved={onWeightSaved}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="grow basis-0"
+                    >
+                      Log weight
+                    </Button>
+                  }
+                />
+              </div>
+            </>
           )}
         </>
       )}

@@ -7,8 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginRequestSchema, type LoginRequest } from '@foodnote/shared';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
   CardContent,
@@ -73,22 +74,33 @@ export function LoginForm() {
             autoComplete="current-password"
           />
           {formError && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-text">
               {formError}
             </p>
           )}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting && <Spinner />}
             Log in
           </Button>
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-text-muted text-center w-full">
+        <p className="w-full text-center text-sm text-muted-foreground">
           No account yet?{' '}
+          {/* A `Link` wearing the button look, not a `Button` rendering a link:
+              through `Button` this navigation was announced as a button with no
+              URL. `buttonVariants` is upstream's answer for exactly this. */}
           <Link
             href="/register"
-            className="font-medium text-primary-deep hover:underline"
+            className={cn(
+              buttonVariants({ variant: 'link' }),
+              'h-auto gap-1 p-0',
+            )}
           >
             Register
           </Link>
