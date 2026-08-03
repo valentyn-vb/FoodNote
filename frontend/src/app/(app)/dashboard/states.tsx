@@ -60,11 +60,13 @@ export function DashboardSkeleton() {
           <Skeleton className="h-44 w-full rounded-xl md:h-45" />
         </div>
       </div>
-      {/* The meal list beside the ring, then the two week-scale charts. */}
-      <div className="grid gap-5 xl:grid-cols-2 lg:gap-3.5">
-        <Skeleton className="h-72 w-full rounded-xl" />
+      {/* The meal list beside the ring: two thirds against one from `lg`,
+          matching the real band. */}
+      <div className="grid gap-5 lg:grid-cols-3 lg:gap-3.5">
+        <Skeleton className="h-72 w-full rounded-xl lg:col-span-2" />
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
+      {/* The two week-scale charts. */}
       <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
         <Skeleton className="h-72 w-full rounded-xl" />
         <Skeleton className="h-72 w-full rounded-xl" />
