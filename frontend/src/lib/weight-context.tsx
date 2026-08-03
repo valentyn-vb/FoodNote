@@ -17,6 +17,7 @@ import {
   computeWeightChange,
   isoDaysAgo,
   todayUtc,
+  weightChangeOverDays,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
@@ -27,7 +28,11 @@ import {
 // The chart series and change stats are assembled client-side from the weight
 // journal (ADR-0005); the projection line needs the goal block, which lives in
 // MealsProvider — this provider is nested inside it, so useMeals() is available.
-// A 60-day window covers both the ~6-week chart and the "Last month" comparison.
+// The journal window every weight figure on the dashboard is drawn from. Named
+// rather than inlined because the trend card states it in words — "19 weigh-ins
+// in 60 days" — and a count whose period is only implied says nothing.
+export const WEIGHT_WINDOW_DAYS = 60;
+
 type FetchStatus = 'loading' | 'error' | 'ready';
 
 type WeightContextValue = {
@@ -37,6 +42,8 @@ type WeightContextValue = {
   weightTrend: WeightTrendPoint[];
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
+  /** Rolling 7-day change; null when the journal doesn't reach back a week. */
+  weekChangeKg: number | null;
   onWeightSaved: (entry: WeightEntryResponse) => void;
   onWeightsChanged: () => void;
 };
@@ -61,7 +68,7 @@ export function WeightProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     const now = new Date();
     weightsApi
-      .list(isoDaysAgo(60, now), todayUtc(now))
+      .list(isoDaysAgo(WEIGHT_WINDOW_DAYS, now), todayUtc(now))
       .then((list) => {
         if (cancelled) return;
         setEntries(list);
@@ -127,6 +134,18 @@ export function WeightProvider({ children }: { children: ReactNode }) {
         : [],
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
+      // Here rather than in the dashboard, beside the other two derivations of
+      // the same journal: all three have to share one anchor, and the view
+      // cannot hold that anchor without also holding this provider's date
+      // convention.
+      weekChangeKg: goal
+        ? weightChangeOverDays(
+            entries,
+            goal.currentWeightKg,
+            selectedDateAsNow,
+            7,
+          )
+        : null,
       onWeightSaved,
       onWeightsChanged,
     };

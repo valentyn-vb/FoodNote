@@ -48,9 +48,16 @@ type MealsContextValue = {
   /** True when selectedDate equals today UTC — gates meal logging and labels. */
   isToday: boolean;
   eatenKcal: number;
+  /** Target minus eaten — negative once the day goes over budget. */
   remainingKcal: number;
   progressPct: number;
   goalKcal: number;
+  /** The day's macro totals, straight from the read model — never re-summed
+      from the meal list, whose items may legitimately disagree with it. */
+  macros: Pick<
+    DashboardResponse['today'],
+    'proteinGrams' | 'carbsGrams' | 'fatGrams'
+  >;
   // Maintenance energy at the current weight — what the target becomes on a
   // maintenance plan. Null until the dashboard has loaded.
   maintenanceKcal: number | null;
@@ -253,7 +260,14 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       eatenKcal,
       goalKcal,
       maintenanceKcal: dashboard?.maintenanceCalories ?? null,
-      remainingKcal: Math.max(0, goalKcal - eatenKcal),
+      macros: {
+        proteinGrams: dashboard?.today.proteinGrams ?? 0,
+        carbsGrams: dashboard?.today.carbsGrams ?? 0,
+        fatGrams: dashboard?.today.fatGrams ?? 0,
+      },
+      // Signed: a day over budget is a number the dashboard states, not one it
+      // floors away. progressPct below stays clamped — the bar fills once.
+      remainingKcal: goalKcal - eatenKcal,
       progressPct:
         goalKcal > 0
           ? Math.min(100, Math.round((eatenKcal / goalKcal) * 100))
