@@ -228,10 +228,20 @@ type GoalBlock = Pick<
 // so both of these render a non-finite input as empty rather than throwing
 // RangeError and taking the dashboard down with it.
 
-/** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
+/**
+ * An x-axis tick: "Jul" on a month boundary, "Jul 11" anywhere else.
+ *
+ * Months are the unit, and monthTicks puts every tick on the 1st — except when
+ * a span holds fewer than two boundaries, where it falls back to the span's own
+ * ends. Those are ordinary dates, and printing only their month labelled both
+ * ends of a three-week journal "Jul".
+ */
 export function formatTrendTick(t: number): string {
   if (!Number.isFinite(t)) return '';
-  return utcMonth.format(new Date(t));
+  const date = new Date(t);
+  return date.getUTCDate() === 1
+    ? utcMonth.format(date)
+    : utcMonthDay.format(date);
 }
 
 /** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */

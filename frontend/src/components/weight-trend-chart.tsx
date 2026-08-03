@@ -10,7 +10,9 @@ import {
   XAxis,
   YAxis,
 } from '@/components/evilcharts/charts/line-chart';
+import { ReferenceDot } from 'recharts';
 import { weightConfig } from '@/lib/chart-config';
+import { cn } from '@/lib/utils';
 import {
   formatTrendDate,
   formatTrendTick,
@@ -20,6 +22,31 @@ import {
 
 const PROJECTION_LEAD_SHARE = 1 / 3;
 const WEIGHT_PADDING_KG = 1;
+
+/**
+ * Where the projection crosses the right edge of a cropped axis, carrying the
+ * goal it is headed for. Null when the goal already fits — then the projection
+ * ends at its own point and needs no stand-in.
+ *
+ * The marker sits at the edge rather than at the Projected Goal Date, which is
+ * off-plot by construction: cropping the axis to the weigh-ins is what keeps
+ * them legible. So it reads as "the line continues, and here is where to", and
+ * says the real date in words rather than pretending to plot it.
+ */
+function projectionAtEdge(data: WeightTrendPoint[], edgeT: number) {
+  const projected = data.filter((point) => point.projected !== undefined);
+  const from = projected.at(0);
+  const to = projected.at(-1);
+  if (!from || !to || to.t <= edgeT || to.t === from.t) return null;
+
+  const share = (edgeT - from.t) / (to.t - from.t);
+  return {
+    t: edgeT,
+    kg: from.projected! + (to.projected! - from.projected!) * share,
+    goalDate: formatTrendDate(to.t),
+    goalKg: to.projected!,
+  };
+}
 
 /**
  * Axis domains that show the weigh-ins plus a short lead into the projection.
@@ -67,12 +94,19 @@ export function WeightTrendChart({
   data: WeightTrendPoint[];
 }) {
   const croppedTo = cropToWeighIns(data);
+  const goalMarker = croppedTo
+    ? projectionAtEdge(data, croppedTo.time[1])
+    : null;
 
   return (
     <EvilLineChart
       data={data}
       config={weightConfig}
-      className={className}
+      // recharts puts tabindex="0" on its own <svg>, so clicking anything
+      // inside it — a dot, the goal marker — focuses the whole plot and the
+      // browser rings it. The ring is the full width of the card, which reads
+      // as an error state rather than as focus.
+      className={cn('[&_.recharts-surface]:outline-none', className)}
       // Straight segments between weigh-ins. `monotone` smoothed the measured
       // line into curvature that was never recorded — weight between two
       // weigh-ins is unknown, not gently curved.
@@ -121,6 +155,34 @@ export function WeightTrendChart({
         strokeVariant="dashed"
         lineProps={{ strokeWidth: 2 }}
       />
+      {/* Where the dashed line leaves the plot, and what it is aimed at. A
+          hollow ring, not a filled dot: the weigh-ins are filled, and this is
+          not a measurement. The name rides in an SVG <title> so hovering it
+          says so — recharts' own Tooltip only tracks the plotted series. */}
+      {goalMarker && (
+        <ReferenceDot
+          x={goalMarker.t}
+          y={goalMarker.kg}
+          ifOverflow="visible"
+          shape={({ cx, cy }: { cx?: number; cy?: number }) => (
+            <g>
+              <title>
+                {`Projected goal · ${goalMarker.goalDate} · ${goalMarker.goalKg} kg`}
+              </title>
+              {/* A wide transparent disc so the pointer finds a 5px ring. */}
+              <circle cx={cx} cy={cy} r={12} fill="transparent" />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={4.5}
+                fill="var(--color-card)"
+                stroke="var(--color-success)"
+                strokeWidth={2}
+              />
+            </g>
+          )}
+        />
+      )}
       {/* The tooltip keeps day precision — months are the axis unit, not the
           resolution the data was recorded at.
           evilcharts/ui/tooltip.tsx's ChartTooltipContent doesn't pass the

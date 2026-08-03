@@ -484,8 +484,14 @@ describe('buildWeightTrend', () => {
 // ---------------------------------------------------------------------------
 
 describe('formatTrendTick', () => {
-  it('formats an epoch ms timestamp as a short month (UTC)', () => {
-    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul');
+  it('formats a month boundary as a short month (UTC)', () => {
+    expect(formatTrendTick(Date.UTC(2024, 6, 1))).toBe('Jul');
+  });
+
+  it('keeps the day on a tick that is not a month boundary', () => {
+    // monthTicks falls back to the span's own ends when it holds fewer than two
+    // boundaries; month-only labels made both ends of one month read "Jul".
+    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul 15');
   });
 
   it('returns an empty string for a non-finite input', () => {

@@ -7,9 +7,9 @@ import { ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   formatGoalDate,
+  formatTrendDate,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
-import { WEIGHT_WINDOW_DAYS } from '@/lib/weight-context';
 import { ChartCard } from './chart-card';
 import { InlineError } from './states';
 import { WeightHistoryDrawer } from './weight-history-drawer';
@@ -40,13 +40,17 @@ export function WeightTrendCard({
   className?: string;
 }) {
   const direction = monthChangeKg < 0 ? 'down' : 'up';
+  // The date the plot starts at, which is the first weigh-in and not the
+  // provider's 60-day window: the axis is cropped to the readings, so naming
+  // the window described a span the chart no longer draws.
+  const firstWeighIn = trend.find((point) => point.actual !== undefined)?.t;
+  const count = `${entries.length} ${entries.length === 1 ? 'weigh-in' : 'weigh-ins'}`;
   const subtitle =
     status === 'ready'
       ? [
-          // The window is stated, not implied: the count is however many
-          // entries the provider's window holds, which is neither "the last N"
-          // nor "all of them" — and unqualified it reads as both.
-          `${entries.length} ${entries.length === 1 ? 'weigh-in' : 'weigh-ins'} in ${WEIGHT_WINDOW_DAYS} days`,
+          firstWeighIn === undefined
+            ? count
+            : `${count} since ${formatTrendDate(firstWeighIn)}`,
           monthChangeKg !== 0 &&
             `${direction} ${Math.abs(monthChangeKg)} kg this month`,
           projectedGoalDate && `goal by ${formatGoalDate(projectedGoalDate)}`,

@@ -28,9 +28,10 @@ import {
 // The chart series and change stats are assembled client-side from the weight
 // journal (ADR-0005); the projection line needs the goal block, which lives in
 // MealsProvider — this provider is nested inside it, so useMeals() is available.
-// The journal window every weight figure on the dashboard is drawn from. Named
-// rather than inlined because the trend card states it in words — "19 weigh-ins
-// in 60 days" — and a count whose period is only implied says nothing.
+// The journal window every weight figure on the dashboard is drawn from. It is
+// the fetch range, not anything the trend card draws: the chart crops its axis
+// to the readings themselves, and the card dates its count from the first of
+// them rather than from this window.
 export const WEIGHT_WINDOW_DAYS = 60;
 
 type FetchStatus = 'loading' | 'error' | 'ready';
