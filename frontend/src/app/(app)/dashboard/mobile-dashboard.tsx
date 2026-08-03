@@ -1,11 +1,8 @@
 'use client';
 
-import { useAuth } from '@/components/auth-provider';
-import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
@@ -15,12 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
-import { initialsOf } from '@/lib/user-display';
 import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
 import { History } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
 import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
@@ -29,7 +24,6 @@ import { useDashboardGate } from './use-dashboard-gate';
 import { WeightHistoryDrawer } from './weight-history-drawer';
 
 export function MobileDashboard() {
-  const { user } = useAuth();
   const {
     eatenKcal,
     remainingKcal,
@@ -54,22 +48,6 @@ export function MobileDashboard() {
 
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:hidden">
-      <div className="flex items-center justify-between">
-        {/* Not "Today" any more: the day being shown is DayNav's to say. */}
-        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
-        {/* The sidebar (and its profile menu) is desktop-only — on mobile the
-            avatar is the only path to the profile page. */}
-        <Link href="/profile" aria-label="Open profile">
-          <Avatar>
-            <AvatarFallback>{initialsOf(user)}</AvatarFallback>
-          </Avatar>
-        </Link>
-      </div>
-
-      <div className="flex justify-center">
-        <DayNav />
-      </div>
-
       {gate.state === 'error' ? (
         <DashboardError onRetry={gate.retryAll} />
       ) : gate.state === 'loading' ? (

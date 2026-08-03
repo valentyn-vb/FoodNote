@@ -16,10 +16,10 @@ import { WeightProvider } from '@/lib/weight-context';
 // restoring one (refresh cookie → access token) we show a loader; once the
 // status settles as unauthenticated we bounce to /login.
 //
-// Once authenticated, this is the shared shell for the app routes. Mobile
-// gets none of the chrome — AppSidebar, AppHeader and SidebarInset only
-// activate at lg+, each route's own `lg:hidden` block still owns the mobile
-// layout.
+// Once authenticated, this is the shared shell for the app routes, at every
+// width: the header names the route and carries the actions, and the sidebar is
+// a sheet below 768 and a rail or a panel above it. No route hand-rolls a header
+// of its own any more.
 // MealsProvider lives here (not in the dashboard page) so the sidebar's
 // "Log a meal" trigger shares the same state as the dashboard's numbers.
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -40,17 +40,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <OnboardingGuard>
-      <SidebarProvider className="lg:min-h-screen">
+      {/* Below 1024 the panel would leave too little for the header row, so the
+          rail is the starting state there. Safe to read the viewport during
+          render: the spinner above means the shell's first paint is already a
+          client one, so there is no expanded→collapsed flash to hide. */}
+      <SidebarProvider
+        defaultOpen={typeof window === 'undefined' || window.innerWidth >= 1024}
+      >
         <MealsProvider>
           <WeightProvider>
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
-              <main className="px-8 py-6">{children}</main>
+              {/* A div, not a `main`: SidebarInset is already the page's `main`.
+                  The flat `px-8` was 64 of the 360px a phone has. */}
+              <div className="px-4 py-5 md:px-6 lg:px-8 lg:py-6">
+                {children}
+              </div>
             </SidebarInset>
-            {/* Both "Log weight" triggers live in different trees (sidebar on
-                desktop, dashboard row on mobile), so the celebration is mounted
-                here — the nearest shared ancestor that can see either save. */}
+            {/* The "Log weight" trigger moves between the header and the sidebar
+                sheet with the width, so the celebration is mounted here — the
+                nearest shared ancestor that can see either save. */}
             <GoalReachedOverlay />
           </WeightProvider>
         </MealsProvider>

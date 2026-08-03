@@ -9,6 +9,7 @@ import { useWeight } from '@/lib/weight-context';
 import { TrendingDownIcon, UtensilsIcon } from 'lucide-react';
 import { DayNav } from '@/components/day-nav';
 import { useMeals } from '@/lib/meals-context';
+import { cn } from '@/lib/utils';
 
 /** The route's own name. Prefix-matched, so a future `/meals/:id` still reads
     "Meals" rather than falling through to the app name. */
@@ -27,11 +28,9 @@ function titleFor(pathname: string): string {
 
 /**
  * The shared top bar of the (app) shell: the sidebar toggle, where you are, the
- * day you are logging into, and the one action every screen offers.
- *
- * Desktop only, like the rest of the chrome — the sidebar it toggles is
- * `hidden lg:contents`, so below `lg` the trigger would open nothing and each
- * route's own `lg:hidden` block still owns its header.
+ * day you are logging into, and the actions the width can afford. On every
+ * route at every width — below `lg` the trigger opens the sidebar as a sheet,
+ * which is also the only way off /meals and /profile.
  *
  * The `new Date()` DayNav reads during render is safe here despite SSR: AppLayout
  * renders a spinner until the session is restored on the client, so this subtree
@@ -42,52 +41,71 @@ export function AppHeader() {
   const { onWeightSaved } = useWeight();
   const { isToday } = useMeals();
 
+  // The day picker only where a day is what the screen shows: on Profile or
+  // Meals it would be a control that changes nothing.
+  const showDayNav = pathname === '/dashboard';
+
   return (
-    // Three columns with equal 1fr sides: the day picker sits on the header's
-    // midline whatever the title and the action pair happen to measure, and
-    // unlike absolute centring it can't end up underneath either of them.
-    <header className="sticky top-0 z-10 hidden grid-cols-[1fr_auto_1fr] items-center gap-2 border-b bg-background px-4 py-4 lg:grid">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger />
-        <h1 className="font-heading text-2xl font-semibold">
-          {titleFor(pathname)}
-        </h1>
+    // Below `lg` the header is dissolved into its parent so that its first row
+    // can stick on its own: a sticky box sticks *inside* its parent, so a header
+    // kept as a box would pin the day row along with the chrome and spend 128px
+    // of an 800px viewport. At `lg` there is only one row, and the header is it:
+    // three columns with equal 1fr sides, so the day picker sits on the
+    // midline whatever the title and the actions happen to measure.
+    <header className="contents lg:sticky lg:top-0 lg:z-10 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-2 lg:border-b lg:bg-background lg:px-4 lg:py-4">
+      {/* The chrome row. `lg:contents` dissolves it in turn, so its two children
+          become the header's own first and last grid columns. */}
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background px-4 py-3 md:px-6 lg:contents">
+        <div className="flex min-w-0 items-center gap-2 lg:order-1">
+          <SidebarTrigger />
+          {/* The label of the place gives way before any control does. */}
+          <h1 className="truncate font-heading text-2xl font-semibold">
+            {titleFor(pathname)}
+          </h1>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2 lg:order-3 lg:ml-0 lg:justify-end">
+          <WeightLogDrawer
+            mode="create"
+            onWeightSaved={onWeightSaved}
+            trigger={
+              // Below 768 the row cannot hold both actions (40 + 117 + 140 of
+              // 328 at 360px, before this one's 143), and calories are logged
+              // many times a day where weight is logged once — so this is the
+              // one that yields, to a button in the sidebar sheet.
+              //
+              // A weight is always stamped "now" on create, so it cannot be
+              // logged onto the day the nav is showing. Off today the action is
+              // disabled rather than silently writing to today (#119).
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={!isToday}
+                className="hidden px-6 md:inline-flex"
+              >
+                <TrendingDownIcon />
+                Log weight
+              </Button>
+            }
+          />
+          <MealLogDrawer
+            trigger={
+              <Button size="lg" className="px-6">
+                <UtensilsIcon />
+                Log a meal
+              </Button>
+            }
+          />
+        </div>
       </div>
 
-      {/* The day picker only where a day is what the screen shows: on Profile or
-          Meals it would be a control that changes nothing. The cell itself stays
-          either way — drop it and the actions become the second grid child and
-          take the middle column. */}
-      <div>{pathname === '/dashboard' && <DayNav />}</div>
-
-      <div className="flex items-center justify-end gap-2">
-        <WeightLogDrawer
-          mode="create"
-          onWeightSaved={onWeightSaved}
-          trigger={
-            // A weight is always stamped "now" on create, so it cannot be
-            // logged onto the day the nav is showing. Off today the action is
-            // disabled rather than silently writing to today (#119) — the gate
-            // the sidebar carried before these actions moved up here.
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={!isToday}
-              className="px-6"
-            >
-              <TrendingDownIcon />
-              Log weight
-            </Button>
-          }
-        />
-        <MealLogDrawer
-          trigger={
-            <Button size="lg" className="px-6">
-              <UtensilsIcon />
-              Log a meal
-            </Button>
-          }
-        />
+      {/* The cell stays even when empty: the actions only take the right-hand
+          1fr while something occupies the middle column. Below `lg` its padding
+          tracks the shell's own, so the row lines up with the content. */}
+      <div
+        className={cn('lg:order-2', showDayNav && 'px-4 pt-4 md:px-6 lg:p-0')}
+      >
+        {showDayNav && <DayNav />}
       </div>
     </header>
   );
