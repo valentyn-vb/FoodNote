@@ -60,9 +60,7 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        render={
-          <Button variant="outline" className="mx-auto w-fit" size="sm" />
-        }
+        render={<Button variant="outline" size="sm" />}
       >
         <Edit2Icon className="size-3 mr-1" />
         Edit profile
