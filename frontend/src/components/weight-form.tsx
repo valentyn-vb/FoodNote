@@ -74,7 +74,6 @@ export function WeightForm({
         type="text"
         inputMode="decimal"
         autoFocus
-        placeholder="e.g. 71.4"
         error={errors.weightKg?.message}
         {...register('weightKg')}
       />
