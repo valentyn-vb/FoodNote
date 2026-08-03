@@ -154,6 +154,7 @@ export function MobileDashboard() {
                 <WeightTrendChart
                   className="aspect-auto h-[110px] w-full flex-none"
                   data={weightTrend}
+                  compact
                 />
               ) : weightStatus === 'error' ? (
                 <InlineError onRetry={retryWeight} />

@@ -18,17 +18,51 @@ import {
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
 
-// The logged-weight + projection line chart, shared by the mobile and desktop
-// dashboard layouts — same chart, sized by className. Wrapped in a Card by
-// WeightTrendCard in dashboard-charts.tsx.
+const PROJECTION_LEAD_SHARE = 1 / 3;
+const WEIGHT_PADDING_KG = 1;
+
+/**
+ * Axis domains that show the weigh-ins plus a short lead into the projection.
+ * Null when there is no band to protect: one weigh-in is not a trend being
+ * squeezed, and its zero-width span gives no lead to measure.
+ */
+function cropToWeighIns(data: WeightTrendPoint[]) {
+  const weighIns = data.filter(
+    (point): point is WeightTrendPoint & { actual: number } =>
+      point.actual !== undefined,
+  );
+  const firstWeighIn = weighIns.at(0);
+  const newestWeighIn = weighIns.at(-1);
+  if (!firstWeighIn || !newestWeighIn || firstWeighIn.t === newestWeighIn.t) {
+    return null;
+  }
+
+  const weighedKilos = weighIns.map((point) => point.actual);
+  return {
+    weighIns,
+    time: [
+      firstWeighIn.t,
+      newestWeighIn.t +
+        (newestWeighIn.t - firstWeighIn.t) * PROJECTION_LEAD_SHARE,
+    ],
+    weight: [
+      Math.min(...weighedKilos) - WEIGHT_PADDING_KG,
+      Math.max(...weighedKilos) + WEIGHT_PADDING_KG,
+    ],
+  };
+}
 
 export function WeightTrendChart({
   className,
   data,
+  compact = false,
 }: {
   className?: string;
   data: WeightTrendPoint[];
+  compact?: boolean;
 }) {
+  const croppedTo = compact ? cropToWeighIns(data) : null;
+
   return (
     <EvilLineChart
       data={data}
@@ -49,7 +83,8 @@ export function WeightTrendChart({
           lands on first, and what Apple Health and Withings both do for weight. */}
       <YAxis
         orientation="right"
-        domain={['dataMin - 1', 'dataMax + 1']}
+        domain={croppedTo?.weight ?? ['dataMin - 1', 'dataMax + 1']}
+        allowDataOverflow={croppedTo !== null}
         tickFormatter={(kg: number) => `${Math.round(kg)}`}
         width={34}
       />
@@ -59,8 +94,9 @@ export function WeightTrendChart({
         dataKey="t"
         type="number"
         scale="time"
-        domain={['dataMin', 'dataMax']}
-        ticks={monthTicks(data)}
+        domain={croppedTo?.time ?? ['dataMin', 'dataMax']}
+        allowDataOverflow={croppedTo !== null}
+        ticks={monthTicks(croppedTo?.weighIns ?? data)}
         tickFormatter={formatTrendTick}
       />
       {/* Markers make a lone weigh-in visible: one measurement cannot stroke a
