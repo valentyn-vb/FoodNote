@@ -5,6 +5,7 @@ import {
   macroTotalsSchema,
   weightKgSchema,
 } from './common';
+import { paceSchema } from './goals';
 
 /**
  * Dashboard contract — a thin read model: one UTC day's consumption against
@@ -31,6 +32,10 @@ export const dashboardResponseSchema = z.object({
     startWeightKg: weightKgSchema,
     currentWeightKg: weightKgSchema,
     targetWeightKg: weightKgSchema,
+    // Carried here rather than derived from the calories: subtracting
+    // calorieTarget from maintenanceCalories gives the wrong rate whenever the
+    // target was clamped to the Safety Floor.
+    preferredWeeklyChangeKg: paceSchema,
     // Null once the target is reached, and always null on a maintenance plan
     // (pace 0). Read with reachedTarget to tell those two apart: reached is
     // (null && reachedTarget), maintaining is (null && !reachedTarget).

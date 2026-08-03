@@ -64,6 +64,7 @@ export class DashboardService {
         startWeightKg: goal.startWeightKg,
         currentWeightKg: profile.currentWeightKg,
         targetWeightKg: goal.targetWeightKg,
+        preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg,
         projectedGoalDate: goal.projectedGoalDate,
         reachedTarget: goal.reachedTarget,
       },
