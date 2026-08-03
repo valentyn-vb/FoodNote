@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { profile } from '@/lib/api-client';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
@@ -11,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CurrentPlanSection } from './current-plan-section';
 import { EditProfileDialog } from './edit-profile-dialog';
-import { LogoutButton } from './logout-button';
 import { PersonalDetailsSection } from './personal-details-section';
 
 // No mascot on this screen — Profile is a routine settings surface, not a
@@ -46,44 +46,37 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-md flex-col bg-surface lg:mx-14 lg:my-10 lg:max-w-xl">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <Link
-          href="/dashboard"
-          aria-label="Back to dashboard"
-          className="lg:hidden"
-        >
-          <ChevronLeft
-            size={20}
-            className="shrink-0 text-text"
-            strokeWidth={1.8}
-          />
+    <div className="flex w-full max-w-md flex-col lg:max-w-xl">
+      {/* Mobile only: at lg+ the shell's own AppHeader names the route. */}
+      <div className="flex items-center justify-between px-4 py-3 lg:hidden">
+        <Link href="/dashboard" aria-label="Back to dashboard">
+          <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
         </Link>
-        <h1 className="font-sans text-title font-semibold text-text lg:text-heading-lg">
-          Profile
-        </h1>
+        <h1 className="font-heading text-2xl font-semibold">Profile</h1>
       </div>
+      <Separator className="lg:hidden" />
 
-      <div className="pt-7 pb-5 lg:px-4 lg:pt-6 ">
-        <div className="flex flex-col items-center   lg:flex-row lg:items-center lg:gap-4 mb-2.5">
-          <Avatar className="size-18">
-            <AvatarFallback className="bg-primary text-heading-lg text-surface">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
-            <div className="font-sans text-[17px] font-semibold text-text">
-              {fullName}
-            </div>
-            <div className="font-sans text-caption text-text-muted">
-              {authUser?.email}
-            </div>
-          </div>
+      {/* `pt-5` clears the mobile Separator above; at lg+ that rule is hidden
+          and the shell's own `main` padding already spaces this block. */}
+      <div className="mb-2.5 flex flex-col items-center pt-5 lg:flex-row lg:items-center lg:gap-4 lg:pt-0">
+        <Avatar className="size-18">
+          {/* The stock fallback is a grey wash at 14px — it reads as a
+                missing image at this size, not as a person. */}
+          <AvatarFallback className="bg-primary text-2xl font-semibold text-primary-foreground">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col items-center gap-2.5 lg:items-start lg:gap-0.5">
+          <p className="text-lg font-bold">{fullName}</p>
+          <p className="text-sm text-muted-foreground">{authUser?.email}</p>
         </div>
-        <EditProfileDialog />
       </div>
+      <EditProfileDialog />
 
-      <div className="flex flex-col gap-4 px-4 pb-5">
+      {/* `mt-6`: Edit profile belongs to the identity block above it, so it
+          needs more air below than the 4 between the two sections — otherwise
+          it reads as a heading for Current plan. */}
+      <div className="mt-6 flex flex-col gap-4">
         <CurrentPlanSection
           profileData={profileData}
           loading={loading}
@@ -95,15 +88,6 @@ export default function ProfilePage() {
           loading={loading}
           onProfileChange={setProfileData}
         />
-      </div>
-
-      <div className="border-t border-border px-4 pt-3 pb-6">
-        <LogoutButton
-          variant="outline"
-          className="h-12 w-full rounded-sm border-[1.5px] border-error bg-transparent text-title font-semibold text-error shadow-none hover:bg-error-bg"
-        >
-          Log out
-        </LogoutButton>
       </div>
     </div>
   );

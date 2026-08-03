@@ -10,6 +10,7 @@ import {
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import {
   Dialog,
@@ -22,16 +23,45 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
+import { cn } from '@/lib/utils';
 import { goals, profile, weights } from '@/lib/api-client';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { DetailRow } from './detail-row';
+import { Edit2Icon } from 'lucide-react';
 
 const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
+
+/**
+ * One label/value pair of the details list. The dividers live on the `<dl>`
+ * rather than as a `border-b … last:border-b-0` on every row. `numeric` gives
+ * the value tabular figures — a weight, an age.
+ */
+function DetailRow({
+  label,
+  value,
+  numeric = true,
+}: {
+  label: string;
+  value: React.ReactNode;
+  numeric?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5">
+      <dt className="text-sm font-semibold">{label}</dt>
+      <dd
+        className={cn(
+          'text-sm font-semibold text-muted-foreground',
+          numeric && 'tabular-nums',
+        )}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
 
 type PersonalDetailsSectionProps = {
   profileData: ProfileResponse | null;
@@ -124,11 +154,9 @@ export function PersonalDetailsSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-sans text-caption text-text-muted">
-        Personal details
-      </h2>
-      <Card className="gap-0 overflow-hidden rounded-lg border-[1.5px] border-border bg-surface py-0 ring-0">
-        <dl>
+      <h2 className="text-sm text-muted-foreground">Personal details</h2>
+      <Card className="gap-0 overflow-hidden py-0">
+        <dl className="divide-y divide-border">
           <DetailRow
             label="Sex"
             value={profileData ? SEX_LABELS[profileData.sex] : '—'}
@@ -162,29 +190,33 @@ export function PersonalDetailsSection({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           disabled={loading || saving}
-          className="inline-flex h-auto w-fit items-center gap-1.5 p-0 font-sans text-label  font-semibold text-primary-deep hover:bg-transparent disabled:opacity-50"
+          render={
+            <Button variant="outline" className="mx-auto w-fit" size="sm" />
+          }
         >
-          {(loading || saving) && <Loader2 className="size-4 animate-spin" />}
+          {loading || saving ? (
+            <Spinner />
+          ) : (
+            <Edit2Icon className="size-3 mr-1" />
+          )}
           Edit details
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-sans text-title font-semibold text-text">
-              Edit details
-            </DialogTitle>
-            <DialogDescription className="font-sans text-caption text-text-muted">
+            <DialogTitle>Edit details</DialogTitle>
+            <DialogDescription>
               We&apos;ll use this to recalculate your daily calorie target.
             </DialogDescription>
           </DialogHeader>
 
           <DetailsForm form={form} onSubmit={handleSave} />
 
-          <DialogFooter className="flex-row justify-end gap-2.5">
+          <DialogFooter className="flex-row justify-end gap-2">
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" form={DETAILS_FORM_ID} variant="cta">
-              Save
+            <Button type="submit" form={DETAILS_FORM_ID}>
+              Save changes
             </Button>
           </DialogFooter>
         </DialogContent>

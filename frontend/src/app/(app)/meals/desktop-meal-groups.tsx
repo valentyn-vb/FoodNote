@@ -1,0 +1,45 @@
+import type { MealResponse } from '@foodnote/shared';
+import { Card } from '@/components/ui/card';
+import { EmptyGroupLine, MealLine } from '@/components/meal-line';
+import {
+  formatGroupSummary,
+  groupMealsByType,
+} from '@/lib/dashboard-transforms';
+
+// The /meals page at desktop width shows all four meal times side by side,
+// always expanded: a day's meals fit easily and there is room for them, so
+// collapsing would hide data for nothing. Two columns at lg, four at xl — four
+// across a narrow desktop window crushes the meal names.
+//
+// The dashboard uses MealGroupsAccordion at every width instead; its "Logged
+// today" column is too narrow for a four-column grid.
+export function DesktopMealGroups({ meals }: { meals: MealResponse[] }) {
+  const groups = groupMealsByType(meals);
+
+  return (
+    <div className="hidden grid-cols-2 gap-3.5 lg:grid xl:grid-cols-4">
+      {groups.map((group) => (
+        <Card
+          key={group.mealType}
+          className="gap-0 self-start rounded-lg border border-border py-0 ring-0"
+        >
+          <div className="flex flex-col gap-0.5 px-4 py-3">
+            <h2 className="text-sm font-semibold capitalize">
+              {group.mealType}
+            </h2>
+            <div className="text-sm text-muted-foreground tabular-nums">
+              {formatGroupSummary(group)}
+            </div>
+          </div>
+          <div className="flex flex-col border-t border-border">
+            {group.meals.length === 0 ? (
+              <EmptyGroupLine />
+            ) : (
+              group.meals.map((meal) => <MealLine key={meal.id} meal={meal} />)
+            )}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}

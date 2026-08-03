@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils';
 // Homepage only (ticket #58). Light-mode brand colors via the `.gradient-mesh`
 // utility in globals.css — a pure-CSS, GPU-composited replacement for the
 // former @shadergradient/react WebGL canvas. No client JS, no WebGL context,
-// no three.js: this is a server component. Colors are our
-// --fn-primary/-secondary/-tertiary, matching the shader it replaced.
+// no three.js: this is a server component. The colours are --primary and the
+// chart hues (--chart-2, --chart-3), which keep the shader's own — the semantic
+// --success and --warning are darkened for contrast and would dim the mesh.
 export function GradientMesh({ className }: { className?: string }) {
   return (
     <div

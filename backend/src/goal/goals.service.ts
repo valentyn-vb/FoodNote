@@ -5,7 +5,6 @@ import { hasReachedTarget, projectedDate } from '@foodnote/shared';
 import type {
   CreateGoalRequest,
   GoalResponse,
-  Pace,
   UpdateGoalRequest,
 } from '@foodnote/shared';
 import { WeightsService } from '../weights/weights.service';
@@ -56,7 +55,7 @@ export class GoalsService {
   }
 
   private toResponse(goal: Goal, currentWeightKg: number | null): GoalResponse {
-    const pace = goal.preferredWeeklyChangeKg as Pace;
+    const pace = goal.preferredWeeklyChangeKg;
     // With an empty weight journal there is nothing to compare against, so
     // neither the projection nor the reached test can say anything.
     const reachedTarget =
@@ -104,7 +103,7 @@ export class GoalsService {
       // otherwise the user abandoned it, which is `replaced`. This is the only
       // place the status is ever set to `completed` — reaching a target must not
       // touch it, or GET /goals/current would 404 and the OnboardingGuard would
-      // bounce the user into the wizard (see docs/adr/0006).
+      // bounce the user into the wizard (see docs/adr/0007).
       const previous = await manager.findOne(Goal, {
         where: { userId, status: 'active' },
       });
@@ -112,7 +111,7 @@ export class GoalsService {
         previous.status = hasReachedTarget({
           startWeightKg: previous.startWeightKg,
           targetWeightKg: previous.targetWeightKg,
-          preferredWeeklyChangeKg: previous.preferredWeeklyChangeKg as Pace,
+          preferredWeeklyChangeKg: previous.preferredWeeklyChangeKg,
           currentWeightKg: latest.weightKg,
         })
           ? 'completed'

@@ -1,4 +1,5 @@
 import { Instrument_Serif } from 'next/font/google';
+import './landing.css';
 import { cn } from '@/lib/utils';
 import { SiteNav } from '@/components/marketing/site-nav';
 import { ScrollReveal } from '@/components/marketing/scroll-reveal';
@@ -21,7 +22,7 @@ const instrumentSerif = Instrument_Serif({
 
 export default function Home() {
   return (
-    <main className={cn('overflow-x-clip bg-bg', instrumentSerif.variable)}>
+    <main className={cn('overflow-x-clip', instrumentSerif.variable)}>
       <SiteNav />
       <CoverSlide />
       <ScrollReveal>

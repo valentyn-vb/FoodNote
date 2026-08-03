@@ -2,14 +2,17 @@
 
 import * as React from 'react';
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
+import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 type DrawerContextProps = {
   hasSnapPoints: boolean;
   modal: DrawerPrimitive.Root.Props['modal'];
   showSwipeHandle: boolean;
   swipeDirection: NonNullable<DrawerPrimitive.Root.Props['swipeDirection']>;
+  responsiveSide: boolean;
 };
 
 const DrawerContext = React.createContext<DrawerContextProps | null>(null);
@@ -24,19 +27,38 @@ function useDrawer() {
   return context;
 }
 
+/**
+ * `responsiveSide` is the app's drawer shape: a bottom sheet in the thumb zone
+ * on mobile, a right-hand panel on desktop where the page stays visible
+ * alongside it. It lives here rather than in each caller so every drawer
+ * agrees, and so the breakpoint is stated once.
+ */
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
 function Drawer({
   modal = true,
   showSwipeHandle = false,
+  responsiveSide = false,
   snapPoints,
-  swipeDirection = 'down',
+  swipeDirection: swipeDirectionProp = 'down',
   ...props
 }: DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
+  responsiveSide?: boolean;
 }) {
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const swipeDirection =
+    responsiveSide && isDesktop ? 'right' : swipeDirectionProp;
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
   const contextValue = React.useMemo(
-    () => ({ hasSnapPoints, modal, showSwipeHandle, swipeDirection }),
-    [hasSnapPoints, modal, showSwipeHandle, swipeDirection],
+    () => ({
+      hasSnapPoints,
+      modal,
+      showSwipeHandle,
+      swipeDirection,
+      responsiveSide,
+    }),
+    [hasSnapPoints, modal, showSwipeHandle, swipeDirection, responsiveSide],
   );
 
   return (
@@ -102,7 +124,13 @@ function DrawerContent({
   children,
   ...props
 }: DrawerPrimitive.Popup.Props) {
-  const { hasSnapPoints, modal, showSwipeHandle, swipeDirection } = useDrawer();
+  const {
+    hasSnapPoints,
+    modal,
+    showSwipeHandle,
+    swipeDirection,
+    responsiveSide,
+  } = useDrawer();
   const swipeAxis =
     swipeDirection === 'down' || swipeDirection === 'up' ? 'y' : 'x';
 
@@ -145,6 +173,18 @@ function DrawerContent({
             'data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:origin-left data-[swipe-direction=left]:[--closed-transform:translate3d(calc(-100%-var(--drawer-inset,0px)-2px),0,0)] data-[swipe-direction=left]:[--translate-x:calc(var(--drawer-swipe-movement-x)+var(--stack-peek-offset)+(var(--stack-shrink)*100%))]',
             // Direction: right.
             'data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:origin-right data-[swipe-direction=right]:[--closed-transform:translate3d(calc(100%+var(--drawer-inset,0px)+2px),0,0)] data-[swipe-direction=right]:[--translate-x:calc(var(--drawer-swipe-movement-x)-var(--stack-peek-offset)-(var(--stack-shrink)*100%))]',
+            // Responsive side: full-bleed sheet on mobile, a fixed-width panel
+            // once it anchors to the edge. Set here so the width travels with
+            // the shape instead of being poked in per call site.
+            // Must carry the same data-attribute as the sizing rule above, or
+            // it loses on specificity rather than order and silently does
+            // nothing — the base `data-[swipe-axis=x]:sm:` is (0,2,0).
+            responsiveSide &&
+              'lg:data-[swipe-axis=x]:[--drawer-content-width:37.5rem]',
+            // A side panel runs to the top of the viewport, where a bottom
+            // sheet has the swipe handle and the page edge giving it room.
+            // Buy that room back on desktop.
+            responsiveSide && 'lg:data-[swipe-axis=x]:pt-4',
             className,
           )}
           {...props}
@@ -177,6 +217,53 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+/**
+ * A header with the title optically centred and a close button on the right,
+ * plus an optional leading slot (a back link). Shared so the close
+ * affordance — including its accessible name — has one definition.
+ */
+function DrawerTitleBar({
+  children,
+  leading,
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerHeader> & { leading?: React.ReactNode }) {
+  return (
+    <DrawerHeader
+      className={cn('grid grid-cols-[1fr_auto_1fr] items-center', className)}
+      {...props}
+    >
+      {leading ? (
+        <div className="col-start-1 justify-self-start">{leading}</div>
+      ) : (
+        <div />
+      )}
+      <DrawerTitle className="col-start-2 justify-self-center">
+        {children}
+      </DrawerTitle>
+      <DrawerClose
+        aria-label="Close drawer"
+        className="col-start-3 -my-1.5 flex size-8 items-center justify-self-end justify-center"
+      >
+        <XIcon size={20} className="text-muted-foreground" strokeWidth={2} />
+      </DrawerClose>
+    </DrawerHeader>
+  );
+}
+
+function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="drawer-body"
+      className={cn(
+        'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-4',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -187,11 +274,16 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+/**
+ * `text-lg`, not the page scale: 24px Fredoka in a sheet's own title bar
+ * competes with the content under it. Call sites pass placement, never type —
+ * this is the one place the drawer title's look is decided.
+ */
 function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('font-heading font-medium text-foreground', className)}
+      className={cn('text-lg font-bold', className)}
       {...props}
     />
   );
@@ -219,6 +311,8 @@ export {
   DrawerClose,
   DrawerContent,
   DrawerHeader,
+  DrawerTitleBar,
+  DrawerBody,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,

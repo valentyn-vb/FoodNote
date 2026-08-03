@@ -1,3 +1,10 @@
+> **Historical reference.** This documents the Paper design system FoodNote
+> started from — brand intent, fonts, the mascot, the hues. It is **not** the
+> source of truth for values: its type scale declared `title` 15px under `body`
+> 16px, which is why call sites never used it. The current vocabulary is
+> [the styling spec](styling-rewrite-spec.md); the newer visual reference is the
+> designer's HTML handoff, which lives outside the repository.
+
 # FoodNote — Design System Summary
 
 Source of truth: [Paper file "Foodnote Design System"](https://app.paper.design/file/01KXDP0BGYQ1SYCCDP0E5XP2ED/1-0). This doc is a static snapshot for the repo — edit designs in Paper, not here.

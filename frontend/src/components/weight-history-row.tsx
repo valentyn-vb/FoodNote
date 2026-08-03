@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import type { WeightEntryResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { weights } from '@/lib/api-client';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
-import { CARD_CLASS } from '@/app/(app)/dashboard/helpers';
-import { WeightDrawer } from './weight-drawer';
+import type { WeightEntryResponse } from '@foodnote/shared';
+import { Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { WeightLogDrawer } from './weight-log-drawer';
 
 export function WeightHistoryRow({
   entry,
@@ -35,29 +35,31 @@ export function WeightHistoryRow({
   }
 
   return (
-    <Card
-      className={`${CARD_CLASS} flex-row items-center justify-between px-4 py-3`}
-    >
+    // One line of the history: a fixed-height surface that never flexes,
+    // because inside the drawer's bounded scrolling column a row would squash
+    // before the column scrolled. Tighter radius than the card default — 20px
+    // on a 64px row reads as a pill.
+    <Card className="shrink-0 flex-row items-center justify-between gap-3 rounded-md px-4 py-3.5">
       <div className="flex flex-col gap-0.5">
-        <div className="font-sans text-label font-semibold text-text [font-variant-numeric:tabular-nums]">
+        <div className="text-sm font-semibold tabular-nums">
           {entry.weightKg} kg
         </div>
-        <div className="font-sans text-[12px] text-text-muted">
+        <div className="text-sm text-muted-foreground">
           {formatEntryDate(entry.recordedAt)}
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <WeightDrawer
+      <div className="flex shrink-0 items-center gap-1">
+        <WeightLogDrawer
           mode="edit"
           entry={entry}
           onChanged={onChanged}
-          triggerLabel="Edit entry"
-          triggerClassName="flex size-8 items-center justify-center rounded-sm text-text-muted hover:bg-[#F0EEE9]"
-        >
-          <Pencil size={16} />
-        </WeightDrawer>
+          trigger={
+            <Button variant="ghost" size="icon-sm" aria-label="Edit entry">
+              <Pencil size={16} />
+            </Button>
+          }
+        />
         <Button
-          type="button"
           variant="ghost"
           size="icon-sm"
           aria-label="Delete entry"
@@ -72,11 +74,7 @@ export function WeightHistoryRow({
           className="text-text-muted"
           onClick={handleDelete}
         >
-          {busy ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Trash2 size={16} />
-          )}
+          {busy ? <Spinner /> : <Trash2 size={16} />}
         </Button>
       </div>
     </Card>

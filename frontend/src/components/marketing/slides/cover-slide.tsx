@@ -10,18 +10,15 @@ import {
   useTransform,
 } from 'motion/react';
 import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import type { Asciify as AsciifyComponent } from '@/components/canvasui/Asciify';
 import type {
   DitheredObjectProps,
   DitheredObject as DitheredObjectComponent,
 } from '@/components/canvasui/DitheredObject';
-import {
-  SparklesIcon,
-  type SparklesIconHandle,
-} from '@/components/ui/sparkles';
+import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { supportsHover } from '@/lib/utils';
+import { cn, supportsHover } from '@/lib/utils';
 
 // The mascot drags in three.js (GLTF/DRACO loaders, ~320KB gzipped) plus an
 // 800KB+ .glb model, and only ever renders at lg+ — `hidden lg:block` alone
@@ -109,21 +106,19 @@ function HeroCopy({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <h1 className="font-display text-pretty text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-text">
+      <h1 className="font-heading text-pretty text-[clamp(30px,6vw,56px)] leading-[1.02] font-semibold tracking-tight text-foreground">
         Your calories,
         <br />
         actually tracked.
       </h1>
-      <p className="font-sans text-[clamp(14px,1.6vw,18px)] leading-[1.5] text-text/75">
+      <p className="font-sans text-[clamp(14px,1.6vw,18px)] leading-[1.5] text-foreground/75">
         AI-assisted meal logging, a weight journal that remembers, and a plan
         that adapts.
       </p>
       <div className="flex flex-row gap-3 pt-1">
-        <Button
-          render={<Link href={authed ? '/dashboard' : '/register'} />}
-          nativeButton={false}
-          variant="cta"
-          className="gap-2 px-6 py-3.5"
+        <Link
+          href={authed ? '/dashboard' : '/register'}
+          className={cn(buttonVariants(), 'gap-2 px-6 py-3.5')}
           onMouseEnter={() =>
             supportsHover() && sparkleRef.current?.startAnimation()
           }
@@ -133,16 +128,17 @@ function HeroCopy({ className }: { className?: string }) {
         >
           <SparklesIcon ref={sparkleRef} size={16} />
           {authed ? 'Go to dashboard' : 'Get started'}
-        </Button>
+        </Link>
         {!authed && (
-          <Button
-            render={<Link href="/login" />}
-            nativeButton={false}
-            variant="outline"
-            className="border-black/10 bg-white/70 px-6 py-3.5"
+          <Link
+            href="/login"
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'border-black/10 bg-white/70 px-6 py-3.5',
+            )}
           >
             Log in
-          </Button>
+          </Link>
         )}
       </div>
     </div>
@@ -164,7 +160,7 @@ export function CoverSlide() {
   const showMascot = useMediaQuery('(min-width: 1024px)');
 
   return (
-    <div ref={ref} className="bg-bg pb-16">
+    <div ref={ref} className="bg-background pb-16">
       {/* Desktop: the shot has generous empty space on the left, so the copy
           sits inside the image, like the reference. Padding lives on this
           wrapper (not the shared root) so the mobile branch below can be
@@ -218,17 +214,17 @@ export function CoverSlide() {
               </div>
               {/* Same line as the nav tooltip, restated here as a quiet footnote
                 since it's the hamster's own explanation, not the nav's. */}
-              <p className="absolute top-[93%] left-[6%] max-w-[220px] font-sans text-[11px] leading-[1.3] text-text/40 italic">
+              <p className="absolute top-[93%] left-[6%] max-w-[220px] font-sans text-[11px] leading-[1.3] text-foreground/40 italic">
                 Hamsters hoard food but almost never overeat. Kindred spirits.
               </p>
               {/* Positioned beside the mascot's own row (not under the headline)
                 so the two never compete for the same horizontal band. */}
               <div className="absolute top-[58%] left-[32%] w-[22%] max-w-[200px]">
                 <div className="rounded-2xl bg-white/90 px-3.5 py-2.5 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.25)]">
-                  <p className="font-[family-name:var(--font-accent-serif)] text-[14px] leading-[1.3] text-text italic">
+                  <p className="font-[family-name:var(--font-accent-serif)] text-[14px] leading-[1.3] text-foreground italic">
                     Meet Hammy, your new AI calorie-tracking pet.
                   </p>
-                  <p className="mt-1 font-sans text-[10.5px] text-text-muted">
+                  <p className="mt-1 font-sans text-[10.5px] text-muted-foreground">
                     Drag him. He doesn&apos;t mind.
                   </p>
                 </div>
@@ -239,7 +235,7 @@ export function CoverSlide() {
               <svg
                 viewBox="0 0 110 50"
                 fill="none"
-                className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-text/35 select-none"
+                className="absolute top-[61%] left-[21%] aspect-[110/50] w-[9%] text-foreground/35 select-none"
               >
                 <path
                   d="M100 8C70 8 35 20 14 32"
@@ -282,7 +278,13 @@ export function CoverSlide() {
             alt="FoodNote's dashboard open on a phone, showing remaining calories and the weight trend"
             fill
             priority
-            sizes="100vw"
+            // The wrapper is `sm:hidden`, so above 640px this element has no
+            // width at all — `100vw` promised one anyway, which is what Next
+            // warned about, and `display: none` does not stop the fetch: a
+            // desktop visitor was downloading a priority mobile hero it never
+            // shows. Stating the breakpoint makes the srcset pick a negligible
+            // candidate there instead.
+            sizes="(max-width: 639px) 100vw, 1px"
             className="object-cover"
           />
         </motion.div>

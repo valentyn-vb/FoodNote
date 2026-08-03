@@ -77,11 +77,20 @@ describe('Goals (e2e)', () => {
     expect(body.projectedGoalDate).not.toBeNull();
   });
 
-  it('POST /goals rejects a non-preset pace (400)', async () => {
+  it('POST /goals rejects a pace outside 0…1.0 (400)', async () => {
+    // 0.6 was rejected here too, as a non-preset. ADR-0009 widened Pace to a
+    // continuum — a manual plan derives its rate from calories and lands between
+    // the presets — so only the ceiling and zero bound it now.
     await request(app.getHttpServer())
       .post('/api/goals')
       .set(auth())
-      .send({ targetWeightKg: 75, preferredWeeklyChangeKg: 0.6 })
+      .send({ targetWeightKg: 75, preferredWeeklyChangeKg: 1.5 })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/api/goals')
+      .set(auth())
+      .send({ targetWeightKg: 75, preferredWeeklyChangeKg: -0.25 })
       .expect(400);
   });
 
@@ -99,6 +108,26 @@ describe('Goals (e2e)', () => {
       .set(auth())
       .expect(200);
     expect((get.body as GoalResponse).id).toBe(current.id);
+  });
+
+  it('accepts a derived, non-preset pace and keeps all four decimals', async () => {
+    // What a manual plan saves: the user named calories, the client derived the
+    // rate, and it goes into the same field a preset card would use — no extra
+    // column, no extra endpoint (ADR-0009).
+    const patched = (
+      await request(app.getHttpServer())
+        .patch('/api/goals/current')
+        .set(auth())
+        .send({ preferredWeeklyChangeKg: 0.9173 })
+        .expect(200)
+    ).body as GoalResponse;
+    expect(patched.preferredWeeklyChangeKg).toBe(0.9173);
+    expect(patched.projectedGoalDate).not.toBeNull();
+
+    // Read it back fresh rather than trusting the write's own echo — the column is
+    // numeric(6,4) and the precision is load-bearing: at the old (4,2) this
+    // rounded to 0.92, which handed the user's typed budget back ~5 kcal off.
+    expect((await current()).preferredWeeklyChangeKg).toBe(0.9173);
   });
 
   it('PATCH /goals/current mutates target/pace in place (id stable)', async () => {

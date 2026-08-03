@@ -13,7 +13,7 @@ export function EmptyState({
   return (
     <div className={cn('flex flex-col items-center gap-2 py-6', className)}>
       <Image src={mascotSrc} alt="" width={56} height={56} />
-      <div className="font-sans text-caption text-text-muted">{caption}</div>
+      <span className="text-sm text-muted-foreground">{caption}</span>
     </div>
   );
 }

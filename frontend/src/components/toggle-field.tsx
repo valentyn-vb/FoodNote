@@ -5,10 +5,10 @@ import {
   type Path,
   type PathValue,
 } from 'react-hook-form';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldError } from '@/components/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
-import { LABEL_CLASS } from './form-fields';
+import { FormLabel } from './form-fields';
 
 export function ToggleField<T extends FieldValues>({
   control,
@@ -27,7 +27,7 @@ export function ToggleField<T extends FieldValues>({
 }) {
   return (
     <Field className="gap-1.75" data-invalid={!!error || undefined}>
-      <FieldLabel className={LABEL_CLASS}>{label}</FieldLabel>
+      <FormLabel>{label}</FormLabel>
       <Controller
         control={control}
         name={name}
@@ -36,6 +36,9 @@ export function ToggleField<T extends FieldValues>({
           <ToggleGroup
             value={field.value ? [field.value] : []}
             onValueChange={(values) => values[0] && field.onChange(values[0])}
+            // The visible FormLabel has no `for` target to bind to a group, so
+            // name the group itself or a screen reader announces bare options.
+            aria-label={label}
             aria-invalid={!!error || undefined}
             spacing={2}
             className="w-full gap-2"
@@ -44,11 +47,18 @@ export function ToggleField<T extends FieldValues>({
               <ToggleGroupItem
                 key={option}
                 value={option}
+                size="lg"
                 className={cn(
-                  'h-11.5 grow basis-0 rounded-sm border border-border font-sans text-text-muted capitalize data-[state=on]:border-[1.5px] data-[state=on]:border-primary data-[state=on]:bg-[#FFF3E7] data-[state=on]:font-semibold data-[state=on]:text-primary-deep',
+                  // One choice among a few, reading as its own option rather
+                  // than as a pressed button. Selection is on `data-pressed`,
+                  // the attribute Base UI actually emits; the border keeps its
+                  // width and only changes colour, so choosing an option
+                  // doesn't nudge it half a pixel in every direction.
+                  'grow basis-0 border border-border bg-card capitalize text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
                   // Four labels (meal types) need tighter items than two (sex)
-                  // to fit one row on a narrow screen.
-                  options.length > 2 && 'px-1 text-[12.5px]',
+                  // to fit one row on a narrow screen. Narrower, not smaller:
+                  // the type level is the same either way.
+                  options.length > 2 && 'px-1',
                 )}
               >
                 {option}
@@ -57,9 +67,7 @@ export function ToggleField<T extends FieldValues>({
           </ToggleGroup>
         )}
       />
-      {error && (
-        <FieldError className="font-sans text-[12px]">{error}</FieldError>
-      )}
+      {error && <FieldError>{error}</FieldError>}
     </Field>
   );
 }

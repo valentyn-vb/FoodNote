@@ -11,7 +11,7 @@ function Chip({
   return (
     <div
       className={cn(
-        'absolute z-20 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-semibold text-text shadow-[0_4px_12px_-4px_rgba(0,0,0,0.25)] select-none',
+        'absolute z-20 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-semibold text-foreground shadow-[0_4px_12px_-4px_rgba(0,0,0,0.25)] select-none',
         className,
       )}
     >
@@ -51,8 +51,10 @@ function Feature({
         sizes="220px"
         className="mx-auto h-auto w-full max-w-[220px]"
       />
-      <p className="mt-4 font-sans text-[15px] leading-[1.6] text-text/75">
-        <span className="font-display font-semibold text-text">{title}</span>{' '}
+      <p className="mt-4 font-sans text-[15px] leading-[1.6] text-foreground/75">
+        <span className="font-heading font-semibold text-foreground">
+          {title}
+        </span>{' '}
         {description}
       </p>
     </div>
@@ -65,7 +67,7 @@ export function IntroSlide() {
       id="how-it-works"
       className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 sm:px-10 sm:py-28"
     >
-      <h2 className="max-w-xl font-display text-pretty text-[clamp(28px,4vw,40px)] leading-[1.1] font-semibold text-text">
+      <h2 className="max-w-xl font-heading text-pretty text-[clamp(28px,4vw,40px)] leading-[1.1] font-semibold text-foreground">
         Less calculating. More living.
       </h2>
 
@@ -91,8 +93,8 @@ export function IntroSlide() {
 
       <div className="relative mt-14 hidden overflow-hidden rounded-[32px] bg-[#f5f5f2] px-8 py-14 sm:block sm:px-14 sm:py-20">
         <div className="relative z-10 max-w-sm">
-          <p className="font-sans text-[17px] leading-[1.65] text-text/75">
-            <span className="font-display font-semibold text-text">
+          <p className="font-sans text-[17px] leading-[1.65] text-foreground/75">
+            <span className="font-heading font-semibold text-foreground">
               Describe it. We&apos;ll do the math.
             </span>{' '}
             Type what you ate. FoodNote&apos;s AI turns it into calories and
@@ -100,8 +102,8 @@ export function IntroSlide() {
           </p>
         </div>
         <div className="relative z-10 mt-10 max-w-sm sm:mt-12">
-          <p className="font-sans text-[17px] leading-[1.65] text-text/75">
-            <span className="font-display font-semibold text-text">
+          <p className="font-sans text-[17px] leading-[1.65] text-foreground/75">
+            <span className="font-heading font-semibold text-foreground">
               Your weight, without the guesswork.
             </span>{' '}
             Log whenever you step on the scale. Your trend and projected date

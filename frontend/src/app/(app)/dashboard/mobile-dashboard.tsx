@@ -1,26 +1,28 @@
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
-import {
-  DailyCaloriesChart,
-  WeightTrendCard,
-} from '@/components/dashboard-charts';
+import { DailyCaloriesChart, WeightTrendChart } from '@/components/charts';
+import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
+import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { WeightDrawer } from '@/components/weight-drawer';
+import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { initialsOf } from '@/lib/user-display';
 import { useWeight } from '@/lib/weight-context';
 import NumberFlow from '@number-flow/react';
+import { History } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { EmptyMeals } from './empty-meals';
-import { CARD_CLASS, fullnessMascot } from './helpers';
-import { MealRow } from './meal-row';
+import { fullnessMascot } from './helpers';
 import { StatWidget } from './stat-widget';
 import { DashboardError, InlineError, MobileDashboardSkeleton } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
@@ -33,8 +35,9 @@ export function MobileDashboard() {
     remainingKcal,
     progressPct,
     goalKcal,
-    todayMeals,
+    selectedDayMeals,
     dailyCalories,
+    isToday,
   } = useMeals();
   const {
     status: weightStatus,
@@ -49,20 +52,21 @@ export function MobileDashboard() {
   const weightReady = weightStatus === 'ready';
 
   return (
-    <div className="flex flex-col gap-5 bg-bg px-5 pt-6 pb-8 lg:hidden">
+    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:hidden">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-heading-lg font-semibold text-text">
-          Today
-        </h1>
+        {/* Not "Today" any more: the day being shown is DayNav's to say. */}
+        <h1 className="font-heading text-2xl font-semibold">Dashboard</h1>
         {/* The sidebar (and its profile menu) is desktop-only — on mobile the
             avatar is the only path to the profile page. */}
         <Link href="/profile" aria-label="Open profile">
           <Avatar>
-            <AvatarFallback className="bg-primary text-surface">
-              {initialsOf(user)}
-            </AvatarFallback>
+            <AvatarFallback>{initialsOf(user)}</AvatarFallback>
           </Avatar>
         </Link>
+      </div>
+
+      <div className="flex justify-center">
+        <DayNav />
       </div>
 
       {gate.state === 'error' ? (
@@ -71,23 +75,16 @@ export function MobileDashboard() {
         <MobileDashboardSkeleton />
       ) : (
         <>
-          <Card className={`${CARD_CLASS} gap-2.5 p-5`}>
-            <h2 className="font-sans text-caption text-text-muted">
-              Remaining today
+          <Card className="gap-2.5 p-5">
+            <h2 className="text-sm text-muted-foreground">
+              {isToday ? 'Remaining today' : 'Remaining'}
             </h2>
-            <NumberFlow
-              value={remainingKcal}
-              suffix=" kcal"
-              className="font-display text-[38px] font-semibold text-text"
-            />
-            <div className="h-2 shrink-0 overflow-hidden rounded-full bg-[#F0EEE9]">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
+            <div className="font-heading text-4xl font-semibold tabular-nums">
+              <NumberFlow value={remainingKcal} suffix=" kcal" />
             </div>
-            <div className="flex justify-between font-sans text-[12.5px] text-text-muted [font-variant-numeric:tabular-nums]">
-              <div className="flex items-center gap-1.5">
+            <Progress value={progressPct} />
+            <div className="flex justify-between">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
                 <Image
                   src={fullnessMascot(eatenKcal, goalKcal)}
                   alt=""
@@ -95,10 +92,11 @@ export function MobileDashboard() {
                   height={20}
                 />
                 <NumberFlow value={eatenKcal} /> eaten
-              </div>
-              <div>
-                Goal <NumberFlow value={goalKcal} />
-              </div>
+              </span>
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {isToday ? 'Goal' : 'Current goal'}{' '}
+                <NumberFlow value={goalKcal} />
+              </span>
             </div>
           </Card>
 
@@ -124,9 +122,7 @@ export function MobileDashboard() {
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-sans text-caption font-medium text-text">
-                Weight trend
-              </h2>
+              <h2 className="text-base font-semibold">Weight trend</h2>
               <div className="flex items-center gap-2">
                 {weightReady && (
                   <div className="flex items-baseline gap-1 font-sans text-[12px] font-medium text-secondary-deep">
@@ -143,35 +139,34 @@ export function MobileDashboard() {
                   <WeightHistoryDrawer
                     entries={weightEntries}
                     onWeightsChanged={onWeightsChanged}
-                    triggerClassName="flex size-6 items-center justify-center rounded-sm text-text-muted"
+                    trigger={
+                      <Button variant="ghost" size="icon-sm">
+                        <History />
+                      </Button>
+                    }
                   />
                 )}
               </div>
             </div>
-            {weightReady ? (
-              <WeightTrendCard
-                className={`${CARD_CLASS} p-4`}
-                chartClassName="aspect-auto h-[136px] w-full flex-none"
-                data={weightTrend}
-              />
-            ) : (
-              <Card className={`${CARD_CLASS} p-4`}>
-                {weightStatus === 'error' ? (
-                  <InlineError onRetry={retryWeight} />
-                ) : (
-                  <Skeleton className="h-[110px] w-full" />
-                )}
-              </Card>
-            )}
+            <Card className="p-4">
+              {weightReady ? (
+                <WeightTrendChart
+                  className="aspect-auto h-[110px] w-full flex-none"
+                  data={weightTrend}
+                />
+              ) : weightStatus === 'error' ? (
+                <InlineError onRetry={retryWeight} />
+              ) : (
+                <Skeleton className="h-27.5 w-full" />
+              )}
+            </Card>
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <h2 className="font-sans text-caption font-medium text-text">
-              Daily calories (7 days)
-            </h2>
-            <Card className={`${CARD_CLASS} shrink-0 px-4 pt-4 pb-3`}>
+            <h2 className="text-base font-semibold">Daily calories (7 days)</h2>
+            <Card className="shrink-0 px-4 pt-4 pb-3">
               <DailyCaloriesChart
-                className="aspect-auto h-[120px] w-full flex-none"
+                className="aspect-auto h-30 w-full flex-none"
                 data={dailyCalories}
               />
             </Card>
@@ -180,25 +175,46 @@ export function MobileDashboard() {
           <Disclaimer />
 
           <div className="flex flex-col gap-2.5">
-            <h2 className="font-sans text-caption font-medium text-text">
-              Logged today
+            <h2 className="text-sm font-semibold">
+              {isToday ? 'Logged today' : 'Logged meals'}
             </h2>
-            {todayMeals.length === 0 && <EmptyMeals />}
-            {todayMeals.map((meal) => (
-              <MealRow key={meal.id} meal={meal} />
-            ))}
+            {selectedDayMeals.length === 0 ? (
+              <EmptyMeals />
+            ) : (
+              <MealGroupsAccordion meals={selectedDayMeals} />
+            )}
           </div>
 
-          <div className="flex gap-2.5 border-t border-border pt-3">
-            <MealLogDrawer />
-            <WeightDrawer
-              mode="create"
-              onWeightSaved={onWeightSaved}
-              triggerClassName="h-12.5 grow basis-0 rounded-sm border border-border text-[13.5px] font-medium text-text"
-            >
-              Log weight
-            </WeightDrawer>
-          </div>
+          {/* Nothing to log into a day that has passed. */}
+          {isToday && (
+            <>
+              <Separator />
+              <div className="flex gap-2.5">
+                {/* Twice the weight button's share of the bar — it is the action
+                    this screen exists for. */}
+                <MealLogDrawer
+                  trigger={
+                    <Button size="lg" className="grow-2 basis-0 px-8">
+                      Log a meal
+                    </Button>
+                  }
+                />
+                <WeightLogDrawer
+                  mode="create"
+                  onWeightSaved={onWeightSaved}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="grow basis-0"
+                    >
+                      Log weight
+                    </Button>
+                  }
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

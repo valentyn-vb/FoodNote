@@ -27,25 +27,22 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Account menu"
-        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
+      <DropdownMenuTrigger aria-label="Account menu">
         <Avatar>
-          <AvatarFallback className="bg-primary text-surface">
+          <AvatarFallback>
             {initialsOf(user) || user?.email[0]?.toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="max-w-56 font-normal">
+          <DropdownMenuLabel className="max-w-56">
             {fullName && (
-              <span className="block truncate font-medium text-text">
+              <span className="block truncate text-sm font-semibold">
                 {fullName}
               </span>
             )}
-            <span className="block truncate font-normal text-text-muted">
+            <span className="block truncate text-sm text-muted-foreground">
               {user?.email}
             </span>
           </DropdownMenuLabel>

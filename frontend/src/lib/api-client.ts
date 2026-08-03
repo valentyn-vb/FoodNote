@@ -1,4 +1,5 @@
 import {
+  aiParseResponseSchema,
   authResponseSchema,
   authUserSchema,
   dashboardResponseSchema,
@@ -9,10 +10,13 @@ import {
   profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
+  type AiParseRequest,
+  type AiParseResponse,
   type AuthResponse,
   type AuthUser,
   type CreateGoalRequest,
   type CreateMealRequest,
+  type UpdateMealRequest,
   type CreateWeightRequest,
   type DashboardResponse,
   type GoalResponse,
@@ -28,6 +32,11 @@ import {
   type UpdateWeightRequest,
   type WeightEntryResponse,
 } from '@foodnote/shared';
+import { ApiError, apiErrorMessage } from '@/lib/api-error';
+
+// Re-exported so existing importers keep their path; the class itself is shared
+// with the server data layer, which throws the same one.
+export { ApiError };
 
 /**
  * The access token lives only in memory (never in storage) and is re-obtained
@@ -38,15 +47,6 @@ let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
-}
-
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
 }
 
 async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -81,18 +81,9 @@ export async function apiFetch(
     res = await rawFetch(path, init);
   }
   if (!res.ok) {
-    throw new ApiError(res.status, await safeErrorMessage(res));
+    throw new ApiError(res.status, await apiErrorMessage(res));
   }
   return res;
-}
-
-async function safeErrorMessage(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { message?: string };
-    return body.message ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
 }
 
 async function handleAuthResponse(res: Response): Promise<AuthResponse> {
@@ -199,9 +190,37 @@ export const meals = {
     return mealResponseSchema.parse(await res.json());
   },
 
+  /** PATCH /meals/:id — a partial draft. Totals stay the source of truth, so
+      the items are only ever sent alongside them, never summed into them. */
+  async update(id: string, data: UpdateMealRequest): Promise<MealResponse> {
+    const res = await apiFetch(`/api/meals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return mealResponseSchema.parse(await res.json());
+  },
+
   /** DELETE /meals/:id — 204, used by the save toast's Undo action. */
   async remove(id: string): Promise<void> {
     await apiFetch(`/api/meals/${id}`, { method: 'DELETE' });
+  },
+
+  /**
+   * POST /meals/ai-parse — never writes. Resolves to the discriminated union:
+   * a Parsed Meal, or the "not food" verdict, both successful recognitions
+   * (ADR-0006). Real failures reject as ApiError: 429 rate limit, 502 terminal
+   * model failure. `signal` carries the drawer's cancel/timeout.
+   */
+  async aiParse(
+    data: AiParseRequest,
+    signal?: AbortSignal,
+  ): Promise<AiParseResponse> {
+    const res = await apiFetch('/api/meals/ai-parse', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      signal,
+    });
+    return aiParseResponseSchema.parse(await res.json());
   },
 };
 

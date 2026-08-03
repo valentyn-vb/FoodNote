@@ -1,8 +1,9 @@
-import type {
-  DashboardResponse,
-  MealResponse,
-  MealType,
-  WeightEntryResponse,
+import {
+  mealTypeSchema,
+  type DashboardResponse,
+  type MealResponse,
+  type MealType,
+  type WeightEntryResponse,
 } from '@foodnote/shared';
 
 /**
@@ -40,6 +41,36 @@ export function todayUtc(now: Date): string {
 /** A UTC 'YYYY-MM-DD' string `days` days before `now` — for range `from` bounds. */
 export function isoDaysAgo(days: number, now: Date): string {
   return new Date(now.getTime() - days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Add (or subtract) `days` to a UTC 'YYYY-MM-DD' string. */
+export function addDays(isoDate: string, days: number): string {
+  return new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * DAY_MS)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** True when `isoDate` is strictly after today UTC. */
+export function isFutureDay(isoDate: string, now: Date): boolean {
+  return isoDate > todayUtc(now);
+}
+
+/**
+ * Human label for a tracking day:
+ * - same UTC day as `now` → "Today"
+ * - one day before → "Yesterday"
+ * - otherwise → locale short date, e.g. "Mon, Jul 28"
+ */
+export function formatDayLabel(isoDate: string, now: Date): string {
+  const today = todayUtc(now);
+  if (isoDate === today) return 'Today';
+  if (isoDate === addDays(today, -1)) return 'Yesterday';
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${isoDate}T00:00:00Z`));
 }
 
 function round1(n: number): number {
@@ -122,6 +153,45 @@ export function todaysMeals(
   return meals
     .filter((m) => utcDay(m.recordedAt) === date)
     .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+}
+
+export type MealGroup = {
+  mealType: MealType;
+  meals: MealResponse[];
+  totalKcal: number;
+};
+
+/**
+ * One day's meals split into the four meal times. Always returns all four
+ * groups — an empty breakfast is information ("nothing logged"), not a group to
+ * hide, and a fixed shape lets every layout render without null checks.
+ *
+ * Group order comes from mealTypeSchema.options (the contract's own order:
+ * breakfast → lunch → dinner → snack) rather than a second hardcoded list that
+ * could drift from it.
+ *
+ * Within a group meals run oldest → newest, so a group reads top-down in the
+ * order it was eaten. Callers pass todaysMeals(), which is newest-first to match
+ * the provider's optimistic prepend, so this re-sorts rather than inheriting it.
+ */
+export function groupMealsByType(meals: MealResponse[]): MealGroup[] {
+  return mealTypeSchema.options.map((mealType) => {
+    const inGroup = meals
+      .filter((meal) => meal.mealType === mealType)
+      .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+
+    return {
+      mealType,
+      meals: inGroup,
+      totalKcal: inGroup.reduce((sum, meal) => sum + meal.totalCalories, 0),
+    };
+  });
+}
+
+/** "420 kcal · 2 meals" — the subtotal line every group header shows. */
+export function formatGroupSummary(group: MealGroup): string {
+  const meals = `${group.meals.length} ${group.meals.length === 1 ? 'meal' : 'meals'}`;
+  return `${group.totalKcal} kcal · ${meals}`;
 }
 
 /**

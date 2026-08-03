@@ -13,6 +13,7 @@ import {
   type Pace,
   type ProfileResponse,
 } from '@foodnote/shared';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,16 +26,25 @@ import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
 import { goals, profile } from '@/lib/api-client';
 import { useMeals } from '@/lib/meals-context';
+import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
-const CONFETTI_COLORS = ['#f5a65c', '#e08a3c', '#5bb98c', '#f4907e'];
+// canvas-confetti paints on a canvas, so it can't take CSS variables — but it
+// can take what they resolve to. Read at launch, not restated: this was the
+// fourth copy of the brand palette in the codebase.
+function confettiColors() {
+  const style = getComputedStyle(document.documentElement);
+  return ['--primary', '--brand-ink', '--chart-2', '--chart-3']
+    .map((token) => style.getPropertyValue(token).trim())
+    .filter(Boolean);
+}
 
 function fireConfetti() {
   const shared = {
     particleCount: 60,
     spread: 70,
     startVelocity: 45,
-    colors: CONFETTI_COLORS,
+    colors: confettiColors(),
     disableForReducedMotion: true,
     zIndex: 100,
   };
@@ -130,7 +140,7 @@ export function GoalReachedOverlay() {
       });
       await refetchDashboard();
       toast.success('New target set', {
-        description: `Target: ${targetWeightValue} kg · ${pace} kg/week`,
+        description: `Target: ${targetWeightValue} kg · ${formatPace(pace)} kg/week`,
       });
     } catch {
       toast.error("Couldn't set your new target. Please try again.");
@@ -144,7 +154,10 @@ export function GoalReachedOverlay() {
       modal={true}
       disablePointerDismissal={true}
     >
-      <DialogContent className="max-w-sm" showCloseButton={false}>
+      <DialogContent
+        className="max-h-[85dvh] max-w-sm overflow-y-auto"
+        showCloseButton={false}
+      >
         {view === 'choice' && (
           <>
             <DialogHeader className="items-center gap-2 text-center">
@@ -155,10 +168,8 @@ export function GoalReachedOverlay() {
                 height={96}
                 priority
               />
-              <DialogTitle className="font-display text-title font-semibold text-text">
-                You hit your target
-              </DialogTitle>
-              <DialogDescription className="font-sans text-caption text-text-muted">
+              <DialogTitle>You hit your target</DialogTitle>
+              <DialogDescription>
                 {goal
                   ? `You reached ${goal.targetWeightKg} kg. Pick where to go from here.`
                   : 'You reached your target weight.'}
@@ -169,13 +180,12 @@ export function GoalReachedOverlay() {
               <div className="flex flex-col gap-1.5">
                 <Button
                   type="button"
-                  variant="cta"
                   onClick={handleSwitchMaintenance}
                   disabled={switchingMaintenance}
                 >
                   {switchingMaintenance ? '...' : 'Switch to maintenance'}
                 </Button>
-                <p className="text-center font-sans text-caption text-text-muted">
+                <p className="text-center text-sm text-muted-foreground">
                   {/* maintenanceKcal is energy at the current weight, which is
                       exactly what the target becomes at pace 0 — so it is the
                       number this button will set, not an estimate. */}
@@ -197,7 +207,7 @@ export function GoalReachedOverlay() {
                 >
                   Set a new target
                 </Button>
-                <p className="text-center font-sans text-caption text-text-muted">
+                <p className="text-center text-sm text-muted-foreground">
                   Choose another plan — a new goal weight and pace.
                 </p>
               </div>
@@ -208,8 +218,11 @@ export function GoalReachedOverlay() {
         {view === 'target-input' && (
           <>
             <DialogHeader className="gap-2">
-              <DialogTitle className="font-display text-heading font-semibold text-text">
-                What's your new target?
+              {/* Page-scale, unlike the choice view's dialog title above: this
+                  view is a single question, and it is the only DialogTitle in
+                  the app that overrides the component's own level. */}
+              <DialogTitle className="font-heading text-2xl font-semibold">
+                What&apos;s your new target?
               </DialogTitle>
             </DialogHeader>
 
@@ -237,7 +250,6 @@ export function GoalReachedOverlay() {
                 </Button>
                 <Button
                   type="submit"
-                  variant="cta"
                   disabled={form.formState.isSubmitting}
                   className="flex-1"
                 >
@@ -249,17 +261,35 @@ export function GoalReachedOverlay() {
         )}
 
         {view === 'target-plan' && profileData && targetWeightValue && (
-          <PlanSelection
-            input={{
-              ...profileData,
-              targetWeightKg: targetWeightValue,
-              currentWeightKg:
-                profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
-            }}
-            onBack={() => setView('target-input')}
-            onConfirm={handlePlanConfirm}
-            fromDate={new Date().toISOString().slice(0, 10)}
-          />
+          <>
+            <DialogHeader className="gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setView('target-input')}
+                aria-label="Back"
+                className="-ml-2 self-start"
+              >
+                <ChevronLeft />
+              </Button>
+              <DialogTitle>Choose your plan</DialogTitle>
+              <DialogDescription>
+                Based on your new target, here are a few daily-calorie options.
+              </DialogDescription>
+            </DialogHeader>
+
+            <PlanSelection
+              input={{
+                ...profileData,
+                targetWeightKg: targetWeightValue,
+                currentWeightKg:
+                  profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
+              }}
+              onConfirm={handlePlanConfirm}
+              fromDate={new Date().toISOString().slice(0, 10)}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>

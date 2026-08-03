@@ -9,10 +9,12 @@ import { useAuth } from '@/components/auth-provider';
 // sidebar and its user menu are desktop-only.
 export function LogoutButton({
   variant,
+  size,
   className,
   children,
 }: {
   variant?: React.ComponentProps<typeof Button>['variant'];
+  size?: React.ComponentProps<typeof Button>['size'];
   className?: string;
   children: React.ReactNode;
 }) {
@@ -25,7 +27,12 @@ export function LogoutButton({
   }
 
   return (
-    <Button variant={variant} className={className} onClick={handleLogout}>
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      onClick={handleLogout}
+    >
       {children}
     </Button>
   );
