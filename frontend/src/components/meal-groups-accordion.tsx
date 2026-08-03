@@ -16,11 +16,12 @@ import {
 
 // One day's meals collapsed behind their meal-time subtotals, so the list reads
 // as a four-row summary of where the day's calories went and you drill into the
-// one you care about. Shared by /meals and both dashboards' "Logged today".
+// one you care about. The dashboard's "Logged today", at every width.
 //
-// Breakpoint-agnostic on purpose: every caller either already sits inside a
-// container scoped to one breakpoint (the dashboards) or wraps it in one
-// (/meals), so owning an `lg:hidden` here would fight them.
+// Not /meals: that page shows the day in full, so it renders MealGroups
+// expanded instead. The difference is summary versus whole day, which is a
+// difference between the two screens and not between two widths (#127) — so
+// neither component owns a breakpoint.
 //
 // All four groups start closed (Base UI defaults `value` to []). `multiple` so
 // opening dinner doesn't collapse breakfast.

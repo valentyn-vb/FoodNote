@@ -87,6 +87,33 @@ tokens, the type row and the named divergences from upstream are in
   exemption alongside the existing ones.
 - **There is no dark mode.** It was removed, not disabled: no `.dark`, no
   `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
+- **One tree per screen** — [ADR
+  0011](docs/adr/0011-one-tree-per-screen.md), which argues it rather than
+  asserting it, because the rule costs something. Outside `ui/**`, `hidden lg:*`
+  and `lg:hidden` are **not** how a layout differs by width: the desktop
+  composition is a grid or flex rearrangement of the same blocks, in one DOM.
+  Two mounted copies drift, double the state and the focus order, measure their
+  charts at 0×0, and leave the widths between them to nobody.
+- **Three steps, two thresholds, and the CSS and JS halves must agree.** Phone,
+  `md` (768), `lg` (1024). 768 is `md:` and `useIsMobile()`; 1024 is `lg:` and
+  `DESKTOP_QUERY`. Neither `sm:` nor `xl:` is a step: `xl:grid-cols-4` was
+  deleted for truncating meal names at 1440, and the four surviving `sm:`
+  utilities size a dialog and its footer, not a page.
+- **Verify a layout change at 360, 390, 768, 1024 and 1440,** on the seeded
+  account (`npm run db:up && npm run seed -w backend`), and check no horizontal
+  scroll at any of them. A Chrome window will not go below 500 CSS px, so the two
+  phone widths need device emulation, not a resized window — and a `fullPage`
+  screenshot captures the charts **empty**, so take viewport shots.
+- **No page owns a max-width.** The shell owns the page frame; a cap on a route
+  is what left `/profile` a 576px column against the left edge of 1440.
+- **A NumberFlow figure needs an `sr-only` name** beside it, with the visual copy
+  `aria-hidden` — it renders per-digit spans and exposes no accessible name at
+  all. `spokenStat` in `app/(app)/dashboard/helpers.ts` formats them.
+- **A dialog caps its own height.** Upstream's `DialogContent` has neither a cap
+  nor a scroller, so on a short viewport — a phone with the keyboard up — it
+  grows past both edges and its submit button becomes unreachable. Write
+  `max-h-[85dvh] overflow-y-auto` at the call site; the drawer primitive already
+  does this for itself.
 - **After changing `@theme`, `rm -rf frontend/.next`.** Turbopack serves stale
   token CSS even across a dev-server restart, and a colour that "didn't arrive"
   is the cache far more often than the code.
