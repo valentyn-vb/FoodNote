@@ -102,10 +102,15 @@ export function AppHeader() {
       </div>
 
       {/* The cell stays even when empty: the actions only take the right-hand
-          1fr while something occupies the middle column. Below `lg` its padding
-          tracks the shell's own, so the row lines up with the content. */}
+          1fr while something occupies the middle column. Below `lg` it is a row
+          of its own, so the picker is centred in it rather than left against
+          the content edge; at `lg` the grid's middle column already centres it
+          and the padding belongs to the header. */}
       <div
-        className={cn('lg:order-2', showDayNav && 'px-4 pt-4 md:px-6 lg:p-0')}
+        className={cn(
+          'lg:order-2',
+          showDayNav && 'flex justify-center px-4 pt-4 md:px-6 lg:p-0',
+        )}
       >
         {showDayNav && <DayNav />}
       </div>
