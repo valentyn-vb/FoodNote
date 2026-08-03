@@ -55,7 +55,7 @@ function MealsError({ onRetry }: { onRetry: () => void }) {
 // arrangement once the meals arrive.
 function MealsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
       {Array.from({ length: 4 }, (_, i) => (
         <Skeleton key={i} className="h-36 w-full rounded-lg" />
       ))}

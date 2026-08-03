@@ -20,7 +20,10 @@ export function MealLine({ meal }: { meal: MealResponse }) {
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-t-0">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="truncate text-sm font-semibold">{meal.mealName}</div>
+        {/* Wraps rather than truncating: in a four-column group at `xl` the
+            name has ~150px beside the two icons and the figure, and a truncated
+            "Greek yogurt with berrie…" tells you less than two lines do. */}
+        <div className="text-sm font-semibold break-words">{meal.mealName}</div>
         <div className="text-sm text-muted-foreground">
           {meal.source === 'ai' ? 'AI logged' : 'Manual'} ·{' '}
           {formatMealTime(meal.recordedAt)}

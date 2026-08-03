@@ -11,13 +11,15 @@ import {
 // (#127). This page exists to show the day in full; collapsing it would hide the
 // only thing on the screen.
 //
-// Two columns is the ceiling. `xl:grid-cols-4` truncated meal names at 1440
-// while most of the page stood empty; two give each card ~560px there.
+// All four meal times across the page at `xl`, where there is width for them.
+// Not at `lg`: the sidebar and the page padding leave 720px there, so four
+// columns would be ~165px each. The name wraps rather than truncating
+// (meal-line.tsx), which is what makes the narrow column readable.
 export function MealGroups({ meals }: { meals: MealResponse[] }) {
   const groups = groupMealsByType(meals);
 
   return (
-    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
       {groups.map((group) => (
         <Card
           key={group.mealType}
