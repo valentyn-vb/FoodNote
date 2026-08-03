@@ -201,7 +201,7 @@ export function formatGroupSummary(group: MealGroup): string {
  * second-to-last bucket.
  *
  * `date` is the Dashboard's Tracking Day, not the client clock, so the last
- * bucket is always the same day as the "Logged today" list (see todaysMeals).
+ * bucket is always the same day as the "Today's meals" list (see todaysMeals).
  */
 export function bucketDailyCalories(
   meals: MealResponse[],

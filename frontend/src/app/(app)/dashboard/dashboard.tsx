@@ -144,17 +144,22 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
       </div>
 
       {/* The day's own two blocks: what was eaten, and where it went.
-          Two across from `md`; the ring stretches to the meal list's
-          height rather than fixing its own, so the row has one height. */}
-      <div className="grid gap-5 xl:grid-cols-2 lg:gap-3.5">
-        <Card className="gap-0 overflow-hidden p-0">
+          Two thirds against one from `lg`, not an even split: the meal list
+          grows a row per meal while the ring is one figure at a fixed size, so
+          half the row left the ring swimming in its own card. A third of the
+          content column is 256px at 1024 and 383 at 1440, which the ring reads
+          well at; below `lg` they stack, where a third would be 200px or less.
+          The ring stretches to the list's height rather than fixing its own, so
+          the row still has one height. */}
+      <div className="grid gap-5 lg:grid-cols-3 lg:gap-3.5">
+        <Card className="gap-0 overflow-hidden p-0 lg:col-span-2">
           {/* Title over a line of context, the shape ChartCard gives the three
               cards beside it — this one composes Card directly because the
               accordion runs edge to edge, which a padded body cannot do. */}
           <div className="flex flex-wrap items-start justify-between gap-x-3 px-5 pt-5 pb-4">
             <div className="flex flex-col gap-0.5">
               <h2 className="text-base font-semibold">
-                {isToday ? 'Logged today' : 'Logged meals'}
+                {isToday ? "Today's meals" : 'Meals that day'}
               </h2>
               <p className="text-sm text-muted-foreground">
                 Grouped by meal time

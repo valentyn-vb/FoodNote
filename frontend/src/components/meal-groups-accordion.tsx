@@ -15,7 +15,7 @@ import {
 
 // One day's meals collapsed behind their meal-time subtotals, so the list reads
 // as a four-row summary of where the day's calories went and you drill into the
-// one you care about. The dashboard's "Logged today", at every width.
+// one you care about. The dashboard's "Today's meals", at every width.
 //
 // Not /meals: that page shows the day in full, so it renders MealGroups
 // expanded instead. The difference is summary versus whole day, which is a
