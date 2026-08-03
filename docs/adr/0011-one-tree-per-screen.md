@@ -117,6 +117,15 @@ destructures them, so they land on a `<div>` and do nothing.
 - Two thresholds mean the 768–1023 band is a real step with its own answers —
   the sidebar is an icon rail there, `/meals` is two columns, `/profile` is one.
 - A 44px touch target is a **hit area**, not a size: `touch-target` in
-  `globals.css` centres an invisible box on an icon-only control, so the visual
-  scale stays upstream's. Two of them on neighbouring controls overlap, which is
-  why `meal-line.tsx` and `day-nav.tsx` carry wider gaps than their look needs.
+  `globals.css` centres an invisible box on an icon-only control, so
+  `ui/button.tsx` stays at upstream's scale. Note that this is not the project's
+  only answer to the criterion — ADR 0010 already diverges on **fields**, which
+  are `h-11` outright. Buttons are the surface where a 44px box would be visible
+  and wrong, which is why they get the overlay and fields do not. Two overlays
+  on neighbouring controls overlap, which is why `meal-line.tsx`,
+  `weight-history-row.tsx` and `day-nav.tsx` carry wider gaps than their look
+  needs.
+- **The rule has no enforcement**, and that is a known hole: `touch-target` is
+  opt-in, so a new icon-only control is born without it and only review will
+  catch that. A lint rule beside `no-literal-values.js` is the obvious next step
+  if it starts drifting.

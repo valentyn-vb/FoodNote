@@ -8,11 +8,9 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   NotebookTextIcon,
-  TrendingDownIcon,
   UserRoundPenIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +32,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/auth-provider';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
-import { useMeals } from '@/lib/meals-context';
-import { useWeight } from '@/lib/weight-context';
+import { LogWeightAction } from '@/components/log-weight-action';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 
 // Navigation, at every width: a rail or a panel from 768 up, a sheet below it.
@@ -49,8 +45,6 @@ export function AppSidebar() {
   const router = useRouter();
   const { user: authUser, logout } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
-  const { isToday } = useMeals();
-  const { onWeightSaved } = useWeight();
   const fullName = fullNameOf(authUser);
   const initials = initialsOf(authUser);
 
@@ -68,23 +62,20 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {/* Sized by padding to match AppHeader, so the wordmark and the route
-            title sit on one line and the logo row ends where the header's
-            border does. The header's row is 64 below `lg` (`py-3`) and 72 at
-            `lg` (`lg:py-4` around a 40px button), so this one is 32px of mascot
-            + SidebarHeader's own `p-2` + `py-2 lg:py-3` to match at both steps.
+        {/* AppHeader's `h-16 lg:h-18`, less SidebarHeader's own `p-2` — so the
+            wordmark and the route title sit on one line and this row ends where
+            the header's border does. Both sides now name the same two
+            utilities instead of each summing its own paddings.
             Collapsed, the rail is 3rem and that `p-2` leaves exactly the
             mascot's 32px — so the row drops its `px-4` there and centres, and
             the wordmark goes. With the padding kept, the logo was pushed past
             the edge and `overflow-hidden` cut it in half. */}
-        <div className="flex items-center gap-2 overflow-hidden px-4 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 lg:py-3">
+        <div className="flex h-12 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 lg:h-14">
           <Image
             src="/mascot/default.webp"
             alt="FoodNote mascot"
             width={32}
             height={32}
-            // `size-8` as well as the intrinsic 32: the row's height is its
-            // padding plus this, and the intrinsic box rounds to 31.
             className="size-8 shrink-0 rounded-full"
           />
           <span className="truncate text-lg font-bold group-data-[collapsible=icon]:hidden">
@@ -128,18 +119,7 @@ export function AppSidebar() {
             row — the sidebar's list is places, and this is an action. The sheet
             stays open behind the drawer: closing it would unmount the drawer
             with it. */}
-        {isMobile && (
-          <WeightLogDrawer
-            mode="create"
-            onWeightSaved={onWeightSaved}
-            trigger={
-              <Button variant="outline" size="lg" disabled={!isToday}>
-                <TrendingDownIcon />
-                Log weight
-              </Button>
-            }
-          />
-        )}
+        {isMobile && <LogWeightAction />}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

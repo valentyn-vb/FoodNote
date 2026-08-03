@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/components/auth-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
 import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
+import { DESKTOP_QUERY } from '@/hooks/use-media-query';
 import { MealsProvider } from '@/lib/meals-context';
 import { WeightProvider } from '@/lib/weight-context';
 
@@ -45,7 +46,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           render: the spinner above means the shell's first paint is already a
           client one, so there is no expanded→collapsed flash to hide. */}
       <SidebarProvider
-        defaultOpen={typeof window === 'undefined' || window.innerWidth >= 1024}
+        defaultOpen={
+          typeof window === 'undefined' ||
+          window.matchMedia(DESKTOP_QUERY).matches
+        }
       >
         <MealsProvider>
           <WeightProvider>

@@ -67,14 +67,12 @@ type PersonalDetailsSectionProps = {
   profileData: ProfileResponse | null;
   loading: boolean;
   onProfileChange: (profile: ProfileResponse) => void;
-  className?: string;
 };
 
 export function PersonalDetailsSection({
   profileData,
   loading,
   onProfileChange,
-  className,
 }: PersonalDetailsSectionProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -155,11 +153,11 @@ export function PersonalDetailsSection({
   }
 
   return (
-    <section className={cn('flex flex-col gap-2.5', className)}>
+    <section className="flex flex-col gap-2.5">
       {/* `[h2 ......... Edit]` — the same shape "Change plan" has inside the
           plan card. Centred under the card, the trigger read as a caption
           rather than as the section's one control. */}
-      <div className="flex min-h-8 items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm text-muted-foreground">Personal details</h2>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger

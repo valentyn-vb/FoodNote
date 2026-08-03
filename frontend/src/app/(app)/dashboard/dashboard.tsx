@@ -21,6 +21,22 @@ import { DashboardError, DashboardSkeleton, InlineError } from './states';
 import { useDashboardGate } from './use-dashboard-gate';
 import { WeightHistoryDrawer } from './weight-history-drawer';
 
+// The label and the value are one decision, not two: they used to branch on the
+// same thing twice — once as `=== null`, once as `!` — and had to agree.
+function goalStat(goal: {
+  reachedTarget: boolean;
+  projectedGoalDate: string | null;
+}) {
+  if (goal.reachedTarget)
+    return { label: 'Goal', value: 'You hit your target' };
+  if (goal.projectedGoalDate === null)
+    return { label: 'Goal', value: 'Maintaining your weight' };
+  return {
+    label: 'Projected goal date',
+    value: `${formatGoalDate(goal.projectedGoalDate)} · ${weeksUntil(goal.projectedGoalDate, new Date())} wks`,
+  };
+}
+
 /**
  * The day's numbers, in six blocks and one DOM. Three bands at `lg` — the
  * numbers, the two charts side by side, the meal list full width — stacked in
@@ -74,11 +90,7 @@ export function Dashboard() {
               and the widget carries one. */}
           <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
             <Card className="gap-2.5 p-5 lg:grow-2 lg:basis-0">
-              {/* Three figures, three names. Same treatment as StatWidget and
-                  for the same reason: NumberFlow renders per-digit spans with
-                  no accessible name, so the visual copy is hidden and a string
-                  stands beside it — which is also what makes each number
-                  assertable without betting on an animation library's markup. */}
+              {/* Three figures, three names — see `spokenStat`. */}
               <span className="sr-only">
                 {spokenStat(remainingLabel, remainingKcal, ' kcal')}
               </span>
@@ -121,21 +133,7 @@ export function Dashboard() {
               // and a date pinned to the top read as a card that failed to
               // finish loading.
               className="lg:grow lg:basis-0 lg:justify-center"
-              label={
-                gate.goal.reachedTarget || gate.goal.projectedGoalDate === null
-                  ? 'Goal'
-                  : 'Projected goal date'
-              }
-              value={
-                gate.goal.reachedTarget
-                  ? 'You hit your target'
-                  : !gate.goal.projectedGoalDate
-                    ? 'Maintaining your weight'
-                    : `${formatGoalDate(gate.goal.projectedGoalDate)} · ${weeksUntil(
-                        gate.goal.projectedGoalDate,
-                        new Date(),
-                      )} wks`
-              }
+              {...goalStat(gate.goal)}
             />
           </div>
 

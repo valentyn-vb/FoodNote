@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 // Shown when GET /dashboard fails — the tiles are the backbone, so without
 // them the whole view is unusable. Retry re-runs both the dashboard and the
@@ -18,15 +17,6 @@ export function DashboardError({ onRetry }: { onRetry: () => void }) {
         Try again
       </Button>
     </div>
-  );
-}
-
-export function TileSkeleton({ className }: { className?: string }) {
-  return (
-    <Card className={cn('gap-1.5 rounded-lg px-4.5 py-4', className)}>
-      <Skeleton className="h-3 w-24" />
-      <Skeleton className="h-7 w-20" />
-    </Card>
   );
 }
 
@@ -56,7 +46,10 @@ export function DashboardSkeleton() {
           <Skeleton className="h-9 w-40" />
           <Skeleton className="rounded-full h-2 w-full" />
         </Card>
-        <TileSkeleton className="lg:grow lg:basis-0" />
+        <Card className="gap-1.5 rounded-lg px-4.5 py-4 lg:grow lg:basis-0">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-20" />
+        </Card>
       </div>
       <div className="flex flex-col gap-5 lg:flex-row lg:gap-3.5">
         <div className="flex flex-col gap-2.5 lg:grow lg:basis-0">

@@ -1,13 +1,12 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { LogWeightAction } from '@/components/log-weight-action';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useWeight } from '@/lib/weight-context';
-import { TrendingDownIcon, UtensilsIcon } from 'lucide-react';
-import { useMeals } from '@/lib/meals-context';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { UtensilsIcon } from 'lucide-react';
 
 /** The route's own name. Prefix-matched, so a future `/meals/:id` still reads
     "Meals" rather than falling through to the app name. */
@@ -35,11 +34,13 @@ function titleFor(pathname: string): string {
  */
 export function AppHeader() {
   const pathname = usePathname();
-  const { onWeightSaved } = useWeight();
-  const { isToday } = useMeals();
+  // The same 768 the sidebar's sheet uses, and gated in JS rather than with
+  // `hidden md:inline-flex`: a CSS-hidden trigger leaves its drawer mounted, so
+  // the phone carried this one *and* the sheet's copy.
+  const isMobile = useIsMobile();
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background px-4 py-3 md:px-6 lg:px-4 lg:py-4">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 lg:h-18 lg:px-4">
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger className="touch-target" />
         {/* The label of the place gives way before any control does. */}
@@ -49,29 +50,11 @@ export function AppHeader() {
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <WeightLogDrawer
-          mode="create"
-          onWeightSaved={onWeightSaved}
-          trigger={
-            // Below 768 the row cannot hold both actions (40 + 117 + 140 of 328
-            // at 360px, before this one's 143), and calories are logged many
-            // times a day where weight is logged once — so this is the one that
-            // yields, to a button in the sidebar sheet.
-            //
-            // A weight is always stamped "now" on create, so it cannot be
-            // logged onto the day the nav is showing. Off today the action is
-            // disabled rather than silently writing to today (#119).
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={!isToday}
-              className="hidden px-6 md:inline-flex"
-            >
-              <TrendingDownIcon />
-              Log weight
-            </Button>
-          }
-        />
+        {/* Below 768 the row cannot hold both actions (40 + 117 + 140 of 328
+            at 360px, before this one's 143), and calories are logged many times
+            a day where weight is logged once — so this is the one that yields,
+            to a button in the sidebar sheet. */}
+        {!isMobile && <LogWeightAction className="px-6" />}
         <MealLogDrawer
           trigger={
             <Button size="lg" className="px-6">

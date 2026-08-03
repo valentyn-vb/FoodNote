@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { goals, profile } from '@/lib/api-client';
-import { cn, formatPace } from '@/lib/utils';
+import { formatPace } from '@/lib/utils';
 import {
   type Pace,
   type PlanInput,
@@ -26,14 +26,12 @@ type CurrentPlanSectionProps = {
   profileData: ProfileResponse | null;
   loading: boolean;
   onProfileChange: (profile: ProfileResponse) => void;
-  className?: string;
 };
 
 export function CurrentPlanSection({
   profileData,
   loading,
   onProfileChange,
-  className,
 }: CurrentPlanSectionProps) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -89,13 +87,8 @@ export function CurrentPlanSection({
   );
 
   return (
-    <section className={cn('flex flex-col gap-2.5', className)}>
-      {/* `min-h-8` is the height of the sibling section's Edit button: side by
-          side at `lg`, two heading rows of different heights start their cards
-          at different y. This section's control lives inside its card. */}
-      <div className="flex min-h-8 items-center">
-        <h2 className="text-sm text-muted-foreground">Current plan</h2>
-      </div>
+    <section className="flex flex-col gap-2.5">
+      <h2 className="text-sm text-muted-foreground">Current plan</h2>
       <Card className="gap-1 p-4">
         <p className="font-heading text-2xl font-semibold tabular-nums">
           {profileData?.calorieTarget != null

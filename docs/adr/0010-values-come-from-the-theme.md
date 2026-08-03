@@ -106,11 +106,18 @@ is still a candidate for a component — the rule is no longer what forces it.
 `ui/**` is meant to survive a `shadcn diff`, so every intentional difference is
 listed here rather than discovered later:
 
-- **Touch targets.** `Input`, `SelectTrigger` and `InputGroup` are `h-11` (44px)
-  against upstream's `h-9`; `Button size="lg"` is `h-12`,
-  `icon-lg` is `size-11`; `Toggle size="lg"` is `h-11`. Horizontal padding is
-  upstream's, so the divergence is height and nothing else. 44/48 is a
-  thumb-target argument, not a style one.
+- **Touch targets, on fields only.** `Input`, `SelectTrigger` and `InputGroup`
+  are `h-11` (44px) against upstream's `h-9`; `Toggle size="lg"` is `h-11
+min-w-11`. Horizontal padding is upstream's, so the divergence is height and
+  nothing else. 44 is a thumb-target argument, not a style one.
+
+  **`Button` is not among them** — `size="lg"` is upstream's `h-10` and
+  `icon-lg` is `size-10`. This entry claimed `h-12` and `size-11` until
+  [ADR 0011](0011-one-tree-per-screen.md) came to reuse the claim and found the
+  code said otherwise; the numbers were stale, not the code. Buttons reach 44 by
+  hit area instead — see `touch-target` in ADR 0011, which exists _because_
+  `ui/button.tsx` is stock here.
+
 - **`Card` is bounded by a `border`,** not upstream's `ring-1
 ring-foreground/10`. A ring means focus and invalid state here, so a card and
   a focused card must not be drawn the same way.

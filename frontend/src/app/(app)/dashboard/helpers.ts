@@ -6,9 +6,14 @@ const NUMBER_FORMAT = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 });
 
-/** The accessible name of one figure — NumberFlow splits a number into
-    per-digit spans and exposes no name of its own, so every figure needs one
-    string beside it and its visual copy hidden from the accessibility tree. */
+/**
+ * The accessible name of one figure. NumberFlow splits a number into per-digit
+ * animated spans and exposes no accessible name, so a screen reader reads a
+ * bare figure as a label followed by scattered digits. Every figure therefore
+ * carries one `sr-only` string beside it with its visual copy `aria-hidden` —
+ * which is also what makes the value assertable in a test without betting on an
+ * animation library's internal markup.
+ */
 export function spokenStat(
   label: string,
   value: string | number,
