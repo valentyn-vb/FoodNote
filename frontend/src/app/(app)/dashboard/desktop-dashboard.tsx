@@ -1,15 +1,12 @@
 'use client';
 
-import {
-  DailyCaloriesChart,
-  RemainingTodayRing,
-  WeightTrendChart,
-} from '@/components/charts';
+import { DailyCaloriesChart, RemainingTodayRing } from '@/components/charts';
 import { Disclaimer } from '@/components/disclaimer';
 import { MealGroupsAccordion } from '@/components/meal-groups-accordion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WeightTrendChart } from '@/components/weight-trend-chart';
 import { formatGoalDate, weeksUntil } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
 import { useWeight } from '@/lib/weight-context';
