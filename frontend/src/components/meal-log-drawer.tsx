@@ -42,6 +42,7 @@ import {
   FieldError,
   FieldLabel,
 } from '@/components/ui/field';
+import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Disclaimer } from '@/components/disclaimer';
 import {
@@ -61,6 +62,7 @@ import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
+import { VoiceDictation } from '@/components/voice-dictation';
 
 /**
  * The step, and whatever only that step knows. A parsed meal's confidence note
@@ -805,13 +807,18 @@ function DescriptionField({
   return (
     <Field data-invalid={error ? true : undefined}>
       <FieldLabel htmlFor={id}>Describe what you ate</FieldLabel>
-      <Textarea
-        id={id}
-        aria-invalid={error ? true : undefined}
-        className={cn('min-h-22', className)}
-        {...props}
-        {...parseForm.register('description')}
-      />
+      {/* InputGroup so the mic sits inside the field's border rather than beside
+          it: speaking and typing fill the same box, which is the point. */}
+      <InputGroup>
+        <InputGroupTextarea
+          id={id}
+          aria-invalid={error ? true : undefined}
+          className={cn('min-h-22', className)}
+          {...props}
+          {...parseForm.register('description')}
+        />
+        <VoiceDictation parseForm={parseForm} />
+      </InputGroup>
       {/* Says what the disabled Parse button is waiting for. Before the field is
           touched there is no error to show, so without this the button is dead
           with no stated reason. */}
