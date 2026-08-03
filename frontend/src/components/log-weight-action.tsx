@@ -32,7 +32,7 @@ export function LogWeightAction({ className }: { className?: string }) {
           disabled={!isToday}
           className={className}
         >
-          <TrendingDownIcon />
+          <TrendingDownIcon className="mr-1" />
           Log weight
         </Button>
       }

@@ -5,6 +5,7 @@ import { LogWeightAction } from '@/components/log-weight-action';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { ShellFrame } from '@/components/shell-frame';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { UtensilsIcon } from 'lucide-react';
 
@@ -40,30 +41,34 @@ export function AppHeader() {
   const isMobile = useIsMobile();
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 lg:h-18 lg:px-4">
-      <div className="flex min-w-0 items-center gap-2">
-        <SidebarTrigger className="touch-target" />
-        {/* The label of the place gives way before any control does. */}
-        <h1 className="truncate font-heading text-2xl font-semibold">
-          {titleFor(pathname)}
-        </h1>
-      </div>
+    <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-background px-4 md:px-6 lg:h-18 lg:px-4">
+      {/* The same frame the page content sits in, so the actions stop where the
+          content does instead of running to the edge of a 4K display. */}
+      <ShellFrame className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <SidebarTrigger className="touch-target" />
+          {/* The label of the place gives way before any control does. */}
+          <h1 className="truncate font-heading text-2xl font-semibold">
+            {titleFor(pathname)}
+          </h1>
+        </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        {/* Below 768 the row cannot hold both actions (40 + 117 + 140 of 328
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* Below 768 the row cannot hold both actions (40 + 117 + 140 of 328
             at 360px, before this one's 143), and calories are logged many times
             a day where weight is logged once — so this is the one that yields,
             to a button in the sidebar sheet. */}
-        {!isMobile && <LogWeightAction className="px-6" />}
-        <MealLogDrawer
-          trigger={
-            <Button size="lg" className="px-6">
-              <UtensilsIcon />
-              Log a meal
-            </Button>
-          }
-        />
-      </div>
+          {!isMobile && <LogWeightAction className="px-6" />}
+          <MealLogDrawer
+            trigger={
+              <Button size="lg" className="px-6">
+                <UtensilsIcon className="mr-1" />
+                Log a meal
+              </Button>
+            }
+          />
+        </div>
+      </ShellFrame>
     </header>
   );
 }

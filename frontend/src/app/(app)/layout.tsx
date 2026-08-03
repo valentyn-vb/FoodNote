@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { ShellFrame } from '@/components/shell-frame';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/components/auth-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
@@ -58,8 +59,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <AppHeader />
               {/* A div, not a `main`: SidebarInset is already the page's `main`.
                   The flat `px-8` was 64 of the 360px a phone has. */}
-              <div className="px-4 py-5 md:px-6 lg:px-8 lg:py-6">
-                {children}
+              {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
+                  so this makes the page column at least as tall as what is left
+                  of the viewport under the header — which is what lets a page
+                  push its own footer to the bottom with `mt-auto` instead of
+                  leaving it floating under short content. */}
+              <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
+                <ShellFrame className="flex flex-1 flex-col">
+                  {children}
+                </ShellFrame>
               </div>
             </SidebarInset>
             {/* The "Log weight" trigger moves between the header and the sidebar
