@@ -4,7 +4,14 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
-import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  Bookmark,
+  BookmarkCheck,
+  Pencil,
+  TriangleAlert,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NumberFlow from '@number-flow/react';
 import {
@@ -19,7 +26,9 @@ import {
   perPortion,
   type AiParsedMeal,
   type AiParseRequest,
+  type MealItem,
   type MealResponse,
+  type MealSource,
 } from '@foodnote/shared';
 import {
   Drawer,
@@ -60,7 +69,11 @@ import {
 } from '@/components/meal-fields';
 import { cn } from '@/lib/utils';
 import { useMeals } from '@/lib/meals-context';
-import { ApiError, meals as mealsApi } from '@/lib/api-client';
+import {
+  ApiError,
+  meals as mealsApi,
+  savedMeals as savedMealsApi,
+} from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -154,6 +167,22 @@ const emptyDraft = (): MealDraftValues => ({
   fatGrams: 0,
   items: [],
 });
+
+/**
+ * The items as the contract wants them. The four per-portion figures the form
+ * carries — for the inputs and for `sumItems` — are display only, derived from
+ * `per100g × portionGrams / 100`, and are not part of `mealItemSchema`; only
+ * the weight and the density go on the wire. The meal-level totals are a
+ * different thing and are untouched.
+ *
+ * Two callers: logging a meal, and keeping one for reuse.
+ */
+function toWireItems(items: MealDraftValues['items']): MealItem[] {
+  return (items ?? []).map(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ({ calories, proteinGrams, carbsGrams, fatGrams, ...item }) => item,
+  );
+}
 
 const draftFromMeal = (meal: MealResponse): MealDraftValues => ({
   mealName: meal.mealName,
@@ -364,20 +393,20 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
     form.setValue('fatGrams', next.fatGrams);
   }
 
+  /**
+   * How the figures on screen were produced. It goes onto a new Meal Entry and
+   * onto a Saved Meal kept from this draft — a kept parse still reads as `ai`.
+   * A stored meal keeps its own: an edit corrects figures, it does not rewrite
+   * where they came from.
+   */
+  const draftSource: MealSource = editing
+    ? editing.source
+    : step === 'manual'
+      ? 'manual'
+      : 'ai';
+
   function handleSave(values: MealDraftValues) {
-    // Strip the per-portion display fields (calories, proteinGrams, carbsGrams,
-    // fatGrams at item level) — only portionGrams + per100g go into the request.
-    // The meal-level totals (totalCalories, proteinGrams…) are untouched.
-    const items = (values.items ?? []).map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({
-        calories: _c,
-        proteinGrams: _p,
-        carbsGrams: _carb,
-        fatGrams: _f,
-        ...item
-      }) => item,
-    );
+    const items = toWireItems(values.items);
     if (editing) {
       // No recordedAt and no source in the patch: an edit corrects a meal's
       // figures, it doesn't move it to another Tracking Day or turn an AI parse
@@ -388,7 +417,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
         ...values,
         items,
         recordedAt: new Date().toISOString(),
-        source: step === 'manual' ? 'manual' : 'ai',
+        source: draftSource,
       });
     }
     // Closing resets: DrawerPortal unmounts the content, and `handleOpenChange`
@@ -515,6 +544,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             form={form}
             description={readDescription()}
             confidenceNote={view.confidenceNote}
+            source={draftSource}
             totalsOverridden={totalsOverridden}
             onTakeOverTotals={() => setTotalsOverridden(true)}
             onItemsChange={handleItemsChange}
@@ -528,6 +558,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
         <StepPanel key="manual">
           <ManualStep
             form={form}
+            source={draftSource}
             onTakeOverTotals={() => setTotalsOverridden(true)}
             onSubmit={form.handleSubmit(handleSave)}
           />
@@ -538,6 +569,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
         <StepPanel key="edit">
           <EditStep
             form={form}
+            source={draftSource}
             onItemsChange={handleItemsChange}
             onTakeOverTotals={() => setTotalsOverridden(true)}
             onSubmit={form.handleSubmit(handleSave)}
@@ -614,6 +646,7 @@ function ReviewStep({
   form,
   description,
   confidenceNote,
+  source,
   totalsOverridden,
   onTakeOverTotals,
   onItemsChange,
@@ -623,6 +656,7 @@ function ReviewStep({
   form: UseFormReturn<MealDraftValues>;
   description: string;
   confidenceNote: string | null;
+  source: MealSource;
   totalsOverridden: boolean;
   onTakeOverTotals: () => void;
   onItemsChange: () => void;
@@ -705,8 +739,11 @@ function ReviewStep({
         </form>
       </DrawerBody>
 
-      <DrawerFooter className="pb-5">
+      {/* `items-center gap-2`, as StepFooter does: one full-width action with a
+          quiet link under it. */}
+      <DrawerFooter className="items-center gap-2 pb-5">
         <SaveButton control={form.control} />
+        <SaveToMyMealsButton form={form} source={source} />
       </DrawerFooter>
     </>
   );
@@ -720,10 +757,12 @@ function ReviewStep({
  */
 function ManualStep({
   form,
+  source,
   onTakeOverTotals,
   onSubmit,
 }: {
   form: UseFormReturn<MealDraftValues>;
+  source: MealSource;
   onTakeOverTotals: () => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
 }) {
@@ -749,8 +788,9 @@ function ManualStep({
         </form>
       </DrawerBody>
 
-      <DrawerFooter className="pb-5">
+      <DrawerFooter className="items-center gap-2 pb-5">
         <SaveButton control={form.control} />
+        <SaveToMyMealsButton form={form} source={source} />
       </DrawerFooter>
     </>
   );
@@ -766,11 +806,13 @@ function ManualStep({
  */
 function EditStep({
   form,
+  source,
   onItemsChange,
   onTakeOverTotals,
   onSubmit,
 }: {
   form: UseFormReturn<MealDraftValues>;
+  source: MealSource;
   onItemsChange: () => void;
   onTakeOverTotals: () => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
@@ -798,8 +840,11 @@ function EditStep({
         </form>
       </DrawerBody>
 
-      <DrawerFooter className="pb-5">
+      <DrawerFooter className="items-center gap-2 pb-5">
         <SaveButton control={form.control} />
+        {/* Here too, not only on the create steps: this is what lets a meal
+            logged days ago be kept for reuse. */}
+        <SaveToMyMealsButton form={form} source={source} />
       </DrawerFooter>
     </>
   );
@@ -1014,6 +1059,62 @@ function RecoverStep({
       {children}
       <StepFooter primary={primary} secondary={secondary} />
     </>
+  );
+}
+
+/**
+ * Keeps the draft on screen as a Saved Meal, to log again later without a parse.
+ *
+ * Its own press rather than a checkbox on the save: the two are independent
+ * records (ADR-0014), either order is valid, and this is the only way to keep a
+ * meal that was logged days ago — the Edit step gets the same control.
+ *
+ * It latches once it succeeds. Nothing stops duplicate names server-side, so
+ * without this a second press would quietly make a second copy.
+ */
+function SaveToMyMealsButton({
+  form,
+  source,
+}: {
+  form: UseFormReturn<MealDraftValues>;
+  source: MealSource;
+}) {
+  const [state, setState] = useState<'idle' | 'saving' | 'kept'>('idle');
+
+  async function keep() {
+    // A template is the draft as shown, so it has to clear the same validation a
+    // Meal Entry does — an unnamed meal is no more keepable than it is loggable.
+    if (!(await form.trigger())) return;
+    setState('saving');
+    const values = form.getValues();
+    try {
+      // No mealType and no recordedAt: those describe an occasion, and a Saved
+      // Meal has none — the user picks them each time it is logged.
+      await savedMealsApi.create({
+        mealName: values.mealName,
+        totalCalories: values.totalCalories,
+        proteinGrams: values.proteinGrams,
+        carbsGrams: values.carbsGrams,
+        fatGrams: values.fatGrams,
+        source,
+        items: toWireItems(values.items),
+      });
+      setState('kept');
+      toast.success(`“${values.mealName}” is in My meals`);
+    } catch {
+      // Back to idle, not to a dead end: the meal is still there to keep.
+      setState('idle');
+      toast.error("Couldn't keep that meal. Please try again.");
+    }
+  }
+
+  const kept = state === 'kept';
+
+  return (
+    <QuietButton onClick={keep} disabled={state !== 'idle'}>
+      {kept ? <BookmarkCheck aria-hidden /> : <Bookmark aria-hidden />}
+      {kept ? 'In My meals' : 'Save to My meals'}
+    </QuietButton>
   );
 }
 
