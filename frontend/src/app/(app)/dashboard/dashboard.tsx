@@ -1,6 +1,6 @@
 'use client';
 
-import type { DashboardResponse } from '@foodnote/shared';
+import { useRouter } from 'next/navigation';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { EmptyMeals } from '@/components/empty-meals';
@@ -10,16 +10,13 @@ import {
   goalDirection,
   splitCaloriesByMealType,
 } from '@/lib/dashboard-transforms';
-import { useMeals } from '@/lib/meals-context';
-import { useWeight } from '@/lib/weight-context';
 import { CurrentGoalCard } from './current-goal-card';
 import { CurrentWeightCard } from './current-weight-card';
 import { DailyCaloriesCard } from './daily-calories-card';
 import { EatenCard } from './eaten-card';
 import { formatFigure } from './helpers';
 import { RemainingCard } from './remaining-card';
-import { DashboardError, DashboardSkeleton } from './states';
-import { useDashboardGate } from './use-dashboard-gate';
+import type { DashboardFigures } from './figures';
 import { WeeklyIntakeCard } from './weekly-intake-card';
 import { WeightTrendCard } from './weight-trend-card';
 
@@ -36,24 +33,17 @@ import { WeightTrendCard } from './weight-trend-card';
  * present-state, which is what the API serves — `date` scopes only the meal
  * window (ADR-0005). The calorie labels say which day they mean.
  */
-export function Dashboard() {
-  const gate = useDashboardGate();
-
+export function Dashboard({
+  selectedDate,
+  ...figures
+}: DashboardFigures & { selectedDate: string }) {
   return (
     <div className="flex grow flex-col gap-5 lg:gap-4">
-      {/* Outside the gate, so stepping the day is still possible while the day
-          it stepped to is loading or has failed. */}
       <div className="flex justify-center">
-        <DayNav />
+        <DayNav selectedDate={selectedDate} />
       </div>
 
-      {gate.state === 'error' ? (
-        <DashboardError onRetry={gate.retryAll} />
-      ) : gate.state === 'loading' ? (
-        <DashboardSkeleton />
-      ) : (
-        <DashboardBands goal={gate.goal} />
-      )}
+      <DashboardBands {...figures} />
 
       {/* Last at every width, and outside the gate so it doesn't appear from
           nowhere when the data lands — it says the numbers are estimates, which
@@ -69,31 +59,27 @@ export function Dashboard() {
 }
 
 /**
- * The six blocks themselves, rendered only in the gate's 'ready' state — which
- * is what makes `goal`, and the direction derived from it, non-null by type
- * rather than by a second check the layout would have to repeat.
+ * The seven blocks. `goal` is non-null by type because the page cannot render
+ * without it — `requireOnboarded()` redirects first — which is what the gate's
+ * 'ready' state used to buy.
  */
-function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
-  const {
-    eatenKcal,
-    remainingKcal,
-    progressPct,
-    goalKcal,
-    macros,
-    selectedDayMeals,
-    dailyCalories,
-    isToday,
-  } = useMeals();
-  const {
-    status: weightStatus,
-    retry: retryWeight,
-    entries: weightEntries,
-    currentWeightKg,
-    weightTrend,
-    weightChangeKg,
-    weekChangeKg,
-    onWeightsChanged,
-  } = useWeight();
+function DashboardBands({
+  goal,
+  eatenKcal,
+  remainingKcal,
+  progressPct,
+  goalKcal,
+  macros,
+  selectedDayMeals,
+  dailyCalories,
+  isToday,
+  weightEntries,
+  currentWeightKg,
+  weightTrend,
+  weightChangeKg,
+  weekChangeKg,
+}: DashboardFigures) {
+  const router = useRouter();
 
   const direction = goalDirection(
     goal.startWeightKg,
@@ -207,10 +193,11 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
       <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
         <WeightTrendCard
           className="h-72"
-          status={weightStatus}
-          onRetry={retryWeight}
           entries={weightEntries}
-          onWeightsChanged={onWeightsChanged}
+          // A journal edit used to tell the provider to refetch; it re-renders
+          // the server tree instead, which is the only thing that can move the
+          // trend, the change stat and the goal tile together.
+          onWeightsChanged={() => router.refresh()}
           trend={weightTrend}
           monthChangeKg={weightChangeKg}
           projectedGoalDate={goal.projectedGoalDate}

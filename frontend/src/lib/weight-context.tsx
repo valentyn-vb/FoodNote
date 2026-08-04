@@ -15,6 +15,7 @@ import { useMeals } from '@/lib/meals-context';
 import {
   buildWeightTrend,
   computeWeightChange,
+  WEIGHT_WINDOW_DAYS,
   isoDaysAgo,
   todayUtc,
   weightAsOf,
@@ -33,7 +34,6 @@ import {
 // the fetch range, not anything the trend card draws: the chart crops its axis
 // to the readings themselves, and the card dates its count from the first of
 // them rather than from this window.
-export const WEIGHT_WINDOW_DAYS = 60;
 
 type FetchStatus = 'loading' | 'error' | 'ready';
 

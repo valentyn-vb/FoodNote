@@ -1,0 +1,83 @@
+import type {
+  DashboardResponse,
+  ListMealsResponse,
+  ListWeightsResponse,
+} from '@foodnote/shared';
+import {
+  bucketDailyCalories,
+  buildWeightTrend,
+  computeWeightChange,
+  todayUtc,
+  todaysMeals,
+  weightAsOf,
+  weightChangeOverDays,
+} from '@/lib/dashboard-transforms';
+
+/**
+ * Every figure the dashboard draws, derived in one pass.
+ *
+ * This is what the two providers' `useMemo` bodies were: pure functions over the
+ * three responses, computed on every client render because that is where the data
+ * happened to be. Nothing here needs a browser, so it runs on the server and the
+ * client receives numbers instead of the arithmetic that produces them.
+ *
+ * The anchor is the **selected** Tracking Day, not today. Passing the server's
+ * current weight instead once compared the latest reading against a week before
+ * the selected day, and a past day's card read "9.6 kg this week" off two numbers
+ * seven months of plan apart.
+ */
+export function dashboardFigures({
+  dashboard,
+  meals,
+  weights,
+  now,
+}: {
+  dashboard: DashboardResponse;
+  meals: ListMealsResponse;
+  weights: ListWeightsResponse;
+  now: Date;
+}) {
+  const goal = dashboard.goal;
+  const goalKcal = dashboard.calorieTarget;
+  const eatenKcal = dashboard.today.totalCalories;
+
+  // The selected day standing in for "now" in every journal derivation below.
+  const anchor = new Date(`${dashboard.date}T00:00:00Z`);
+
+  const currentWeightKg = weightAsOf(weights, anchor, goal.currentWeightKg);
+  const change = computeWeightChange(weights, currentWeightKg, anchor);
+
+  return {
+    isToday: dashboard.date === todayUtc(now),
+    goal,
+    goalKcal,
+    eatenKcal,
+    // Signed: a day over budget is a number the dashboard states, not one it
+    // floors away. `progressPct` stays clamped — the bar fills once.
+    remainingKcal: goalKcal - eatenKcal,
+    progressPct:
+      goalKcal > 0
+        ? Math.min(100, Math.round((eatenKcal / goalKcal) * 100))
+        : 0,
+    // Straight from the read model, never re-summed from the meal list, whose
+    // items may legitimately disagree with it.
+    macros: {
+      proteinGrams: dashboard.today.proteinGrams,
+      carbsGrams: dashboard.today.carbsGrams,
+      fatGrams: dashboard.today.fatGrams,
+    },
+    selectedDayMeals: todaysMeals(meals, dashboard.date),
+    dailyCalories: bucketDailyCalories(meals, dashboard.date),
+    weightEntries: weights,
+    currentWeightKg,
+    weightTrend: buildWeightTrend(
+      weights,
+      { ...goal, currentWeightKg },
+      anchor,
+    ),
+    weightChangeKg: change.weightChangeKg,
+    weekChangeKg: weightChangeOverDays(weights, currentWeightKg, anchor, 7),
+  };
+}
+
+export type DashboardFigures = ReturnType<typeof dashboardFigures>;

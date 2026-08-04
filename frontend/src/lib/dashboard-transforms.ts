@@ -58,6 +58,41 @@ export function isFutureDay(isoDate: string, now: Date): boolean {
 }
 
 /**
+ * How far back the weight journal is read.
+ *
+ * Here rather than beside the provider that used to own it: a `'use client'`
+ * module's plain exports become client references on the server, so importing
+ * this from there gave a Server Component `undefined` — and `undefined` days
+ * makes an Invalid Date two calls later, which surfaces as `RangeError` from
+ * `toISOString` with nothing in the message about where the number came from.
+ */
+export const WEIGHT_WINDOW_DAYS = 60;
+
+/** The `?date=` parameter the Tracking Day now lives in, on `/dashboard` and `/meals`. */
+export const DAY_PARAM = 'date';
+
+/**
+ * The Tracking Day a request is asking for.
+ *
+ * The day used to be `useState` inside `MealsProvider`, which is why it survived
+ * a navigation between the dashboard and `/meals`. Read on the server it has to
+ * live in the URL instead — and that turns it into untrusted input: anything can
+ * arrive here, including a future day the API has no data for, or a string that
+ * is not a date at all. Both fall back to today rather than erroring, which is
+ * the same thing `setSelectedDate` did with a future date.
+ */
+export function trackingDayFrom(
+  value: string | string[] | undefined,
+  now: Date,
+): string {
+  if (typeof value !== 'string') return todayUtc(now);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return todayUtc(now);
+  if (Number.isNaN(Date.parse(`${value}T00:00:00Z`))) return todayUtc(now);
+  if (isFutureDay(value, now)) return todayUtc(now);
+  return value;
+}
+
+/**
  * Human label for a tracking day:
  * - same UTC day as `now` → "Today"
  * - one day before → "Yesterday"
