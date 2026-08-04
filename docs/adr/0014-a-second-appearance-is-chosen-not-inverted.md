@@ -355,14 +355,19 @@ Without it the decay is predictable — someone nudges `--muted-foreground` half
 step "so it reads better" and takes four pairs with them. The literal-ban lint
 rule is the same idea one layer down; this is the layer that was missing.
 
-It also found something on its first run, in light rather than dark. `--ring`
-exists because the fill orange reaches only 2.0:1 against white where a focus
-indicator wants 3:1 — and the ring measures **1.84:1** on the page and 1.94:1 on
-a card, _below_ the fill it replaced. The substitution bought nothing. Fixing it
-means re-picking a colour that appears on every focus state in the app, which is a
-light-palette change and outside this ADR; it is pinned at its measured value so
-it cannot drift, and it wants a ticket of its own. Dark clears all three at
-7.03, 6.31 and 8.95.
+It also found something on its first run, in light rather than dark, and that
+find is fixed here. `--ring` exists because the fill orange reaches only 2.0:1
+against white where a focus indicator wants 3:1 — and the ring measured
+**1.84:1** on the page and 1.94:1 on a card, _below_ the fill it replaced. The
+substitution had bought nothing. It is now `oklch(0.648 0.15 58.7)`: 3.23 and
+3.41, the lightest value at the ring's own hue that clears the criterion on both
+surfaces, with the chroma raised from 0.122 as the lightness came down, because a
+warm colour darkened at constant chroma turns brown. It stays 1.59:1 from the
+fill, so a focused button still reads as one.
+
+This is a light-palette change inside a dark-mode ADR, and it is taken
+deliberately: the test found it, the fix is one value, and leaving a focus
+indicator below its criterion to protect a scope boundary is the wrong trade.
 
 ---
 

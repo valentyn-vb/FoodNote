@@ -130,9 +130,13 @@
   --accent-foreground: var(--foreground);
   --border: oklch(0.925 0.021 67.6);
   --input: oklch(0.915 0.025 65.6);
-  /* Warm but not the fill orange: the fill reaches 2.0:1 against white where
-     WCAG 2.2 wants 3:1. */
-  --ring: oklch(0.798 0.122 58.7);
+  /* A focus indicator has to clear 3:1 against what surrounds it, and this is
+     the value that does: 3.23:1 on the page, 3.41:1 on a card. The hue is the
+     one the ring always had; the chroma goes up with the darkening (0.122 →
+     0.15) because a warm colour losing lightness at constant chroma turns
+     brown. It sits well clear of the fill orange (1.59:1 between them), so a
+     focused button still reads as a focused button. */
+  --ring: oklch(0.648 0.15 58.7);
 
   --brand-ink: oklch(0.541 0.129 51.5);
 

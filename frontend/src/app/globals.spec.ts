@@ -156,18 +156,16 @@ const UI_PAIRS: [string, string, string][] = [
  *
  * `--primary-foreground/--primary` is the team's decision on review of #106.
  *
- * The three others are a pre-existing gap this test found rather than caused.
- * `--ring` was picked to be "warm but not the fill orange", because the fill
- * reaches only 2.0:1 against white where WCAG 2.2 wants 3:1 for a focus
- * indicator — but the ring measures *lower* than the fill it replaced, so the
- * substitution bought nothing. Fixing it means re-picking a colour that shows on
- * every focus state in the app, which is a light-palette change and deliberately
- * outside ADR 0014. Dark clears all three.
+ * `--primary/--background` is the fill's own boundary against the page. A solid
+ * button names itself with its label, and darkening the fill to earn the ratio is
+ * the #106 argument again, so it stays pinned rather than fixed.
+ *
+ * `--ring` used to be here too, measuring *lower* than the fill it was
+ * introduced to improve on. It clears 3:1 in both appearances now, which is why
+ * this list is two entries shorter than the day it was written.
  */
 const KNOWN_GAPS = new Map([
   ['light:--primary-foreground/--primary', 2.0],
-  ['light:--ring/--background', 1.84],
-  ['light:--ring/--card', 1.94],
   ['light:--primary/--background', 1.9],
 ]);
 
