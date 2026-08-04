@@ -28,14 +28,12 @@ import { WeightHistoryDrawer } from './weight-history-drawer';
  */
 export function WeightTrendCard({
   entries,
-  onWeightsChanged,
   trend,
   monthChangeKg,
   projectedGoalDate,
   className,
 }: {
   entries: WeightEntryResponse[];
-  onWeightsChanged: () => void;
   trend: WeightTrendPoint[];
   monthChangeKg: number;
   projectedGoalDate: string | null;
@@ -65,7 +63,6 @@ export function WeightTrendCard({
       action={
         <WeightHistoryDrawer
           entries={entries}
-          onWeightsChanged={onWeightsChanged}
           trigger={
             <Button
               variant="ghost"

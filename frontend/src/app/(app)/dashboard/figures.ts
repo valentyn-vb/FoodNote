@@ -41,8 +41,13 @@ export function dashboardFigures({
   const goalKcal = dashboard.calorieTarget;
   const eatenKcal = dashboard.today.totalCalories;
 
-  // The selected day standing in for "now" in every journal derivation below.
-  const anchor = new Date(`${dashboard.date}T00:00:00Z`);
+  // The selected day standing in for "now" in every journal derivation below,
+  // anchored at the **end** of it. A weigh-in logged at any hour belongs to the
+  // Tracking Day it was logged on and has to count as its weight: anchored at
+  // midnight, today's weigh-in reads as tomorrow's and the card keeps showing
+  // yesterday's figure — which is exactly what it did until this line said
+  // 23:59. Noon was wrong for the same reason, half as often.
+  const anchor = new Date(`${dashboard.date}T23:59:59.999Z`);
 
   const currentWeightKg = weightAsOf(weights, anchor, goal.currentWeightKg);
   const change = computeWeightChange(weights, currentWeightKg, anchor);

@@ -1,10 +1,11 @@
 'use client';
 
 import { formatMealTime } from '@/lib/dashboard-transforms';
-import { useMeals } from '@/lib/meals-context';
+import { deleteMeal } from '@/lib/actions/meals';
 import type { MealResponse } from '@foodnote/shared';
 import { PencilIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MealLogDrawer } from './meal-log-drawer';
 
@@ -14,8 +15,21 @@ import { MealLogDrawer } from './meal-log-drawer';
 // background.) No NumberFlow either — these lists don't animate, so the calorie
 // figure is plain text.
 export function MealLine({ meal }: { meal: MealResponse }) {
-  const { deleteMeal } = useMeals();
   const [editOpen, setEditOpen] = useState(false);
+  const [isDeleting, startDeleting] = useTransition();
+
+  // The row used to vanish on click and come back if the request failed, against
+  // a client list this component could edit. The list is server state now, so it
+  // goes when the re-render arrives; `isDeleting` is what says the tap landed.
+  function handleDelete() {
+    startDeleting(async () => {
+      const result = await deleteMeal(
+        meal.id,
+        "Couldn't delete your meal. Please try again.",
+      );
+      if (!result.ok) toast.error(result.message);
+    });
+  }
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3 first:border-t-0">
@@ -60,7 +74,8 @@ export function MealLine({ meal }: { meal: MealResponse }) {
             variant="ghost"
             size="icon-sm"
             aria-label={`Delete ${meal.mealName}`}
-            onClick={() => deleteMeal(meal)}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="touch-target text-muted-foreground"
           >
             <Trash2Icon />

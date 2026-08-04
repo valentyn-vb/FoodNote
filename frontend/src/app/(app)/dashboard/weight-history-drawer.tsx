@@ -15,11 +15,9 @@ import { WeightHistoryRow } from '@/components/weight-history-row';
 // that the dashboard's fixed h-screen grid has no room for.
 export function WeightHistoryDrawer({
   entries,
-  onWeightsChanged,
   trigger,
 }: {
   entries: WeightEntryResponse[];
-  onWeightsChanged: () => void;
   /** The element the drawer opens from, so its look stays in a ui/ component. */
   trigger: ReactElement;
 }) {
@@ -43,8 +41,11 @@ export function WeightHistoryDrawer({
             <WeightHistoryRow
               key={entry.id}
               entry={entry}
+              // Still the fetched window's count rather than the journal's, so
+              // a user with one entry inside 60 days and more outside it is
+              // offered a delete Nest will refuse. Unchanged by this migration:
+              // the contract carries no total, and the refusal is handled.
               canDelete={sorted.length > 1}
-              onChanged={onWeightsChanged}
             />
           ))}
         </div>

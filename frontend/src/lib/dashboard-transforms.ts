@@ -82,7 +82,10 @@ export const DAY_PARAM = 'date';
  * the same thing `setSelectedDate` did with a future date.
  */
 export function trackingDayFrom(
-  value: string | string[] | undefined,
+  // `null` because `useSearchParams().get()` returns it, and an array because a
+  // server page's `searchParams` does when the key is repeated. Both are "not a
+  // day I can use", which is the first branch below.
+  value: string | string[] | null | undefined,
   now: Date,
 ): string {
   if (typeof value !== 'string') return todayUtc(now);

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import type { AuthUser } from '@foodnote/shared';
+import type { Appearance, AuthUser, DashboardResponse } from '@foodnote/shared';
 import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -10,8 +10,6 @@ import { AppearanceProvider } from '@/components/appearance-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
 import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
 import { DESKTOP_QUERY } from '@/hooks/use-media-query';
-import { MealsProvider } from '@/lib/meals-context';
-import { WeightProvider } from '@/lib/weight-context';
 
 /**
  * The shared shell for the app routes, at every width: the header names the
@@ -23,16 +21,26 @@ import { WeightProvider } from '@/lib/weight-context';
  * viewport to decide the sidebar's starting state, and `SidebarProvider` holds
  * that state. The user arrives as a prop rather than from a context.
  *
- * `MealsProvider` lives here rather than in the dashboard page so the sidebar's
- * "Log a meal" trigger shares state with the dashboard's numbers. Both providers
- * and `OnboardingGuard` are on their way out — they belong to the slices that
- * follow this one.
+ * No providers left. `MealsProvider` was here so the sidebar's "Log a meal"
+ * trigger shared state with the dashboard's numbers; both write through actions
+ * that revalidate now, so there is no shared client state to place. The
+ * reached-target dialog stays mounted here for the same reason the trigger is —
+ * a weight can be logged on any route — but it takes its inputs as props.
+ * `OnboardingGuard` is the last of them, and it goes with the onboarding route.
  */
 export function AppShell({
   user,
+  goal,
+  maintenanceKcal,
+  appearance,
   children,
 }: {
   user: AuthUser;
+  /** Read from the cookie on the server, so the provider's first value matches the paint. */
+  appearance: Appearance;
+  /** Null until onboarding is finished — the shell renders before that check runs. */
+  goal: DashboardResponse['goal'] | null;
+  maintenanceKcal: number | null;
   children: ReactNode;
 }) {
   return (
@@ -40,7 +48,7 @@ export function AppShell({
     // the section on /profile offer one setting, and one owner is what keeps them
     // agreeing. Outside OnboardingGuard so the appearance survives the redirect a
     // half-finished profile causes.
-    <AppearanceProvider>
+    <AppearanceProvider initial={appearance}>
       <OnboardingGuard>
         {/* Below 1024 the panel would leave too little for the header row, so the
           rail is the starting state there. */}
@@ -50,30 +58,26 @@ export function AppShell({
             window.matchMedia(DESKTOP_QUERY).matches
           }
         >
-          <MealsProvider>
-            <WeightProvider>
-              <AppSidebar user={user} />
-              <SidebarInset>
-                <AppHeader />
-                {/* A div, not a `main`: SidebarInset is already the page's `main`.
+          <AppSidebar user={user} />
+          <SidebarInset>
+            <AppHeader />
+            {/* A div, not a `main`: SidebarInset is already the page's `main`.
                   The flat `px-8` was 64 of the 360px a phone has. */}
-                {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
+            {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
                   so this makes the page column at least as tall as what is left
                   of the viewport under the header — which is what lets a page
                   push its own footer to the bottom with `mt-auto` instead of
                   leaving it floating under short content. */}
-                <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
-                  <ShellFrame className="flex flex-1 flex-col">
-                    {children}
-                  </ShellFrame>
-                </div>
-              </SidebarInset>
-              {/* The "Log weight" trigger moves between the header and the sidebar
+            <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
+              <ShellFrame className="flex flex-1 flex-col">
+                {children}
+              </ShellFrame>
+            </div>
+          </SidebarInset>
+          {/* The "Log weight" trigger moves between the header and the sidebar
                 sheet with the width, so the celebration is mounted here — the
                 nearest shared ancestor that can see either save. */}
-              <GoalReachedOverlay />
-            </WeightProvider>
-          </MealsProvider>
+          <GoalReachedOverlay goal={goal} maintenanceKcal={maintenanceKcal} />
         </SidebarProvider>
       </OnboardingGuard>
     </AppearanceProvider>

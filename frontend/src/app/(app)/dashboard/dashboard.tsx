@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { EmptyMeals } from '@/components/empty-meals';
@@ -79,8 +78,6 @@ function DashboardBands({
   weightChangeKg,
   weekChangeKg,
 }: DashboardFigures) {
-  const router = useRouter();
-
   const direction = goalDirection(
     goal.startWeightKg,
     goal.targetWeightKg,
@@ -194,10 +191,6 @@ function DashboardBands({
         <WeightTrendCard
           className="h-72"
           entries={weightEntries}
-          // A journal edit used to tell the provider to refetch; it re-renders
-          // the server tree instead, which is the only thing that can move the
-          // trend, the change stat and the goal tile together.
-          onWeightsChanged={() => router.refresh()}
           trend={weightTrend}
           monthChangeKg={weightChangeKg}
           projectedGoalDate={goal.projectedGoalDate}

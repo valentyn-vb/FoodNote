@@ -3,35 +3,34 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { weights } from '@/lib/api-client';
+import { deleteWeight } from '@/lib/actions/weights';
 import { formatEntryDate } from '@/lib/dashboard-transforms';
 import type { WeightEntryResponse } from '@foodnote/shared';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { WeightLogDrawer } from './weight-log-drawer';
 
 export function WeightHistoryRow({
   entry,
   canDelete,
-  onChanged,
 }: {
   entry: WeightEntryResponse;
   canDelete: boolean;
-  onChanged: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, startDelete] = useTransition();
 
-  async function handleDelete() {
-    setBusy(true);
-    try {
-      await weights.remove(entry.id);
-      onChanged();
-      toast.success('Entry deleted');
-    } catch {
-      toast.error("Couldn't delete this entry. Please try again.");
-      setBusy(false);
-    }
+  // `onChanged` is gone: it told the drawer's owner to refetch the journal, and
+  // the action revalidates the routes that draw it.
+  function handleDelete() {
+    startDelete(async () => {
+      const result = await deleteWeight(
+        entry.id,
+        "Couldn't delete this entry. Please try again.",
+      );
+      if (result.ok) toast.success('Entry deleted');
+      else toast.error(result.message);
+    });
   }
 
   return (
@@ -54,7 +53,6 @@ export function WeightHistoryRow({
         <WeightLogDrawer
           mode="edit"
           entry={entry}
-          onChanged={onChanged}
           trigger={
             <Button
               variant="ghost"

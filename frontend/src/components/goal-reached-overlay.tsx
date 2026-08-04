@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import {
   weightKgSchema,
+  type DashboardResponse,
   type Pace,
   type ProfileResponse,
 } from '@foodnote/shared';
@@ -24,8 +25,8 @@ import {
 } from '@/components/ui/dialog';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
-import { goals, profile } from '@/lib/api-client';
-import { useMeals } from '@/lib/meals-context';
+import { profile } from '@/lib/api-client';
+import { createGoal, updateGoal } from '@/lib/actions/goals';
 import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
@@ -63,16 +64,21 @@ type DialogView = 'choice' | 'target-input' | 'target-plan';
 /**
  * Non-dismissable celebration and required action dialog for a reached goal.
  * Once a goal is reached, the user must choose: switch to maintenance or set a
- * new target. Closing happens only after one of those actions completes
- * successfully (refetchDashboard flips reachedTarget to false). X, Escape, and
- * outside-click are blocked.
+ * new target. X, Escape, and outside-click are blocked.
  *
  * No new state is persisted to the server: the dialog is driven purely by
- * reachedTarget on the dashboard payload, so dismissal is implicit in the
- * action result.
+ * `reachedTarget`, so dismissal is implicit in the write. Both writes are actions
+ * that revalidate, and the re-rendered tree arrives with `reachedTarget` false —
+ * which is what closes this. Nothing here has to ask for that refetch, and
+ * nothing here holds a copy of the answer.
  */
-export function GoalReachedOverlay() {
-  const { goal, maintenanceKcal, refetchDashboard } = useMeals();
+export function GoalReachedOverlay({
+  goal,
+  maintenanceKcal,
+}: {
+  goal: DashboardResponse['goal'] | null;
+  maintenanceKcal: number | null;
+}) {
   const shouldReduceMotion = useReducedMotion();
   const [view, setView] = useState<DialogView>('choice');
   const [switchingMaintenance, setSwitchingMaintenance] = useState(false);
@@ -103,19 +109,17 @@ export function GoalReachedOverlay() {
 
   async function handleSwitchMaintenance() {
     setSwitchingMaintenance(true);
-    try {
-      await goals.update({ preferredWeeklyChangeKg: 0 });
-      await refetchDashboard();
+    const result = await updateGoal({ preferredWeeklyChangeKg: 0 });
+    if (result.ok) {
       toast.success('Switched to maintenance', {
         description: goal
           ? `Your daily calories now hold you at ${goal.currentWeightKg} kg.`
           : undefined,
       });
-    } catch {
-      toast.error("Couldn't switch to maintenance. Please try again.");
-    } finally {
-      setSwitchingMaintenance(false);
+    } else {
+      toast.error(result.message);
     }
+    setSwitchingMaintenance(false);
   }
 
   async function handleTargetInputContinue(data: TargetWeightForm) {
@@ -133,17 +137,16 @@ export function GoalReachedOverlay() {
 
   async function handlePlanConfirm(pace: Pace) {
     if (!targetWeightValue) return;
-    try {
-      await goals.create({
-        targetWeightKg: targetWeightValue,
-        preferredWeeklyChangeKg: pace,
-      });
-      await refetchDashboard();
+    const result = await createGoal({
+      targetWeightKg: targetWeightValue,
+      preferredWeeklyChangeKg: pace,
+    });
+    if (result.ok) {
       toast.success('New target set', {
         description: `Target: ${targetWeightValue} kg · ${formatPace(pace)} kg/week`,
       });
-    } catch {
-      toast.error("Couldn't set your new target. Please try again.");
+    } else {
+      toast.error(result.message);
     }
   }
 

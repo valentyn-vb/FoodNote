@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, useTransition } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { MascotDisc } from '@/components/mascot-disc';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -60,7 +61,9 @@ import {
   type MealDraftValues,
 } from '@/components/meal-fields';
 import { cn } from '@/lib/utils';
-import { useMeals } from '@/lib/meals-context';
+import { useSearchParams } from 'next/navigation';
+import { deleteMeal, saveMeal, updateMeal } from '@/lib/actions/meals';
+import { DAY_PARAM, trackingDayFrom } from '@/lib/dashboard-transforms';
 import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
@@ -209,9 +212,18 @@ type MealLogDrawerProps = {
 export function MealLogDrawer(props: MealLogDrawerProps) {
   const { open: controlledOpen, onOpenChange, trigger } = props;
   const editing = props.mode === 'edit' ? props.meal : undefined;
-  // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
-  // since Undo (DELETE) needs the server id and rollback is the provider's job.
-  const { saveMeal, updateMeal } = useMeals();
+  // The toast and its Undo live here now, because the action that saved the meal
+  // is what returns the id Undo needs to delete. MealsProvider used to own both,
+  // together with an optimistic insert this no longer needs: the meal appears
+  // when the revalidated tree does.
+  const [, startSaving] = useTransition();
+  // Which Tracking Day a new meal belongs to. A meal, unlike a weight, can be
+  // logged onto a past day — the drawer stamps the time of day and the URL says
+  // which day it lands on.
+  const trackingDay = trackingDayFrom(
+    useSearchParams().get(DAY_PARAM),
+    new Date(),
+  );
   const isMobile = useIsMobile();
   const [open, setOpen] = useControllableState(
     controlledOpen,
@@ -383,13 +395,43 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
       // No recordedAt and no source in the patch: an edit corrects a meal's
       // figures, it doesn't move it to another Tracking Day or turn an AI parse
       // into a manual entry.
-      updateMeal(editing, { ...values, items });
+      startSaving(async () => {
+        const result = await updateMeal(editing.id, { ...values, items });
+        if (!result.ok) toast.error(result.message);
+      });
     } else {
-      saveMeal({
-        ...values,
-        items,
-        recordedAt: new Date().toISOString(),
-        source: step === 'manual' ? 'manual' : 'ai',
+      // Only the day part of the stamp is the selected day — the time of day is
+      // what orders meals inside a Tracking Day, so it stays "now".
+      const recordedAt = `${trackingDay}T${new Date().toISOString().slice(11)}`;
+      startSaving(async () => {
+        const result = await saveMeal({
+          ...values,
+          items,
+          recordedAt,
+          source: step === 'manual' ? 'manual' : 'ai',
+        });
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        const saved = result.data;
+        // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
+        toast.success('Meal saved', {
+          icon: (
+            <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
+          ),
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              void deleteMeal(
+                saved.id,
+                "Couldn't undo — your meal is still saved.",
+              ).then((undone) => {
+                if (!undone.ok) toast.error(undone.message);
+              });
+            },
+          },
+        });
       });
     }
     // Closing resets: DrawerPortal unmounts the content, and `handleOpenChange`

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useTransition, type ReactElement } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/drawer';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { weights } from '@/lib/api-client';
+import { saveWeight, updateWeight } from '@/lib/actions/weights';
 import { useControllableState } from '@/hooks/use-controllable-state';
 import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 import { toDatetimeLocal } from '@/lib/dashboard-transforms';
@@ -52,16 +52,17 @@ type WeightLogDrawerTrigger = {
   onOpenChange?: (open: boolean) => void;
 };
 
+// No `onWeightSaved` or `onChanged` any more. Both existed to tell the rest of
+// the app that this drawer had written something — the trend, the change stats,
+// the goal tile and the calorie target all derive from the journal — and the
+// action revalidates the routes that draw them instead. A caller that wanted to
+// know is a caller that no longer has to.
 type WeightLogDrawerProps = WeightLogDrawerTrigger &
   (
-    | {
-        mode: 'create';
-        onWeightSaved?: (entry: WeightEntryResponse) => void;
-      }
+    | { mode: 'create' }
     | {
         mode: 'edit';
         entry: WeightEntryResponse;
-        onChanged: () => void;
       }
   );
 
@@ -73,7 +74,7 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
     onOpenChange,
     false,
   );
-  const [saving, setSaving] = useState(false);
+  const [saving, startSaving] = useTransition();
   const form = useForm<WeightFormValues>({
     resolver: zodResolver(weightFormSchema),
   });
@@ -99,44 +100,46 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
     );
   }, [open, entry, reset]);
 
-  async function handleSubmit(values: WeightFormValues) {
+  function handleSubmit(values: WeightFormValues) {
     const weightKg = parsedWeightKg(values);
-    setSaving(true);
-    try {
+
+    startSaving(async () => {
       if (mode === 'create') {
         // Always "now" at submit time, not whenever the drawer was opened —
         // the date field isn't shown for create, so its form value is
         // decorative and must not be what actually gets sent.
-        const created = await weights.create({
+        const result = await saveWeight({
           weightKg,
           recordedAt: new Date().toISOString(),
         });
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
         toast.success('Weight logged', {
           icon: (
             <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
           ),
         });
-        props.onWeightSaved?.(created);
       } else {
         // Only send recordedAt if the user actually changed it. The date
         // field is minute-precision, so resending it unconditionally would
         // silently zero out the entry's original seconds on every edit,
         // even one that only touched the weight (review on #36).
         const original = toDatetimeLocal(props.entry.recordedAt);
-        await weights.update(props.entry.id, {
+        const result = await updateWeight(props.entry.id, {
           weightKg,
           ...(values.recordedAt !== original && {
             recordedAt: new Date(values.recordedAt).toISOString(),
           }),
         });
-        props.onChanged();
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
       }
       setOpen(false);
-    } catch {
-      toast.error("Couldn't save your weight. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   const title = mode === 'create' ? 'Log weight' : 'Edit weight';

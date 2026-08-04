@@ -16,7 +16,6 @@ import {
   APPEARANCE_ATTRIBUTE,
   APPEARANCE_COOKIE,
   APPEARANCE_COOKIE_MAX_AGE_S,
-  appearanceOrDefault,
 } from '@/lib/appearance';
 
 /**
@@ -47,13 +46,6 @@ export function useAppearance(): AppearanceContextValue {
   return ctx;
 }
 
-function readCookie(): string | undefined {
-  return document.cookie
-    .split('; ')
-    .find((pair) => pair.startsWith(`${APPEARANCE_COOKIE}=`))
-    ?.split('=')[1];
-}
-
 function writeCookie(value: Appearance) {
   // The BFF's writing half does not exist yet, so this is the browser's job for
   // now — the same shape `ui/sidebar.tsx` uses for its own open state. No
@@ -61,13 +53,24 @@ function writeCookie(value: Appearance) {
   document.cookie = `${APPEARANCE_COOKIE}=${value}; path=/; max-age=${APPEARANCE_COOKIE_MAX_AGE_S}; samesite=lax`;
 }
 
-export function AppearanceProvider({ children }: { children: ReactNode }) {
-  // Seeded from the cookie the server just rendered from, so the first client
-  // value matches the painted one. `useState` initialisers run during render on
-  // the client only — this component is never server-rendered.
-  const [appearance, setLocal] = useState<Appearance>(() =>
-    appearanceOrDefault(readCookie()),
-  );
+export function AppearanceProvider({
+  initial,
+  children,
+}: {
+  /** What the root layout stamped on <html>, read from the cookie. */
+  initial: Appearance;
+  children: ReactNode;
+}) {
+  // Seeded from the server, which read the same cookie to stamp <html>, so the
+  // first client value cannot disagree with the painted one.
+  //
+  // It used to read `document.cookie` in this initialiser, on the stated
+  // assumption that the component is never server-rendered — true only while
+  // `(app)/layout.tsx` held a client auth gate that returned a spinner during
+  // SSR. With the gate gone this renders on the server, where `document` does not
+  // exist: the read threw on every request and the subtree silently lost its
+  // server render. A prop cannot have that problem.
+  const [appearance, setLocal] = useState<Appearance>(initial);
 
   // The attribute and the cookie are the state, projected: every transition
   // below moves `appearance` and nothing else, so neither copy can be the one a
