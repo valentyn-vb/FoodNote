@@ -53,7 +53,7 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
+        <CardTitle className="text-xl font-bold">Log in</CardTitle>
         <CardDescription>Welcome back to FoodNote.</CardDescription>
       </CardHeader>
       <CardContent>
