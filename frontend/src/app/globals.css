@@ -178,6 +178,19 @@
   }
   html {
     @apply font-sans antialiased;
+
+    /* Reserve the scrollbar's track whether or not it is showing. Without this
+       the gutter is 15px of content width that appears the moment a page
+       becomes taller than the viewport and vanishes when it stops being so —
+       and since the shell fills the width, that is the whole layout jumping
+       sideways. Nothing here feeds back into it — the page's height does not
+       depend on those 15px, measured at 2560 and 2545 — so this is one shift
+       per toggle, not a loop.
+
+       On a system with overlay scrollbars this costs nothing — the gutter is
+       0 there — which is also why the symptom is invisible on most Macs and
+       obvious on the machines that have it. */
+    scrollbar-gutter: stable;
   }
 
   /* Tailwind v4's preflight sets `cursor: default` on buttons, following the
