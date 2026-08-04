@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { Figtree, Fredoka } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import {
+  APPEARANCE_ATTRIBUTE,
+  APPEARANCE_COOKIE,
+  appearanceOrDefault,
+} from '@/lib/appearance';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -14,14 +20,27 @@ export const metadata: Metadata = {
     'Weight-loss planning and calorie tracking with AI-assisted meal logging.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Read here rather than in the app shell because only this layout renders
+  // <html>, and the attribute has to be on it before the first paint — the page
+  // background is painted from a token long before React runs, so a client-side
+  // apply is a flash of the wrong appearance, not a late one.
+  //
+  // The cost is real and deliberate: `cookies()` is a request-time API, so every
+  // route — the marketing page included — renders dynamically from here on. It
+  // is the first thing in this app to opt out of static rendering. See ADR 0014.
+  const appearance = appearanceOrDefault(
+    (await cookies()).get(APPEARANCE_COOKIE)?.value,
+  );
+
   return (
     <html
       lang="en"
+      {...{ [APPEARANCE_ATTRIBUTE]: appearance }}
       // Browser extensions (LanguageTool etc.) mutate <html> attributes before
       // hydration; suppress attribute-mismatch noise on this element only.
       suppressHydrationWarning

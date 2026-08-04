@@ -9,14 +9,23 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   NotebookTextIcon,
+  PaletteIcon,
   UserRoundPenIcon,
 } from 'lucide-react';
+import type { Appearance } from '@foodnote/shared';
+import { useAppearance } from '@/components/appearance-provider';
+import { APPEARANCE_OPTIONS } from '@/components/appearance-options';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -44,6 +53,7 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 export function AppSidebar({ user }: { user: AuthUser }) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { appearance, setAppearance } = useAppearance();
   const fullName = fullNameOf(user);
   const initials = initialsOf(user);
 
@@ -155,9 +165,13 @@ export function AppSidebar({ user }: { user: AuthUser }) {
               </DropdownMenuTrigger>
               {/* Beside the rail on a desktop; above the row in the sheet,
                   where "right" puts the menu outside the sheet entirely. */}
+              {/* Narrower than the trigger it hangs off: `w-(--anchor-width)`
+                  makes a menu as wide as the whole account row, and three short
+                  commands do not need 239px of it. */}
               <DropdownMenuContent
                 side={isMobile ? 'top' : 'right'}
                 align="end"
+                className="w-40"
               >
                 <DropdownMenuItem
                   onClick={closeSheet}
@@ -166,6 +180,36 @@ export function AppSidebar({ user }: { user: AuthUser }) {
                   <UserRoundPenIcon />
                   Profile
                 </DropdownMenuItem>
+                {/* A submenu rather than three rows: the menu's other items are
+                    destinations and an action, and this is a setting with a
+                    current value — the radio indicator is what says which. */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <PaletteIcon />
+                    Theme
+                  </DropdownMenuSubTrigger>
+                  {/* Content-width by default, which left the three theme
+                      names looking cramped against the tick. */}
+                  <DropdownMenuSubContent className="min-w-32">
+                    <DropdownMenuRadioGroup
+                      value={appearance}
+                      onValueChange={(next) =>
+                        setAppearance(next as Appearance)
+                      }
+                    >
+                      {APPEARANCE_OPTIONS.map(({ value, label, Icon }) => (
+                        <DropdownMenuRadioItem
+                          key={value}
+                          value={value}
+                          className="[&_[data-slot=dropdown-menu-radio-item-indicator]]:text-brand-ink! [&_[data-slot=dropdown-menu-radio-item-indicator]_svg]:text-brand-ink!"
+                        >
+                          <Icon />
+                          {label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOutIcon />

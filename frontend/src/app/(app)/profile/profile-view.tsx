@@ -6,6 +6,7 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { AuthUser, ProfileResponse } from '@foodnote/shared';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { AppearanceSection } from './appearance-section';
 import { CurrentPlanSection } from './current-plan-section';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { PersonalDetailsSection } from './personal-details-section';
@@ -55,7 +56,7 @@ export function ProfileView({ user }: { user: AuthUser }) {
     <div className="flex w-full max-w-xl flex-col gap-6">
       {/* Identity spans the top at every width; the edit trigger joins the row
           at `lg` instead of floating centred beneath the avatar. */}
-      <div className="flex flex-col items-center gap-2.5 lg:flex-row lg:gap-4">
+      <div className="flex flex-col items-center gap-2.5 px-2 lg:flex-row lg:gap-4">
         <Avatar className="size-18">
           {/* The stock fallback is a grey wash at 14px — it reads as a
               missing image at this size, not as a person. */}
@@ -86,6 +87,8 @@ export function ProfileView({ user }: { user: AuthUser }) {
           loading={loading}
           onProfileChange={setProfileData}
         />
+
+        <AppearanceSection />
       </div>
     </div>
   );

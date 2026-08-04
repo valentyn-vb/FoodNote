@@ -6,6 +6,7 @@ import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ShellFrame } from '@/components/shell-frame';
+import { AppearanceProvider } from '@/components/appearance-provider';
 import { OnboardingGuard } from '@/components/onboarding-guard';
 import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
 import { DESKTOP_QUERY } from '@/hooks/use-media-query';
@@ -35,40 +36,46 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <OnboardingGuard>
-      {/* Below 1024 the panel would leave too little for the header row, so the
+    // Beside MealsProvider for the same reason it is here: the sidebar's menu and
+    // the section on /profile offer one setting, and one owner is what keeps them
+    // agreeing. Outside OnboardingGuard so the appearance survives the redirect a
+    // half-finished profile causes.
+    <AppearanceProvider>
+      <OnboardingGuard>
+        {/* Below 1024 the panel would leave too little for the header row, so the
           rail is the starting state there. */}
-      <SidebarProvider
-        defaultOpen={
-          typeof window === 'undefined' ||
-          window.matchMedia(DESKTOP_QUERY).matches
-        }
-      >
-        <MealsProvider>
-          <WeightProvider>
-            <AppSidebar user={user} />
-            <SidebarInset>
-              <AppHeader />
-              {/* A div, not a `main`: SidebarInset is already the page's `main`.
+        <SidebarProvider
+          defaultOpen={
+            typeof window === 'undefined' ||
+            window.matchMedia(DESKTOP_QUERY).matches
+          }
+        >
+          <MealsProvider>
+            <WeightProvider>
+              <AppSidebar user={user} />
+              <SidebarInset>
+                <AppHeader />
+                {/* A div, not a `main`: SidebarInset is already the page's `main`.
                   The flat `px-8` was 64 of the 360px a phone has. */}
-              {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
+                {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
                   so this makes the page column at least as tall as what is left
                   of the viewport under the header — which is what lets a page
                   push its own footer to the bottom with `mt-auto` instead of
                   leaving it floating under short content. */}
-              <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
-                <ShellFrame className="flex flex-1 flex-col">
-                  {children}
-                </ShellFrame>
-              </div>
-            </SidebarInset>
-            {/* The "Log weight" trigger moves between the header and the sidebar
+                <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
+                  <ShellFrame className="flex flex-1 flex-col">
+                    {children}
+                  </ShellFrame>
+                </div>
+              </SidebarInset>
+              {/* The "Log weight" trigger moves between the header and the sidebar
                 sheet with the width, so the celebration is mounted here — the
                 nearest shared ancestor that can see either save. */}
-            <GoalReachedOverlay />
-          </WeightProvider>
-        </MealsProvider>
-      </SidebarProvider>
-    </OnboardingGuard>
+              <GoalReachedOverlay />
+            </WeightProvider>
+          </MealsProvider>
+        </SidebarProvider>
+      </OnboardingGuard>
+    </AppearanceProvider>
   );
 }
