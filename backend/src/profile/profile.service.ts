@@ -25,7 +25,15 @@ export class ProfileService {
   }
 
   async put(userId: string, data: PutProfileRequest): Promise<ProfileResponse> {
-    const profile = this.profiles.create({ userId, ...data });
+    // A merge onto the existing row, not a fresh entity: PUT replaces the
+    // onboarding facts and its payload deliberately carries nothing else (ADR
+    // 0014), so anything the request never mentions — the appearance today, the
+    // next preference tomorrow — has to survive it. `create()` + `save()` would
+    // blank every unlisted column instead, one silent reset per field.
+    const profile = this.profiles.merge(
+      (await this.find(userId)) ?? this.profiles.create({ userId }),
+      data,
+    );
     await this.profiles.save(profile); // create-or-replace: PK is userId
     return this.buildResponse(userId, profile);
   }
@@ -102,6 +110,7 @@ export class ProfileService {
       sex: profile.sex,
       heightCm: profile.heightCm,
       activityLevel: profile.activityLevel,
+      appearance: profile.appearance,
       currentWeightKg,
       maintenanceCalories,
       calorieTarget,
