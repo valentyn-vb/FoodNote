@@ -24,6 +24,7 @@ import {
   type ListWeightsResponse,
   type LoginRequest,
   type MealResponse,
+  type PatchProfileRequest,
   type ProfileResponse,
   type PutProfileRequest,
   type RegisterRequest,
@@ -245,6 +246,15 @@ export const profile = {
   async put(data: PutProfileRequest): Promise<ProfileResponse> {
     const res = await apiFetch('/api/profile', {
       method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return profileResponseSchema.parse(await res.json());
+  },
+
+  /** PATCH /profile edits part of it — the only way to write the appearance. */
+  async patch(data: PatchProfileRequest): Promise<ProfileResponse> {
+    const res = await apiFetch('/api/profile', {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
     return profileResponseSchema.parse(await res.json());
