@@ -122,7 +122,16 @@ export class MealsService {
     await manager.delete(MealItem, { mealEntryId });
     if (items.length === 0) return [];
     const rows = items.map((item) =>
-      manager.create(MealItem, { mealEntryId, ...item }),
+      manager.create(MealItem, {
+        mealEntryId,
+        name: item.name,
+        quantityDescription: item.quantityDescription,
+        portionGrams: item.portionGrams,
+        caloriesPer100g: item.per100g?.calories ?? null,
+        proteinGramsPer100g: item.per100g?.proteinGrams ?? null,
+        carbsGramsPer100g: item.per100g?.carbsGrams ?? null,
+        fatGramsPer100g: item.per100g?.fatGrams ?? null,
+      }),
     );
     return manager.save(rows);
   }

@@ -33,18 +33,24 @@ describe('Meals API (e2e)', () => {
       {
         name: 'Chicken breast',
         quantityDescription: '180 g',
-        calories: 300,
-        proteinGrams: 40,
-        carbsGrams: 0,
-        fatGrams: 7,
+        portionGrams: 180,
+        per100g: {
+          calories: 167,
+          proteinGrams: 22.2,
+          carbsGrams: 0,
+          fatGrams: 3.9,
+        },
       },
       {
         name: 'White rice',
         quantityDescription: '150 g cooked',
-        calories: 300,
-        proteinGrams: 5,
-        carbsGrams: 60,
-        fatGrams: 8,
+        portionGrams: 150,
+        per100g: {
+          calories: 200,
+          proteinGrams: 3.3,
+          carbsGrams: 40,
+          fatGrams: 5.3,
+        },
       },
     ],
   };
@@ -141,10 +147,13 @@ describe('Meals API (e2e)', () => {
           {
             name: 'Protein shake',
             quantityDescription: '1 scoop',
-            calories: 120,
-            proteinGrams: 24,
-            carbsGrams: 3,
-            fatGrams: 1,
+            portionGrams: 30,
+            per100g: {
+              calories: 400,
+              proteinGrams: 80,
+              carbsGrams: 10,
+              fatGrams: 3.3,
+            },
           },
         ],
       })

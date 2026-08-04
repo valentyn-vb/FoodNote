@@ -89,7 +89,12 @@ export class OpenAiMealParser implements MealParser {
             parsed: true,
             meal: {
               mealName: result.mealName,
-              items: result.items,
+              items: result.items.map((item) => ({
+                name: item.name,
+                quantityDescription: item.quantityDescription,
+                portionGrams: item.portionGrams,
+                per100g: item.per100g,
+              })),
               totalCalories: result.totalCalories,
               proteinGrams: result.proteinGrams,
               carbsGrams: result.carbsGrams,

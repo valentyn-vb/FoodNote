@@ -9,8 +9,10 @@ import { numericTransformer } from '../database/numeric.transformer';
 import { MealEntry } from './meal-entry.entity';
 
 /**
- * An optional per-item breakdown of a MealEntry. Pure child row: no
- * independent lifecycle, so no timestamps. Deleting the parent meal cascades.
+ * An optional per-item breakdown of a MealEntry. Stores Nutrition Density
+ * (per 100 g) and Portion Weight so the density survives a meal and is
+ * reusable at a different weight (ADR-0011). Pure child row: no independent
+ * lifecycle, so no timestamps. Deleting the parent meal cascades.
  */
 @Entity('meal_items')
 export class MealItem {
@@ -34,31 +36,44 @@ export class MealItem {
     type: 'numeric',
     precision: 7,
     scale: 2,
+    nullable: true,
     transformer: numericTransformer,
   })
-  calories: number;
+  portionGrams: number | null;
 
   @Column({
     type: 'numeric',
-    precision: 6,
+    precision: 7,
     scale: 2,
+    nullable: true,
     transformer: numericTransformer,
   })
-  proteinGrams: number;
+  caloriesPer100g: number | null;
 
   @Column({
     type: 'numeric',
-    precision: 6,
+    precision: 7,
     scale: 2,
+    nullable: true,
     transformer: numericTransformer,
   })
-  carbsGrams: number;
+  proteinGramsPer100g: number | null;
 
   @Column({
     type: 'numeric',
-    precision: 6,
+    precision: 7,
     scale: 2,
+    nullable: true,
     transformer: numericTransformer,
   })
-  fatGrams: number;
+  carbsGramsPer100g: number | null;
+
+  @Column({
+    type: 'numeric',
+    precision: 7,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
+  fatGramsPer100g: number | null;
 }

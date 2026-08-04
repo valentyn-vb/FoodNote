@@ -15,10 +15,17 @@ const wholeCaloriesSchema = caloriesSchema.multipleOf(1);
 const modelItemSchema = z.object({
   name: z.string(),
   quantityDescription: z.string(),
-  calories: wholeCaloriesSchema,
-  proteinGrams: macroGramsSchema,
-  carbsGrams: macroGramsSchema,
-  fatGrams: macroGramsSchema,
+  // The model always estimates a weight and a density; both are required here.
+  // Per-portion figures are intentionally absent — deriving them from the model
+  // would give a third thing to reconcile with the item-level density and the
+  // meal-level totals constraint (see prompt in constants.ts).
+  portionGrams: z.number().positive(),
+  per100g: z.object({
+    calories: wholeCaloriesSchema,
+    proteinGrams: macroGramsSchema,
+    carbsGrams: macroGramsSchema,
+    fatGrams: macroGramsSchema,
+  }),
 });
 
 export const modelOutputSchema = z.object({

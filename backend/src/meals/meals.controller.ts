@@ -53,10 +53,19 @@ function toResponse(meal: MealEntry): MealResponse {
     items: (meal.items ?? []).map((item) => ({
       name: item.name,
       quantityDescription: item.quantityDescription,
-      calories: item.calories,
-      proteinGrams: item.proteinGrams,
-      carbsGrams: item.carbsGrams,
-      fatGrams: item.fatGrams,
+      portionGrams: item.portionGrams,
+      per100g:
+        item.caloriesPer100g !== null &&
+        item.proteinGramsPer100g !== null &&
+        item.carbsGramsPer100g !== null &&
+        item.fatGramsPer100g !== null
+          ? {
+              calories: item.caloriesPer100g,
+              proteinGrams: item.proteinGramsPer100g,
+              carbsGrams: item.carbsGramsPer100g,
+              fatGrams: item.fatGramsPer100g,
+            }
+          : null,
     })),
   };
 }

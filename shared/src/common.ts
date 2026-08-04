@@ -42,6 +42,18 @@ export const weightKgSchema = z.number().min(30).max(300);
 export const mealNameSchema = z.string().trim().min(1).max(200);
 export const caloriesSchema = z.number().min(0).max(10000);
 export const macroGramsSchema = z.number().min(0).max(1000);
+export const portionGramsSchema = z.number().positive().max(5000);
+
+/** Nutrition per 100 g — a property of the food, not of the portion. */
+export const nutritionPer100gSchema = z.object({
+  calories: caloriesSchema,
+  proteinGrams: macroGramsSchema,
+  carbsGrams: macroGramsSchema,
+  fatGrams: macroGramsSchema,
+});
+
+export type NutritionPer100g = z.infer<typeof nutritionPer100gSchema>;
+
 export const recordedAtSchema = z.iso.datetime();
 export const dateSchema = z.iso.date();
 

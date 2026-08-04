@@ -19,7 +19,12 @@ gibberish — answer notFood instead.
 For a meal:
 - If no quantity is given, assume ONE TYPICAL SINGLE SERVING and say so in
   confidenceNote.
-- The totals must equal the sum of the items.
+- For each item give portionGrams, the weight in grams of the amount eaten,
+  and per100g, the nutrition of 100 g of that food. Estimate a weight even
+  for countable foods (two large eggs ≈ 110 g).
+- The totals must equal the sum of the items: totalCalories equals the sum of
+  each item's (portionGrams × per100g.calories / 100), and likewise for the
+  macro grams.
 - Calories are whole kcal; grams use at most one decimal place.
 - confidenceNote is ONE short sentence naming the assumption you made.
 - mealName is a short label, well under 200 characters.

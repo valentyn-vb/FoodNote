@@ -17,6 +17,43 @@ import { MAX_SAFE_PACE_KG, PACE_OPTIONS } from './goals';
 const KCAL_PER_GRAM = { protein: 4, carbs: 4, fat: 9 } as const;
 
 /**
+ * The nutrition for a given density and weight. kcal round to whole, grams to
+ * one decimal — for display only; the density stays unrounded in storage so
+ * the round-trip error at 1000 g stays under 0.05 kcal.
+ */
+export function perPortion(
+  per100g: {
+    calories: number;
+    proteinGrams: number;
+    carbsGrams: number;
+    fatGrams: number;
+  },
+  grams: number,
+): {
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+} {
+  const f = grams / 100;
+  return {
+    calories: Math.round(per100g.calories * f),
+    proteinGrams: Math.round(per100g.proteinGrams * f * 10) / 10,
+    carbsGrams: Math.round(per100g.carbsGrams * f * 10) / 10,
+    fatGrams: Math.round(per100g.fatGrams * f * 10) / 10,
+  };
+}
+
+/**
+ * The density (per 100 g) implied by a per-portion figure and its weight.
+ * Unrounded — the caller rounds for display if needed, but the store keeps full
+ * precision so that `perPortion(densityFrom(x, g), g)` round-trips to x.
+ */
+export function densityFrom(figure: number, grams: number): number {
+  return (figure / grams) * 100;
+}
+
+/**
  * The energy the given macros account for, by the Atwater factors. Used to
  * cross-check a meal's stated calories against its macros — the two are
  * allowed to disagree (alcohol, fibre, plain rounding), so this informs the

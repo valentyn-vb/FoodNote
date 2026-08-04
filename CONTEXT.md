@@ -40,6 +40,21 @@ illustration again — a stored Meal Entry whose items disagree with its totals
 is the model working as intended, not a corrupt record.
 _Avoid_: ingredient, product
 
+**Portion Weight**:
+The weight in grams of the amount of a food that was eaten in one Meal Item
+(`portionGrams`). Stored alongside Nutrition Density so the density survives
+the meal and can be applied at a different weight later. Null for hand-added
+items that have no parse behind them — those carry no weight and no density.
+_Avoid_: serving weight, portion size (implies a standard, not a measured amount)
+
+**Nutrition Density**:
+The nutrition of 100 g of a food (`per100g`): calories (kcal), protein,
+carbohydrates, and fat in grams. A property of the food itself, not of the
+amount eaten; multiplied by Portion Weight / 100 to give the per-portion
+figures. Null when Portion Weight is null. Stored unrounded (numeric(7,2)) so
+the round-trip error at 1000 g stays under 0.05 kcal.
+_Avoid_: per-100g figures, density (alone), nutritional value
+
 **AI Parse**:
 Turning a free-text description ("two eggs on toast") into a candidate meal. It
 never writes: a parse yields either a Parsed Meal or the verdict "not food", and

@@ -8,6 +8,8 @@ import {
   mealNameSchema,
   mealSourceSchema,
   mealTypeSchema,
+  nutritionPer100gSchema,
+  portionGramsSchema,
   recordedAtSchema,
 } from './common';
 
@@ -24,10 +26,10 @@ import {
 export const mealItemSchema = z.object({
   name: z.string().trim().min(1).max(200),
   quantityDescription: z.string().trim().min(1).max(100),
-  calories: caloriesSchema,
-  proteinGrams: macroGramsSchema,
-  carbsGrams: macroGramsSchema,
-  fatGrams: macroGramsSchema,
+  // null together: a hand-added item has no parse behind it, so no weight and
+  // no density. modelItemSchema makes both required — the model always estimates.
+  portionGrams: portionGramsSchema.nullable(),
+  per100g: nutritionPer100gSchema.nullable(),
 });
 
 export const createMealRequestSchema = z.object({
