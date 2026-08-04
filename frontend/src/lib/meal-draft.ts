@@ -1,8 +1,4 @@
-import {
-  caloriesFromMacros,
-  type MacroTotals,
-  type MealItem,
-} from '@foodnote/shared';
+import { caloriesFromMacros, type MacroTotals } from '@foodnote/shared';
 
 /**
  * The arithmetic behind reviewing a Parsed Meal, kept pure and free of React
@@ -13,8 +9,16 @@ import {
  * a total the user set by hand always wins.
  */
 
-/** The items' own macro numbers, added up. */
-export function sumItems(items: MealItem[]): MacroTotals {
+/** Any item shape that carries per-portion nutrition figures. */
+type ItemWithPortion = {
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+};
+
+/** The items' per-portion figures, added up. */
+export function sumItems(items: ItemWithPortion[]): MacroTotals {
   return items.reduce<MacroTotals>(
     (total, item) => ({
       totalCalories: total.totalCalories + item.calories,

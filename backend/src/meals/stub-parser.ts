@@ -39,10 +39,13 @@ export class StubMealParser extends MealParser {
           {
             name: description.slice(0, 200),
             quantityDescription: '1 serving',
-            calories: 420,
-            proteinGrams: 24,
-            carbsGrams: 34,
-            fatGrams: 20,
+            portionGrams: 100,
+            per100g: {
+              calories: 420,
+              proteinGrams: 24,
+              carbsGrams: 34,
+              fatGrams: 20,
+            },
           },
         ],
         confidenceNote: 'Fixed values from the test parser.',

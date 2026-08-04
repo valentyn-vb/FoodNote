@@ -15,10 +15,13 @@ const PARSED: AiParseResponse = {
       {
         name: 'Eggs',
         quantityDescription: '2 large',
-        calories: 143,
-        proteinGrams: 13,
-        carbsGrams: 1,
-        fatGrams: 10,
+        portionGrams: 110,
+        per100g: {
+          calories: 130,
+          proteinGrams: 11.8,
+          carbsGrams: 0.9,
+          fatGrams: 9.1,
+        },
       },
     ],
     totalCalories: 143,

@@ -4,14 +4,62 @@ import {
   caloriesFromMacros,
   calorieTargetForPace,
   dailyEnergyDeltaForPace,
+  densityFrom,
   hasReachedTarget,
   manualCalorieRange,
   paceForCalorieTarget,
+  perPortion,
   projectedDate,
   tdee,
 } from './calc';
 import { MAX_SAFE_PACE_KG } from './goals';
 import type { Pace } from './goals';
+
+describe('perPortion', () => {
+  const rice100g = {
+    calories: 131,
+    proteinGrams: 2.9,
+    carbsGrams: 28.7,
+    fatGrams: 0.3,
+  };
+
+  it('scales density by weight: 150 g of rice', () => {
+    const p = perPortion(rice100g, 150);
+    expect(p.calories).toBe(197); // 131 × 1.5 = 196.5 → 197
+    expect(p.proteinGrams).toBe(4.4); // 2.9 × 1.5 = 4.35 → 4.4
+    expect(p.carbsGrams).toBe(43.1); // 28.7 × 1.5 = 43.05 → 43.1
+    expect(p.fatGrams).toBe(0.5); // 0.3 × 1.5 = 0.45 → 0.5
+  });
+
+  it('returns the density unchanged at 100 g', () => {
+    const p = perPortion(rice100g, 100);
+    expect(p.calories).toBe(131);
+    expect(p.proteinGrams).toBe(2.9);
+    expect(p.carbsGrams).toBe(28.7);
+    expect(p.fatGrams).toBe(0.3);
+  });
+});
+
+describe('densityFrom', () => {
+  it('derives per-100g from a per-portion figure and weight', () => {
+    // 196 kcal for 150 g → 196 / 150 × 100 = 130.666…
+    expect(densityFrom(196, 150)).toBeCloseTo(130.667, 2);
+  });
+
+  it('round-trips through perPortion within display precision', () => {
+    const per100g = {
+      calories: 131,
+      proteinGrams: 2.9,
+      carbsGrams: 28.7,
+      fatGrams: 0.3,
+    };
+    const grams = 150;
+    const portion = perPortion(per100g, grams);
+    // Re-deriving the density from the display-rounded calories should be close.
+    const implied = densityFrom(portion.calories, grams);
+    expect(implied).toBeCloseTo(per100g.calories, 0);
+  });
+});
 
 describe('caloriesFromMacros (Atwater)', () => {
   it('applies 4/4/9 kcal per gram', () => {

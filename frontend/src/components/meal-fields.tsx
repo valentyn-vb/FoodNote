@@ -3,18 +3,25 @@
 import { Trash2 } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import {
+  caloriesSchema,
   createMealRequestSchema,
+  macroGramsSchema,
   mealTypeSchema,
+  nutritionPer100gSchema,
+  portionGramsSchema,
+  perPortion,
+  densityFrom,
   type MacroTotals,
-  type MealItem,
+  type NutritionPer100g,
 } from '@foodnote/shared';
 import {
   useFieldArray,
   useWatch,
   type Control,
+  type FieldArrayWithId,
   type UseFormReturn,
 } from 'react-hook-form';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,11 +41,31 @@ import { ToggleField } from './toggle-field';
  * where it is confirmed by glance rather than filled in).
  */
 
-/** Everything POST /meals needs except what the drawer supplies itself. */
-export const mealDraftSchema = createMealRequestSchema.omit({
-  recordedAt: true,
-  source: true,
+/**
+ * Extended item schema for the form: adds per-portion display fields (calories,
+ * protein, carbs, fat) that are not part of the wire schema (mealItemSchema).
+ * For parsed items these are derived from per100g × portionGrams / 100 and
+ * recomputed when either changes. For hand-added items (portionGrams = null,
+ * per100g = null) they are typed directly by the user.
+ * Both drive the meal totals through sumItems but are stripped before posting.
+ */
+const formItemSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  quantityDescription: z.string().trim().min(1).max(100),
+  portionGrams: portionGramsSchema.nullable(),
+  per100g: nutritionPer100gSchema.nullable(),
+  calories: caloriesSchema,
+  proteinGrams: macroGramsSchema,
+  carbsGrams: macroGramsSchema,
+  fatGrams: macroGramsSchema,
 });
+
+export type FormMealItem = z.infer<typeof formItemSchema>;
+
+/** Everything POST /meals needs except what the drawer supplies itself. */
+export const mealDraftSchema = createMealRequestSchema
+  .omit({ recordedAt: true, source: true })
+  .extend({ items: z.array(formItemSchema).optional() });
 
 export type MealDraftValues = z.infer<typeof mealDraftSchema>;
 
@@ -263,12 +290,14 @@ const ITEM_NUTRIENTS = [
   })),
 ] as const;
 
-const EMPTY_ITEM: MealItem = {
+const EMPTY_ITEM: FormMealItem = {
   name: '',
   // Not '': quantityDescription is required and min(1), so an empty string
   // makes an item that cannot be saved. Items only illustrate, so a neutral
   // stand-in is enough.
   quantityDescription: '1 serving',
+  portionGrams: null,
+  per100g: null,
   calories: 0,
   proteinGrams: 0,
   carbsGrams: 0,
@@ -298,90 +327,17 @@ export function MealItemsFields({
       <FormGroupLabel>Items ({fields.length})</FormGroupLabel>
 
       {fields.map((field, index) => (
-        <Card
+        <MealItemRow
           key={field.id}
-          // Staggered: the parsed items are the payoff of the whole flow, and
-          // a cascade reads as "here is what we found" where a simultaneous
-          // appearance reads as a repaint. Capped so a ten-item parse doesn't
-          // turn into a queue.
-          style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
-          // One line of a list: a fixed-height surface that never flexes, at a
-          // tighter radius than the card default.
-          className="@container motion-keep-fade bg-accent/20 shadow-none shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
-        >
-          <div className="flex items-center gap-2">
-            {/* A parsed name is a label, not a field: what the user corrects
-                here are the figures, and an input invited edits to the one part
-                that changes nothing downstream. A hand-added item still needs
-                one — it arrives nameless, and the schema requires a name — so
-                that case keeps its input. */}
-            {field.name ? (
-              <span
-                title={field.name}
-                className="min-w-24 grow-2 basis-0 truncate text-sm font-semibold"
-              >
-                {field.name}
-              </span>
-            ) : (
-              <Input
-                aria-label={`Item ${index + 1} name`}
-                placeholder="Item name"
-                // Reads as text until focused — an item's name, not a form
-                // field: no box, no shadow, the underline does the work.
-                className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
-                {...form.register(`items.${index}.name`)}
-              />
-            )}
-            {/* Read-only: it is what makes the calorie figure checkable
-                ("Rice — 196 kcal" can't be judged, "Rice, 150 g — 196 kcal"
-                can), but the totals are what the user actually corrects. */}
-            <span
-              title={field.quantityDescription}
-              className="min-w-0 shrink truncate text-right text-sm tabular-nums text-muted-foreground"
-            >
-              {field.quantityDescription}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Remove item ${index + 1}`}
-              onClick={() => {
-                remove(index);
-                onItemsChange();
-              }}
-            >
-              <Trash2 />
-            </Button>
-          </div>
-
-          {/* All four figures on one line, each labelled by its addon:
-              units go after a number, nutrient names before it, so kcal reads
-              as the marker for this box rather than a stray unit. */}
-          <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
-            {/* A compact cell in a dense row, tighter than a form field. White
-                and flat: the row already sits on a tinted wash, so a field that
-                lifts off it competes with the row, and the fill is what marks it
-                editable — the read-only name and quantity beside it are not. */}
-            {ITEM_NUTRIENTS.map(({ name, label }) => (
-              <InputGroup
-                key={name}
-                className="h-9 min-w-0 rounded-sm bg-card shadow-none"
-              >
-                <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
-                <InputGroupInput
-                  aria-label={`Item ${index + 1} ${label}`}
-                  className="px-1 text-center"
-                  {...(name === 'calories' ? integerProps : decimalProps)}
-                  {...form.register(`items.${index}.${name}`, {
-                    valueAsNumber: true,
-                    onChange: onItemsChange,
-                  })}
-                />
-              </InputGroup>
-            ))}
-          </div>
-        </Card>
+          field={field}
+          index={index}
+          form={form}
+          onRemove={() => {
+            remove(index);
+            onItemsChange();
+          }}
+          onItemsChange={onItemsChange}
+        />
       ))}
 
       <Button
@@ -396,5 +352,177 @@ export function MealItemsFields({
         + Add item
       </Button>
     </div>
+  );
+}
+
+/**
+ * One item card. Isolated so the per-100 g row can watch the form's per100g
+ * field without re-rendering the sibling items on each density update.
+ */
+function MealItemRow({
+  field,
+  index,
+  form,
+  onRemove,
+  onItemsChange,
+}: {
+  field: FieldArrayWithId<MealDraftValues, 'items', 'id'>;
+  index: number;
+  form: UseFormReturn<MealDraftValues>;
+  onRemove: () => void;
+  onItemsChange: () => void;
+}) {
+  // Live subscription so the read-only per-100 g row updates when a figure
+  // is edited and we recompute the density via form.setValue.
+  const per100g = useWatch({
+    control: form.control,
+    name: `items.${index}.per100g`,
+  }) as NutritionPer100g | null;
+
+  const isParsed = per100g !== null;
+
+  function handlePortionChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const grams = parseFloat(e.target.value);
+    const current = form.getValues(`items.${index}.per100g`);
+    if (current && grams > 0) {
+      const p = perPortion(current, grams);
+      form.setValue(`items.${index}.calories`, p.calories);
+      form.setValue(`items.${index}.proteinGrams`, p.proteinGrams);
+      form.setValue(`items.${index}.carbsGrams`, p.carbsGrams);
+      form.setValue(`items.${index}.fatGrams`, p.fatGrams);
+      onItemsChange();
+    }
+  }
+
+  function handleFigureChange(
+    figureName: 'calories' | 'proteinGrams' | 'carbsGrams' | 'fatGrams',
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const value = parseFloat(e.target.value);
+    const grams = form.getValues(`items.${index}.portionGrams`);
+    if (grams && grams > 0 && !isNaN(value)) {
+      const density = densityFrom(value, grams);
+      form.setValue(`items.${index}.per100g.${figureName}`, density);
+    }
+    onItemsChange();
+  }
+
+  return (
+    <Card
+      // Staggered: the parsed items are the payoff of the whole flow, and
+      // a cascade reads as "here is what we found" where a simultaneous
+      // appearance reads as a repaint. Capped so a ten-item parse doesn't
+      // turn into a queue.
+      style={{ transitionDelay: `${Math.min(index, 5) * 40}ms` }}
+      // One line of a list: a fixed-height surface that never flexes, at a
+      // tighter radius than the card default.
+      className="@container motion-keep-fade bg-accent/20 shadow-none shrink-0 flex-col items-stretch gap-2.5 rounded-md p-3 transition-[opacity,transform] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0"
+    >
+      <div className="flex items-center gap-2">
+        {/* A parsed name is a label, not a field: what the user corrects
+            here are the figures, and an input invited edits to the one part
+            that changes nothing downstream. A hand-added item still needs
+            one — it arrives nameless, and the schema requires a name — so
+            that case keeps its input. */}
+        {field.name ? (
+          <span
+            title={field.name}
+            className="min-w-24 grow-2 basis-0 truncate text-sm font-semibold"
+          >
+            {field.name}
+          </span>
+        ) : (
+          <Input
+            aria-label={`Item ${index + 1} name`}
+            placeholder="Item name"
+            // Reads as text until focused — an item's name, not a form
+            // field: no box, no shadow, the underline does the work.
+            className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
+            {...form.register(`items.${index}.name`)}
+          />
+        )}
+
+        {isParsed ? (
+          /* Parsed item: quantityDescription qualifies the weight input
+             ("2 large [110] g"), so the calorie figure stays checkable. */
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="text-sm text-muted-foreground">
+              {field.quantityDescription}
+            </span>
+            <InputGroup className="h-8 w-20 rounded-sm bg-card shadow-none">
+              <InputGroupInput
+                aria-label={`Item ${index + 1} portion grams`}
+                {...integerProps}
+                max={5000}
+                {...form.register(`items.${index}.portionGrams`, {
+                  valueAsNumber: true,
+                  onChange: handlePortionChange,
+                })}
+              />
+              <InputGroupAddon>g</InputGroupAddon>
+            </InputGroup>
+          </div>
+        ) : (
+          /* Hand-added item: no density to scale from, so no weight input.
+             Read-only: it is what makes the calorie figure checkable. */
+          <span
+            title={field.quantityDescription}
+            className="min-w-0 shrink truncate text-right text-sm tabular-nums text-muted-foreground"
+          >
+            {field.quantityDescription}
+          </span>
+        )}
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Remove item ${index + 1}`}
+          onClick={onRemove}
+        >
+          <Trash2 />
+        </Button>
+      </div>
+
+      {/* All four figures on one line, each labelled by its addon:
+          units go after a number, nutrient names before it, so kcal reads
+          as the marker for this box rather than a stray unit. */}
+      <div className="grid grid-cols-2 gap-2 @sm:grid-cols-4">
+        {/* A compact cell in a dense row, tighter than a form field. White
+            and flat: the row already sits on a tinted wash, so a field that
+            lifts off it competes with the row, and the fill is what marks it
+            editable — the read-only name and quantity beside it are not. */}
+        {ITEM_NUTRIENTS.map(({ name, label }) => (
+          <InputGroup
+            key={name}
+            className="h-9 min-w-0 rounded-sm bg-card shadow-none"
+          >
+            <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
+            <InputGroupInput
+              aria-label={`Item ${index + 1} ${label}`}
+              className="px-1 text-center"
+              {...(name === 'calories' ? integerProps : decimalProps)}
+              {...form.register(`items.${index}.${name}`, {
+                valueAsNumber: true,
+                onChange: (e) => handleFigureChange(name, e),
+              })}
+            />
+          </InputGroup>
+        ))}
+      </div>
+
+      {/* The read-only per-100 g line: the density the figures were derived
+          from. Shown only for parsed items where the density is known. It is
+          what makes a calorie figure judgeable — "131 kcal per 100 g" can
+          be sanity-checked, "196 kcal" for a portion cannot. Updating when
+          the user edits a figure shows the implied density in real time. */}
+      {isParsed && per100g && (
+        <p className="text-xs tabular-nums text-muted-foreground">
+          per 100 g: {Math.round(per100g.calories)} kcal · P{' '}
+          {per100g.proteinGrams.toFixed(1)} · C {per100g.carbsGrams.toFixed(1)}{' '}
+          · F {per100g.fatGrams.toFixed(1)}
+        </p>
+      )}
+    </Card>
   );
 }

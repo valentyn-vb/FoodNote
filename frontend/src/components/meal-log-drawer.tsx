@@ -15,6 +15,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   aiParseRequestSchema,
+  perPortion,
   type AiParsedMeal,
   type AiParseRequest,
   type MealResponse,
@@ -158,7 +159,14 @@ const draftFromMeal = (meal: MealResponse): MealDraftValues => ({
   proteinGrams: meal.proteinGrams,
   carbsGrams: meal.carbsGrams,
   fatGrams: meal.fatGrams,
-  items: meal.items,
+  items: meal.items.map((item) => ({
+    ...item,
+    // Populate per-portion display fields so the inputs show the right
+    // figures and sumItems can still drive the totals on item edits.
+    ...(item.per100g && item.portionGrams
+      ? perPortion(item.per100g, item.portionGrams)
+      : { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
+  })),
 });
 
 /**
@@ -261,11 +269,22 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
   /** Load a Parsed Meal into the form. The payload deliberately shares the
       draft's field names (see `shared/src/meals.ts`), so spreading it is what
       keeps that contract worth having — only `confidenceNote` isn't a field.
+      Per-portion display fields are computed from each item's per100g and
+      portionGrams so sumItems and the figure inputs show the right values.
       Its own totals stand until an item is edited: we never silently
       contradict the numbers the model returned. */
   function loadParsedMeal(meal: AiParsedMeal) {
     const { confidenceNote, ...draft } = meal;
-    form.reset({ ...emptyDraft(), ...draft });
+    form.reset({
+      ...emptyDraft(),
+      ...draft,
+      items: draft.items.map((item) => ({
+        ...item,
+        ...(item.per100g && item.portionGrams
+          ? perPortion(item.per100g, item.portionGrams)
+          : { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
+      })),
+    });
     setTotalsOverridden(false);
     setView({ step: 'preview', confidenceNote });
   }
@@ -342,14 +361,28 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
   }
 
   function handleSave(values: MealDraftValues) {
+    // Strip the per-portion display fields (calories, proteinGrams, carbsGrams,
+    // fatGrams at item level) — only portionGrams + per100g go into the request.
+    // The meal-level totals (totalCalories, proteinGrams…) are untouched.
+    const items = (values.items ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ({
+        calories: _c,
+        proteinGrams: _p,
+        carbsGrams: _carb,
+        fatGrams: _f,
+        ...item
+      }) => item,
+    );
     if (editing) {
       // No recordedAt and no source in the patch: an edit corrects a meal's
       // figures, it doesn't move it to another Tracking Day or turn an AI parse
       // into a manual entry.
-      updateMeal(editing, values);
+      updateMeal(editing, { ...values, items });
     } else {
       saveMeal({
         ...values,
+        items,
         recordedAt: new Date().toISOString(),
         source: step === 'manual' ? 'manual' : 'ai',
       });
