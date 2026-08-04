@@ -35,38 +35,17 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import type { MealEntry } from '../meal/meal-entry.entity';
+import { toMealFields } from '../meal/meal-mapping';
 import { MealsService } from './meals.service';
 
 // Totals are the source of truth; items are echoed back as an array (empty
-// for a manual entry with no breakdown), never summed by the server.
+// for a manual entry with no breakdown), never summed by the server. Everything
+// but the occasion is shared with the saved-meals endpoint (meal-mapping.ts).
 function toResponse(meal: MealEntry): MealResponse {
   return {
-    id: meal.id,
-    mealName: meal.mealName,
+    ...toMealFields(meal),
     mealType: meal.mealType,
     recordedAt: meal.recordedAt.toISOString(),
-    totalCalories: meal.totalCalories,
-    proteinGrams: meal.proteinGrams,
-    carbsGrams: meal.carbsGrams,
-    fatGrams: meal.fatGrams,
-    source: meal.source,
-    items: (meal.items ?? []).map((item) => ({
-      name: item.name,
-      quantityDescription: item.quantityDescription,
-      portionGrams: item.portionGrams,
-      per100g:
-        item.caloriesPer100g !== null &&
-        item.proteinGramsPer100g !== null &&
-        item.carbsGramsPer100g !== null &&
-        item.fatGramsPer100g !== null
-          ? {
-              calories: item.caloriesPer100g,
-              proteinGrams: item.proteinGramsPer100g,
-              carbsGrams: item.carbsGramsPer100g,
-              fatGrams: item.fatGramsPer100g,
-            }
-          : null,
-    })),
   };
 }
 

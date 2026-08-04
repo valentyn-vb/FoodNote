@@ -5,8 +5,10 @@ import {
   dashboardResponseSchema,
   goalResponseSchema,
   listMealsResponseSchema,
+  listSavedMealsResponseSchema,
   listWeightsResponseSchema,
   mealResponseSchema,
+  savedMealResponseSchema,
   profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
@@ -17,6 +19,9 @@ import {
   type CreateGoalRequest,
   type CreateMealRequest,
   type UpdateMealRequest,
+  type CreateSavedMealRequest,
+  type ListSavedMealsResponse,
+  type SavedMealResponse,
   type CreateWeightRequest,
   type DashboardResponse,
   type GoalResponse,
@@ -221,6 +226,28 @@ export const meals = {
       signal,
     });
     return aiParseResponseSchema.parse(await res.json());
+  },
+};
+
+/**
+ * Saved Meals — meals kept by name to log again. Logging one goes through
+ * `meals.create`, not through here: the two records are copies, never linked
+ * (ADR-0014), so nothing in this namespace ever writes a Meal Entry.
+ */
+export const savedMeals = {
+  /** GET /saved-meals — the caller's whole list, ordered by name. */
+  async list(): Promise<ListSavedMealsResponse> {
+    const res = await apiFetch('/api/saved-meals');
+    return listSavedMealsResponseSchema.parse(await res.json());
+  },
+
+  /** POST /saved-meals — the draft as shown, minus the occasion. */
+  async create(data: CreateSavedMealRequest): Promise<SavedMealResponse> {
+    const res = await apiFetch('/api/saved-meals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return savedMealResponseSchema.parse(await res.json());
   },
 };
 

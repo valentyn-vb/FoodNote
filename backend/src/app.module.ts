@@ -15,6 +15,7 @@ import { buildDataSourceOptions } from './database/data-source';
 import { GoalsModule } from './goal/goals.module';
 import { MealsModule } from './meals/meals.module';
 import { ProfileModule } from './profile/profile.module';
+import { SavedMealsModule } from './saved-meals/saved-meals.module';
 import { UserModule } from './user/user.module';
 import { WeightsModule } from './weights/weights.module';
 
@@ -55,6 +56,7 @@ import { WeightsModule } from './weights/weights.module';
     ProfileModule,
     DashboardModule,
     MealsModule,
+    SavedMealsModule,
   ],
   controllers: [AppController],
   providers: [

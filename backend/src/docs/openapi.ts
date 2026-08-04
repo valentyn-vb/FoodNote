@@ -9,8 +9,11 @@ import {
   errorResponseSchema,
   goalResponseSchema,
   healthResponseSchema,
+  createSavedMealRequestSchema,
   listMealsQuerySchema,
   listMealsResponseSchema,
+  listSavedMealsResponseSchema,
+  savedMealResponseSchema,
   listWeightsQuerySchema,
   listWeightsResponseSchema,
   loginRequestSchema,
@@ -83,6 +86,12 @@ export function buildOpenApiDocument(): OpenAPIObject {
     ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
     AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
     AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
+    CreateSavedMealRequest: schemaObject(createSavedMealRequestSchema, 'input'),
+    SavedMealResponse: schemaObject(savedMealResponseSchema, 'output'),
+    ListSavedMealsResponse: schemaObject(
+      listSavedMealsResponseSchema,
+      'output',
+    ),
     CreateGoalRequest: schemaObject(createGoalRequestSchema, 'input'),
     UpdateGoalRequest: schemaObject(updateGoalRequestSchema, 'input'),
     GoalResponse: schemaObject(goalResponseSchema, 'output'),
@@ -152,6 +161,13 @@ export function buildOpenApiDocument(): OpenAPIObject {
       {
         name: 'meals',
         description: 'Logged meals with their macro totals and optional items',
+      },
+      {
+        name: 'saved-meals',
+        description:
+          'Meals kept by name to log again. Logging one copies it into a ' +
+          'meal — the two records are never linked, so editing or deleting ' +
+          'either leaves the other untouched.',
       },
       {
         name: 'goals',
@@ -463,6 +479,40 @@ export function buildOpenApiDocument(): OpenAPIObject {
             204: { description: 'Deleted' },
             401: unauthorized,
             404: errorResponse('No such meal owned by the caller'),
+          },
+        },
+      },
+      '/saved-meals': {
+        post: {
+          tags: ['saved-meals'],
+          summary: 'Keep a meal to log again',
+          description:
+            'The same body as `POST /meals` without `mealType` and ' +
+            '`recordedAt`: those describe an occasion, and the user chooses ' +
+            'them when logging. `source` records how the kept figures were ' +
+            'produced and is copied onto each meal logged from this one.',
+          requestBody: jsonBody('CreateSavedMealRequest'),
+          responses: {
+            201: {
+              description: 'Saved meal created',
+              ...jsonContent('SavedMealResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+          },
+        },
+        get: {
+          tags: ['saved-meals'],
+          summary: "The caller's saved meals, by name",
+          description:
+            'Ordered by name rather than recency: the list is searched, so a ' +
+            'stable order beats a moving one.',
+          responses: {
+            200: {
+              description: "The caller's saved meals",
+              ...jsonContent('ListSavedMealsResponse'),
+            },
+            401: unauthorized,
           },
         },
       },
