@@ -51,7 +51,7 @@ export default function ProfilePage() {
     <div className="flex w-full max-w-xl flex-col gap-6">
       {/* Identity spans the top at every width; the edit trigger joins the row
           at `lg` instead of floating centred beneath the avatar. */}
-      <div className="flex flex-col items-center gap-2.5 lg:flex-row lg:gap-4">
+      <div className="flex flex-col items-center gap-2.5 lg:flex-row lg:gap-4 px-2">
         <Avatar className="size-18">
           {/* The stock fallback is a grey wash at 14px — it reads as a
               missing image at this size, not as a person. */}

@@ -29,7 +29,7 @@ export function AppearanceSection() {
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 id={HEADING_ID} className="text-sm text-muted-foreground">
+      <h2 id={HEADING_ID} className="text-sm text-muted-foreground px-2">
         Theme
       </h2>
       <Card className="gap-3 p-4">

@@ -88,9 +88,9 @@ export function CurrentPlanSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="text-sm text-muted-foreground">Current plan</h2>
+      <h2 className="text-sm text-muted-foreground px-2">Current plan</h2>
       <Card className="gap-1 p-4">
-        <p className="font-heading text-2xl font-semibold tabular-nums">
+        <p className="text-2xl font-bold tracking-tight tabular-nums">
           {profileData?.calorieTarget != null
             ? `${profileData.calorieTarget.toLocaleString()} kcal / day`
             : '—'}
