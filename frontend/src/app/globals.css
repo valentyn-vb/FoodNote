@@ -76,12 +76,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* ── Width ───────────────────────────────────────────────────────────────
-     One step past tailwind's own scale, which stops at 7xl/80rem. The (app)
-     shell's frame stops here (shell-frame.tsx); 80rem left a quarter of a 2560
-     display empty on each side. */
-  --container-8xl: 96rem;
-
   /* ── Motion ──────────────────────────────────────────────────────────────
      Indeterminate progress, for a wait with no known duration. Exempt from the
      reduced-motion collapse — see the note there. */

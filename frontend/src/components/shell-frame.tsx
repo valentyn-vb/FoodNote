@@ -2,28 +2,20 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * The (app) shell's page frame: full width until 1536, centred after it.
+ * The (app) shell's page frame. Full width at every size — the team's call, on
+ * review of #143: a display wide enough to show more should show more, and the
+ * empty margins a cap leaves read as a layout that failed rather than as one
+ * that chose to stop.
  *
- * A component rather than a utility repeated twice, because both the header row
- * and the page content have to use the *same* cap — otherwise the actions in the
- * header keep running to the far edge while the content below stops, and the
- * two read as different pages. Above the cap both frames centre on the same
- * axis at the same width, so their edges line up exactly.
+ * Still a component rather than nothing, because the header row and the page
+ * content have to keep agreeing about their frame: they line up today only
+ * because both ask the same place what it is. Anything the frame gains later —
+ * a cap, a gutter, a max measure for one route — is one edit here rather than
+ * two that can drift apart. It is deliberately thin, not accidentally so.
  *
- * `max-w-8xl` is 96rem, a token this project adds because tailwind's own scale
- * stops at 80rem. It is wider than the 1150px of content a 1440 display gives,
- * so nothing about the verified widths changes; it only stops the growth beyond
- * them, where a four-card row would otherwise stretch a stat across a third of
- * a 4K screen.
- *
- * 96rem and not the 80rem it started at: on a 2560 display an 80rem frame left
- * ~640px of empty page on either side, which reads as a layout that failed
- * rather than as one that chose to stop (#143 review). The cap is not a
- * breakpoint — nothing rearranges at it, the cards only stop widening — so it
- * is not one of the three steps AGENTS.md names.
- *
- * The cap belongs here and not on a route (AGENTS.md): a page that caps itself
- * is what left /profile a 576px column against the left edge of 1440.
+ * Whatever it becomes, it belongs here and not on a route (AGENTS.md): a page
+ * that frames itself is what left /profile a 576px column against the left edge
+ * of 1440.
  */
 export function ShellFrame({
   className,
@@ -32,7 +24,5 @@ export function ShellFrame({
   className?: string;
   children: ReactNode;
 }) {
-  return (
-    <div className={cn('mx-auto w-full max-w-8xl', className)}>{children}</div>
-  );
+  return <div className={cn('w-full', className)}>{children}</div>;
 }
