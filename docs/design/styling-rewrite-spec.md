@@ -66,6 +66,7 @@ and washes are derived rather than held as tokens.
 | `--success`, `--warning`                                 | "on plan" and "worth a look" — fills, borders, icons                  |
 | `--success-text`, `--warning-text`, `--destructive-text` | text on the matching wash                                             |
 | `--chart-1..5`                                           | decoration: 1 the brand orange, 2 mint, 3 coral, 4–5 unused           |
+| `--mascot-canvas`                                        | the cream the mascot artwork is painted on — see below                |
 | `--sidebar-*`                                            | compatibility shims `shadcn add sidebar` greps for                    |
 
 **Brand and text is the one rule worth memorising:** the brand hue fills and
@@ -82,6 +83,76 @@ handoff's orange and `--primary-foreground` is white. Treat this as a decision
 the team owns rather than a defect to fix, and do not cite it as precedent: the
 threshold still holds everywhere else, including `--brand-ink`, which exists
 precisely so brand-coloured _text_ has something that passes.
+
+## The second appearance
+
+`light | dark | system`, chosen rather than derived —
+[ADR 0014](../adr/0014-a-second-appearance-is-chosen-not-inverted.md) argues the
+shape. What matters for the palette: of the 35 declarations in `:root`, 11 are
+`var()` aliases and resolve at use time, and `--primary` keeps one value in both
+appearances (its _label_ flips instead). So the dark set is **23 chosen values**,
+none of them a transform of its light counterpart.
+
+Two rules hold across all of them: every surface stays at or below **chroma
+0.015** — warmth comes from hue, the lesson the light background learned when its
+own chroma was halved — and `--card` stays lighter than the page, by 0.043 rather
+than light's 0.018, because the same step is invisible down there and on a dark
+surface that separation is what carries elevation.
+
+The donut's four hues are held at least 45° apart pairwise, since they are drawn
+at once with sectors touching. The coral moved from hue 31 to 14 to earn that
+against the brand orange at 62. `--chart-5` has no dark value: nothing uses it.
+
+### Measured pairs
+
+Both appearances, computed from `globals.css` by `globals.spec.ts`, which fails
+below 4.5:1 for text and 3:1 for a focus ring. Numbers, not intentions.
+
+| Pair                                   | light | dark  |
+| -------------------------------------- | ----- | ----- |
+| `--foreground` on `--background`       | 13.88 | 15.25 |
+| `--foreground` on `--card`             | 14.62 | 13.70 |
+| `--foreground` on `--secondary`        | 14.04 | 12.91 |
+| `--foreground` on `--muted`            | 13.31 | 12.23 |
+| `--foreground` on `--accent`           | 13.21 | 11.21 |
+| `--muted-foreground` on `--background` | 5.40  | 7.21  |
+| `--muted-foreground` on `--card`       | 5.69  | 6.47  |
+| `--brand-ink` on `--background`        | 5.02  | 10.97 |
+| `--brand-ink` on `--card`              | 5.28  | 9.86  |
+| `--primary-foreground` on `--primary`  | 2.00  | 7.30  |
+| `--success-text` on `--card`           | 7.54  | 9.65  |
+| `--warning-text` on `--card`           | 5.86  | 10.01 |
+| `--destructive-text` on `--card`       | 5.66  | 6.82  |
+| `--destructive` on `--card`            | 5.45  | 5.63  |
+| `--destructive` on `--background`      | 5.17  | 6.26  |
+| `--ring` on `--background`             | 1.84  | 7.03  |
+| `--ring` on `--card`                   | 1.94  | 6.31  |
+| `--primary` on `--background`          | 1.90  | 8.95  |
+| `--brand-ink` on `--foreground`        | 2.77  | 1.39  |
+
+Four of those are below their threshold, all in light, and each is pinned to the
+measured number in the test so it cannot drift:
+
+- **`--primary-foreground` on `--primary`, 2.00** — the #106 decision above. Dark
+  reaches 7.30 by flipping the label, so the exception exists in light only.
+- **`--ring`, 1.84 and 1.94** — and this is a finding, not a decision. The ring
+  exists because the fill reaches only 2.0:1 where a focus indicator wants 3:1,
+  and the ring measures _lower_ than the fill it replaced. Re-picking it touches
+  every focus state in the app, so it wants a ticket rather than a footnote.
+- **`--brand-ink` on `--foreground`, 2.77 and 1.39** — a link's colour against
+  body text, where 3:1 is the recognised target because the `link` variant
+  underlines on hover only. Neither appearance reaches it; dark is thinner by
+  construction, since the ink sits above the fill.
+
+**`--mascot-canvas` is not a surface.** `default.webp` and `guide.webp` are
+opaque squares whose ink runs to all four edges — measured: the ears sit 8% from
+the top, outside an inscribed circle, and the body reaches the bottom edge. So a
+circular crop always eats something. The token is the artwork's own background
+(`rgb(252 250 246)`), which lets a disc be drawn in exactly that colour with the
+square _inscribed_ in it — side ≤ diameter ÷ √2 — so the square's edges land on
+their own colour and vanish, and the mascot gets air instead of a rim. It is the
+one colour that does **not** change between appearances: the illustration does
+not, so its ground cannot.
 
 **Washes are derived, not stored.** `--success-surface` and friends were deleted
 in favour of `color-mix(in oklch, var(--success), var(--card) 90%)`, which

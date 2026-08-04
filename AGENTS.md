@@ -64,7 +64,9 @@ tokens, the type row and the named divergences from upstream are in
   `rounded-[calc(var(--radius)-5px)]` and `bg-[color-mix(in_oklch,var(--card),var(--foreground)_5%)]`
   are not. Layout and variants (`data-[state=open]:`, `has-[…]`) are untouched.
 - **If the value you need isn't there, add the token** to `@theme` and use the
-  generated utility. A _missing_ token yields no CSS at all rather than a
+  generated utility — and give it a second value in the dark blocks, or say in a
+  comment why it needs none (an alias, or `--primary`, which is one value on
+  purpose). A _missing_ token yields no CSS at all rather than a
   default, so deleting one silently removes the rule that used it — and a token
   name can be held as a string (`goal-reached-overlay.tsx` resolves several
   through `getComputedStyle`), where no type error will find it.
@@ -85,8 +87,16 @@ tokens, the type row and the named divergences from upstream are in
   exceptions: motion driven from JS must check the preference at its source, and
   motion that _is_ the information — a busy indicator — needs an explicit
   exemption alongside the existing ones.
-- **There is no dark mode.** It was removed, not disabled: no `.dark`, no
-  `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
+- **Two appearances: `appearance` in the code, "Theme" on screen.** `light | dark | system`, a
+  field on the profile, mirrored in a cookie the root layout reads and stamped on
+  `<html>` as `data-appearance` — [ADR
+  0014](docs/adr/0014-a-second-appearance-is-chosen-not-inverted.md). Never
+  `theme`: here that means the token set. The dark values live in `globals.css`
+  and nowhere else, twice (a media query for `system`, an attribute rule for the
+  explicit choice) because `light-dark()` breaks `getComputedStyle` for the
+  confetti; `globals.spec.ts` asserts the two copies agree. A component must not
+  branch on the appearance — if a role needs a different value in dark, it needs a
+  token, the way `--color-chart-empty` does.
 - **One tree per screen** — [ADR
   0012](docs/adr/0012-one-tree-per-screen.md), which argues it rather than
   asserting it, because the rule costs something. In `app/(app)/**` and the
@@ -103,7 +113,9 @@ tokens, the type row and the named divergences from upstream are in
   size a dialog and its footer, not a page.
 - **Verify a layout change at 360, 390, 768, 1024 and 1440,** on the seeded
   account (`npm run db:up && npm run seed -w backend`), and check no horizontal
-  scroll at any of them. A Chrome window will not go below 500 CSS px, so the two
+  scroll at any of them. The appearance cannot change a layout — no `dark:` may
+  size or place anything — so widths are checked once, and a _colour_ change is
+  checked once per appearance instead: every route at 1024 in both. A Chrome window will not go below 500 CSS px, so the two
   phone widths need device emulation, not a resized window — and a `fullPage`
   screenshot captures the charts **empty**, so take viewport shots.
 - **A page owns a max-width only to keep a line readable,** and `/profile` is
