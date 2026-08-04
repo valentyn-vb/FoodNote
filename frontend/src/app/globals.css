@@ -89,7 +89,11 @@
 }
 
 :root {
-  --background: oklch(0.982 0.009 78.3);
+  /* Half the chroma the cream started at, same lightness and hue: the page
+     still reads warm against the white of --card, but stops reading as a
+     colour of its own. The separation from a card was never the tint — it is
+     the 0.018 of lightness between them — so halving it costs nothing. */
+  --background: oklch(0.982 0.004 78.3);
   --foreground: oklch(0.283 0.045 52.1);
   --card: oklch(1 0 90);
   --card-foreground: var(--foreground);
