@@ -1,21 +1,22 @@
 'use client';
 
 import {
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+} from '@/components/ui/input-group';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
+import type { AiParseRequest } from '@foodnote/shared';
+import { MicIcon, SquareIcon } from 'lucide-react';
+import {
   useCallback,
   useEffect,
   useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
-import { MicIcon, SquareIcon } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
-import type { AiParseRequest } from '@foodnote/shared';
-import {
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupText,
-} from '@/components/ui/input-group';
-import { Spinner } from '@/components/ui/spinner';
 
 /**
  * Dictation through the browser's own recogniser. Nothing is uploaded by us and
@@ -291,31 +292,13 @@ export function VoiceDictation({
   const listening = status === 'listening';
 
   return (
-    <InputGroupAddon align="block-end">
+    <InputGroupAddon align="block-end" className="justify-end">
       {/* Mounted with the addon rather than with the listening state: a live
           region has to exist before its text changes, or the change is never
           announced. */}
       <span aria-live="polite" className="sr-only">
         {listening ? 'Listening. Speak now.' : ''}
       </span>
-
-      <InputGroupButton
-        size="icon-sm"
-        aria-label={listening ? 'Stop dictation' : 'Dictate your meal'}
-        disabled={status === 'requesting'}
-        onClick={listening ? voice.stop : voice.start}
-        // Listening is the one state worth colouring: it is the only one the
-        // user has to act on to leave.
-        className={listening ? 'text-destructive' : 'text-muted-foreground'}
-      >
-        {status === 'requesting' ? (
-          <Spinner />
-        ) : listening ? (
-          <SquareIcon />
-        ) : (
-          <MicIcon />
-        )}
-      </InputGroupButton>
 
       {listening && (
         // The uncommitted words, so it is visibly hearing something before any
@@ -327,7 +310,6 @@ export function VoiceDictation({
           {interim && <span className="truncate italic">{interim}</span>}
         </InputGroupText>
       )}
-      {status === 'idle' && <InputGroupText>Or say it out loud</InputGroupText>}
       {/* Not a FieldError: nothing about the typed description is invalid, and
           the fix is in browser settings rather than in the field. */}
       {status === 'blocked' && (
@@ -340,6 +322,27 @@ export function VoiceDictation({
           Dictation stopped working. Please type it instead.
         </InputGroupText>
       )}
+
+      <InputGroupButton
+        size="icon-sm"
+        aria-label={listening ? 'Stop dictation' : 'Dictate your meal'}
+        disabled={status === 'requesting'}
+        onClick={listening ? voice.stop : voice.start}
+        // Listening is the one state worth colouring: it is the only one the
+        // user has to act on to leave.
+        className={cn(
+          'shrink-0',
+          listening ? 'text-destructive' : 'text-muted-foreground',
+        )}
+      >
+        {status === 'requesting' ? (
+          <Spinner />
+        ) : listening ? (
+          <SquareIcon />
+        ) : (
+          <MicIcon />
+        )}
+      </InputGroupButton>
     </InputGroupAddon>
   );
 }
