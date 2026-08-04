@@ -1,7 +1,50 @@
 'use client';
 
-// Deliberately blank, not unfinished: the boundary is here to stop a failed read
-// taking the shell down with it, and what it draws is not designed yet.
-export default function DashboardError() {
-  return null;
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+
+/**
+ * What `DashboardError` was, on upstream's Empty primitives and reached the way
+ * the framework reaches it. The tiles are the backbone, so a failed read leaves
+ * the whole view unusable and the page says so rather than drawing half of it.
+ *
+ * `reset()` re-renders, which re-runs the three server reads — the same job the
+ * old `retryAll` did by calling two providers' `retry()` in turn, minus the
+ * wiring that had to know there were two.
+ *
+ * A dead session never arrives here: `serverFetch` redirects to `/login` on a
+ * 401 rather than throwing, so this really is "the read failed", not "you are
+ * signed out".
+ */
+export default function DashboardError({ reset }: { reset: () => void }) {
+  return (
+    // No `border`, so upstream's `border-dashed` draws nothing: this stands in
+    // for the whole page, where a dashed frame around a failure reads as a
+    // placeholder for something still coming.
+    <Empty className="grow basis-0">
+      <EmptyHeader>
+        <EmptyMedia>
+          {/* RECOVER mascot moment: the one place the app admits a fault. */}
+          <Image src="/mascot/recover.webp" alt="" width={72} height={72} />
+        </EmptyMedia>
+        <EmptyTitle>Couldn&apos;t load your dashboard</EmptyTitle>
+        <EmptyDescription>
+          The numbers are still on the server. Try again.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" onClick={reset}>
+          Try again
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
 }
