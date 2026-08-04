@@ -7,6 +7,7 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { AppearanceSection } from './appearance-section';
 import { CurrentPlanSection } from './current-plan-section';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { PersonalDetailsSection } from './personal-details-section';
@@ -81,6 +82,8 @@ export default function ProfilePage() {
           loading={loading}
           onProfileChange={setProfileData}
         />
+
+        <AppearanceSection />
       </div>
     </div>
   );
