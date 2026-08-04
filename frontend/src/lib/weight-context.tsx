@@ -17,6 +17,7 @@ import {
   computeWeightChange,
   isoDaysAgo,
   todayUtc,
+  weightAsOf,
   weightChangeOverDays,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
@@ -40,6 +41,8 @@ type WeightContextValue = {
   status: FetchStatus;
   retry: () => void;
   entries: WeightEntryResponse[];
+  /** Current Weight read at the selected Tracking Day, not at this moment. */
+  currentWeightKg: number;
   weightTrend: WeightTrendPoint[];
   weightChangeKg: number;
   weightChangeLastMonthKg: number;
@@ -104,8 +107,11 @@ export function WeightProvider({ children }: { children: ReactNode }) {
   // Use the selected tracking day as "now" so the weight trend and change stat
   // reflect the state at that day, not the current moment.
   const { selectedDate } = useMeals();
-  // UTC noon to avoid any DST edge-case on the boundary.
-  const selectedDateAsNow = new Date(`${selectedDate}T12:00:00Z`);
+  // The *end* of the day, not its noon: an entry recorded this afternoon is on
+  // the selected Tracking Day and has to count as its weight. Anchored at noon,
+  // a weigh-in logged after 12:00 UTC read as tomorrow's and left the card
+  // showing yesterday's figure until the date rolled over.
+  const selectedDateAsNow = new Date(`${selectedDate}T23:59:59.999Z`);
 
   // Edits and deletes re-list rather than patching locally, so the client
   // never holds a view the server disagrees with. That also fixes a real bug:
@@ -123,15 +129,27 @@ export function WeightProvider({ children }: { children: ReactNode }) {
   }, [refetchDashboard]);
 
   const value = useMemo<WeightContextValue>(() => {
+    // Every figure below is measured *from* this weight, so it is derived once:
+    // passing the server's Current Weight instead compared the latest reading
+    // against a week before the selected day, and a past day's card read
+    // "9.6 kg this week" off two numbers seven months of plan apart.
+    const currentWeightKg = goal
+      ? weightAsOf(entries, selectedDateAsNow, goal.currentWeightKg)
+      : 0;
     const change = goal
-      ? computeWeightChange(entries, goal.currentWeightKg, selectedDateAsNow)
+      ? computeWeightChange(entries, currentWeightKg, selectedDateAsNow)
       : { weightChangeKg: 0, weightChangeLastMonthKg: 0 };
     return {
       status,
       retry,
       entries,
+      currentWeightKg,
       weightTrend: goal
-        ? buildWeightTrend(entries, goal, selectedDateAsNow)
+        ? buildWeightTrend(
+            entries,
+            { ...goal, currentWeightKg },
+            selectedDateAsNow,
+          )
         : [],
       weightChangeKg: change.weightChangeKg,
       weightChangeLastMonthKg: change.weightChangeLastMonthKg,
@@ -140,12 +158,7 @@ export function WeightProvider({ children }: { children: ReactNode }) {
       // cannot hold that anchor without also holding this provider's date
       // convention.
       weekChangeKg: goal
-        ? weightChangeOverDays(
-            entries,
-            goal.currentWeightKg,
-            selectedDateAsNow,
-            7,
-          )
+        ? weightChangeOverDays(entries, currentWeightKg, selectedDateAsNow, 7)
         : null,
       onWeightSaved,
       onWeightsChanged,

@@ -9,19 +9,22 @@ import { spokenStat } from './helpers';
 import { StatCard, StatFigure } from './stat-card';
 
 /**
- * The latest weight, how it moved over the last week, and how far the target
- * still is.
+ * The weight on the Tracking Day on show, how it moved over the week before it,
+ * and how far the target still is.
  *
  * The week's change is highlighted only when it moves toward the target, and
  * the other case is muted rather than red: a week of the scale going the wrong
  * way is information, not a failure to colour-code at the user.
  */
 export function CurrentWeightCard({
+  label,
   currentWeightKg,
   targetWeightKg,
   weekChangeKg,
   direction,
 }: {
+  label: string;
+  /** Read at the Tracking Day on show, so a past day gets that day's weight. */
   currentWeightKg: number;
   targetWeightKg: number;
   /** Null when the journal doesn't reach back a week. */
@@ -45,9 +48,9 @@ export function CurrentWeightCard({
   const Arrow = moving && weekChangeKg < 0 ? ArrowDown : ArrowUp;
 
   return (
-    <StatCard label="Current weight">
+    <StatCard label={label}>
       <span className="sr-only">
-        {spokenStat('Current weight', currentWeightKg, ' kg')}
+        {spokenStat(label, currentWeightKg, ' kg')}
       </span>
       <StatFigure unit="kg">
         <NumberFlow value={currentWeightKg} />

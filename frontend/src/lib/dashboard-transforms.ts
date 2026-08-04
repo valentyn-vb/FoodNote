@@ -390,6 +390,24 @@ function carryForward(
 }
 
 /**
+ * Current Weight as of a given instant: the latest entry at or before it.
+ *
+ * The Dashboard is a read of one Tracking Day (CONTEXT.md), so every weight
+ * figure on it has to be the weight *that day* — the server's Current Weight is
+ * only ever the latest one, which on a past day is a number the user did not
+ * have yet. It is still the right fallback when the journal reaches no further
+ * back than the instant asked for: a day before the first weigh-in has no
+ * weight of its own, and the alternative is a card with a hole in it.
+ */
+export function weightAsOf(
+  weights: WeightEntryResponse[],
+  at: Date,
+  fallbackKg: number,
+): number {
+  return carryForward(weights)(at.getTime()) ?? fallbackKg;
+}
+
+/**
  * Weight change over the last `days` days, or null when the journal has nothing
  * that far back. Null rather than 0.0: on a fresh account "no change" would be
  * a claim the data doesn't support, and the card says so instead.

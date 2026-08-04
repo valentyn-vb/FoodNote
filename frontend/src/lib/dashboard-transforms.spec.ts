@@ -23,6 +23,7 @@ import {
   goalDirection,
   remainingToGoalKg,
   splitCaloriesByMealType,
+  weightAsOf,
   weightChangeOverDays,
 } from './dashboard-transforms';
 
@@ -639,6 +640,39 @@ describe('computeWeightChange', () => {
       NOW_WEIGHT,
     );
     expect(result.weightChangeKg).toBe(-3.0); // 80 − 83
+  });
+});
+
+// ---------------------------------------------------------------------------
+// weightAsOf
+// ---------------------------------------------------------------------------
+
+describe('weightAsOf', () => {
+  const END_OF_DAY = new Date('2024-07-30T23:59:59.999Z');
+  const entries = [
+    weight('a', '2024-07-20T08:00:00Z', 83),
+    weight('b', '2024-07-26T08:00:00Z', 81),
+    weight('c', '2024-08-02T08:00:00Z', 79),
+  ];
+
+  it('ignores entries after the day asked for', () => {
+    // The whole point: browsing back to Jul 30 must not show the Aug 2 reading.
+    expect(weightAsOf(entries, END_OF_DAY, 79)).toBe(81);
+  });
+
+  it('takes an entry recorded later the same day', () => {
+    const evening = [weight('pm', '2024-07-30T18:00:00Z', 80)];
+    expect(weightAsOf(evening, END_OF_DAY, 99)).toBe(80);
+  });
+
+  it('falls back when the journal starts after the day asked for', () => {
+    expect(weightAsOf(entries, new Date('2024-07-01T23:59:59.999Z'), 83)).toBe(
+      83,
+    );
+  });
+
+  it('falls back on an empty journal', () => {
+    expect(weightAsOf([], END_OF_DAY, 80)).toBe(80);
   });
 });
 

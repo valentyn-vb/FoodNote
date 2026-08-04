@@ -23,6 +23,9 @@ _Avoid_: local day, date (as a field concept)
 **Current Weight**:
 The weight (kg) of the user's most recent Weight Entry. Always derived, never
 stored or edited on its own — onboarding weight simply creates the first entry.
+"Most recent" is relative to the moment being read: the Dashboard is a read of
+one Tracking Day, so browsing back to a past day reads the latest entry at or
+before the end of _that_ day, carried forward when nothing was logged on it.
 _Avoid_: profile weight
 
 **Meal Entry**:

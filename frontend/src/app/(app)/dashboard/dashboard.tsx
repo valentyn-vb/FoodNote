@@ -88,6 +88,7 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
     status: weightStatus,
     retry: retryWeight,
     entries: weightEntries,
+    currentWeightKg,
     weightTrend,
     weightChangeKg,
     weekChangeKg,
@@ -128,7 +129,8 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
           <CurrentWeightCard
-            currentWeightKg={goal.currentWeightKg}
+            label={isToday ? 'Current weight' : 'Weight that day'}
+            currentWeightKg={currentWeightKg}
             targetWeightKg={goal.targetWeightKg}
             weekChangeKg={weekChangeKg}
             direction={direction}
