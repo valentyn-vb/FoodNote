@@ -33,9 +33,21 @@
      active nav item, an emphasized figure — at 4.9:1. */
   --color-brand-ink: var(--brand-ink);
 
+  /* The cream the mascot artwork is painted on. Not a surface role — it exists
+     so a disc can be drawn in exactly the illustration's own background and the
+     square edges of an opaque asset stop showing. */
+  --color-mascot-canvas: var(--mascot-canvas);
+
   /* Charts, under the stock names: the decorative hues the gradient mesh and
      the goal overlay use. */
   --color-chart-1: var(--chart-1);
+  /* Not a sixth hue: the donut's `remaining` sector, which has to read as the
+     absence of a meal. `--muted` did that for free in light (nearly white on a
+     white card) and cannot in dark, where a surface token must be lighter than
+     the page to read as a surface at all — and a ring sector lighter than its
+     background reads as drawn. Pulling `--muted` toward the card to fix the ring
+     would move it everywhere else it is used, so absence gets its own name. */
+  --color-chart-empty: var(--chart-empty);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
@@ -124,6 +136,18 @@
 
   --brand-ink: oklch(0.541 0.129 51.5);
 
+  /* Measured off `default.webp`, which is opaque and whose artwork runs to all
+     four edges. Deliberately absent from the dark blocks: the illustration does
+     not change with the appearance, so neither may the disc behind it — the
+     moment the disc and the artwork's own ground differ, the square shows.
+     What does change is `--mascot-veil` below. */
+  --mascot-canvas: oklch(0.986 0.006 84.6);
+
+  /* How much of the surface behind it the whole medallion lets through. Applied
+     to disc and drawing together, so they dim as one and the square stays
+     hidden — which is why this is an opacity and not a second colour. */
+  --mascot-veil: 1;
+
   /* 1 is the brand orange, 2 the mint and 3 the coral the mesh and the overlay
      use; 4 and 5 extend the same warm-to-cool run, unused so far. */
   --chart-1: var(--primary);
@@ -131,6 +155,11 @@
   --chart-3: oklch(0.755 0.125 31.1);
   --chart-4: oklch(0.723 0.106 96.4);
   --chart-5: oklch(0.681 0.098 232.7);
+
+  /* The same value `--muted` holds today, written out rather than aliased: the
+     point of the token is that absence stops tracking the muted surface. Copying
+     it here is what makes this change a no-op in light. */
+  --chart-empty: oklch(0.968 0.015 70.9);
 
   --success: oklch(0.622 0.117 148.6);
   --success-text: oklch(0.438 0.08 149.1);
@@ -145,6 +174,120 @@
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  /* Native UI — form controls, scrollbars, the caret — follows this, and the
+     three appearances are exactly its three states. `light dark` is `system`. */
+  color-scheme: light dark;
+}
+
+/* ── The second appearance ────────────────────────────────────────────────────
+   Three states over two selectors. `system` is the media query; the two explicit
+   values are attribute rules, and `light` has to *win* against a dark device
+   rather than merely not adding anything — hence the `:not()`. Drop it and the
+   setting silently does nothing for the one user it exists for, invisibly on any
+   light-mode machine.
+
+   The dark set is written twice, and that is deliberate. `light-dark()` would
+   hold both values in one declaration and was rejected: a custom property's
+   computed value is its token stream, so `getComputedStyle(...)
+   .getPropertyValue('--primary')` would hand canvas-confetti the string
+   "light-dark(…)" rather than a colour, and goal-reached-overlay.tsx reads four
+   tokens that way. `globals.spec.ts` asserts the two blocks declare the same
+   values, so the copies cannot drift.
+
+   Only the values that change appear below. Anything aliased in `:root`
+   (--card-foreground, --sidebar-*, --chart-1) resolves through var() at use time
+   and needs no second declaration — and --primary is absent on purpose: it keeps
+   one value, and its *label* flips instead. See ADR 0014. */
+
+:root[data-appearance='light'] {
+  color-scheme: only light;
+}
+
+:root[data-appearance='dark'] {
+  color-scheme: only dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance='light']) {
+    --background: oklch(0.205 0.01 62);
+    --foreground: oklch(0.945 0.015 70);
+    /* Lighter than the page, as in light — but by 0.043 rather than 0.018: the
+       same step is invisible down here, and on a dark surface this separation is
+       what carries elevation, because a shadow barely reads. */
+    --card: oklch(0.248 0.01 62);
+    --popover: oklch(0.248 0.01 62);
+    /* The app's own ink on the unchanged fill orange: 7.3:1, the value #106
+       rejected on looks in light. A bright fill on a dark page takes a dark
+       label, so dark carries no contrast exception at all. */
+    --primary-foreground: oklch(0.283 0.045 52.1);
+    --secondary: oklch(0.268 0.01 62);
+    --muted: oklch(0.285 0.012 64);
+    --muted-foreground: oklch(0.72 0.02 65);
+    --accent: oklch(0.31 0.014 64);
+    --border: oklch(0.335 0.012 66);
+    --input: oklch(0.355 0.014 66);
+    --ring: oklch(0.72 0.115 60);
+
+    /* Lighter than the fill, inverting the light order. The invariant was never
+       "ink is darker than fill" — it is that ink carries text contrast and fill
+       carries a shape, and that holds in both directions. Chroma below the light
+       value: the same saturation reads stronger against dark. */
+    --brand-ink: oklch(0.855 0.105 52);
+
+    /* A lit cream disc at full strength is the brightest thing on a dark
+       drawer, and it is decoration — it should not outshout the text under it. */
+    --mascot-veil: 0.82;
+
+    /* One lightness band, hues at least 45° apart — measured pairwise, because
+       the donut draws four of these at once with no separating stroke. The coral
+       is what travelled: at hue 31 it sat 31° from the brand orange, which is
+       borderline on cream and worse here, where the orange spreads.
+       --chart-5 is deliberately absent: nothing uses it, and a value chosen and
+       never looked at is worse than one that yields no CSS. */
+    --chart-2: oklch(0.8 0.1 162);
+    --chart-3: oklch(0.79 0.115 14);
+    --chart-4: oklch(0.8 0.1 112);
+    --chart-empty: oklch(0.28 0.008 62);
+
+    --success: oklch(0.72 0.13 149);
+    --success-text: oklch(0.82 0.12 150);
+    --warning: oklch(0.76 0.13 40);
+    --warning-text: oklch(0.85 0.1 64);
+    --destructive: oklch(0.7 0.16 28);
+    --destructive-text: oklch(0.75 0.145 25);
+  }
+}
+
+:root[data-appearance='dark'] {
+  --background: oklch(0.205 0.01 62);
+  --foreground: oklch(0.945 0.015 70);
+  --card: oklch(0.248 0.01 62);
+  --popover: oklch(0.248 0.01 62);
+  --primary-foreground: oklch(0.283 0.045 52.1);
+  --secondary: oklch(0.268 0.01 62);
+  --muted: oklch(0.285 0.012 64);
+  --muted-foreground: oklch(0.72 0.02 65);
+  --accent: oklch(0.31 0.014 64);
+  --border: oklch(0.335 0.012 66);
+  --input: oklch(0.355 0.014 66);
+  --ring: oklch(0.72 0.115 60);
+
+  --brand-ink: oklch(0.855 0.105 52);
+
+  --mascot-veil: 0.82;
+
+  --chart-2: oklch(0.8 0.1 162);
+  --chart-3: oklch(0.79 0.115 14);
+  --chart-4: oklch(0.8 0.1 112);
+  --chart-empty: oklch(0.28 0.008 62);
+
+  --success: oklch(0.72 0.13 149);
+  --success-text: oklch(0.82 0.12 150);
+  --warning: oklch(0.76 0.13 40);
+  --warning-text: oklch(0.85 0.1 64);
+  --destructive: oklch(0.7 0.16 28);
+  --destructive-text: oklch(0.75 0.145 25);
 }
 
 /* A 44px touch target on a control that is drawn smaller. The criterion
