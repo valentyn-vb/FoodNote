@@ -8,6 +8,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   NotebookTextIcon,
+  TrendingDownIcon,
   UserRoundPenIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -107,6 +108,20 @@ export function AppSidebar() {
                 >
                   <NotebookTextIcon />
                   <span>Meals</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* A place, unlike "Log weight" above it in the header — that one
+                  opens a drawer and stays an action. This is the journal itself,
+                  at any range. */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === '/weights'}
+                  tooltip="Weights"
+                  onClick={closeSheet}
+                  render={<Link href="/weights" />}
+                >
+                  <TrendingDownIcon />
+                  <span>Weights</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -60,7 +60,7 @@ function projectionAtEdge(data: WeightTrendPoint[], edgeT: number) {
  * the goal date in words, so the dashed line only has to point at it, not reach
  * it.
  */
-function cropToWeighIns(data: WeightTrendPoint[]) {
+function cropToWeighIns(data: WeightTrendPoint[], hasProjection: boolean) {
   const weighIns = data.filter(
     (point): point is WeightTrendPoint & { actual: number } =>
       point.actual !== undefined,
@@ -76,8 +76,13 @@ function cropToWeighIns(data: WeightTrendPoint[]) {
     weighIns,
     time: [
       firstWeighIn.t,
+      // The lead is room for the dashed line to head off in. With no projection
+      // to draw — a reached target, or the weights page reading one window —
+      // reserving it just leaves a third of the plot blank.
       newestWeighIn.t +
-        (newestWeighIn.t - firstWeighIn.t) * PROJECTION_LEAD_SHARE,
+        (hasProjection
+          ? (newestWeighIn.t - firstWeighIn.t) * PROJECTION_LEAD_SHARE
+          : 0),
     ],
     weight: [
       Math.min(...weighedKilos) - WEIGHT_PADDING_KG,
@@ -93,15 +98,19 @@ export function WeightTrendChart({
   className?: string;
   data: WeightTrendPoint[];
 }) {
-  const croppedTo = cropToWeighIns(data);
+  const hasProjection = data.some((point) => point.projected !== undefined);
+  const croppedTo = cropToWeighIns(data, hasProjection);
   const goalMarker = croppedTo
     ? projectionAtEdge(data, croppedTo.time[1])
     : null;
+  // The legend lists whatever the config holds, so a config carrying `projected`
+  // named a series the plot wasn't drawing whenever there was no projection.
+  const measured = { actual: weightConfig.actual, trend: weightConfig.trend };
 
   return (
     <EvilLineChart
       data={data}
-      config={weightConfig}
+      config={hasProjection ? weightConfig : measured}
       // recharts puts tabindex="0" on its own <svg>, so clicking anything
       // inside it — a dot, the goal marker — focuses the whole plot and the
       // browser rings it. The ring is the full width of the card, which reads
