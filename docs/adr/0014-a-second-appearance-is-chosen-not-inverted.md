@@ -371,12 +371,13 @@ indicator below its criterion to protect a scope boundary is the wrong trade.
 
 ---
 
-_On the number: 0014 is the next free one, and 0011 is not free. Two PRs claimed
-it independently — `d4d0e43` (per-100 g density, #137) and `a64b0fa` (voice
-dictation, #141) — so `docs/adr/` now holds two files numbered 0011, and the
-string "ADR-0011" appears in `meal-item.entity.ts` meaning the first and in
-`voice-dictation.tsx` meaning the second. It had looked free because `5a4ddde`
-renamed the one-tree ADR off it, which is the trap: a vacated number reads as
-available and is not, because older references still point at what used to be
-there. An ADR number is an identifier, so this one is left alone rather than
-reused a third time; untangling the two that exist is its own change._
+_On the numbers: 0011 had been claimed twice. `d4d0e43` (per-100 g density, #137)
+and `a64b0fa` (voice dictation, #141) landed within days of each other, each
+taking a number that looked free, and neither merge could see the clash — the
+files differ, so there was nothing to conflict. The string "ADR-0011" then meant
+the per-100 g decision in `meal-item.entity.ts` and the dictation one in
+`voice-dictation.tsx`. Untangled here: the earlier claim keeps 0011, and voice
+dictation moves to 0015, one past this ADR. It had looked free because `5a4ddde`
+renamed the one-tree ADR off it, which is the trap worth naming — a vacated number
+reads as available and is not, because references written before the rename still
+point at what used to be there._
