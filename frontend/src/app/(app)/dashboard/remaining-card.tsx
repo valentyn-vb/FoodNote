@@ -4,7 +4,7 @@ import NumberFlow from '@number-flow/react';
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { fullnessMascot, remainingStat } from './helpers';
-import { StatCard, StatFigure } from './stat-card';
+import { StatCard, StatFigure } from '@/components/stat-card';
 
 /**
  * What is left of the day's budget: the figure, the bar, and the two numbers
