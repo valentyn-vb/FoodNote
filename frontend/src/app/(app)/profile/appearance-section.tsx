@@ -38,9 +38,6 @@ export function AppearanceSection() {
           value={appearance}
           onValueChange={setAppearance}
           options={APPEARANCE_OPTIONS}
-          // The same two thresholds the rest of the app uses — there is no
-          // third. The component owns what a column costs.
-          stackBelowMd
         />
         <FieldDescription>
           {APPEARANCE_OPTIONS.find((o) => o.value === appearance)?.hint}
