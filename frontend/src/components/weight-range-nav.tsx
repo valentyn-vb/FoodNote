@@ -3,6 +3,7 @@
 import { StepperNav } from '@/components/stepper-nav';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
+  RANGE_LABELS,
   WEIGHT_RANGE_PRESETS,
   canStepForward,
   rangeLabel,
@@ -67,9 +68,22 @@ export function WeightRangeNav({
           <ToggleGroupItem
             key={option}
             value={option}
+            aria-label={RANGE_LABELS[option]}
             className="border border-border bg-card px-3 text-muted-foreground tabular-nums hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground"
           >
-            {option}
+            {/* Two text nodes, one button: five long labels do not fit a
+                phone row, and the short forms read as jargon where there is
+                room to spell them out. Both are hidden from the accessibility
+                tree and the button carries the full form as its name, so a
+                screen reader hears "1 year" at every width rather than
+                "1Y 1 year" — CSS decides which is visible, and CSS is not
+                something the accessibility tree reads. */}
+            <span aria-hidden="true" className="md:hidden">
+              {option}
+            </span>
+            <span aria-hidden="true" className="hidden md:inline">
+              {RANGE_LABELS[option]}
+            </span>
           </ToggleGroupItem>
         ))}
       </ToggleGroup>

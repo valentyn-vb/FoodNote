@@ -8,7 +8,7 @@ import { addDays, todayUtc } from './dashboard-transforms';
  * whole point is stepping the window — so the two have no shared state, only
  * the same UTC date arithmetic, which is imported rather than restated.
  */
-export const WEIGHT_RANGE_PRESETS = ['30D', '3M', '6M', '1Y'] as const;
+export const WEIGHT_RANGE_PRESETS = ['7D', '30D', '3M', '6M', '1Y'] as const;
 
 export type WeightRangePreset = (typeof WEIGHT_RANGE_PRESETS)[number];
 
@@ -23,10 +23,23 @@ export type WeightRangePreset = (typeof WEIGHT_RANGE_PRESETS)[number];
  * not be comparable.
  */
 export const RANGE_DAYS: Record<WeightRangePreset, number> = {
+  '7D': 7,
   '30D': 30,
   '3M': 90,
   '6M': 180,
   '1Y': 365,
+};
+
+/**
+ * Long labels for desktop, where there is room to say what a preset means. The
+ * short forms stay on narrow screens, where five full labels do not fit a row.
+ */
+export const RANGE_LABELS: Record<WeightRangePreset, string> = {
+  '7D': '7 days',
+  '30D': '30 days',
+  '3M': '3 months',
+  '6M': '6 months',
+  '1Y': '1 year',
 };
 
 export type WeightRange = { from: string; to: string };

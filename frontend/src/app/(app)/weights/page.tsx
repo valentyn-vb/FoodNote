@@ -57,7 +57,7 @@ const LOOKBACK_DAYS = Math.max(...CHANGE_PERIODS);
  */
 export default function WeightsPage() {
   const [selection, setSelection] = useState<WeightRangeSelection>({
-    preset: '30D',
+    preset: '7D',
     offset: 0,
   });
   // One `now` for the whole render, so the bounds, the labels and the change
@@ -77,9 +77,13 @@ export default function WeightsPage() {
   });
   const { goal } = useMeals();
 
-  const visible = history.filter(
-    (entry) => utcDay(entry.recordedAt) >= range.from,
-  );
+  // One chain, newest first. `visible` is the same array: buildWeightTrend sorts
+  // its own input, so the order it receives does not matter, and the entry list
+  // wants newest first anyway.
+  const visible = history
+    .filter((entry) => utcDay(entry.recordedAt) >= range.from)
+    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+  const newest = visible;
 
   // Every figure is anchored to the end of the selected range, not to this
   // moment — on a past window "the last 7 days" means the seven days before
@@ -102,10 +106,6 @@ export default function WeightsPage() {
     },
     rangeEnd,
   );
-  const newest = [...visible].sort((a, b) =>
-    b.recordedAt.localeCompare(a.recordedAt),
-  );
-
   // Last reading minus first, across what is actually plotted — not
   // weightChangeOverDays, which is carry-forward and so needs a reading at or
   // before the window's first day. On the 30D preset that anchor is the window's
@@ -137,27 +137,70 @@ export default function WeightsPage() {
         <WeightsSkeleton />
       ) : (
         <>
-          <StatCard label="Current weight">
-            {/* NumberFlow has no accessible name of its own, so the figure is
+          {/* Paired from `lg`, so the two short cards sit beside each other
+              instead of each spanning the content column on its own. The chart
+              and the entry list below stay full width: one is a plot that reads
+              better wide, the other is a list. */}
+          <div className="grid gap-5 lg:grid-cols-2 lg:gap-3.5">
+            <StatCard label="Current weight">
+              {/* NumberFlow has no accessible name of its own, so the figure is
                 spoken here once and the visual parts are hidden — the pattern
                 the dashboard's stat cards already use. */}
-            <span className="sr-only">
-              {`Current weight: ${currentWeightKg} kg`}
-            </span>
-            {/* Animated because the range control changes it: stepping from one
+              <span className="sr-only">
+                {`Current weight: ${currentWeightKg} kg`}
+              </span>
+              {/* Animated because the range control changes it: stepping from one
                 window to the next moves this figure, and the digits carrying
                 that motion is what says the two readings are the same measure
                 at two times. */}
-            <StatFigure unit="kg">
-              <NumberFlow value={currentWeightKg} />
-            </StatFigure>
-            <DirectionChip changeKg={rangeChange} />
-            <p className="text-sm text-muted-foreground tabular-nums">
-              {rangeLabel(selection.preset, selection.offset, now)}
-            </p>
-          </StatCard>
+              <StatFigure unit="kg">
+                <NumberFlow value={currentWeightKg} />
+              </StatFigure>
+              <DirectionChip changeKg={rangeChange} />
+              <p className="text-sm text-muted-foreground tabular-nums">
+                {rangeLabel(selection.preset, selection.offset, now)}
+              </p>
+            </StatCard>
 
-          <Card className="h-72 gap-4 p-5">
+            <Card className="gap-3 p-5">
+              <h2 className="text-base font-semibold">Change over time</h2>
+              {/* A term/value list, not a table: each row is one period and its
+                one figure, with no second column to align against. */}
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+                {CHANGE_PERIODS.map((days) => {
+                  const change = weightChangeOverDays(
+                    history,
+                    currentWeightKg,
+                    rangeEnd,
+                    days,
+                  );
+                  return (
+                    <div key={days} className="flex flex-col gap-0.5">
+                      <dt className="text-sm text-muted-foreground">
+                        {days} days
+                      </dt>
+                      <dd className="text-base font-semibold tabular-nums">
+                        {change === null ? (
+                          // Not "0.0 kg": the journal has nothing that far back,
+                          // which is a different statement from no change.
+                          <span className="font-normal text-muted-foreground">
+                            Not enough history
+                          </span>
+                        ) : (
+                          `${change > 0 ? '+' : ''}${change} kg`
+                        )}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </Card>
+          </div>
+
+          {/* `px-2` on top of the card's own padding: the y-axis labels are
+              drawn inside the plot area, so at the card's edge the leftmost
+              tick sat on the border. */}
+          <Card className="h-72 gap-4 p-5 px-7">
             <div className="flex flex-col gap-0.5">
               <h2 className="text-base font-semibold">Weight trend</h2>
               <p className="text-sm text-muted-foreground">
@@ -170,40 +213,6 @@ export default function WeightsPage() {
               className="aspect-auto min-h-0 w-full grow basis-0"
               data={trend}
             />
-          </Card>
-
-          <Card className="gap-3 p-5">
-            <h2 className="text-base font-semibold">Change over time</h2>
-            {/* A term/value list, not a table: each row is one period and its
-                one figure, with no second column to align against. */}
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-              {CHANGE_PERIODS.map((days) => {
-                const change = weightChangeOverDays(
-                  history,
-                  currentWeightKg,
-                  rangeEnd,
-                  days,
-                );
-                return (
-                  <div key={days} className="flex flex-col gap-0.5">
-                    <dt className="text-sm text-muted-foreground">
-                      {days} days
-                    </dt>
-                    <dd className="text-base font-semibold tabular-nums">
-                      {change === null ? (
-                        // Not "0.0 kg": the journal has nothing that far back,
-                        // which is a different statement from no change.
-                        <span className="font-normal text-muted-foreground">
-                          Not enough history
-                        </span>
-                      ) : (
-                        `${change > 0 ? '+' : ''}${change} kg`
-                      )}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
           </Card>
 
           <Card className="gap-3 p-5">

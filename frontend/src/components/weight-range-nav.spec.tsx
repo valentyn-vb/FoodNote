@@ -63,7 +63,7 @@ describe('WeightRangeNav', () => {
       <WeightRangeNav preset="30D" offset={-3} now={NOW} onChange={onChange} />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: '1Y' }));
+    await userEvent.click(screen.getByRole('button', { name: '1 year' }));
 
     // Three periods back means something different per preset — 90 days at 30D,
     // three years at 1Y — so carrying the offset across a preset change would
@@ -79,11 +79,11 @@ describe('WeightRangeNav', () => {
     // Base UI's ToggleGroupItem is a button carrying `aria-pressed`, not a
     // radio — asserted on the attribute a screen reader actually reads rather
     // than on the `data-pressed` the styling hangs off.
-    expect(screen.getByRole('button', { name: '6M' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '6 months' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
-    expect(screen.getByRole('button', { name: '30D' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '30 days' })).toHaveAttribute(
       'aria-pressed',
       'false',
     );
