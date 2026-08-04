@@ -87,6 +87,47 @@ tokens, the type row and the named divergences from upstream are in
   exemption alongside the existing ones.
 - **There is no dark mode.** It was removed, not disabled: no `.dark`, no
   `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
+- **One tree per screen** — [ADR
+  0012](docs/adr/0012-one-tree-per-screen.md), which argues it rather than
+  asserting it, because the rule costs something. In `app/(app)/**` and the
+  components it uses — `marketing/`, `canvasui/` and `evilcharts/` are outside
+  every rule in this section — `hidden lg:*` and `lg:hidden` are **not** how a
+  layout differs by width: the desktop
+  composition is a grid or flex rearrangement of the same blocks, in one DOM.
+  Two mounted copies drift, double the state and the focus order, measure their
+  charts at 0×0, and leave the widths between them to nobody.
+- **Three steps, two thresholds, and the CSS and JS halves must agree.** Phone,
+  `md` (768), `lg` (1024). 768 is `md:` and `useIsMobile()`; 1024 is `lg:` and
+  `DESKTOP_QUERY`. Neither `sm:` nor `xl:` is a step: `xl:grid-cols-4` was
+  deleted for truncating meal names at 1440, and the `sm:` utilities that remain
+  size a dialog and its footer, not a page.
+- **Verify a layout change at 360, 390, 768, 1024 and 1440,** on the seeded
+  account (`npm run db:up && npm run seed -w backend`), and check no horizontal
+  scroll at any of them. A Chrome window will not go below 500 CSS px, so the two
+  phone widths need device emulation, not a resized window — and a `fullPage`
+  screenshot captures the charts **empty**, so take viewport shots.
+- **A page owns a max-width only to keep a line readable,** and `/profile` is
+  the one that does (`max-w-xl`, left-aligned): a label/value row at 1120px puts
+  the value a screen away from its label. Otherwise the shell owns the frame — a
+  cap applied for its own sake is what left `/profile` a 576px column against the
+  left edge of 1440, and `/meals` four truncated cards with the page half empty.
+- **A NumberFlow figure needs an `sr-only` name** beside it, with the visual copy
+  `aria-hidden` — it renders per-digit spans and exposes no accessible name at
+  all. `spokenStat` in `app/(app)/dashboard/helpers.ts` formats them.
+- **An icon-only control carries `touch-target`.** The utility centres an
+  invisible 44px box on a control drawn smaller — the criterion measures the hit
+  area, not the ink, so `ui/**` keeps upstream's size scale and stays diffable.
+  Only icon-only: a wide, short button is not what a thumb misses, and fields
+  already reach 44 by height (ADR 0010). Two overlays on neighbouring controls
+  **overlap**, and an overlap hands the tap to whichever won on source order, so
+  the gap between them must clear it — `meal-line.tsx`, `weight-history-row.tsx`
+  and `day-nav.tsx` all widened theirs. Nothing enforces this rule yet, so it is
+  a review item.
+- **A dialog caps its own height.** Upstream's `DialogContent` has neither a cap
+  nor a scroller, so on a short viewport — a phone with the keyboard up — it
+  grows past both edges and its submit button becomes unreachable. Write
+  `max-h-[85dvh] overflow-y-auto` at the call site; the drawer primitive already
+  does this for itself.
 - **After changing `@theme`, `rm -rf frontend/.next`.** Turbopack serves stale
   token CSS even across a dev-server restart, and a colour that "didn't arrive"
   is the cache far more often than the code.

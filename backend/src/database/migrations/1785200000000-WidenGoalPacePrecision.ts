@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Widens the Goal's Pace from numeric(4,2) to numeric(6,4) (#82, ADR-0009).
+ * Widens the Goal's Pace from numeric(4,2) to numeric(6,4) (#82, ADR-0013).
  *
  * A manual plan derives its Pace from a calorie budget the user typed, and one
  * step of Pace is worth `step × 7700 ÷ 7` kcal/day. At two decimals that step is

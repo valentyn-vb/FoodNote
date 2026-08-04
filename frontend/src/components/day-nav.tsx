@@ -46,11 +46,15 @@ export function DayNav() {
   return (
     // One control, not three: the arrows and the label share a card-coloured
     // track, so the group reads as a single day switcher on the page ground.
-    <div className="h-10 inline-flex items-center gap-0.5 rounded-md border bg-card p-1">
+    //
+    // `gap-2`, not `gap-0.5`: each arrow's touch target overflows its 36px box
+    // by 4px a side, and at 2px of gap that overflow reached into the label,
+    // handing the label's own edge to the arrow.
+    <div className="h-10 inline-flex items-center gap-2 rounded-md border bg-card p-1">
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 rounded-sm text-muted-foreground"
+        className="touch-target h-8 rounded-sm text-muted-foreground"
         aria-label="Previous day"
         onClick={() => setSelectedDate(addDays(selectedDate, -1))}
       >
@@ -71,6 +75,10 @@ export function DayNav() {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
           <Calendar
+            // The whole calendar sizes off `--cell-size`, 32 upstream. At 44
+            // the popover is 332 of a 360px phone, which fits — and a date grid
+            // is the one place where a missed tap silently opens the wrong day.
+            className="[--cell-size:--spacing(11)]"
             mode="single"
             selected={selectedAsDate}
             onSelect={handleSelect}
@@ -83,7 +91,7 @@ export function DayNav() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 rounded-sm text-muted-foreground"
+        className="touch-target h-8 rounded-sm text-muted-foreground"
         aria-label="Next day"
         disabled={isToday}
         onClick={() => setSelectedDate(addDays(selectedDate, 1))}

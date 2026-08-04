@@ -4,6 +4,13 @@
  * the vendored `evilcharts/` source) so the palette decisions live in one
  * readable place: colors come from the FoodNote tokens, never EvilCharts
  * defaults.
+ *
+ * Every name here is held as a string, so nothing checks it: a token that no
+ * longer exists yields no CSS at all rather than a fallback, and recharts draws
+ * the series black. That is how `--fn-primary` and `--fn-secondary-deep`
+ * survived the styling rewrite that renamed them — neither tsc nor
+ * no-literal-values can see inside a `var()`. Grep globals.css before changing
+ * one.
  */
 
 // One metric, one hue (the H03 "Weight trend & projection" annotation), in two
@@ -13,7 +20,7 @@
 // a plain filled square (evilcharts/ui/legend LegendIndicator) and cannot show
 // a dash — with one shared color the two keys were indistinguishable there.
 export const weightConfig = {
-  actual: { label: 'Logged', colors: { light: ['var(--fn-secondary-deep)'] } },
+  actual: { label: 'Logged', colors: { light: ['var(--color-success)'] } },
   projected: {
     // "Projected" is the user-facing word and matches Projected Goal Date in
     // CONTEXT.md. The line is remaining weight ÷ Pace, so it is straight by
@@ -22,11 +29,14 @@ export const weightConfig = {
     // forecast we have no model for.
     label: 'Projected',
     colors: {
-      light: ['color-mix(in oklch, var(--fn-secondary), white 38%)'],
+      light: ['color-mix(in oklch, var(--color-success), white 38%)'],
     },
   },
+  // The fit is a different statement from the readings, so it gets a different
+  // colour rather than a third weight of the same tint.
+  trend: { label: 'Trend', colors: { light: ['var(--color-brand-ink)'] } },
 };
 
 export const calorieConfig = {
-  kcal: { label: 'kcal', colors: { light: ['var(--fn-primary)'] } },
+  kcal: { label: 'kcal', colors: { light: ['var(--color-primary)'] } },
 };

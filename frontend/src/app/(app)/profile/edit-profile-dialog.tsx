@@ -60,14 +60,16 @@ export function EditProfileDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         disabled={!user}
-        render={
-          <Button variant="outline" className="mx-auto w-fit" size="sm" />
-        }
+        render={<Button variant="outline" size="sm" />}
       >
         <Edit2Icon className="size-3 mr-1" />
         Edit profile
       </DialogTrigger>
-      <DialogContent>
+      {/* Every dialog caps its own height: the primitive is upstream's, which
+          has neither a cap nor a scroller, so on a short viewport — a phone
+          with the keyboard up — it grows past both edges with no way to reach
+          its own submit button. */}
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>

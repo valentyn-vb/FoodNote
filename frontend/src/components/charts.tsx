@@ -8,78 +8,164 @@ import {
   XAxis,
 } from '@/components/evilcharts/charts/bar-chart';
 import { calorieConfig } from '@/lib/chart-config';
-import type { DailyCaloriePoint } from '@/lib/dashboard-transforms';
-import NumberFlow from '@number-flow/react';
-import {
-  PolarAngleAxis,
-  RadialBar,
-  RadialBarChart,
-  ResponsiveContainer,
-} from 'recharts';
+import type {
+  CalorieSplitSegment,
+  DailyCaloriePoint,
+} from '@/lib/dashboard-transforms';
+import { ReferenceLine } from 'recharts';
+import { cn } from '@/lib/utils';
 
 export function DailyCaloriesChart({
   className,
   data,
+  target,
 }: {
   className?: string;
   data: DailyCaloriePoint[];
+  /** Drawn as a dashed rule across the week. */
+  target: number;
 }) {
   return (
-    <EvilBarChart data={data} config={calorieConfig} className={className}>
+    <EvilBarChart
+      data={data}
+      config={calorieConfig}
+      // See WeightTrendChart: recharts' own <svg> is focusable, and a focus
+      // ring the width of the card reads as an error state.
+      className={cn('[&_.recharts-surface]:outline-none', className)}
+    >
       <BarGrid />
-      <XAxis dataKey="day" />
+      {/* Seven days is the whole domain, so every one of them gets a label.
+          Left to recharts' `preserveEnd` against the default `minTickGap` of 8,
+          the axis silently drops Wed below 223px of chart width (#123). */}
+      <XAxis dataKey="day" interval={0} />
       <Bar dataKey="kcal" radius={4} />
+      {/* Dashed, in the brand ink rather than the bars' fill: it is the line
+          the bars are read against, not another series.
+
+          `extendDomain` because recharts builds the y-domain from the data
+          alone: on a week spent under target the rule falls above dataMax and
+          is silently clipped — exactly the week it matters most on. */}
+      <ReferenceLine
+        y={target}
+        ifOverflow="extendDomain"
+        stroke="var(--color-brand-ink)"
+        strokeDasharray="4 4"
+        strokeWidth={1.5}
+      />
       <BarTooltip />
     </EvilBarChart>
   );
 }
 
 /**
- * The remaining-calories gauge, label and all. The centre figure is an HTML
- * overlay rather than SVG <text> so NumberFlow can animate it.
+ * The donut's colours, by segment key. Held here rather than at the call site
+ * so the ring and the legend beside it cannot drift: both read this map.
+ * `remaining` is deliberately the muted role — the unfilled part of the target
+ * is the absence of a meal, not a fifth one.
  */
-export function RemainingTodayRing({
-  remainingKcal,
-  goalKcal,
+export const CALORIE_SPLIT_COLORS: Record<CalorieSplitSegment['key'], string> =
+  {
+    breakfast: 'var(--color-chart-1)',
+    lunch: 'var(--color-chart-2)',
+    dinner: 'var(--color-chart-3)',
+    snack: 'var(--color-chart-4)',
+    remaining: 'var(--color-muted)',
+  };
+
+// Ring geometry, in the units of the 100x100 viewBox below.
+const RING_MID_RADIUS = 38;
+const RING_THICKNESS = 14;
+const RING_INNER = RING_MID_RADIUS - RING_THICKNESS / 2;
+const RING_OUTER = RING_MID_RADIUS + RING_THICKNESS / 2;
+
+/** `turns` is 0..1 clockwise from the top; SVG angles run clockwise too. */
+function turnsToRadians(turns: number): number {
+  return (turns - 0.25) * 2 * Math.PI;
+}
+
+function polar(radius: number, radians: number): string {
+  return `${50 + radius * Math.cos(radians)} ${50 + radius * Math.sin(radians)}`;
+}
+
+/** One segment of the ring: a filled annulus sector with square ends. */
+function segmentPath(from: number, to: number): string {
+  const start = turnsToRadians(from);
+  const end = turnsToRadians(to);
+  const large = end - start > Math.PI ? 1 : 0;
+
+  // Traversed clockwise: out along the outer arc, in at the far edge, back
+  // along the inner arc.
+  return [
+    `M ${polar(RING_OUTER, start)}`,
+    `A ${RING_OUTER} ${RING_OUTER} 0 ${large} 1 ${polar(RING_OUTER, end)}`,
+    `L ${polar(RING_INNER, end)}`,
+    `A ${RING_INNER} ${RING_INNER} 0 ${large} 0 ${polar(RING_INNER, start)}`,
+    'Z',
+  ].join(' ');
+}
+
+/**
+ * The day's calories as a ring, split by meal time. Sized by the caller; the
+ * figure in the middle is the caller's too — it is a NumberFlow that needs an
+ * `sr-only` name, which SVG text inside a chart cannot carry.
+ *
+ * Drawn by hand rather than with a recharts Pie, because a Pie cannot make the
+ * shape: `cornerRadius` is per-sector and rounds all four of a sector's
+ * corners, and `paddingAngle` breaks the day into separate arcs. The ring is
+ * one continuous band — every end square, every join square — and it carries no
+ * tooltip or legend of its own (the card draws the legend), so nothing was lost
+ * with the Pie.
+ *
+ * A day with nothing logged is the bare track: an empty ring would read as a
+ * chart that failed to load.
+ */
+export function CalorieSplitDonut({
+  className,
+  data,
 }: {
-  remainingKcal: number;
-  goalKcal: number;
+  className?: string;
+  data: CalorieSplitSegment[];
 }) {
+  const total = data.reduce((sum, segment) => sum + segment.kcal, 0);
+  if (total <= 0) return <svg className={className} viewBox="0 0 100 100" />;
+
+  // Each segment starts where the previous one ended, as a running total
+  // rather than a reassigned cursor — the compiler's immutability rule rejects
+  // writing to an outer variable from inside a map.
+  const arcs = data.reduce<
+    { key: CalorieSplitSegment['key']; from: number; to: number }[]
+  >((acc, segment) => {
+    const from = acc.at(-1)?.to ?? 0;
+    return [
+      ...acc,
+      { key: segment.key, from, to: from + segment.kcal / total },
+    ];
+  }, []);
+
   return (
-    <>
-      {/* Recharts radial gauge — animates the arc on mount and on value
-          change. Center label is an HTML overlay so NumberFlow can animate
-          the figure (it can't render inside SVG <text>). */}
-      <div className="relative size-[110px] shrink-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadialBarChart
-            data={[{ value: remainingKcal }]}
-            innerRadius="82%"
-            outerRadius="100%"
-            startAngle={90}
-            endAngle={-270}
-          >
-            <PolarAngleAxis
-              type="number"
-              domain={[0, goalKcal]}
-              tick={false}
-              axisLine={false}
-            />
-            <RadialBar
-              dataKey="value"
-              cornerRadius={10}
-              fill="var(--primary)"
-              background={{ fill: 'var(--border)' }}
-            />
-          </RadialBarChart>
-        </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-heading text-2xl font-semibold tabular-nums">
-            <NumberFlow value={remainingKcal} />
-          </span>
-          <span className="text-sm text-muted-foreground">kcal left</span>
-        </div>
-      </div>
-    </>
+    // Decorative: the card states the same numbers in text beside it.
+    <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
+      {arcs.map((arc) =>
+        // A single segment filling the ring has no two ends to draw a sector
+        // between, so it is a stroked circle instead.
+        arc.to - arc.from > 0.999 ? (
+          <circle
+            key={arc.key}
+            cx="50"
+            cy="50"
+            r={RING_MID_RADIUS}
+            fill="none"
+            stroke={CALORIE_SPLIT_COLORS[arc.key]}
+            strokeWidth={RING_THICKNESS}
+          />
+        ) : (
+          <path
+            key={arc.key}
+            d={segmentPath(arc.from, arc.to)}
+            fill={CALORIE_SPLIT_COLORS[arc.key]}
+          />
+        ),
+      )}
+    </svg>
   );
 }

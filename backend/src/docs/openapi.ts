@@ -264,7 +264,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
             'the journal must not be empty.\n\n' +
             '`preferredWeeklyChangeKg` accepts any rate from 0 to 1.0 kg/week, ' +
             'not only the presets the picker offers: a manual plan derives its ' +
-            'rate from a calorie budget the user names (ADR-0009). `0` is a ' +
+            'rate from a calorie budget the user names (ADR-0013). `0` is a ' +
             'maintenance plan, which parks the target and has no projected date.',
           requestBody: jsonBody('CreateGoalRequest'),
           responses: {

@@ -1,14 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { LogWeightAction } from '@/components/log-weight-action';
 import { MealLogDrawer } from '@/components/meal-log-drawer';
-import { WeightLogDrawer } from '@/components/weight-log-drawer';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useWeight } from '@/lib/weight-context';
-import { TrendingDownIcon, UtensilsIcon } from 'lucide-react';
-import { DayNav } from '@/components/day-nav';
-import { useMeals } from '@/lib/meals-context';
+import { ShellFrame } from '@/components/shell-frame';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { UtensilsIcon } from 'lucide-react';
 
 /** The route's own name. Prefix-matched, so a future `/meals/:id` still reads
     "Meals" rather than falling through to the app name. */
@@ -26,69 +25,50 @@ function titleFor(pathname: string): string {
 }
 
 /**
- * The shared top bar of the (app) shell: the sidebar toggle, where you are, the
- * day you are logging into, and the one action every screen offers.
+ * The shared top bar of the (app) shell: the sidebar toggle, where you are, and
+ * the actions the width can afford. On every route at every width — below `lg`
+ * the trigger opens the sidebar as a sheet, which is also the only way off
+ * /meals and /profile.
  *
- * Desktop only, like the rest of the chrome — the sidebar it toggles is
- * `hidden lg:contents`, so below `lg` the trigger would open nothing and each
- * route's own `lg:hidden` block still owns its header.
- *
- * The `new Date()` DayNav reads during render is safe here despite SSR: AppLayout
- * renders a spinner until the session is restored on the client, so this subtree
- * never takes part in hydration.
+ * One row, so the whole header is what sticks. The day picker lives on the two
+ * pages that show a day, not here.
  */
 export function AppHeader() {
   const pathname = usePathname();
-  const { onWeightSaved } = useWeight();
-  const { isToday } = useMeals();
+  // The same 768 the sidebar's sheet uses, and gated in JS rather than with
+  // `hidden md:inline-flex`: a CSS-hidden trigger leaves its drawer mounted, so
+  // the phone carried this one *and* the sheet's copy.
+  const isMobile = useIsMobile();
 
   return (
-    // Three columns with equal 1fr sides: the day picker sits on the header's
-    // midline whatever the title and the action pair happen to measure, and
-    // unlike absolute centring it can't end up underneath either of them.
-    <header className="sticky top-0 z-10 hidden grid-cols-[1fr_auto_1fr] items-center gap-2 border-b bg-background px-4 py-4 lg:grid">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger />
-        <h1 className="font-heading text-2xl font-semibold">
-          {titleFor(pathname)}
-        </h1>
-      </div>
+    <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-background px-4 md:px-6 lg:h-18 lg:px-4">
+      {/* The same frame the page content sits in, so the actions stop where the
+          content does instead of running to the edge of a 4K display. */}
+      <ShellFrame className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <SidebarTrigger className="touch-target" />
+          {/* The label of the place gives way before any control does. */}
+          <h1 className="truncate font-heading text-2xl font-semibold">
+            {titleFor(pathname)}
+          </h1>
+        </div>
 
-      {/* The day picker only where a day is what the screen shows: on Profile or
-          Meals it would be a control that changes nothing. The cell itself stays
-          either way — drop it and the actions become the second grid child and
-          take the middle column. */}
-      <div>{pathname === '/dashboard' && <DayNav />}</div>
-
-      <div className="flex items-center justify-end gap-2">
-        <WeightLogDrawer
-          mode="create"
-          onWeightSaved={onWeightSaved}
-          trigger={
-            // A weight is always stamped "now" on create, so it cannot be
-            // logged onto the day the nav is showing. Off today the action is
-            // disabled rather than silently writing to today (#119) — the gate
-            // the sidebar carried before these actions moved up here.
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={!isToday}
-              className="px-6"
-            >
-              <TrendingDownIcon />
-              Log weight
-            </Button>
-          }
-        />
-        <MealLogDrawer
-          trigger={
-            <Button size="lg" className="px-6">
-              <UtensilsIcon />
-              Log a meal
-            </Button>
-          }
-        />
-      </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* Below 768 the row cannot hold both actions (40 + 117 + 140 of 328
+            at 360px, before this one's 143), and calories are logged many times
+            a day where weight is logged once — so this is the one that yields,
+            to a button in the sidebar sheet. */}
+          {!isMobile && <LogWeightAction className="px-6" />}
+          <MealLogDrawer
+            trigger={
+              <Button size="lg" className="px-6">
+                <UtensilsIcon className="mr-1" />
+                Log a meal
+              </Button>
+            }
+          />
+        </div>
+      </ShellFrame>
     </header>
   );
 }

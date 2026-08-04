@@ -10,7 +10,9 @@ import {
   XAxis,
   YAxis,
 } from '@/components/evilcharts/charts/line-chart';
+import { ReferenceDot } from 'recharts';
 import { weightConfig } from '@/lib/chart-config';
+import { cn } from '@/lib/utils';
 import {
   formatTrendDate,
   formatTrendTick,
@@ -22,9 +24,41 @@ const PROJECTION_LEAD_SHARE = 1 / 3;
 const WEIGHT_PADDING_KG = 1;
 
 /**
+ * Where the projection crosses the right edge of a cropped axis, carrying the
+ * goal it is headed for. Null when the goal already fits — then the projection
+ * ends at its own point and needs no stand-in.
+ *
+ * The marker sits at the edge rather than at the Projected Goal Date, which is
+ * off-plot by construction: cropping the axis to the weigh-ins is what keeps
+ * them legible. So it reads as "the line continues, and here is where to", and
+ * says the real date in words rather than pretending to plot it.
+ */
+function projectionAtEdge(data: WeightTrendPoint[], edgeT: number) {
+  const projected = data.filter((point) => point.projected !== undefined);
+  const from = projected.at(0);
+  const to = projected.at(-1);
+  if (!from || !to || to.t <= edgeT || to.t === from.t) return null;
+
+  const share = (edgeT - from.t) / (to.t - from.t);
+  return {
+    t: edgeT,
+    kg: from.projected! + (to.projected! - from.projected!) * share,
+    goalDate: formatTrendDate(to.t),
+    goalKg: to.projected!,
+  };
+}
+
+/**
  * Axis domains that show the weigh-ins plus a short lead into the projection.
  * Null when there is no band to protect: one weigh-in is not a trend being
  * squeezed, and its zero-width span gives no lead to measure.
+ *
+ * Always applied, because the axis has to be built from the data rather than
+ * from the goal — the same rule Apple Health and Withings follow. A Projected
+ * Goal Date two months out took two thirds of the width and pressed sixty days
+ * of weigh-ins into the remaining third. The card's own subtitle already states
+ * the goal date in words, so the dashed line only has to point at it, not reach
+ * it.
  */
 function cropToWeighIns(data: WeightTrendPoint[]) {
   const weighIns = data.filter(
@@ -55,19 +89,24 @@ function cropToWeighIns(data: WeightTrendPoint[]) {
 export function WeightTrendChart({
   className,
   data,
-  compact = false,
 }: {
   className?: string;
   data: WeightTrendPoint[];
-  compact?: boolean;
 }) {
-  const croppedTo = compact ? cropToWeighIns(data) : null;
+  const croppedTo = cropToWeighIns(data);
+  const goalMarker = croppedTo
+    ? projectionAtEdge(data, croppedTo.time[1])
+    : null;
 
   return (
     <EvilLineChart
       data={data}
       config={weightConfig}
-      className={className}
+      // recharts puts tabindex="0" on its own <svg>, so clicking anything
+      // inside it — a dot, the goal marker — focuses the whole plot and the
+      // browser rings it. The ring is the full width of the card, which reads
+      // as an error state rather than as focus.
+      className={cn('[&_.recharts-surface]:outline-none', className)}
       // Straight segments between weigh-ins. `monotone` smoothed the measured
       // line into curvature that was never recorded — weight between two
       // weigh-ins is unknown, not gently curved.
@@ -79,10 +118,7 @@ export function WeightTrendChart({
       {/* Fitted, non-zero domain — body weight sits in a narrow band and a
           zero-based axis would flatten the trend into a flat line. A truncated
           scale has to be *labelled* to stay honest, hence no `hide`. */}
-      {/* Labels on the right, next to the newest reading — the edge the eye
-          lands on first, and what Apple Health and Withings both do for weight. */}
       <YAxis
-        orientation="right"
         domain={croppedTo?.weight ?? ['dataMin - 1', 'dataMax + 1']}
         allowDataOverflow={croppedTo !== null}
         tickFormatter={(kg: number) => `${Math.round(kg)}`}
@@ -106,11 +142,47 @@ export function WeightTrendChart({
       <Line dataKey="actual" lineProps={{ strokeWidth: 2 }}>
         <Dot variant="border" />
       </Line>
+      {/* Thinner and dotless, under the readings it summarises: the day-to-day
+          noise of a bathroom scale hides the direction, because water weight
+          moves a reading by more than a week of a 0.5 kg/week plan does. */}
+      <Line
+        dataKey="trend"
+        curveType="linear"
+        lineProps={{ strokeWidth: 1.5 }}
+      />
       <Line
         dataKey="projected"
         strokeVariant="dashed"
         lineProps={{ strokeWidth: 2 }}
       />
+      {/* Where the dashed line leaves the plot, and what it is aimed at. A
+          hollow ring, not a filled dot: the weigh-ins are filled, and this is
+          not a measurement. The name rides in an SVG <title> so hovering it
+          says so — recharts' own Tooltip only tracks the plotted series. */}
+      {goalMarker && (
+        <ReferenceDot
+          x={goalMarker.t}
+          y={goalMarker.kg}
+          ifOverflow="visible"
+          shape={({ cx, cy }: { cx?: number; cy?: number }) => (
+            <g>
+              <title>
+                {`Projected goal · ${goalMarker.goalDate} · ${goalMarker.goalKg} kg`}
+              </title>
+              {/* A wide transparent disc so the pointer finds a 5px ring. */}
+              <circle cx={cx} cy={cy} r={12} fill="transparent" />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={4.5}
+                fill="var(--color-card)"
+                stroke="var(--color-success)"
+                strokeWidth={2}
+              />
+            </g>
+          )}
+        />
+      )}
       {/* The tooltip keeps day precision — months are the axis unit, not the
           resolution the data was recorded at.
           evilcharts/ui/tooltip.tsx's ChartTooltipContent doesn't pass the

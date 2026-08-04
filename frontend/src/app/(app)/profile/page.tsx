@@ -2,12 +2,9 @@
 
 import { useAuth } from '@/components/auth-provider';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { profile } from '@/lib/api-client';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 import type { ProfileResponse } from '@foodnote/shared';
-import { ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CurrentPlanSection } from './current-plan-section';
@@ -46,22 +43,17 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-md flex-col lg:max-w-xl">
-      {/* Mobile only: at lg+ the shell's own AppHeader names the route. */}
-      <div className="flex items-center justify-between px-4 py-3 lg:hidden">
-        <Link href="/dashboard" aria-label="Back to dashboard">
-          <ChevronLeft size={20} className="shrink-0" strokeWidth={1.8} />
-        </Link>
-        <h1 className="font-heading text-2xl font-semibold">Profile</h1>
-      </div>
-      <Separator className="lg:hidden" />
-
-      {/* `pt-5` clears the mobile Separator above; at lg+ that rule is hidden
-          and the shell's own `main` padding already spaces this block. */}
-      <div className="mb-2.5 flex flex-col items-center pt-5 lg:flex-row lg:items-center lg:gap-4 lg:pt-0">
+    // Capped and left-aligned on a desktop: one column of label/value rows is
+    // unreadable at 1120px, where a row's value sits a screen away from its
+    // label. This is the one page that owns a max-width — see AGENTS.md, which
+    // records it as the exception rather than pretending the rule is absolute.
+    <div className="flex w-full max-w-xl flex-col gap-6">
+      {/* Identity spans the top at every width; the edit trigger joins the row
+          at `lg` instead of floating centred beneath the avatar. */}
+      <div className="flex flex-col items-center gap-2.5 lg:flex-row lg:gap-4">
         <Avatar className="size-18">
           {/* The stock fallback is a grey wash at 14px — it reads as a
-                missing image at this size, not as a person. */}
+              missing image at this size, not as a person. */}
           <AvatarFallback className="bg-primary text-2xl font-semibold text-primary-foreground">
             {initials}
           </AvatarFallback>
@@ -70,13 +62,14 @@ export default function ProfilePage() {
           <p className="text-lg font-bold">{fullName}</p>
           <p className="text-sm text-muted-foreground">{authUser?.email}</p>
         </div>
+        <div className="lg:ml-auto">
+          <EditProfileDialog />
+        </div>
       </div>
-      <EditProfileDialog />
 
-      {/* `mt-6`: Edit profile belongs to the identity block above it, so it
-          needs more air below than the 4 between the two sections — otherwise
-          it reads as a heading for Current plan. */}
-      <div className="mt-6 flex flex-col gap-4">
+      {/* One column at every width. Two were tried (#131) and reversed: the
+          sections stack. */}
+      <div className="flex flex-col gap-4">
         <CurrentPlanSection
           profileData={profileData}
           loading={loading}

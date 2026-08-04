@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import NumberFlow from '@number-flow/react';
 import {
   useForm,
@@ -208,6 +209,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
   // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
   // since Undo (DELETE) needs the server id and rollback is the provider's job.
   const { saveMeal, updateMeal } = useMeals();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useControllableState(
     controlledOpen,
     onOpenChange,
@@ -407,9 +409,14 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
         type="button"
         variant="ghost"
         size="sm"
+        // The title bar is one row with the title and the close control, and
+        // below 768 the full label leaves the title nowhere to go. The
+        // accessible name stays the long one — a lone "Back" says where it
+        // goes only to someone who can see the step behind it.
+        aria-label="Back to AI Input"
         onClick={() => setView({ step: 'ai-input' })}
       >
-        <ArrowLeftIcon /> Back to AI Input
+        <ArrowLeftIcon /> {isMobile ? 'Back' : 'Back to AI Input'}
       </Button>
     ) : undefined;
 

@@ -23,6 +23,9 @@ _Avoid_: local day, date (as a field concept)
 **Current Weight**:
 The weight (kg) of the user's most recent Weight Entry. Always derived, never
 stored or edited on its own — onboarding weight simply creates the first entry.
+"Most recent" is relative to the moment being read: the Dashboard is a read of
+one Tracking Day, so browsing back to a past day reads the latest entry at or
+before the end of _that_ day, carried forward when nothing was logged on it.
 _Avoid_: profile weight
 
 **Meal Entry**:
@@ -163,7 +166,7 @@ _Avoid_: ETA, deadline
 **Dashboard**:
 The user's progress view for a single Tracking Day: calories eaten and
 remaining against the Calorie Target with macro totals, plus Goal progress
-(Current Weight vs. target, Projected Goal Date). A point-in-time read of one
+(Current Weight vs. target, Pace, Projected Goal Date). A point-in-time read of one
 day — the trend and history charts are assembled by the client from the Weight
 Entry and Meal Entry journals, not part of the Dashboard itself.
 _Avoid_: overview, home, summary

@@ -6,18 +6,18 @@ import {
   groupMealsByType,
 } from '@/lib/dashboard-transforms';
 
-// The /meals page at desktop width shows all four meal times side by side,
-// always expanded: a day's meals fit easily and there is room for them, so
-// collapsing would hide data for nothing. Two columns at lg, four at xl — four
-// across a narrow desktop window crushes the meal names.
+// The whole day, expanded, at every width — the difference from the dashboard's
+// MealGroupsAccordion is summary versus whole day, not phone versus desktop
+// (#127). This page exists to show the day in full; collapsing it would hide the
+// only thing on the screen.
 //
-// The dashboard uses MealGroupsAccordion at every width instead; its "Logged
-// today" column is too narrow for a four-column grid.
-export function DesktopMealGroups({ meals }: { meals: MealResponse[] }) {
+// Two columns is the ceiling. `xl:grid-cols-4` truncated meal names at 1440
+// while most of the page stood empty; two give each card ~560px there.
+export function MealGroups({ meals }: { meals: MealResponse[] }) {
   const groups = groupMealsByType(meals);
 
   return (
-    <div className="hidden grid-cols-2 gap-3.5 lg:grid xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
       {groups.map((group) => (
         <Card
           key={group.mealType}

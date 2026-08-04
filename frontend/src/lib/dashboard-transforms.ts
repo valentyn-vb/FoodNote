@@ -24,6 +24,8 @@ export type WeightTrendPoint = {
   t: number;
   actual?: number;
   projected?: number;
+  /** Least-squares fit through the actual readings — absent below two of them. */
+  trend?: number;
 };
 
 export type DailyCaloriePoint = { day: string; kcal: number };
@@ -65,12 +67,7 @@ export function formatDayLabel(isoDate: string, now: Date): string {
   const today = todayUtc(now);
   if (isoDate === today) return 'Today';
   if (isoDate === addDays(today, -1)) return 'Yesterday';
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${isoDate}T00:00:00Z`));
+  return utcWeekdayMonthDay.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
 function round1(n: number): number {
@@ -115,16 +112,20 @@ const localMonthDayTime = new Intl.DateTimeFormat('en-US', {
   hour: 'numeric',
   minute: '2-digit',
 });
+const utcWeekdayMonthDay = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const utcWeekday = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  timeZone: 'UTC',
+});
 
 /** Projected goal date as "Sep 19" (UTC). */
 export function formatGoalDate(date: string): string {
   return utcMonthDay.format(new Date(`${date}T00:00:00Z`));
-}
-
-/** Whole weeks from `now` until a goal date (never negative). */
-export function weeksUntil(date: string, now: Date): number {
-  const diff = Date.parse(`${date}T00:00:00Z`) - now.getTime();
-  return Math.max(0, Math.ceil(diff / (7 * DAY_MS)));
 }
 
 /** A logged-at label for a meal row, in the viewer's local time ("12:40 PM"). */
@@ -200,16 +201,12 @@ export function formatGroupSummary(group: MealGroup): string {
  * second-to-last bucket.
  *
  * `date` is the Dashboard's Tracking Day, not the client clock, so the last
- * bucket is always the same day as the "Logged today" list (see todaysMeals).
+ * bucket is always the same day as the "Today's meals" list (see todaysMeals).
  */
 export function bucketDailyCalories(
   meals: MealResponse[],
   date: string,
 ): DailyCaloriePoint[] {
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    timeZone: 'UTC',
-  });
   const baseMs = Date.parse(`${date}T00:00:00Z`);
 
   return Array.from({ length: 7 }, (_, idx) => {
@@ -218,7 +215,7 @@ export function bucketDailyCalories(
     const kcal = meals
       .filter((m) => utcDay(m.recordedAt) === bucketDate)
       .reduce((sum, m) => sum + m.totalCalories, 0);
-    return { day: weekday.format(new Date(dayMs)), kcal };
+    return { day: utcWeekday.format(new Date(dayMs)), kcal };
   });
 }
 
@@ -231,10 +228,20 @@ type GoalBlock = Pick<
 // so both of these render a non-finite input as empty rather than throwing
 // RangeError and taking the dashboard down with it.
 
-/** An x-axis tick: "Jul". The trend spans months, so months are the unit. */
+/**
+ * An x-axis tick: "Jul" on a month boundary, "Jul 11" anywhere else.
+ *
+ * Months are the unit, and monthTicks puts every tick on the 1st — except when
+ * a span holds fewer than two boundaries, where it falls back to the span's own
+ * ends. Those are ordinary dates, and printing only their month labelled both
+ * ends of a three-week journal "Jul".
+ */
 export function formatTrendTick(t: number): string {
   if (!Number.isFinite(t)) return '';
-  return utcMonth.format(new Date(t));
+  const date = new Date(t);
+  return date.getUTCDate() === 1
+    ? utcMonth.format(date)
+    : utcMonthDay.format(date);
 }
 
 /** A tooltip heading: "Jul 27" in UTC, matching Tracking Day. */
@@ -273,6 +280,30 @@ export function monthTicks(points: WeightTrendPoint[]): number[] {
 }
 
 /**
+ * Ordinary least squares through `[x, y]` pairs, returned as the line itself.
+ * Null below two points, and null when every x is the same instant — both are
+ * cases where no single line is defined, rather than ones to draw flat.
+ */
+function fitLine(pairs: [number, number][]): ((x: number) => number) | null {
+  if (pairs.length < 2) return null;
+
+  const n = pairs.length;
+  const meanX = pairs.reduce((sum, [x]) => sum + x, 0) / n;
+  const meanY = pairs.reduce((sum, [, y]) => sum + y, 0) / n;
+
+  let covariance = 0;
+  let variance = 0;
+  for (const [x, y] of pairs) {
+    covariance += (x - meanX) * (y - meanY);
+    variance += (x - meanX) ** 2;
+  }
+  if (variance === 0) return null;
+
+  const slope = covariance / variance;
+  return (x) => round1(meanY + slope * (x - meanX));
+}
+
+/**
  * Weight-trend series on a true time axis: one point per Tracking Day, plus a
  * two-point projection from the newest entry to the target at the Projected
  * Goal Date. A reached target (null projectedGoalDate) shows logged points only.
@@ -287,6 +318,13 @@ export function monthTicks(points: WeightTrendPoint[]): number[] {
  * at effectively one instant, drawing a vertical segment — a claim that the
  * user weighed two things at once. The day's *last* entry wins, so the final
  * point equals Current Weight and the chart agrees with the tile above it.
+ *
+ * Each reading also carries the least-squares line through all of them, which
+ * is what the day-to-day noise of a bathroom scale hides: water weight moves a
+ * reading by more than a week of a 0.5 kg/week plan does. The fit is over
+ * instants, not over positions in the series — on this axis a gap in the
+ * journal is real elapsed time, and a fit over positions would tilt the line by
+ * however often the user happened to weigh in.
  */
 export function buildWeightTrend(
   weights: WeightEntryResponse[],
@@ -300,9 +338,15 @@ export function buildWeightTrend(
     latestPerDay.set(utcDay(w.recordedAt), w); // ascending, so the last wins
   }
 
-  const points: WeightTrendPoint[] = [...latestPerDay.values()].map((w) => ({
-    t: Date.parse(w.recordedAt),
-    actual: w.weightKg,
+  const readings = [...latestPerDay.values()].map(
+    (w) => [Date.parse(w.recordedAt), w.weightKg] as [number, number],
+  );
+  const fit = fitLine(readings);
+
+  const points: WeightTrendPoint[] = readings.map(([t, weightKg]) => ({
+    t,
+    actual: weightKg,
+    trend: fit?.(t),
   }));
 
   if (!goal.projectedGoalDate) return points;
@@ -323,6 +367,66 @@ export function buildWeightTrend(
 }
 
 /**
+ * The weight in effect at any past instant: the latest entry at or before it,
+ * carried forward. Undefined when the journal starts after that instant — the
+ * caller decides what "no history yet" reads as, since 0.0 kg of change and no
+ * comparison at all are different statements.
+ */
+function carryForward(
+  weights: WeightEntryResponse[],
+): (atMs: number) => number | undefined {
+  const sorted = [...weights].sort((a, b) =>
+    a.recordedAt.localeCompare(b.recordedAt),
+  );
+
+  return (atMs) => {
+    let found: number | undefined;
+    for (const w of sorted) {
+      if (Date.parse(w.recordedAt) <= atMs) found = w.weightKg;
+      else break;
+    }
+    return found;
+  };
+}
+
+/**
+ * Current Weight as of a given instant: the latest entry at or before it.
+ *
+ * The Dashboard is a read of one Tracking Day (CONTEXT.md), so every weight
+ * figure on it has to be the weight *that day* — the server's Current Weight is
+ * only ever the latest one, which on a past day is a number the user did not
+ * have yet. It is still the right fallback when the journal reaches no further
+ * back than the instant asked for: a day before the first weigh-in has no
+ * weight of its own, and the alternative is a card with a hole in it.
+ */
+export function weightAsOf(
+  weights: WeightEntryResponse[],
+  at: Date,
+  fallbackKg: number,
+): number {
+  return carryForward(weights)(at.getTime()) ?? fallbackKg;
+}
+
+/**
+ * Weight change over the last `days` days, or null when the journal has nothing
+ * that far back. Null rather than 0.0: on a fresh account "no change" would be
+ * a claim the data doesn't support, and the card says so instead.
+ *
+ * A rolling window, not a calendar one — "since Monday" reads 0.0 every Monday
+ * morning, and a fixed length is what makes this comparable to the Pace in
+ * kg/week shown beside it.
+ */
+export function weightChangeOverDays(
+  weights: WeightEntryResponse[],
+  currentWeightKg: number,
+  now: Date,
+  days: number,
+): number | null {
+  const then = carryForward(weights)(now.getTime() - days * DAY_MS);
+  return then === undefined ? null : round1(currentWeightKg - then);
+}
+
+/**
  * Weight change over the last ~30 days and the ~30 days before that, using
  * carry-forward (the latest entry at or before each anchor). Not enough
  * history for a period → 0.0 kg, so a fresh account reads honestly.
@@ -332,17 +436,7 @@ export function computeWeightChange(
   currentWeightKg: number,
   now: Date,
 ): { weightChangeKg: number; weightChangeLastMonthKg: number } {
-  const sorted = [...weights].sort((a, b) =>
-    a.recordedAt.localeCompare(b.recordedAt),
-  );
-  const weightAtOrBefore = (targetMs: number): number | undefined => {
-    let found: number | undefined;
-    for (const w of sorted) {
-      if (Date.parse(w.recordedAt) <= targetMs) found = w.weightKg;
-      else break;
-    }
-    return found;
-  };
+  const weightAtOrBefore = carryForward(weights);
 
   const w30 = weightAtOrBefore(now.getTime() - 30 * DAY_MS);
   const w60 = weightAtOrBefore(now.getTime() - 60 * DAY_MS);
@@ -352,4 +446,72 @@ export function computeWeightChange(
     weightChangeLastMonthKg:
       w30 === undefined || w60 === undefined ? 0 : round1(w30 - w60),
   };
+}
+
+export type GoalDirection = 'lose' | 'gain' | 'maintain';
+
+/**
+ * What kind of plan this is. Pace 0 is maintenance and nothing else (ADR-0007),
+ * so it is asked first; otherwise the direction comes from the target against
+ * the **start** weight, never the current one, which is what lets it survive
+ * overshooting the target.
+ */
+export function goalDirection(
+  startWeightKg: number,
+  targetWeightKg: number,
+  pace: number,
+): GoalDirection {
+  if (pace === 0) return 'maintain';
+  return targetWeightKg < startWeightKg ? 'lose' : 'gain';
+}
+
+/**
+ * Kilograms still to go, measured in the goal's own direction, so an overshoot
+ * reads 0 rather than counting back up. Null on a maintenance plan — there is
+ * no destination to be short of.
+ */
+export function remainingToGoalKg(
+  currentWeightKg: number,
+  targetWeightKg: number,
+  direction: GoalDirection,
+): number | null {
+  if (direction === 'maintain') return null;
+  const remaining =
+    direction === 'lose'
+      ? currentWeightKg - targetWeightKg
+      : targetWeightKg - currentWeightKg;
+  return Math.max(0, round1(remaining));
+}
+
+export type CalorieSplitSegment = {
+  /** Meal type, or 'remaining' for the unfilled part of the target. */
+  key: MealType | 'remaining';
+  kcal: number;
+};
+
+/**
+ * One day's calories split into the four meal times plus what is left of the
+ * target — the donut's segments. Empty meal times are dropped (a zero segment
+ * draws nothing but crowds the legend), while `remaining` is kept even at 0 so
+ * a day exactly on target still closes the ring.
+ *
+ * Over target, `remaining` is 0 and the ring is the meals alone: a negative
+ * segment has no drawing, and the deficit is stated in words by the card that
+ * owns the figure.
+ *
+ * Takes the day's meals already scoped (todaysMeals) and the remainder the read
+ * model derived, rather than a date and a target to re-derive them from. The
+ * card prints `remainingKcal` in the ring's hole, so a second derivation here
+ * would let the hole and the arc around it disagree — and the day's totals come
+ * from the Dashboard read model, never re-summed from the meal list.
+ */
+export function splitCaloriesByMealType(
+  dayMeals: MealResponse[],
+  remainingKcal: number,
+): CalorieSplitSegment[] {
+  const byType = groupMealsByType(dayMeals)
+    .filter((group) => group.totalKcal > 0)
+    .map((group) => ({ key: group.mealType, kcal: group.totalKcal }));
+
+  return [...byType, { key: 'remaining', kcal: Math.max(0, remainingKcal) }];
 }

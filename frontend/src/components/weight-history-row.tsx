@@ -48,13 +48,20 @@ export function WeightHistoryRow({
           {formatEntryDate(entry.recordedAt)}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      {/* `gap-3`, as in meal-line: two 44px touch targets on 32px icons
+          need 12px between them to stop overlapping. */}
+      <div className="flex shrink-0 items-center gap-3">
         <WeightLogDrawer
           mode="edit"
           entry={entry}
           onChanged={onChanged}
           trigger={
-            <Button variant="ghost" size="icon-sm" aria-label="Edit entry">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Edit entry"
+              className="touch-target"
+            >
               <Pencil size={16} />
             </Button>
           }
@@ -62,6 +69,7 @@ export function WeightHistoryRow({
         <Button
           variant="ghost"
           size="icon-sm"
+          className="touch-target text-text-muted"
           aria-label="Delete entry"
           // Stated as the constraint, not as a claim about the journal:
           // `canDelete` is derived from the provider's 60-day window, so an
@@ -71,7 +79,6 @@ export function WeightHistoryRow({
             canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
           disabled={busy || !canDelete}
-          className="text-text-muted"
           onClick={handleDelete}
         >
           {busy ? <Spinner /> : <Trash2 size={16} />}

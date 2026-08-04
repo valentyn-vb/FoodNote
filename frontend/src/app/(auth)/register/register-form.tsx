@@ -50,7 +50,7 @@ export function RegisterForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle className="text-xl font-bold">Create your account</CardTitle>
         <CardDescription>
           Start planning and tracking with FoodNote.
         </CardDescription>

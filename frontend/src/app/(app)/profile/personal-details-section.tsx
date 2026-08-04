@@ -154,7 +154,47 @@ export function PersonalDetailsSection({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="text-sm text-muted-foreground">Personal details</h2>
+      {/* `[h2 ......... Edit]` — the same shape "Change plan" has inside the
+          plan card. Centred under the card, the trigger read as a caption
+          rather than as the section's one control. */}
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm text-muted-foreground">Personal details</h2>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          <DialogTrigger
+            disabled={loading || saving}
+            render={<Button variant="outline" size="sm" />}
+          >
+            {loading || saving ? (
+              <Spinner />
+            ) : (
+              <Edit2Icon className="size-3 mr-1" />
+            )}
+            Edit details
+          </DialogTrigger>
+          {/* See edit-profile-dialog: upstream's DialogContent has no height
+              cap, so with a keyboard up this one lost both its title and its
+              "Save changes" off opposite edges. */}
+          <DialogContent className="max-h-[85dvh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit details</DialogTitle>
+              <DialogDescription>
+                We&apos;ll use this to recalculate your daily calorie target.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DetailsForm form={form} onSubmit={handleSave} />
+
+            <DialogFooter className="flex-row justify-end gap-2">
+              <DialogClose render={<Button type="button" variant="outline" />}>
+                Cancel
+              </DialogClose>
+              <Button type="submit" form={DETAILS_FORM_ID}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       <Card className="gap-0 overflow-hidden py-0">
         <dl className="divide-y divide-border">
           <DetailRow
@@ -186,41 +226,6 @@ export function PersonalDetailsSection({
           />
         </dl>
       </Card>
-
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger
-          disabled={loading || saving}
-          render={
-            <Button variant="outline" className="mx-auto w-fit" size="sm" />
-          }
-        >
-          {loading || saving ? (
-            <Spinner />
-          ) : (
-            <Edit2Icon className="size-3 mr-1" />
-          )}
-          Edit details
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit details</DialogTitle>
-            <DialogDescription>
-              We&apos;ll use this to recalculate your daily calorie target.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DetailsForm form={form} onSubmit={handleSave} />
-
-          <DialogFooter className="flex-row justify-end gap-2">
-            <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
-            </DialogClose>
-            <Button type="submit" form={DETAILS_FORM_ID}>
-              Save changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

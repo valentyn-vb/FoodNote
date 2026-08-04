@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import type { MealResponse, WeightEntryResponse } from '@foodnote/shared';
+import type {
+  MealResponse,
+  MealType,
+  WeightEntryResponse,
+} from '@foodnote/shared';
 import {
   addDays,
   bucketDailyCalories,
@@ -16,7 +20,11 @@ import {
   todaysMeals,
   todayUtc,
   utcDay,
-  weeksUntil,
+  goalDirection,
+  remainingToGoalKg,
+  splitCaloriesByMealType,
+  weightAsOf,
+  weightChangeOverDays,
 } from './dashboard-transforms';
 
 // ---------------------------------------------------------------------------
@@ -256,36 +264,6 @@ describe('formatGoalDate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// weeksUntil
-// ---------------------------------------------------------------------------
-
-describe('weeksUntil', () => {
-  // Use midnight UTC as `now` to avoid fractional-day edge cases.
-  const anchor = new Date('2024-07-30T00:00:00Z');
-
-  it('returns 1 for exactly one week ahead', () => {
-    expect(weeksUntil('2024-08-06', anchor)).toBe(1);
-  });
-
-  it('returns 2 for exactly two weeks ahead', () => {
-    expect(weeksUntil('2024-08-13', anchor)).toBe(2);
-  });
-
-  it('rounds up a partial week', () => {
-    // 8 days → ceil(8/7) = 2
-    expect(weeksUntil('2024-08-07', anchor)).toBe(2);
-  });
-
-  it('returns 0 for a past date (never negative)', () => {
-    expect(weeksUntil('2024-07-01', anchor)).toBe(0);
-  });
-
-  it('returns 0 for yesterday', () => {
-    expect(weeksUntil('2024-07-29', anchor)).toBe(0);
-  });
-});
-
-// ---------------------------------------------------------------------------
 // todaysMeals
 // ---------------------------------------------------------------------------
 
@@ -411,8 +389,8 @@ describe('buildWeightTrend', () => {
     ];
     const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
     expect(trend).toEqual([
-      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82 },
-      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81 },
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82, trend: 82 },
+      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81, trend: 81 },
     ]);
   });
 
@@ -453,11 +431,44 @@ describe('buildWeightTrend', () => {
       weight('b', '2024-07-29T08:00:00Z', 81),
     ];
     const trend = buildWeightTrend(weights, goalWithProjection, NOW_TREND);
+    // Two readings define the fit exactly, so each trend value equals its own
+    // reading; the projection point carries none, being no reading of anything.
     expect(trend).toEqual([
-      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82 },
-      { t: Date.parse('2024-07-29T08:00:00Z'), actual: 81, projected: 81 },
+      { t: Date.parse('2024-07-28T08:00:00Z'), actual: 82, trend: 82 },
+      {
+        t: Date.parse('2024-07-29T08:00:00Z'),
+        actual: 81,
+        projected: 81,
+        trend: 81,
+      },
       { t: Date.parse('2024-12-31T00:00:00Z'), projected: 75 },
     ]);
+  });
+
+  it('carries no trend line below two readings', () => {
+    const weights = [weight('a', '2024-07-28T08:00:00Z', 82)];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    expect(trend.at(0)?.trend).toBeUndefined();
+  });
+
+  it('fits the trend over elapsed time, not over the number of weigh-ins', () => {
+    // Two readings a day apart, then one nine days later. Over series
+    // positions the third reading would be one step from the second and the
+    // fit would follow the early pair; over instants the long gap carries the
+    // weight it actually spans, so the line runs through the outer readings.
+    const weights = [
+      weight('a', '2024-07-01T08:00:00Z', 84),
+      weight('b', '2024-07-02T08:00:00Z', 83),
+      weight('c', '2024-07-11T08:00:00Z', 80),
+    ];
+    const trend = buildWeightTrend(weights, goalReached, NOW_TREND);
+    const fitted = trend.map((p) => p.trend);
+
+    // A fit over positions would put the middle point at 82.0 (evenly spaced);
+    // over instants it sits close to the straight run from 84 to 80.
+    expect(fitted[0]).toBeCloseTo(83.7, 1);
+    expect(fitted[1]).toBeCloseTo(83.3, 1);
+    expect(fitted[2]).toBeCloseTo(80.0, 1);
   });
 
   it('places the projection endpoint at the target weight on the projected goal date', () => {
@@ -474,8 +485,14 @@ describe('buildWeightTrend', () => {
 // ---------------------------------------------------------------------------
 
 describe('formatTrendTick', () => {
-  it('formats an epoch ms timestamp as a short month (UTC)', () => {
-    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul');
+  it('formats a month boundary as a short month (UTC)', () => {
+    expect(formatTrendTick(Date.UTC(2024, 6, 1))).toBe('Jul');
+  });
+
+  it('keeps the day on a tick that is not a month boundary', () => {
+    // monthTicks falls back to the span's own ends when it holds fewer than two
+    // boundaries; month-only labels made both ends of one month read "Jul".
+    expect(formatTrendTick(Date.UTC(2024, 6, 15))).toBe('Jul 15');
   });
 
   it('returns an empty string for a non-finite input', () => {
@@ -623,5 +640,200 @@ describe('computeWeightChange', () => {
       NOW_WEIGHT,
     );
     expect(result.weightChangeKg).toBe(-3.0); // 80 − 83
+  });
+});
+
+// ---------------------------------------------------------------------------
+// weightAsOf
+// ---------------------------------------------------------------------------
+
+describe('weightAsOf', () => {
+  const END_OF_DAY = new Date('2024-07-30T23:59:59.999Z');
+  const entries = [
+    weight('a', '2024-07-20T08:00:00Z', 83),
+    weight('b', '2024-07-26T08:00:00Z', 81),
+    weight('c', '2024-08-02T08:00:00Z', 79),
+  ];
+
+  it('ignores entries after the day asked for', () => {
+    // The whole point: browsing back to Jul 30 must not show the Aug 2 reading.
+    expect(weightAsOf(entries, END_OF_DAY, 79)).toBe(81);
+  });
+
+  it('takes an entry recorded later the same day', () => {
+    const evening = [weight('pm', '2024-07-30T18:00:00Z', 80)];
+    expect(weightAsOf(evening, END_OF_DAY, 99)).toBe(80);
+  });
+
+  it('falls back when the journal starts after the day asked for', () => {
+    expect(weightAsOf(entries, new Date('2024-07-01T23:59:59.999Z'), 83)).toBe(
+      83,
+    );
+  });
+
+  it('falls back on an empty journal', () => {
+    expect(weightAsOf([], END_OF_DAY, 80)).toBe(80);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// weightChangeOverDays
+// ---------------------------------------------------------------------------
+
+describe('weightChangeOverDays', () => {
+  const NOW_WINDOW = new Date('2024-07-30T00:00:00Z');
+  const daysAgo = (days: number) =>
+    new Date(NOW_WINDOW.getTime() - days * 86_400_000).toISOString();
+
+  it('returns null when the journal does not reach back that far', () => {
+    // Distinct from 0: a fresh account has made no comparison, not a flat one.
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(2), 81)], 80, NOW_WINDOW, 7),
+    ).toBeNull();
+  });
+
+  it('returns null on an empty journal', () => {
+    expect(weightChangeOverDays([], 80, NOW_WINDOW, 7)).toBeNull();
+  });
+
+  it('measures against the entry in effect a week ago', () => {
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(7), 80.6)], 80, NOW_WINDOW, 7),
+    ).toBe(-0.6);
+  });
+
+  it('carries the latest entry at or before the anchor forward', () => {
+    // Nothing was logged on the anchor day itself; the 10-day-old entry stands.
+    const entries = [
+      weight('old', daysAgo(10), 82),
+      weight('new', daysAgo(1), 80),
+    ];
+    expect(weightChangeOverDays(entries, 80, NOW_WINDOW, 7)).toBe(-2.0);
+  });
+
+  it('reports a gain as a positive number', () => {
+    expect(
+      weightChangeOverDays([weight('w', daysAgo(7), 79.5)], 80, NOW_WINDOW, 7),
+    ).toBe(0.5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// goalDirection
+// ---------------------------------------------------------------------------
+
+describe('goalDirection', () => {
+  it('is maintenance whenever the pace is 0, whatever the weights say', () => {
+    expect(goalDirection(80, 75, 0)).toBe('maintain');
+  });
+
+  it('reads the direction from the target against the start weight', () => {
+    expect(goalDirection(80, 75, 0.5)).toBe('lose');
+    expect(goalDirection(70, 75, 0.5)).toBe('gain');
+  });
+
+  it('survives overshooting the target', () => {
+    // Current weight is irrelevant here by design — a loss plan whose target
+    // was passed is still a loss plan.
+    expect(goalDirection(80, 75, 0.5)).toBe('lose');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// remainingToGoalKg
+// ---------------------------------------------------------------------------
+
+describe('remainingToGoalKg', () => {
+  it('measures in the goal direction', () => {
+    expect(remainingToGoalKg(74.5, 72, 'lose')).toBe(2.5);
+    expect(remainingToGoalKg(70, 75, 'gain')).toBe(5);
+  });
+
+  it('clamps an overshoot to 0 rather than counting back up', () => {
+    expect(remainingToGoalKg(71, 72, 'lose')).toBe(0);
+    expect(remainingToGoalKg(76, 75, 'gain')).toBe(0);
+  });
+
+  it('is null on a maintenance plan', () => {
+    expect(remainingToGoalKg(74.5, 74.5, 'maintain')).toBeNull();
+  });
+
+  it('rounds to 1 decimal place', () => {
+    expect(remainingToGoalKg(74.56, 72, 'lose')).toBe(2.6);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// splitCaloriesByMealType
+// ---------------------------------------------------------------------------
+
+describe('splitCaloriesByMealType', () => {
+  const DAY = '2024-07-30';
+
+  function typedMeal(
+    id: string,
+    mealType: MealType,
+    totalCalories: number,
+  ): MealResponse {
+    return { ...meal(id, `${DAY}T12:00:00.000Z`, totalCalories), mealType };
+  }
+
+  it('keeps the contract order of meal types', () => {
+    const segments = splitCaloriesByMealType(
+      [
+        typedMeal('d', 'dinner', 300),
+        typedMeal('b', 'breakfast', 200),
+        typedMeal('s', 'snack', 100),
+        typedMeal('l', 'lunch', 400),
+      ],
+      1000,
+    );
+    expect(segments.map((s) => s.key)).toEqual([
+      'breakfast',
+      'lunch',
+      'dinner',
+      'snack',
+      'remaining',
+    ]);
+  });
+
+  it('sums several meals of the same type', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('a', 'lunch', 300), typedMeal('b', 'lunch', 250)],
+      1450,
+    );
+    expect(segments.find((s) => s.key === 'lunch')?.kcal).toBe(550);
+  });
+
+  it('drops meal times with nothing logged', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 400)],
+      1600,
+    );
+    expect(segments.map((s) => s.key)).toEqual(['breakfast', 'remaining']);
+  });
+
+  it('takes the remainder from the read model rather than re-deriving it', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 400)],
+      1600,
+    );
+    expect(segments.find((s) => s.key === 'remaining')?.kcal).toBe(1600);
+  });
+
+  it('keeps a zero remainder so a day on target still closes the ring', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 2000)],
+      0,
+    );
+    expect(segments.at(-1)).toEqual({ key: 'remaining', kcal: 0 });
+  });
+
+  it('floors the remainder at 0 when the day went over', () => {
+    const segments = splitCaloriesByMealType(
+      [typedMeal('b', 'breakfast', 2400)],
+      -400,
+    );
+    expect(segments.at(-1)?.kcal).toBe(0);
   });
 });

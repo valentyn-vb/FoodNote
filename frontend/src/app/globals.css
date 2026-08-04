@@ -89,7 +89,11 @@
 }
 
 :root {
-  --background: oklch(0.982 0.009 78.3);
+  /* Half the chroma the cream started at, same lightness and hue: the page
+     still reads warm against the white of --card, but stops reading as a
+     colour of its own. The separation from a card was never the tint — it is
+     the 0.018 of lightness between them — so halving it costs nothing. */
+  --background: oklch(0.982 0.004 78.3);
   --foreground: oklch(0.283 0.045 52.1);
   --card: oklch(1 0 90);
   --card-foreground: var(--foreground);
@@ -143,6 +147,28 @@
   --sidebar-ring: var(--ring);
 }
 
+/* A 44px touch target on a control that is drawn smaller. The criterion
+   measures the hit area, not the ink, so the control keeps its stock shadcn
+   size and this centres an invisible box on it — which is why `ui/**` stays
+   diffable. Opt-in, and only for icon-only controls: a wide, short button is
+   not what a thumb misses, and two of these on adjacent controls overlap, so
+   the gap between them has to clear the overflow (see meal-line, day-nav). */
+@utility touch-target {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 100%;
+    height: 100%;
+    min-width: --spacing(11);
+    min-height: --spacing(11);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -152,6 +178,35 @@
   }
   html {
     @apply font-sans antialiased;
+
+    /* Reserve the scrollbar's track whether or not it is showing. Without this
+       the gutter is 15px of content width that appears the moment a page
+       becomes taller than the viewport and vanishes when it stops being so —
+       and since the shell fills the width, that is the whole layout jumping
+       sideways. Nothing here feeds back into it — the page's height does not
+       depend on those 15px, measured at 2560 and 2545 — so this is one shift
+       per toggle, not a loop.
+
+       On a system with overlay scrollbars this costs nothing — the gutter is
+       0 there — which is also why the symptom is invisible on most Macs and
+       obvious on the machines that have it. */
+    scrollbar-gutter: stable;
+  }
+
+  /* Tailwind v4's preflight sets `cursor: default` on buttons, following the
+     spec rather than the habit — so every control in the app lost the pointer
+     at once. Restored here, in one base rule, because the alternative is a
+     `cursor-pointer` on each call site and inside `ui/**`, which has to stay
+     diffable against upstream.
+
+     A disabled control keeps the default cursor: the pointer is a promise that
+     clicking does something. Base UI marks some of its disabled triggers with
+     `aria-disabled` instead of the attribute, so both are excluded. Anchors are
+     absent on purpose — the UA already gives an href a pointer, and a link that
+     looks like a button is still a link. */
+  button:not(:disabled, [aria-disabled='true']),
+  [role='button']:not(:disabled, [aria-disabled='true']) {
+    cursor: pointer;
   }
 }
 

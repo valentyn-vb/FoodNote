@@ -107,7 +107,7 @@ export function ManualPlanDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button variant="link" />}>{label}</DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>
