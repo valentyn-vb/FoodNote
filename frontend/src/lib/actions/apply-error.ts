@@ -1,6 +1,6 @@
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { ActionFailure } from './result';
+import { FORM_ERROR, type ActionFailure } from './result';
 
 /**
  * Draws a failed `ActionResult` where it belongs: field errors onto their
@@ -35,5 +35,11 @@ export function applyActionError<T extends FieldValues>(
     form.setError(name as Path<T>, { type: 'server', message });
   }
 
-  form.setFocus(entries[0][0] as Path<T>);
+  // `root` is a form-level error with no input behind it, so there is nothing to
+  // focus — asking react-hook-form to focus it would reach for a ref that does
+  // not exist. The message is already in an alert, which is what announces it.
+  const [firstName] = entries[0];
+  if (firstName !== FORM_ERROR) {
+    form.setFocus(firstName as Path<T>);
+  }
 }

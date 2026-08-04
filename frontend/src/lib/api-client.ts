@@ -1,6 +1,5 @@
 import {
   aiParseResponseSchema,
-  authResponseSchema,
   authUserSchema,
   dashboardResponseSchema,
   goalResponseSchema,
@@ -8,11 +7,9 @@ import {
   listWeightsResponseSchema,
   mealResponseSchema,
   profileResponseSchema,
-  refreshResponseSchema,
   weightEntryResponseSchema,
   type AiParseRequest,
   type AiParseResponse,
-  type AuthResponse,
   type AuthUser,
   type CreateGoalRequest,
   type CreateMealRequest,
@@ -22,11 +19,9 @@ import {
   type GoalResponse,
   type ListMealsResponse,
   type ListWeightsResponse,
-  type LoginRequest,
   type MealResponse,
   type ProfileResponse,
   type PutProfileRequest,
-  type RegisterRequest,
   type UpdateAccountRequest,
   type UpdateGoalRequest,
   type UpdateWeightRequest,
@@ -39,88 +34,46 @@ import { ApiError, apiErrorMessage } from '@/lib/api-error';
 export { ApiError };
 
 /**
- * The access token lives only in memory (never in storage) and is re-obtained
- * via the refresh cookie after a page reload. All requests go through the
- * Next.js proxy, so URLs are relative and cookies are first-party.
+ * Client-side calls, on their way out.
+ *
+ * There is no token here any more. The access token is an httpOnly cookie that
+ * this code cannot read, and the relative `/api/*` paths below now land on
+ * `app/api/[...path]/route.ts` — the transitional bridge — which reads that
+ * cookie and adds the `Authorization` header server-side. Renewal is `proxy.ts`'s
+ * job, so the retry-on-401 that used to live here is gone too: a 401 reaching
+ * this point means the session is genuinely dead, not merely stale.
+ *
+ * **This module and the bridge are deleted together, on this branch, before the
+ * pull request opens.** Every call below belongs to a route that has not been
+ * migrated yet; nothing new should be added.
  */
-let accessToken: string | null = null;
-
-export function setAccessToken(token: string | null): void {
-  accessToken = token;
-}
-
-async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
-  return fetch(path, {
+async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(path, {
     ...init,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...init?.headers,
     },
   });
-}
 
-async function tryRefresh(): Promise<boolean> {
-  const res = await fetch('/api/auth/refresh', {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!res.ok) return false;
-  const { accessToken: token } = refreshResponseSchema.parse(await res.json());
-  accessToken = token;
-  return true;
-}
-
-export async function apiFetch(
-  path: string,
-  init?: RequestInit,
-): Promise<Response> {
-  let res = await rawFetch(path, init);
-  if (res.status === 401 && (await tryRefresh())) {
-    res = await rawFetch(path, init);
-  }
   if (!res.ok) {
     throw new ApiError(res.status, await apiErrorMessage(res));
   }
   return res;
 }
 
-async function handleAuthResponse(res: Response): Promise<AuthResponse> {
-  const parsed = authResponseSchema.parse(await res.json());
-  accessToken = parsed.accessToken;
-  return parsed;
-}
-
+/**
+ * What is left of the auth surface: reading and editing the signed-in account.
+ * Login, register, logout and refresh are gone — they set or clear the session
+ * cookies, which client JS cannot do, so they are Server Actions
+ * (`lib/actions/auth.ts`) and `proxy.ts`. The bridge refuses those four paths.
+ *
+ * `me()` has no callers left either: the server reads the user through
+ * `getCurrentUser()`. Only the profile page's account edit still comes through
+ * here, until the profile route moves it to an action.
+ */
 export const auth = {
-  async register(data: RegisterRequest): Promise<AuthResponse> {
-    return handleAuthResponse(
-      await apiFetch('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    );
-  },
-
-  async login(data: LoginRequest): Promise<AuthResponse> {
-    return handleAuthResponse(
-      await apiFetch('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    );
-  },
-
-  async logout(): Promise<void> {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
-    accessToken = null;
-  },
-
-  async me(): Promise<AuthUser> {
-    const res = await apiFetch('/api/auth/me');
-    return authUserSchema.parse(await res.json());
-  },
-
   async updateMe(data: UpdateAccountRequest): Promise<AuthUser> {
     const res = await apiFetch('/api/auth/me', {
       method: 'PATCH',

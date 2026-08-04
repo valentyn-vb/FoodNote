@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import type { AuthUser } from '@foodnote/shared';
 import {
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
@@ -31,7 +32,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/components/auth-provider';
+import { logout } from '@/lib/actions/auth';
 import { LogWeightAction } from '@/components/log-weight-action';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 
@@ -40,17 +41,17 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 // places, and as rows they went away with the collapsed rail. They live in
 // AppHeader now — except that below 768 the header row has no space for "Log
 // weight", so the sheet carries it back as a button rather than as a nav row.
-export function AppSidebar() {
+export function AppSidebar({ user }: { user: AuthUser }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user: authUser, logout } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
-  const fullName = fullNameOf(authUser);
-  const initials = initialsOf(authUser);
+  const fullName = fullNameOf(user);
+  const initials = initialsOf(user);
 
-  async function handleLogout() {
-    await logout();
-    router.replace('/login');
+  // The action clears both cookies and redirects; there is no local session
+  // state left to reset, nothing to navigate by hand, and no pending state to
+  // draw — the menu unmounts with the navigation.
+  function handleLogout() {
+    void logout();
   }
 
   // A sheet does not unmount on navigation, so following a link inside it has
@@ -147,7 +148,7 @@ export function AppSidebar() {
                     {fullName}
                   </span>
                   <span className="truncate text-sm text-muted-foreground">
-                    {authUser?.email}
+                    {user.email}
                   </span>
                 </div>
                 <ChevronsUpDownIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />

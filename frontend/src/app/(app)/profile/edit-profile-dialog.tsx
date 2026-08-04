@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -15,19 +14,22 @@ import {
 } from '@/components/ui/dialog';
 import {
   updateAccountRequestSchema,
+  type AuthUser,
   type UpdateAccountRequest,
 } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { auth } from '@/lib/api-client';
 import { AuthTextField } from '../../(auth)/auth-text-field';
 import { Edit2Icon } from 'lucide-react';
 
 const EDIT_PROFILE_FORM_ID = 'edit-profile-form';
 
-export function EditProfileDialog() {
-  const { user, updateAccount } = useAuth();
+export function EditProfileDialog({ user }: { user: AuthUser }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const form = useForm<UpdateAccountRequest>({
@@ -37,7 +39,7 @@ export function EditProfileDialog() {
 
   function handleOpenChange(next: boolean) {
     if (saving) return;
-    if (next && user) {
+    if (next) {
       form.reset({ firstName: user.firstName, lastName: user.lastName });
     }
     setOpen(next);
@@ -46,7 +48,13 @@ export function EditProfileDialog() {
   async function handleSave(values: UpdateAccountRequest) {
     setSaving(true);
     try {
-      await updateAccount(values);
+      await auth.updateMe(values);
+      // The name is rendered from a server read in three places — this page, the
+      // sidebar and the header — so the tree that produced it has to re-render.
+      // `router.refresh()` is the transitional form of that: the profile slice
+      // turns this into an action that revalidates the layout, which is the only
+      // way to reach the shell's own `getCurrentUser()`.
+      router.refresh();
       toast.success('Profile updated');
       setOpen(false);
     } catch {
@@ -58,10 +66,7 @@ export function EditProfileDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        disabled={!user}
-        render={<Button variant="outline" size="sm" />}
-      >
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>
         <Edit2Icon className="size-3 mr-1" />
         Edit profile
       </DialogTrigger>

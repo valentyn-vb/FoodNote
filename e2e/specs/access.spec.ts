@@ -14,7 +14,11 @@ test.describe('without a session', () => {
   test('asking for the dashboard lands on the login page', async ({ page }) => {
     await page.goto('/dashboard');
 
-    await expect(page).toHaveURL(/\/login$/);
+    // The destination rides along, so signing in returns you to the page you
+    // asked for rather than to the dashboard by default. This is not a rare
+    // path: the refresh cookie lasts seven days, so an active user meets it
+    // weekly, and any bookmarked page opened while signed out meets it too.
+    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
   });
 });

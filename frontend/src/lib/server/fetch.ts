@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import type { z } from 'zod';
 import { ApiError, apiErrorMessage } from '@/lib/api-error';
 import { ACCESS_COOKIE } from './cookies';
-import { env } from './env';
+import { forwardedFor, nestUrl } from './nest';
 
 /**
  * The only door to Nest from the server.
@@ -26,7 +26,7 @@ async function request(path: string, init: RequestInit): Promise<Response> {
   // here without one means there was no session to renew.
   if (!accessToken) redirect('/login');
 
-  const res = await fetch(`${env.API_URL}/api${path}`, {
+  const res = await fetch(nestUrl(path), {
     ...init,
     // Every read is per-user and cookie-dependent, so there is nothing here a
     // cache could legitimately share. Explicit rather than inherited: a default
@@ -35,10 +35,6 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      // Once every call to Nest originates in a Vercel function, `req.ip`
-      // collapses to a handful of egress addresses and the per-IP auth throttle
-      // buckets every user together. Forwarding the real client address is what
-      // keeps that limit per-user — see `backend/src/common/trust-proxy.ts`.
       ...forwardedFor(await headers()),
       ...init.headers,
     },
@@ -93,9 +89,4 @@ export async function serverSend(
   init: RequestInit = {},
 ): Promise<void> {
   await request(path, init);
-}
-
-function forwardedFor(incoming: Headers): Record<string, string> {
-  const value = incoming.get('x-forwarded-for');
-  return value ? { 'x-forwarded-for': value } : {};
 }

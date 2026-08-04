@@ -9,7 +9,6 @@ import {
   useScroll,
   useTransform,
 } from 'motion/react';
-import { useAuth } from '@/components/auth-provider';
 import { buttonVariants } from '@/components/ui/button';
 import type { Asciify as AsciifyComponent } from '@/components/canvasui/Asciify';
 import type {
@@ -99,10 +98,14 @@ function DesktopHeroImage() {
   return image;
 }
 
-function HeroCopy({ className }: { className?: string }) {
+function HeroCopy({
+  className,
+  authed,
+}: {
+  className?: string;
+  authed: boolean;
+}) {
   const sparkleRef = useRef<SparklesIconHandle>(null);
-  const { status } = useAuth();
-  const authed = status === 'authenticated';
 
   return (
     <div className={className}>
@@ -145,7 +148,7 @@ function HeroCopy({ className }: { className?: string }) {
   );
 }
 
-export function CoverSlide() {
+export function CoverSlide({ authed }: { authed: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -180,7 +183,7 @@ export function CoverSlide() {
               stacking is unaffected whether or not the lens is present. */}
           <DesktopHeroImage />
           <div className="absolute top-[15%] left-[5%] max-w-[46%]">
-            <HeroCopy className="flex flex-col gap-4" />
+            <HeroCopy className="flex flex-col gap-4" authed={authed} />
           </div>
           {/* Hidden below lg: the copy block's buttons need real pixel height
             regardless of hero width, but this row's own top-50%/58% start
@@ -268,7 +271,10 @@ export function CoverSlide() {
           has no horizontal/bottom padding of its own, so the color and the
           image both bleed edge to edge; only the copy gets an inner inset. */}
       <div className="bg-[#9B999E] pt-28 sm:hidden">
-        <HeroCopy className="flex flex-col gap-4 px-6 pb-8 text-center [&>div]:justify-center" />
+        <HeroCopy
+          className="flex flex-col gap-4 px-6 pb-8 text-center [&>div]:justify-center"
+          authed={authed}
+        />
         <motion.div
           style={{ y: parallaxY }}
           className="relative aspect-[1080/1350] w-full overflow-hidden"

@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
-import { useAuth } from '@/components/auth-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -24,10 +23,7 @@ const SECTIONS = [
   { href: '#features', label: 'Features' },
 ];
 
-export function SiteNav() {
-  const { status } = useAuth();
-  const authed = status === 'authenticated';
-
+export function SiteNav({ authed }: { authed: boolean }) {
   return (
     <nav className="glass-card fixed top-4 left-1/2 z-30 flex w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 items-center justify-between rounded-full px-5 py-2.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] sm:top-6">
       <Tooltip>

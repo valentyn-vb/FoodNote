@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/components/auth-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,40 +11,33 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ApiError } from '@/lib/api-client';
 import { registerRequestSchema, type RegisterRequest } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { applyActionError } from '@/lib/actions/apply-error';
+import { register } from '@/lib/actions/auth';
 import { AuthTextField } from '../auth-text-field';
 
 export function RegisterForm() {
-  const { register } = useAuth();
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<RegisterRequest>({
     resolver: zodResolver(registerRequestSchema),
     defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    try {
-      await register(data);
-      router.push('/onboarding');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        form.setError('email', {
-          message: 'This email is already registered.',
-        });
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
-    }
+  // See login-form: the action is the transport, `isPending` is the pending
+  // state, and where the failure is drawn is `applyActionError`'s decision — the
+  // duplicate-email case comes back as a field error and lands under Email
+  // through the same markup a client-side rejection uses.
+  const onSubmit = form.handleSubmit((data) => {
+    startTransition(async () => {
+      const result = await register(data);
+      if (!result.ok) applyActionError(form, result);
+    });
   });
-
-  const { isSubmitting } = form.formState;
 
   return (
     <Card>
@@ -90,10 +82,10 @@ export function RegisterForm() {
           <Button
             type="submit"
             size="lg"
-            disabled={isSubmitting}
+            disabled={isPending}
             className="w-full"
           >
-            {isSubmitting && <Spinner />}
+            {isPending && <Spinner />}
             Create account
           </Button>
         </form>

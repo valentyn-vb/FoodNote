@@ -34,6 +34,21 @@ export function fail(
   return { ok: false, message, fieldErrors };
 }
 
+/** react-hook-form's name for an error that belongs to the form rather than to a field. */
+export const FORM_ERROR = 'root';
+
+/**
+ * For a rejection that is real but belongs to no single field — "Invalid email
+ * or password", where naming one of the two would be a lie *and* a hint. It goes
+ * to react-hook-form's `root` error so the form draws it inline, in its own
+ * `role="alert"`, instead of to a toast: this is the most common failure of the
+ * most-used form in the app, and a toast for it is both easy to miss and gone
+ * before a screen reader announces the field it concerns.
+ */
+export function failForm(message: string): ActionFailure {
+  return fail(message, { [FORM_ERROR]: message });
+}
+
 /**
  * The action `safeParse`s its request schema as a trust boundary — a Server
  * Action is a public POST endpoint, so the client-side validation that already

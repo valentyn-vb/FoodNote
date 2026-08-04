@@ -2,17 +2,14 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/components/auth-provider';
 import { buttonVariants } from '@/components/ui/button';
 import { Liquid } from '@/components/canvasui/Liquid';
 import { MascotPeek } from '@/components/marketing/mascot-peek';
 import { SparklesIcon, type SparklesIconHandle } from '@/components/sparkles';
 import { cn, supportsHover } from '@/lib/utils';
 
-export function OutroSlide() {
+export function OutroSlide({ authed }: { authed: boolean }) {
   const sparkleRef = useRef<SparklesIconHandle>(null);
-  const { status } = useAuth();
-  const authed = status === 'authenticated';
 
   return (
     <div className="flex flex-col items-center gap-6 bg-background px-6 py-16 sm:py-20">

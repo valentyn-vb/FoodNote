@@ -1,28 +1,19 @@
-'use client';
-
-import { useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth-provider';
-import { AuthFormSkeleton } from './auth-form-skeleton';
 
 /**
- * The form only renders once the session restore has settled as
- * unauthenticated — rendering it optimistically would flash the login form
- * at logged-in users before the redirect to the dashboard kicks in.
+ * The mascot and the wordmark, and nothing else.
+ *
+ * It used to hold a session gate: a `useAuth()` read, a `router.replace` in an
+ * effect, and a skeleton standing in until the restore settled — so every visit
+ * to `/login` paid a flash of placeholder before the form appeared. `proxy.ts`
+ * now bounces an already-signed-in visitor to `/dashboard` before this renders
+ * at all, so there is nothing left to wait for and no state to hold.
  */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { status } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'authenticated') router.replace('/dashboard');
-  }, [status, router]);
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="flex flex-col items-center gap-3">
@@ -36,9 +27,7 @@ export default function AuthLayout({
         {/* The wordmark: a page title, so it keeps the brand face. */}
         <p className="font-heading text-2xl font-semibold">FoodNote</p>
       </div>
-      <div className="w-full max-w-sm">
-        {status === 'unauthenticated' ? children : <AuthFormSkeleton />}
-      </div>
+      <div className="w-full max-w-sm">{children}</div>
     </div>
   );
 }
