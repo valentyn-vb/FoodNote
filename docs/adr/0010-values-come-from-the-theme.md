@@ -113,9 +113,9 @@ min-w-11`. Horizontal padding is upstream's, so the divergence is height and
 
   **`Button` is not among them** — `size="lg"` is upstream's `h-10` and
   `icon-lg` is `size-10`. This entry claimed `h-12` and `size-11` until
-  [ADR 0011](0011-one-tree-per-screen.md) came to reuse the claim and found the
+  [ADR 0012](0012-one-tree-per-screen.md) came to reuse the claim and found the
   code said otherwise; the numbers were stale, not the code. Buttons reach 44 by
-  hit area instead — see `touch-target` in ADR 0011, which exists _because_
+  hit area instead — see `touch-target` in ADR 0012, which exists _because_
   `ui/button.tsx` is stock here.
 
 - **`Card` is bounded by a `border`,** not upstream's `ring-1

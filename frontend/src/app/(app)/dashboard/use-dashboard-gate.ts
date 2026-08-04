@@ -6,7 +6,7 @@ import { useWeight } from '@/lib/weight-context';
 
 /**
  * The single place the dashboard decides whether it can render: the error, the
- * skeleton and the six blocks are the three states of one tree (ADR-0011).
+ * skeleton and the six blocks are the three states of one tree (ADR-0012).
  *
  * A discriminated union rather than a bag of fields, so `goal` is known
  * non-null in the 'ready' state and the layout needs no second null check.

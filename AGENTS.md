@@ -88,7 +88,7 @@ tokens, the type row and the named divergences from upstream are in
 - **There is no dark mode.** It was removed, not disabled: no `.dark`, no
   `dark:`, no `next-themes`. Adding one back is a design effort, not a token pass.
 - **One tree per screen** — [ADR
-  0011](docs/adr/0011-one-tree-per-screen.md), which argues it rather than
+  0012](docs/adr/0012-one-tree-per-screen.md), which argues it rather than
   asserting it, because the rule costs something. In `app/(app)/**` and the
   components it uses — `marketing/`, `canvasui/` and `evilcharts/` are outside
   every rule in this section — `hidden lg:*` and `lg:hidden` are **not** how a

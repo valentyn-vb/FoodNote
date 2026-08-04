@@ -2,7 +2,7 @@ import * as React from 'react';
 
 /**
  * The app's desktop threshold — tailwind's `lg`, and the JS half of it. The
- * screens rearrange here rather than swapping trees (ADR 0011): the sidebar
+ * screens rearrange here rather than swapping trees (ADR 0012): the sidebar
  * becomes a panel and the dashboard becomes three bands. shadcn's responsive-dialog example uses `768px`; matching it here
  * would put the 768–1023px band on the desktop dialog while every other surface
  * was still in its phone layout. The app's *other* threshold is 768, and it has
