@@ -181,6 +181,22 @@
   html {
     @apply font-sans antialiased;
   }
+
+  /* Tailwind v4's preflight sets `cursor: default` on buttons, following the
+     spec rather than the habit — so every control in the app lost the pointer
+     at once. Restored here, in one base rule, because the alternative is a
+     `cursor-pointer` on each call site and inside `ui/**`, which has to stay
+     diffable against upstream.
+
+     A disabled control keeps the default cursor: the pointer is a promise that
+     clicking does something. Base UI marks some of its disabled triggers with
+     `aria-disabled` instead of the attribute, so both are excluded. Anchors are
+     absent on purpose — the UA already gives an href a pointer, and a link that
+     looks like a button is still a link. */
+  button:not(:disabled, [aria-disabled='true']),
+  [role='button']:not(:disabled, [aria-disabled='true']) {
+    cursor: pointer;
+  }
 }
 
 @keyframes indeterminate-sweep {
