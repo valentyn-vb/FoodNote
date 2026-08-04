@@ -5,6 +5,7 @@ import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 type DrawerContextProps = {
@@ -241,11 +242,19 @@ function DrawerTitleBar({
       <DrawerTitle className="col-start-2 justify-self-center">
         {children}
       </DrawerTitle>
+      {/* The dialog's own close button, so the same action looks the same
+          whether a screen arrives as a drawer or as a modal — `weight-log-drawer`
+          is both, and switching width used to switch the button. `touch-target`
+          because it is icon-only and 32px of ink; nothing sits close enough for
+          the 44px box to overlap. */}
       <DrawerClose
         aria-label="Close drawer"
-        className="col-start-3 -my-1.5 flex size-8 items-center justify-self-end justify-center"
+        className="col-start-3 -my-1.5 justify-self-end"
+        render={
+          <Button variant="ghost" size="icon-sm" className="touch-target" />
+        }
       >
-        <XIcon size={20} className="text-muted-foreground" strokeWidth={2} />
+        <XIcon />
       </DrawerClose>
     </DrawerHeader>
   );

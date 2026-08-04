@@ -29,3 +29,6 @@ design_handoff_foodnote/
 e2e/.auth/
 e2e/test-results/
 e2e/playwright-report/
+# Editor-local Claude Code config. `settings.local.json` is tracked on purpose —
+# it is the project's own; `launch.json` is one machine's run configuration.
+.claude/launch.json

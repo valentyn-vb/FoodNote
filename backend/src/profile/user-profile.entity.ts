@@ -1,4 +1,5 @@
-import type { ActivityLevel, Sex } from '@foodnote/shared';
+import { DEFAULT_APPEARANCE } from '@foodnote/shared';
+import type { ActivityLevel, Appearance, Sex } from '@foodnote/shared';
 import {
   Column,
   CreateDateColumn,
@@ -42,6 +43,14 @@ export class UserProfile {
 
   @Column({ type: 'varchar' })
   activityLevel: ActivityLevel;
+
+  /**
+   * Which appearance the app renders in. Stored here so it follows the user
+   * between devices; the browser keeps a cookie copy for the first paint, which
+   * is a cache and not the truth (ADR 0014).
+   */
+  @Column({ type: 'varchar', default: DEFAULT_APPEARANCE })
+  appearance: Appearance;
 
   @CreateDateColumn()
   createdAt: Date;

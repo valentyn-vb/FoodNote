@@ -28,6 +28,7 @@ export function PlanOptions({
 
   return (
     <RadioGroup
+      aria-label="Plan"
       // Two abreast once the container clears 32rem — below that the cards'
       // 2xl figure has nowhere to go and they stack.
       className="@lg:grid-cols-2"

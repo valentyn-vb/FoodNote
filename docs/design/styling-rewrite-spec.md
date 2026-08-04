@@ -50,23 +50,24 @@ should still take the element: `trigger={<Button …/>}`.
 `color-mix(in oklch, …)` and `/opacity` are only predictable there, so states
 and washes are derived rather than held as tokens.
 
-| Role                                                     | For                                                                   |
-| -------------------------------------------------------- | --------------------------------------------------------------------- |
-| `--background`                                           | the page                                                              |
-| `--foreground`                                           | all primary text (13.9:1)                                             |
-| `--card`, `--popover` (+ `-foreground`)                  | surfaces                                                              |
-| `--primary`                                              | the brand **fill**: CTA, mascot, mesh, the chart arc                  |
-| `--primary-foreground`                                   | its label — white, 2.0:1, the one exception below                     |
-| `--secondary`, `--accent` (+ `-foreground`)              | button surface, warm wash                                             |
-| `--muted`, `--muted-foreground`                          | a passive surface; secondary text (5.3:1)                             |
-| `--border`, `--input`                                    | structure                                                             |
-| `--ring`                                                 | focus — warm, but not the fill: the fill is 2.0:1 where 3:1 is wanted |
-| `--destructive`                                          | error and over-target                                                 |
-| `--brand-ink`                                            | brand **text**: links, active nav, an emphasized figure (5.0:1)       |
-| `--success`, `--warning`                                 | "on plan" and "worth a look" — fills, borders, icons                  |
-| `--success-text`, `--warning-text`, `--destructive-text` | text on the matching wash                                             |
-| `--chart-1..5`                                           | decoration: 1 the brand orange, 2 mint, 3 coral, 4–5 unused           |
-| `--sidebar-*`                                            | compatibility shims `shadcn add sidebar` greps for                    |
+| Role                                                     | For                                                             |
+| -------------------------------------------------------- | --------------------------------------------------------------- |
+| `--background`                                           | the page                                                        |
+| `--foreground`                                           | all primary text (13.9:1)                                       |
+| `--card`, `--popover` (+ `-foreground`)                  | surfaces                                                        |
+| `--primary`                                              | the brand **fill**: CTA, mascot, mesh, the chart arc            |
+| `--primary-foreground`                                   | its label — white, 2.0:1, the one exception below               |
+| `--secondary`, `--accent` (+ `-foreground`)              | button surface, warm wash                                       |
+| `--muted`, `--muted-foreground`                          | a passive surface; secondary text (5.3:1)                       |
+| `--border`, `--input`                                    | structure                                                       |
+| `--ring`                                                 | focus — warm, not the fill, and 3:1 against both surfaces       |
+| `--destructive`                                          | error and over-target                                           |
+| `--brand-ink`                                            | brand **text**: links, active nav, an emphasized figure (5.0:1) |
+| `--success`, `--warning`                                 | "on plan" and "worth a look" — fills, borders, icons            |
+| `--success-text`, `--warning-text`, `--destructive-text` | text on the matching wash                                       |
+| `--chart-1..5`                                           | decoration: 1 the brand orange, 2 mint, 3 coral, 4–5 unused     |
+| `--mascot-canvas`                                        | the cream the mascot artwork is painted on — see below          |
+| `--sidebar-*`                                            | compatibility shims `shadcn add sidebar` greps for              |
 
 **Brand and text is the one rule worth memorising:** the brand hue fills and
 does not _become_ text unless it is `--brand-ink`. On white, `#f5a65c` reads
@@ -82,6 +83,83 @@ handoff's orange and `--primary-foreground` is white. Treat this as a decision
 the team owns rather than a defect to fix, and do not cite it as precedent: the
 threshold still holds everywhere else, including `--brand-ink`, which exists
 precisely so brand-coloured _text_ has something that passes.
+
+## The second appearance
+
+`light | dark | system`, chosen rather than derived —
+[ADR 0014](../adr/0014-a-second-appearance-is-chosen-not-inverted.md) argues the
+shape. What matters for the palette: of the 35 declarations in `:root`, 11 are
+`var()` aliases and resolve at use time, and `--primary` keeps one value in both
+appearances (its _label_ flips instead). So the dark set is **23 chosen values**,
+none of them a transform of its light counterpart.
+
+Two rules hold across all of them: every surface stays at or below **chroma
+0.015** — warmth comes from hue, the lesson the light background learned when its
+own chroma was halved — and `--card` stays lighter than the page, by 0.043 rather
+than light's 0.018, because the same step is invisible down there and on a dark
+surface that separation is what carries elevation.
+
+The donut's four hues are held at least 45° apart pairwise, since they are drawn
+at once with sectors touching. The coral moved from hue 31 to 14 to earn that
+against the brand orange at 62. `--chart-5` has no dark value: nothing uses it.
+
+### Measured pairs
+
+Both appearances, computed from `globals.css` by `globals.spec.ts`, which fails
+below 4.5:1 for text and 3:1 for a focus ring. Numbers, not intentions.
+
+| Pair                                   | light | dark  |
+| -------------------------------------- | ----- | ----- |
+| `--foreground` on `--background`       | 13.88 | 15.25 |
+| `--foreground` on `--card`             | 14.62 | 13.70 |
+| `--foreground` on `--secondary`        | 14.04 | 12.91 |
+| `--foreground` on `--muted`            | 13.31 | 12.23 |
+| `--foreground` on `--accent`           | 13.21 | 11.21 |
+| `--muted-foreground` on `--background` | 5.40  | 7.21  |
+| `--muted-foreground` on `--card`       | 5.69  | 6.47  |
+| `--brand-ink` on `--background`        | 5.02  | 10.97 |
+| `--brand-ink` on `--card`              | 5.28  | 9.86  |
+| `--primary-foreground` on `--primary`  | 2.00  | 7.30  |
+| `--success-text` on `--card`           | 7.54  | 9.65  |
+| `--warning-text` on `--card`           | 5.86  | 10.01 |
+| `--destructive-text` on `--card`       | 5.66  | 6.82  |
+| `--destructive` on `--card`            | 5.45  | 5.63  |
+| `--destructive` on `--background`      | 5.17  | 6.26  |
+| `--ring` on `--background`             | 3.23  | 7.03  |
+| `--ring` on `--card`                   | 3.41  | 6.31  |
+| `--primary` on `--background`          | 1.90  | 8.95  |
+| `--brand-ink` on `--foreground`        | 2.77  | 1.39  |
+
+Two of those are below their threshold, both in light, and each is pinned to the
+measured number in the test so it cannot drift:
+
+- **`--primary-foreground` on `--primary`, 2.00** — the #106 decision above. Dark
+  reaches 7.30 by flipping the label, so the exception exists in light only.
+- **`--primary` on `--background`, 1.90** — the fill's own edge against the page.
+  A solid button names itself with its label, and darkening the fill to earn the
+  ratio is the #106 argument over again.
+
+`--ring` was a third entry until it was re-picked. It had been chosen to improve
+on the fill's 2.0:1 and measured _lower_ than it — 1.84 and 1.94 — so it now sits
+at `oklch(0.648 0.15 58.7)`: 3.23 and 3.41, the lightest value at its own hue that
+clears the criterion, with the chroma raised as it darkened so it stays amber
+rather than brown.
+
+One pair is worth knowing and is not a threshold failure: **`--brand-ink` on
+`--foreground`, 2.77 in light and 1.39 in dark** — a link's colour against body
+text, where 3:1 is the recognised target because the `link` variant underlines on
+hover only. Neither appearance reaches it; dark is thinner by construction, since
+the ink sits above the fill (ADR 0014 argues that trade).
+
+**`--mascot-canvas` is not a surface.** `default.webp` and `guide.webp` are
+opaque squares whose ink runs to all four edges — measured: the ears sit 8% from
+the top, outside an inscribed circle, and the body reaches the bottom edge. So a
+circular crop always eats something. The token is the artwork's own background
+(`rgb(252 250 246)`), which lets a disc be drawn in exactly that colour with the
+square _inscribed_ in it — side ≤ diameter ÷ √2 — so the square's edges land on
+their own colour and vanish, and the mascot gets air instead of a rim. It is the
+one colour that does **not** change between appearances: the illustration does
+not, so its ground cannot.
 
 **Washes are derived, not stored.** `--success-surface` and friends were deleted
 in favour of `color-mix(in oklch, var(--success), var(--card) 90%)`, which
