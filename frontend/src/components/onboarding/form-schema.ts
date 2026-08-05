@@ -1,15 +1,12 @@
-import {
-  putProfileRequestSchema,
-  weightKgSchema,
-  type Pace,
-} from '@foodnote/shared';
+import { createPlanRequestSchema, type Pace } from '@foodnote/shared';
 import type { z } from 'zod';
 
-// currentWeightKg is collected on the form (it seeds POST /weights and the plan
-// math) but is not part of the profile request — weight lives in the journal.
-export const onboardingFormSchema = putProfileRequestSchema.extend({
-  currentWeightKg: weightKgSchema,
-  targetWeightKg: weightKgSchema,
+// The details form is the plan request minus the pace, which is chosen on the
+// next step — so the form derives from the request rather than listing the same
+// fields a second time. It is also what `/profile`'s Edit details dialog submits,
+// where the pace is likewise not on the form.
+export const onboardingFormSchema = createPlanRequestSchema.omit({
+  preferredWeeklyChangeKg: true,
 });
 
 export type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;

@@ -18,6 +18,7 @@ export * from './auth';
 export * from './common';
 export * from './profile';
 export * from './goals';
+export * from './plan';
 export * from './weights';
 export * from './meals';
 export * from './dashboard';

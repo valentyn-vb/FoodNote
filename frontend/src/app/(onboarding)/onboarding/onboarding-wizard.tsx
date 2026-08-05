@@ -11,18 +11,16 @@ import {
 } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
-import { goals, profile, weights } from '@/lib/api-client';
+import { createPlan } from '@/lib/actions/plan';
 import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 type Step = 'details' | 'plan';
 
 export function OnboardingWizard() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('details');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -41,32 +39,19 @@ export function OnboardingWizard() {
     setStep('details');
   };
 
+  // One call: the profile, the first weight entry and the goal are one
+  // transaction on the server (docs/adr/0016), so there is no half-saved plan to
+  // recover from here — and no navigation either, since the action redirects.
   const handleConfirm = async (pace: Pace) => {
     setSubmitError(null);
     setSubmitting(true);
-    try {
-      const values = form.getValues();
-      await profile.put({
-        age: values.age,
-        sex: values.sex,
-        heightCm: values.heightCm,
-        activityLevel: values.activityLevel,
-      });
-      // Weight is written only to the journal, never the profile.
-      await weights.create({
-        weightKg: values.currentWeightKg,
-        recordedAt: new Date().toISOString(),
-      });
-      await goals.create({
-        targetWeightKg: values.targetWeightKg,
-        preferredWeeklyChangeKg: pace,
-      });
-      router.push('/dashboard');
-    } catch {
-      setSubmitError("Couldn't save your plan. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    const result = await createPlan({
+      ...form.getValues(),
+      preferredWeeklyChangeKg: pace,
+    });
+    // Only a failure returns; a success redirected out of this tree.
+    setSubmitError(result.ok ? null : result.message);
+    setSubmitting(false);
   };
 
   return step === 'plan' ? (

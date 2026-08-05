@@ -5,6 +5,7 @@ import {
   authUserSchema,
   createGoalRequestSchema,
   createMealRequestSchema,
+  createPlanRequestSchema,
   createWeightRequestSchema,
   errorResponseSchema,
   goalResponseSchema,
@@ -32,8 +33,8 @@ import { z } from 'zod';
  * re-declares a request/response shape; the paths below only wire the existing
  * schemas to routes, so the docs cannot drift from validation.
  *
- * Scope: auth, the weight journal, meals, goals, and health. Profile and
- * dashboard join as their modules are documented.
+ * Scope: auth, the weight journal, meals, goals, the plan, and health. Profile
+ * and dashboard join as their modules are documented.
  */
 
 type Io = 'input' | 'output';
@@ -83,6 +84,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
     ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
     AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
     AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
+    CreatePlanRequest: schemaObject(createPlanRequestSchema, 'input'),
     CreateGoalRequest: schemaObject(createGoalRequestSchema, 'input'),
     UpdateGoalRequest: schemaObject(updateGoalRequestSchema, 'input'),
     GoalResponse: schemaObject(goalResponseSchema, 'output'),
@@ -158,6 +160,13 @@ export function buildOpenApiDocument(): OpenAPIObject {
         description:
           'The active weight plan — at most one per user. Its Pace drives the ' +
           'derived calorie target and projected date.',
+      },
+      {
+        name: 'plan',
+        description:
+          'The one transactional write onboarding makes — a Profile, a first ' +
+          'weight entry and a Goal, committed together. Write-only: a Plan is ' +
+          'read back through `/goals/current` and `/profile`.',
       },
       { name: 'health', description: 'Liveness probe' },
     ],
@@ -249,6 +258,36 @@ export function buildOpenApiDocument(): OpenAPIObject {
             },
             400: errorResponse('Validation failed'),
             401: unauthorized,
+          },
+        },
+      },
+      '/plan': {
+        post: {
+          tags: ['plan'],
+          summary: 'Commit an onboarding plan',
+          description:
+            'One transaction over three tables: the profile, the first weight ' +
+            'entry and the active goal. It exists because `POST /goals` needs a ' +
+            'weight entry to derive `startWeightKg` from, and without this the ' +
+            'client would have to know that call order.\n\n' +
+            '`409` when an active goal already exists: onboarding is a ' +
+            'transition made once, and this is the same rule the client states ' +
+            'as a redirect off `/onboarding` (docs/adr/0016). Changing a plan ' +
+            'afterwards is `PATCH /profile` + `PATCH /goals/current`.\n\n' +
+            'The body carries no `recordedAt` — the server stamps the weight ' +
+            'entry, because the goal starts from whichever entry is latest and a ' +
+            'client clock must not get a say in that.',
+          requestBody: jsonBody('CreatePlanRequest'),
+          responses: {
+            201: {
+              description: 'Plan committed; the new active goal',
+              ...jsonContent('GoalResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+            409: errorResponse(
+              'A plan already exists — onboarding is complete',
+            ),
           },
         },
       },

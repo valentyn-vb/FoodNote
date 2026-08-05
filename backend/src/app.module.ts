@@ -14,6 +14,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { buildDataSourceOptions } from './database/data-source';
 import { GoalsModule } from './goal/goals.module';
 import { MealsModule } from './meals/meals.module';
+import { PlanModule } from './plan/plan.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { WeightsModule } from './weights/weights.module';
@@ -53,6 +54,7 @@ import { WeightsModule } from './weights/weights.module';
     WeightsModule,
     GoalsModule,
     ProfileModule,
+    PlanModule,
     DashboardModule,
     MealsModule,
   ],

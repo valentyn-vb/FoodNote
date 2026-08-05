@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import {
+  Between,
+  EntityManager,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import type {
   CreateWeightRequest,
   UpdateWeightRequest,
@@ -14,23 +20,40 @@ export class WeightsService {
     private readonly repo: Repository<WeightEntry>,
   ) {}
 
+  /**
+   * The journal's repository, or the one bound to a caller's transaction.
+   *
+   * `PlanService` writes an entry and a goal together, and the goal reads the
+   * entry it just wrote to find its `startWeightKg` — through `getLatestForUser`
+   * below. Both have to run on the transaction's manager or the read misses the
+   * uncommitted insert.
+   */
+  private scoped(manager?: EntityManager): Repository<WeightEntry> {
+    return manager ? manager.getRepository(WeightEntry) : this.repo;
+  }
+
   // Plain list, no per-day uniqueness (contract amended by #27) — every call
   // just inserts a new row.
   async create(
     userId: string,
     data: CreateWeightRequest,
+    manager?: EntityManager,
   ): Promise<WeightEntry> {
-    const entry = this.repo.create({
+    const repo = this.scoped(manager);
+    const entry = repo.create({
       userId,
       weightKg: data.weightKg,
       recordedAt: new Date(data.recordedAt),
     });
-    return this.repo.save(entry);
+    return repo.save(entry);
   }
 
   // Current Weight source: the entry with the latest recordedAt.
-  async getLatestForUser(userId: string): Promise<WeightEntry | null> {
-    return this.repo.findOne({
+  async getLatestForUser(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<WeightEntry | null> {
+    return this.scoped(manager).findOne({
       where: { userId },
       order: { recordedAt: 'DESC' },
     });

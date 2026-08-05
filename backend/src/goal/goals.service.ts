@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { hasReachedTarget, projectedDate } from '@foodnote/shared';
 import type {
   CreateGoalRequest,
@@ -28,8 +28,11 @@ export class GoalsService {
   }
 
   // Fetch Current Weight and assemble the response — the read-shape the
-  // controller returns for every goal endpoint.
-  private async buildResponse(goal: Goal): Promise<GoalResponse> {
+  // controller returns for every goal endpoint. Public because `PlanService`
+  // builds its response from the goal its transaction returned, *after* the
+  // commit: the derived fields read the weight journal, which a caller inside the
+  // transaction would be reading mid-write.
+  async buildResponse(goal: Goal): Promise<GoalResponse> {
     const latest = await this.weights.getLatestForUser(goal.userId);
     return this.toResponse(goal, latest ? latest.weightKg : null);
   }
@@ -89,8 +92,23 @@ export class GoalsService {
     };
   }
 
-  async create(userId: string, data: CreateGoalRequest): Promise<Goal> {
-    const latest = await this.weights.getLatestForUser(userId);
+  /**
+   * `manager` runs the whole thing inside a transaction the caller already
+   * opened — `PlanService`, which writes the first weight entry in the same one.
+   * Without it the read below would not see that entry and every plan would 400.
+   *
+   * The replace-the-active-goal branch is unreachable from there (the plan
+   * endpoint 409s on an active goal, see docs/adr/0016), but this method is still
+   * reused whole rather than halved: its `completed` / `replaced` choice is the
+   * only place that status is ever set, and ADR-0007 exists to say why nothing
+   * else may touch it.
+   */
+  async create(
+    userId: string,
+    data: CreateGoalRequest,
+    manager?: EntityManager,
+  ): Promise<Goal> {
+    const latest = await this.weights.getLatestForUser(userId, manager);
     if (!latest) {
       throw new BadRequestException(
         'Log a weight entry before creating a goal',
@@ -98,12 +116,12 @@ export class GoalsService {
     }
     // Replace the previous active goal and insert the new one atomically.
     // The partial unique index (ADR-0003) is the backstop.
-    return this.goals.manager.transaction(async (manager) => {
+    const write = async (manager: EntityManager): Promise<Goal> => {
       // The outgoing goal is `completed` only if its target was actually met;
       // otherwise the user abandoned it, which is `replaced`. This is the only
       // place the status is ever set to `completed` — reaching a target must not
-      // touch it, or GET /goals/current would 404 and the OnboardingGuard would
-      // bounce the user into the wizard (see docs/adr/0007).
+      // touch it, or GET /goals/current would 404 and the user would be bounced
+      // back into the onboarding wizard (see docs/adr/0007).
       const previous = await manager.findOne(Goal, {
         where: { userId, status: 'active' },
       });
@@ -127,7 +145,9 @@ export class GoalsService {
         status: 'active',
       });
       return manager.save(goal);
-    });
+    };
+
+    return manager ? write(manager) : this.goals.manager.transaction(write);
   }
 
   async update(userId: string, data: UpdateGoalRequest): Promise<Goal | null> {

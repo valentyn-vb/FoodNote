@@ -4,10 +4,8 @@ import { Skeleton } from '@/components/ui/skeleton';
  * The wizard's own shape: the mascot and step title centred, one panel of fields
  * beneath, and the step's single CTA at the bottom.
  *
- * It reads nothing on the server yet — the wizard still fetches its own state —
- * so today this shows only for as long as the route's JS takes to arrive. It is
- * here because `requireNotOnboarded()` moves onto this page with the onboarding
- * route's own migration, and from then on the wait is a server read.
+ * The wait it covers is `requireNotOnboarded()`'s read of the goal, which the page
+ * does before anything paints.
  */
 export default function OnboardingLoading() {
   return (
