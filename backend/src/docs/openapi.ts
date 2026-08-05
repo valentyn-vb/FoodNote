@@ -14,6 +14,7 @@ import {
   listMealsResponseSchema,
   listSavedMealsResponseSchema,
   savedMealResponseSchema,
+  updateSavedMealRequestSchema,
   listWeightsQuerySchema,
   listWeightsResponseSchema,
   loginRequestSchema,
@@ -87,6 +88,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
     AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
     AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
     CreateSavedMealRequest: schemaObject(createSavedMealRequestSchema, 'input'),
+    UpdateSavedMealRequest: schemaObject(updateSavedMealRequestSchema, 'input'),
     SavedMealResponse: schemaObject(savedMealResponseSchema, 'output'),
     ListSavedMealsResponse: schemaObject(
       listSavedMealsResponseSchema,
@@ -517,6 +519,28 @@ export function buildOpenApiDocument(): OpenAPIObject {
         },
       },
       '/saved-meals/{id}': {
+        patch: {
+          tags: ['saved-meals'],
+          summary: 'Correct an owned saved meal',
+          description:
+            'Any subset of the create fields. When `items` is present it ' +
+            'replaces the whole list (an empty array clears it); omit `items` ' +
+            'to leave the breakdown untouched. The only way a template ever ' +
+            'changes — and it never touches meals already logged from it, so a ' +
+            'correction applies from here on rather than to days already ' +
+            'counted.',
+          parameters: [idParam],
+          requestBody: jsonBody('UpdateSavedMealRequest'),
+          responses: {
+            200: {
+              description: 'Saved meal updated',
+              ...jsonContent('SavedMealResponse'),
+            },
+            400: errorResponse('Validation failed or malformed id'),
+            401: unauthorized,
+            404: errorResponse('No such saved meal owned by the caller'),
+          },
+        },
         delete: {
           tags: ['saved-meals'],
           summary: 'Delete an owned saved meal (its items cascade)',

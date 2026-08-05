@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import type { CreateSavedMealRequest } from '@foodnote/shared';
+import type {
+  CreateSavedMealRequest,
+  UpdateSavedMealRequest,
+} from '@foodnote/shared';
 import { toItemColumns, toMealColumns } from '../meal/meal-mapping';
 import { SavedMeal } from '../saved-meal/saved-meal.entity';
 import { SavedMealItem } from '../saved-meal/saved-meal-item.entity';
@@ -43,6 +46,49 @@ export class SavedMealsService {
       where: { userId },
       relations: { items: true },
       order: { mealName: 'ASC' },
+    });
+  }
+
+  /**
+   * Corrects a template in place. The only way its figures ever change: logging
+   * one copies it, so nothing in the meal flow reaches back here (ADR-0014), and
+   * a correction applies to meals logged from here on — never to days already
+   * counted.
+   *
+   * Presence is the switch on `items`, as on meals: omitted leaves the breakdown
+   * alone, any array (including empty) replaces the whole list.
+   */
+  async update(
+    userId: string,
+    id: string,
+    patch: UpdateSavedMealRequest,
+  ): Promise<SavedMeal> {
+    return this.dataSource.transaction(async (manager) => {
+      // Scoped by (id, userId) together, so a wrong-owner id and a missing one
+      // are indistinguishable 404s.
+      const saved = await manager.findOne(SavedMeal, {
+        where: { id, userId },
+        relations: { items: true },
+      });
+      if (!saved) throw new NotFoundException('Saved meal not found');
+
+      // Assigned onto the loaded entity rather than spread into a new object:
+      // `{ ...saved, ...patch }` would be a plain object, and TypeORM needs the
+      // instance it gave us. Zod's `.partial()` omits absent keys rather than
+      // setting them undefined, so a present key always means "change this".
+      //
+      // `items` is the one field that can't be assigned — it is `per100g`
+      // objects on the wire and four flat columns in the table. Unlike a meal,
+      // nothing else here needs converting: a Saved Meal has no date and no meal
+      // type, which is why MealsService.update still goes field by field.
+      const { items, ...fields } = patch;
+      Object.assign(saved, fields);
+      await manager.save(saved);
+
+      if (items !== undefined) {
+        saved.items = await this.replaceItems(manager, saved.id, items);
+      }
+      return saved;
     });
   }
 

@@ -20,6 +20,7 @@ import {
   type CreateMealRequest,
   type UpdateMealRequest,
   type CreateSavedMealRequest,
+  type UpdateSavedMealRequest,
   type ListSavedMealsResponse,
   type SavedMealResponse,
   type CreateWeightRequest,
@@ -245,6 +246,22 @@ export const savedMeals = {
   async create(data: CreateSavedMealRequest): Promise<SavedMealResponse> {
     const res = await apiFetch('/api/saved-meals', {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return savedMealResponseSchema.parse(await res.json());
+  },
+
+  /**
+   * PATCH /saved-meals/:id — the only way a template's figures ever change.
+   * Meals already logged from it are untouched, so a correction applies to
+   * loggings from here on (ADR-0014).
+   */
+  async update(
+    id: string,
+    data: UpdateSavedMealRequest,
+  ): Promise<SavedMealResponse> {
+    const res = await apiFetch(`/api/saved-meals/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
     return savedMealResponseSchema.parse(await res.json());

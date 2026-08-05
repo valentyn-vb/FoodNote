@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NumberFlow from '@number-flow/react';
 import {
@@ -66,7 +67,11 @@ import { SavedMealPicker } from '@/components/saved-meals/saved-meal-picker';
 import { SaveToMyMealsButton } from '@/components/saved-meals/save-to-my-meals-button';
 import { cn } from '@/lib/utils';
 import { useMeals } from '@/lib/meals-context';
-import { ApiError, meals as mealsApi } from '@/lib/api-client';
+import {
+  ApiError,
+  meals as mealsApi,
+  savedMeals as savedMealsApi,
+} from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -89,9 +94,14 @@ type View =
   // nothing to parse and nowhere to step back to.
   | { step: 'edit' }
   // A Saved Meal picked off the list, up for logging. It carries the record it
-  // came from because the later steps need its id — and because holding it here
-  // means it cannot outlive the step, the same reason the parse's note doesn't.
-  | { step: 'saved-log'; saved: SavedMealResponse };
+  // came from because holding it here means it cannot outlive the step, the same
+  // reason the parse's note doesn't.
+  | { step: 'saved-log'; saved: SavedMealResponse }
+  // The same Saved Meal, up for correction rather than logging — its own step
+  // rather than a flag, because the two write to different places: this one
+  // patches the template and never logs anything (ADR-0014). The id is what
+  // makes it a correction rather than a copy.
+  | { step: 'saved-edit'; saved: SavedMealResponse };
 
 const STEP_TITLES: Record<View['step'], string> = {
   'ai-input': 'Log a meal',
@@ -102,6 +112,7 @@ const STEP_TITLES: Record<View['step'], string> = {
   error: 'Log a meal',
   edit: 'Edit meal',
   'saved-log': 'Log a saved meal',
+  'saved-edit': 'Edit saved meal',
 };
 
 /** The AI call is a live model round-trip; past this it isn't coming. */
@@ -304,22 +315,49 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
   }
 
   /**
-   * Load a Saved Meal into the form, to log it. The same handling as a Parsed
-   * Meal, and for the same reason: its stored totals stand until an item is
-   * edited, so nothing silently contradicts the figures the user kept. Change a
-   * weight and the totals re-derive from the items — that is the case the
-   * feature exists for, 100 g of pasta one day and 400 g the next.
+   * Load a Saved Meal into the form — to log a copy of it (`saved-log`), or to
+   * correct the template itself (`saved-edit`). One loader, because the arithmetic
+   * is the same either way and only the destination differs: the two steps write
+   * to different places, they don't behave differently on screen.
    *
-   * A template with no items has nothing to derive from, so there its totals are
+   * Handled exactly as a Parsed Meal, and for the same reason: the stored totals
+   * stand as they are until an item is edited, and then they re-derive from the
+   * items (ADR-0008). Change a weight or a figure and all four totals follow —
+   * that is the case the feature exists for, 100 g of pasta one day and 400 g the
+   * next, and it has to hold while correcting the template too or the kept totals
+   * would silently stop matching the kept breakdown.
+   *
+   * A template with no items has nothing to derive from, so there the totals are
    * the editable surface from the start.
-   *
-   * Nothing is written here, and nothing about the template is touched by what
-   * follows: logging copies (ADR-0014).
    */
-  function loadSavedMeal(saved: SavedMealResponse) {
+  function loadSavedMeal(
+    saved: SavedMealResponse,
+    step: 'saved-log' | 'saved-edit',
+  ) {
     form.reset(draftFromMeal(saved));
     setTotalsOverridden(saved.items.length === 0);
-    setView({ step: 'saved-log', saved });
+    setView({ step, saved });
+  }
+
+  /** Writes the draft back to the template, and only to the template: no Meal
+      Entry is created, so today's totals don't move. Back to the list rather
+      than closing, so the corrected figures are visible where they were picked
+      — leaving the step unmounts the picker, which re-lists on the way in. */
+  async function saveTemplate(id: string, values: MealDraftValues) {
+    try {
+      await savedMealsApi.update(id, {
+        mealName: values.mealName,
+        totalCalories: values.totalCalories,
+        proteinGrams: values.proteinGrams,
+        carbsGrams: values.carbsGrams,
+        fatGrams: values.fatGrams,
+        items: toWireItems(values.items),
+      });
+      setView({ step: 'ai-input' });
+      toast.success(`“${values.mealName}” updated`);
+    } catch {
+      toast.error("Couldn't save your changes. Please try again.");
+    }
   }
 
   async function runParse({ description }: AiParseRequest) {
@@ -406,6 +444,13 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
       : 'ai';
 
   function handleSave(values: MealDraftValues) {
+    // The one step that isn't logging anything: it writes the template and stays
+    // in the drawer, so it returns before the close below.
+    if (view.step === 'saved-edit') {
+      void saveTemplate(view.saved.id, values);
+      return;
+    }
+
     const items = toWireItems(values.items);
     if (editing) {
       // No recordedAt and no source in the patch: an edit corrects a meal's
@@ -484,7 +529,10 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             </form>
             {/* Below the parse input, not instead of it: the AI is still the way
                 in for a meal you have not eaten before. */}
-            <SavedMealPicker onPick={loadSavedMeal} />
+            <SavedMealPicker
+              onPick={(saved) => loadSavedMeal(saved, 'saved-log')}
+              onEdit={(saved) => loadSavedMeal(saved, 'saved-edit')}
+            />
           </DrawerBody>
           <StepFooter
             primary={{
@@ -574,10 +622,34 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             onItemsChange={handleItemsChange}
             onSubmit={form.handleSubmit(handleSave)}
           />
-          {/* No "Save to My meals" here — it already is one. Writing changes
-              back to the template is its own control, added with the pencil. */}
+          {/* No "Save to My meals" here — it already is one, and correcting the
+              template is the pencil's job, not a side effect of logging. */}
           <DrawerFooter className="items-center gap-2 pb-5">
             <SaveButton control={form.control} label="Log" />
+          </DrawerFooter>
+        </StepPanel>
+      )}
+
+      {view.step === 'saved-edit' && (
+        <StepPanel key="saved-edit">
+          <MealReviewBody
+            form={form}
+            // No meal type: a Saved Meal has no occasion, so asking for one here
+            // would collect an answer this step doesn't save.
+            showMealType={false}
+            totalsOverridden={totalsOverridden}
+            onTakeOverTotals={() => setTotalsOverridden(true)}
+            onItemsChange={handleItemsChange}
+            onSubmit={form.handleSubmit(handleSave)}
+          />
+          <DrawerFooter className="items-center gap-2 pb-5">
+            {/* Not "Log": nothing is logged here, and the day's totals don't
+                move. The figure is still worth carrying — it is what the
+                template will hand to every future logging. */}
+            <SaveButton control={form.control} label="Save changes" />
+            <QuietButton onClick={() => setView({ step: 'ai-input' })}>
+              Cancel
+            </QuietButton>
           </DrawerFooter>
         </StepPanel>
       )}
@@ -683,6 +755,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
 function MealReviewBody({
   form,
   parse,
+  showMealType = true,
   totalsOverridden,
   onTakeOverTotals,
   onItemsChange,
@@ -694,6 +767,12 @@ function MealReviewBody({
     confidenceNote: string | null;
     onReparse: () => void;
   };
+  /**
+   * Off when the meal being reviewed has no occasion — a Saved Meal under
+   * correction. The field would otherwise ask which meal of the day this is
+   * about something that is never logged.
+   */
+  showMealType?: boolean;
   totalsOverridden: boolean;
   onTakeOverTotals: () => void;
   onItemsChange: () => void;
@@ -750,7 +829,7 @@ function MealReviewBody({
           }}
         />
 
-        <MealTypeField form={form} />
+        {showMealType && <MealTypeField form={form} />}
 
         {parse?.confidenceNote && (
           <Item className="bg-accent">

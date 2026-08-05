@@ -1,27 +1,31 @@
 'use client';
 
-import { Trash2Icon } from 'lucide-react';
+import { PencilIcon, Trash2Icon } from 'lucide-react';
 import type { SavedMealResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
 
 /**
- * One saved meal in the picker: the row opens it for logging, the trash drops the
- * template.
+ * One saved meal in the picker. Three things it can do, and they are deliberately
+ * three separate controls: the row body logs it, the pencil corrects the template
+ * itself, the trash drops it. Keeping the log and the edit apart is the whole
+ * point — adjusting a portion on the way to logging must not rewrite what you
+ * kept (ADR-0014), so changing the template is its own explicit press.
  *
- * Two targets, so a wrapping `<button>` is out — the row is a div holding the
- * body button and the trash button, the shape `meal-line.tsx` uses. `gap-3` there
- * is a measured floor, not a spacing choice: the trash carries a 44px
- * `touch-target` over a 32px box, so anything tighter overlaps the body's own hit
- * area and a tap near the edge goes to whichever won on source order — with
- * Delete as one of the two.
+ * A wrapping `<button>` is therefore out: the row is a div holding three buttons,
+ * the shape `meal-line.tsx` uses. `gap-3` between the icons is a measured floor,
+ * not a spacing choice — each carries a 44px `touch-target` over a 32px box, so
+ * anything tighter overlaps its neighbour and a tap near the edge goes to
+ * whichever won on source order, with Delete as one of them.
  */
 export function SavedMealRow({
   saved,
   onPick,
+  onEdit,
   onDelete,
 }: {
   saved: SavedMealResponse;
   onPick: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -49,16 +53,30 @@ export function SavedMealRow({
         </span>
       </button>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label={`Delete ${saved.mealName} from My meals`}
-        onClick={onDelete}
-        className="touch-target text-muted-foreground"
-      >
-        <Trash2Icon />
-      </Button>
+      {/* Its own group, so the pair keeps its measured gap while the figure
+          above can be spaced away from both. */}
+      <div className="flex shrink-0 items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Edit ${saved.mealName}`}
+          onClick={onEdit}
+          className="touch-target text-muted-foreground"
+        >
+          <PencilIcon />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Delete ${saved.mealName} from My meals`}
+          onClick={onDelete}
+          className="touch-target text-muted-foreground"
+        >
+          <Trash2Icon />
+        </Button>
+      </div>
     </div>
   );
 }

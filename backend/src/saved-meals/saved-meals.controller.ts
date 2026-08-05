@@ -6,14 +6,19 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { createSavedMealRequestSchema } from '@foodnote/shared';
+import {
+  createSavedMealRequestSchema,
+  updateSavedMealRequestSchema,
+} from '@foodnote/shared';
 import type {
   CreateSavedMealRequest,
   SavedMealResponse,
+  UpdateSavedMealRequest,
 } from '@foodnote/shared';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -54,6 +59,17 @@ export class SavedMealsController {
   async list(@Req() req: AuthenticatedRequest): Promise<SavedMealResponse[]> {
     const saved = await this.savedMeals.list(req.user.id);
     return saved.map(toResponse);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(updateSavedMealRequestSchema))
+    body: UpdateSavedMealRequest,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<SavedMealResponse> {
+    const saved = await this.savedMeals.update(req.user.id, id, body);
+    return toResponse(saved);
   }
 
   @Delete(':id')

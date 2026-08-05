@@ -28,8 +28,12 @@ const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
  */
 export function SavedMealPicker({
   onPick,
+  onEdit,
 }: {
+  /** Open it for logging — a copy, leaving the template alone. */
   onPick: (saved: SavedMealResponse) => void;
+  /** Open the template itself for correction. */
+  onEdit: (saved: SavedMealResponse) => void;
 }) {
   const [savedMeals, setSavedMeals] = useState<SavedMealResponse[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>(
@@ -138,6 +142,7 @@ export function SavedMealPicker({
               <SavedMealRow
                 saved={saved}
                 onPick={() => onPick(saved)}
+                onEdit={() => onEdit(saved)}
                 onDelete={() => remove(saved)}
               />
             </li>
