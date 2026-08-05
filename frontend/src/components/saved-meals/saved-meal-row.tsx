@@ -3,6 +3,7 @@
 import { PencilIcon, Trash2Icon } from 'lucide-react';
 import type { SavedMealResponse } from '@foodnote/shared';
 import { Button } from '@/components/ui/button';
+import { MacroLine } from '@/components/macro-line';
 
 /**
  * One saved meal in the picker. Three things it can do, and they are deliberately
@@ -10,6 +11,18 @@ import { Button } from '@/components/ui/button';
  * itself, the trash drops it. Keeping the log and the edit apart is the whole
  * point — adjusting a portion on the way to logging must not rewrite what you
  * kept (ADR-0014), so changing the template is its own explicit press.
+ *
+ * The row body is the log target. What a press does is said once, in a line
+ * under the list's own heading, rather than as a control on every row: a fill on
+ * approach says "this is a control" but not "this logs a meal", and a per-row
+ * label repeated down a list is noise where one sentence does the same work.
+ *
+ * The icon buttons hover to a `primary` tint rather than `ghost`'s own `accent`,
+ * which is the fill the row is already wearing by the time you reach one of them
+ * — two identical washes stacked read as no button at all. A tint of the brand
+ * colour rather than a grey step: `accent` is already a warm wash, and a neutral
+ * square inside it reads as a different material. `--primary` is one value in
+ * both appearances on purpose, and the alpha keeps the icon legible over it.
  *
  * A wrapping `<button>` is therefore out: the row is a div holding three buttons,
  * the shape `meal-line.tsx` uses. `gap-3` between the icons is a measured floor,
@@ -29,32 +42,31 @@ export function SavedMealRow({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-md bg-accent/20 pr-2 transition-colors has-[button:hover]:bg-accent">
+    // `has-[button:hover]:` on the container, so hovering the pencil or the
+    // trash lights the row too: all three act on the same meal, and a row that
+    // stays cold under the control you are about to press reads as two objects.
+    <div className="flex items-center gap-3 rounded-md pr-2 transition-colors has-[button:hover]:bg-accent/40 has-[button:focus-visible]:bg-accent/40">
       <button
         type="button"
         onClick={onPick}
         // The body carries the row's padding, so the whole text block is the
         // target rather than a strip inside it.
         className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-2.5 text-left"
+        aria-label={`Log ${saved.mealName}`}
       >
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-sm font-semibold">
             {saved.mealName}
           </span>
-          {/* Whole grams: a kept meal is a starting point the user rescales, so a
-              decimal here would read as precision the figure doesn't claim. */}
-          <span className="text-sm tabular-nums text-muted-foreground">
-            P {Math.round(saved.proteinGrams)} · C{' '}
-            {Math.round(saved.carbsGrams)} · F {Math.round(saved.fatGrams)}
-          </span>
+          <MacroLine macros={saved} />
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
           {Math.round(saved.totalCalories)} kcal
         </span>
       </button>
 
-      {/* Its own group, so the pair keeps its measured gap while the figure
-          above can be spaced away from both. */}
+      {/* Its own group, so the pair keeps its measured gap while the row body
+          can be spaced away from both. */}
       <div className="flex shrink-0 items-center gap-3">
         <Button
           type="button"
@@ -62,7 +74,7 @@ export function SavedMealRow({
           size="icon-sm"
           aria-label={`Edit ${saved.mealName}`}
           onClick={onEdit}
-          className="touch-target text-muted-foreground"
+          className="touch-target text-muted-foreground hover:bg-primary/10 hover:text-foreground"
         >
           <PencilIcon />
         </Button>
@@ -72,7 +84,7 @@ export function SavedMealRow({
           size="icon-sm"
           aria-label={`Delete ${saved.mealName} from My meals`}
           onClick={onDelete}
-          className="touch-target text-muted-foreground"
+          className="touch-target text-muted-foreground hover:bg-primary/10 hover:text-foreground"
         >
           <Trash2Icon />
         </Button>

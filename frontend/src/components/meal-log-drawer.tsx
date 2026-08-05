@@ -655,6 +655,12 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
               template is the pencil's job, not a side effect of logging. */}
           <DrawerFooter className="items-center gap-2 pb-5">
             <SaveButton control={form.control} label="Log" />
+            {/* The way out. This step is reached from the picker, and it used to
+                be a dead end: the only exits were logging the meal or closing
+                the drawer, so a row opened by mistake had to be paid for. */}
+            <QuietButton onClick={() => setView({ step: 'ai-input' })}>
+              Cancel
+            </QuietButton>
           </DrawerFooter>
         </StepPanel>
       )}
@@ -983,9 +989,16 @@ function EditStep({
 }
 
 /**
- * A secondary action that reads as a link but is still a target: `py-2` puts it
- * at ~36px where `p-0` left a 20px strip. WCAG 2.5.8's inline-text exemption
- * doesn't apply — none of these sit inside a sentence.
+ * The second action in a step's footer: `ghost`, the shape the title bar's
+ * "Back to AI Input" has, rather than the muted `link` it used to be — under a
+ * full-width primary that read as fine print.
+ *
+ * Full height, not `sm`: `sm`'s 32px under a 40px primary looked like a caption
+ * that happened to be clickable, and this is a real branch of the flow.
+ *
+ * Muted until approached: at rest it must not compete with the primary above it,
+ * and `hover:text-foreground` is what says it is a control. Auto width, never
+ * `w-full` — two buttons of one width read as two equal choices.
  */
 function QuietButton({
   className,
@@ -994,9 +1007,9 @@ function QuietButton({
   return (
     <Button
       type="button"
-      variant="link"
+      variant="ghost"
       className={cn(
-        'h-auto gap-1 px-1 py-2 text-sm text-muted-foreground',
+        'gap-1 text-muted-foreground hover:text-foreground',
         className,
       )}
       {...props}

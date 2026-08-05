@@ -58,12 +58,14 @@ export function SaveToMyMealsButton({
   const kept = state === 'kept';
 
   return (
-    // Quiet, and the same shape as the drawer's other secondary links: `py-2`
-    // puts it at ~36px where `p-0` would leave a 20px strip to hit.
+    // The same shape as the drawer's other footer seconds (`QuietButton`):
+    // `ghost` at full height, muted until approached. Not a muted `link`, which
+    // under a full-width primary read as fine print, and not `sm`, which read as
+    // a caption that happened to be clickable.
     <Button
       type="button"
-      variant="link"
-      className="h-auto gap-1 px-1 py-2 text-sm text-muted-foreground"
+      variant="ghost"
+      className="gap-1 text-muted-foreground hover:text-foreground"
       onClick={keep}
       disabled={state !== 'idle'}
     >

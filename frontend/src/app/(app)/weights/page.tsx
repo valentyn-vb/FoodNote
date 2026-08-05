@@ -229,8 +229,12 @@ export default async function WeightsPage({
       </ChartCard>
 
       {/* `gap-4`, the rhythm ChartCard above sets, so the page has one gap
-          between a card's heading and its body rather than two. */}
-      <Card className="gap-4 p-5">
+          between a card's heading and its body rather than two. `p-4`, not
+          `p-5`: the rows inside carry their own `px-4`, and at `p-5` a row's
+          text stood at 36px against a heading at 20px — a step visible on
+          every entry. At `p-4` the two land on 32 and 16, the same nesting
+          /meals has. */}
+      <Card className="gap-4 p-4">
         <h2 className="text-base font-semibold">Weight log entries</h2>
         {visible.length === 0 ? (
           // A dashed edge, as /meals' empty state has: without one the line

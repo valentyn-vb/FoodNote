@@ -60,10 +60,15 @@ export function WeightRangeNav({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [calendarOpen, setCalendarOpen] = useState(false);
-  // The calendar's own draft, cleared each time it opens so picking a window is
-  // always the same two clicks. Seeding it with the current range instead would
-  // make the first click *extend* that range and commit on the spot, which is a
-  // different gesture depending on which day you happen to hit.
+  // The calendar's own draft. `undefined` means "nothing picked yet", and the
+  // calendar then shows the window that is actually on screen — highlighted in
+  // primary, as the selected day is on /meals. It used to *stay* empty on open,
+  // which left the picker claiming no window was chosen at all.
+  //
+  // Picking is still the same two clicks wherever you start: the first click on
+  // a shown range replaces the draft with a one-day range at that date rather
+  // than extending the range it lands next to, so the gesture does not depend on
+  // which day you happen to hit.
   const [draft, setDraft] = useState<DateRange | undefined>(undefined);
 
   const active = matchPreset(range, now);
@@ -80,7 +85,17 @@ export function WeightRangeNav({
     });
   }
 
-  function handleSelect(next: DateRange | undefined) {
+  // `clicked` rather than `next` on the first press: `next` is what the calendar
+  // computed against the window it was *showing*, so honouring it would extend
+  // the range on screen — which is the gesture the cleared draft used to avoid,
+  // and the reason it was cleared. Starting a one-day draft at the clicked date
+  // keeps "two clicks, from wherever you start" while the shown window stays
+  // visible until the first of them.
+  function handleSelect(next: DateRange | undefined, clicked: Date) {
+    if (!draft) {
+      setDraft({ from: clicked, to: undefined });
+      return;
+    }
     setDraft(next);
     if (!next?.from || !next.to) return;
     goToRange({ from: calendarDay(next.from), to: calendarDay(next.to) });
@@ -130,7 +145,15 @@ export function WeightRangeNav({
               // it would compare a reading against itself. `min` makes the
               // second click land on a different day or clear the draft.
               min={1}
-              selected={draft}
+              // The window on screen until a first click replaces it, so the
+              // picker opens saying which span is being shown instead of
+              // showing an empty grid.
+              selected={
+                draft ?? {
+                  from: calendarDate(range.from),
+                  to: calendarDate(range.to),
+                }
+              }
               onSelect={handleSelect}
               defaultMonth={calendarDate(range.to)}
               disabled={{ after: calendarDate(todayUtc(now)) }}

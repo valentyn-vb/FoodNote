@@ -21,10 +21,12 @@ const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
  * The user's Saved Meals, under the parse input. Picking one is the point of the
  * whole feature: a meal logged again without spending a parse.
  *
- * Fetches for itself rather than reading a provider. The drawer unmounts its
- * content on close, so this remounts and re-lists on every open — which is also
- * what makes a meal kept a moment ago show up next time without any shared state
- * to keep in step.
+ * Reads for itself, through `listSavedMeals`, rather than taking the list as a
+ * prop from the route: the drawer is mounted by the shell on every route and the
+ * list is worth nothing until it opens, so a server read would pay for it on
+ * every navigation. The drawer unmounts its content on close, so this remounts
+ * and re-lists on every open — which is also what makes a meal kept a moment ago
+ * show up next time without any shared state to keep in step.
  *
  * Takes whatever height the body has left and scrolls inside it, rather than
  * growing with the list: on a phone the drawer is content-sized, and a dozen
@@ -46,8 +48,8 @@ export function SavedMealPicker({
   );
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Promise chain with a cancelled flag, as the app's other fetches do: setState
-  // only ever runs from the .then callback.
+  // A cancelled flag rather than an AbortController: an action's promise cannot
+  // be aborted, so the guard is on the setState, not on the request.
   useEffect(() => {
     let cancelled = false;
     listSavedMeals().then((result) => {
@@ -105,6 +107,15 @@ export function SavedMealPicker({
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-2">
       <FormGroupLabel>My meals</FormGroupLabel>
+      {/* What a press does, said once for the whole list rather than drawn on
+          every row. Only with rows to say it about — the empty state below
+          already explains what the list is for. */}
+      {status === 'ready' && savedMeals.length > 0 && (
+        <p className="text-xs text-muted-foreground -mt-1">
+          Select a meal to log it again — the pencil edits the saved meal, not
+          your log.
+        </p>
+      )}
 
       {status === 'loading' && (
         <div className="flex flex-col gap-2">
@@ -143,6 +154,9 @@ export function SavedMealPicker({
       {status === 'ready' && savedMeals.length > 0 && (
         <ul className="-mx-1 flex min-h-24 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
           {savedMeals.map((saved) => (
+            // No divider between rows: each one lights up as a whole on
+            // approach, and a line through the list fought that fill for the
+            // job of saying where one row ends.
             <li key={saved.id}>
               <SavedMealRow
                 saved={saved}

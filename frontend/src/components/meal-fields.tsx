@@ -1,6 +1,5 @@
 'use client';
 
-import { Fragment } from 'react';
 import { Trash2Icon } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import {
@@ -32,6 +31,8 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { MacroLine } from '@/components/macro-line';
+import { MACRO_FIELDS } from '@/lib/macros';
 import { FigureField, FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
@@ -115,12 +116,6 @@ export function toWireItems(items: MealDraftValues['items']): MealItem[] {
     }),
   );
 }
-
-const MACRO_FIELDS = [
-  { name: 'proteinGrams', label: 'Protein', short: 'P' },
-  { name: 'carbsGrams', label: 'Carbs', short: 'C' },
-  { name: 'fatGrams', label: 'Fat', short: 'F' },
-] as const;
 
 // `type="number"` keeps RHF's numeric coercion and the numeric keypad; ui/Input
 // handles the wheel-rewrites-the-value hazard that comes with it.
@@ -403,35 +398,15 @@ export function MealItemsFields({
  * "196 kcal" for one portion cannot. It updates as figures are edited, so the
  * implied density is visible while correcting one.
  *
- * Written out — `protein`, not `P` — because this is a sentence to read, not a
- * row of fields to scan; the abbreviations belong on the inputs, where there is
- * no room for anything else. Rounded to whole grams: a tenth of a gram of fat is
- * below what the parser can honestly claim, and it made the line look like a
- * measurement rather than a check.
+ * The line itself is `MacroLine`, shared with the saved-meal picker.
  */
 function Per100gLine({ per100g }: { per100g: NutritionPer100g }) {
   return (
-    <p className="text-xs text-muted-foreground">
-      Per 100 g<span aria-hidden> · </span>
-      {/* The figures carry the app's text colour and the words around them stay
-          muted: the line reads as prose but its numbers are still findable at a
-          glance, without a fill or a second type size. */}
-      <span className="tabular-nums text-foreground">
-        {Math.round(per100g.calories)} kcal
-      </span>
-      {/* The three that share a shape come from the one table the inputs above
-          are built from, so a renamed or added macro cannot appear on the fields
-          and go missing from the line. */}
-      {MACRO_FIELDS.map(({ name, label }) => (
-        <Fragment key={name}>
-          <span aria-hidden> · </span>
-          <span className="tabular-nums text-foreground">
-            {Math.round(per100g[name])} g
-          </span>
-          {` ${label.toLowerCase()}`}
-        </Fragment>
-      ))}
-    </p>
+    <MacroLine
+      lead="Per 100 g"
+      caloriesKcal={per100g.calories}
+      macros={per100g}
+    />
   );
 }
 
