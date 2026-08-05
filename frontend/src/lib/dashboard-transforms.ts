@@ -227,10 +227,11 @@ export function groupMealsByType(meals: MealResponse[]): MealGroup[] {
   });
 }
 
-/** "420 kcal · 2 meals" — the subtotal line every group header shows. */
+/** "2 meals · 420 kcal" — the subtotal line every group header shows, in the
+ * order the day's own total beside the card title reads. */
 export function formatGroupSummary(group: MealGroup): string {
   const meals = `${group.meals.length} ${group.meals.length === 1 ? 'meal' : 'meals'}`;
-  return `${group.totalKcal} kcal · ${meals}`;
+  return `${meals} · ${group.totalKcal} kcal`;
 }
 
 /**

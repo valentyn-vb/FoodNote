@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  *
  * The meal list is the one card a rectangle cannot match, because its height is
  * the data — 251 empty, taller with meals logged. It gets the same 288 as the
- * ring beside it, which is what an empty day settles to in that row.
+ * chart beside it, which is what an empty day settles to in that row.
  */
 export default function DashboardLoading() {
   return (
@@ -41,16 +41,17 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* The meal list beside the ring: two thirds against one from `lg`,
-          matching the real band. */}
-      <div className="grid gap-5 lg:grid-cols-3 lg:gap-3.5">
+      {/* The meal list beside the week's bars: three fifths against two from
+          `lg`, matching the real band. */}
+      <div className="grid gap-5 lg:grid-cols-5 lg:gap-3.5">
+        <Skeleton className="h-72 w-full rounded-xl lg:col-span-3" />
         <Skeleton className="h-72 w-full rounded-xl lg:col-span-2" />
-        <Skeleton className="h-72 w-full rounded-xl" />
       </div>
 
-      {/* The two week-scale charts. */}
-      <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
-        <Skeleton className="h-72 w-full rounded-xl" />
+      {/* The weight trend and the day's split, two thirds against one from
+          `lg`. */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-3.5">
+        <Skeleton className="h-72 w-full rounded-xl lg:col-span-2" />
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
     </div>
