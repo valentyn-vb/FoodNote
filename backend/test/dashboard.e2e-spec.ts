@@ -172,6 +172,7 @@ describe('Dashboard (e2e)', () => {
       startWeightKg: goal.startWeightKg,
       currentWeightKg: 78,
       targetWeightKg: goal.targetWeightKg,
+      preferredWeeklyChangeKg: goal.preferredWeeklyChangeKg,
       projectedGoalDate: goal.projectedGoalDate,
       reachedTarget: goal.reachedTarget,
     });
