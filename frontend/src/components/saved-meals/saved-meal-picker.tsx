@@ -22,9 +22,10 @@ const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
  * what makes a meal kept a moment ago show up next time without any shared state
  * to keep in step.
  *
- * Its own capped scroller rather than growing with the list: on a phone the
- * drawer is content-sized, and a dozen saved meals would push the description
- * field and the Parse action off the screen.
+ * Takes whatever height the body has left and scrolls inside it, rather than
+ * growing with the list: on a phone the drawer is content-sized, and a dozen
+ * saved meals would push the description field and the Parse action off the
+ * screen. The floor is what a clamped sheet shrinks it to instead of to nothing.
  */
 export function SavedMealPicker({
   onPick,
@@ -98,7 +99,7 @@ export function SavedMealPicker({
   }
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex min-h-0 flex-1 flex-col gap-2">
       <FormGroupLabel>My meals</FormGroupLabel>
 
       {status === 'loading' && (
@@ -136,7 +137,7 @@ export function SavedMealPicker({
       )}
 
       {status === 'ready' && savedMeals.length > 0 && (
-        <ul className="-mx-1 flex max-h-64 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
+        <ul className="-mx-1 flex min-h-24 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
           {savedMeals.map((saved) => (
             <li key={saved.id}>
               <SavedMealRow
