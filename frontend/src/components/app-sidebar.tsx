@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { AuthUser } from '@foodnote/shared';
@@ -41,6 +40,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Mascot } from '@/components/mascot';
 import { logout } from '@/lib/actions/auth';
 import { LogWeightAction } from '@/components/log-weight-action';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
@@ -82,12 +82,21 @@ export function AppSidebar({ user }: { user: AuthUser }) {
             the wordmark goes. With the padding kept, the logo was pushed past
             the edge and `overflow-hidden` cut it in half. */}
         <div className="flex h-12 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 lg:h-14">
-          <Image
+          {/* Through `Mascot`, which owns the drawn size of each file and pairs a
+              `w-*` with `h-auto`. Hand-rolled here with `size-8`, this was the one
+              call site fixing both dimensions, and fractional layout renders the
+              row's 32px box at 31 — which is precisely the ratio mismatch
+              `next/image` warns about.
+
+              `priority` because the component is lazy by default and this logo is
+              in the first screen of every app route: the request used to start
+              after layout, measured at 410ms against a 460ms first paint, so the
+              row painted with a hole and filled at 765ms. */}
+          <Mascot
             src="/mascot/default.webp"
             alt="FoodNote mascot"
-            width={32}
-            height={32}
-            className="size-8 shrink-0 rounded-full"
+            className="w-8 shrink-0 rounded-full"
+            priority
           />
           <span className="truncate text-lg font-bold group-data-[collapsible=icon]:hidden">
             FoodNote
