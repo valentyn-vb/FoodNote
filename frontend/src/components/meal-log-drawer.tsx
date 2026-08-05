@@ -4,14 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
-import {
-  ArrowLeftIcon,
-  Bookmark,
-  BookmarkCheck,
-  Pencil,
-  TriangleAlert,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NumberFlow from '@number-flow/react';
 import {
@@ -23,12 +16,12 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   aiParseRequestSchema,
-  perPortion,
   type AiParsedMeal,
   type AiParseRequest,
-  type MealItem,
   type MealResponse,
   type MealSource,
+  type MealType,
+  type SavedMealResponse,
 } from '@foodnote/shared';
 import {
   Drawer,
@@ -64,16 +57,16 @@ import {
   MealTotalsSummary,
   MealTypeField,
   mealDraftSchema,
+  toWireItems,
   useMealTotals,
+  withPortionFigures,
   type MealDraftValues,
 } from '@/components/meal-fields';
+import { SavedMealPicker } from '@/components/saved-meals/saved-meal-picker';
+import { SaveToMyMealsButton } from '@/components/saved-meals/save-to-my-meals-button';
 import { cn } from '@/lib/utils';
 import { useMeals } from '@/lib/meals-context';
-import {
-  ApiError,
-  meals as mealsApi,
-  savedMeals as savedMealsApi,
-} from '@/lib/api-client';
+import { ApiError, meals as mealsApi } from '@/lib/api-client';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -94,7 +87,11 @@ type View =
   | { step: 'error' }
   // Correcting a stored Meal Entry: the first and only step, since there is
   // nothing to parse and nowhere to step back to.
-  | { step: 'edit' };
+  | { step: 'edit' }
+  // A Saved Meal picked off the list, up for logging. It carries the record it
+  // came from because the later steps need its id — and because holding it here
+  // means it cannot outlive the step, the same reason the parse's note doesn't.
+  | { step: 'saved-log'; saved: SavedMealResponse };
 
 const STEP_TITLES: Record<View['step'], string> = {
   'ai-input': 'Log a meal',
@@ -104,6 +101,7 @@ const STEP_TITLES: Record<View['step'], string> = {
   'not-food': 'Log a meal',
   error: 'Log a meal',
   edit: 'Edit meal',
+  'saved-log': 'Log a saved meal',
 };
 
 /** The AI call is a live model round-trip; past this it isn't coming. */
@@ -169,37 +167,25 @@ const emptyDraft = (): MealDraftValues => ({
 });
 
 /**
- * The items as the contract wants them. The four per-portion figures the form
- * carries — for the inputs and for `sumItems` — are display only, derived from
- * `per100g × portionGrams / 100`, and are not part of `mealItemSchema`; only
- * the weight and the density go on the wire. The meal-level totals are a
- * different thing and are untouched.
- *
- * Two callers: logging a meal, and keeping one for reuse.
+ * The form draft for a meal that already exists — a stored Meal Entry being
+ * corrected, or a Saved Meal being logged. One function for both because they
+ * differ only in the occasion: a Saved Meal has no meal type of its own, so
+ * `emptyDraft`'s hour-derived default stands and the user confirms it.
  */
-function toWireItems(items: MealDraftValues['items']): MealItem[] {
-  return (items ?? []).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ({ calories, proteinGrams, carbsGrams, fatGrams, ...item }) => item,
-  );
+function draftFromMeal(
+  meal: SavedMealResponse & { mealType?: MealType },
+): MealDraftValues {
+  return {
+    ...emptyDraft(),
+    ...(meal.mealType ? { mealType: meal.mealType } : {}),
+    mealName: meal.mealName,
+    totalCalories: meal.totalCalories,
+    proteinGrams: meal.proteinGrams,
+    carbsGrams: meal.carbsGrams,
+    fatGrams: meal.fatGrams,
+    items: meal.items.map(withPortionFigures),
+  };
 }
-
-const draftFromMeal = (meal: MealResponse): MealDraftValues => ({
-  mealName: meal.mealName,
-  mealType: meal.mealType,
-  totalCalories: meal.totalCalories,
-  proteinGrams: meal.proteinGrams,
-  carbsGrams: meal.carbsGrams,
-  fatGrams: meal.fatGrams,
-  items: meal.items.map((item) => ({
-    ...item,
-    // Populate per-portion display fields so the inputs show the right
-    // figures and sumItems can still drive the totals on item edits.
-    ...(item.per100g && item.portionGrams
-      ? perPortion(item.per100g, item.portionGrams)
-      : { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
-  })),
-});
 
 /**
  * Logging a meal, AI-first. Every state is a step inside this one container —
@@ -311,15 +297,29 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
     form.reset({
       ...emptyDraft(),
       ...draft,
-      items: draft.items.map((item) => ({
-        ...item,
-        ...(item.per100g && item.portionGrams
-          ? perPortion(item.per100g, item.portionGrams)
-          : { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
-      })),
+      items: draft.items.map(withPortionFigures),
     });
     setTotalsOverridden(false);
     setView({ step: 'preview', confidenceNote });
+  }
+
+  /**
+   * Load a Saved Meal into the form, to log it. The same handling as a Parsed
+   * Meal, and for the same reason: its stored totals stand until an item is
+   * edited, so nothing silently contradicts the figures the user kept. Change a
+   * weight and the totals re-derive from the items — that is the case the
+   * feature exists for, 100 g of pasta one day and 400 g the next.
+   *
+   * A template with no items has nothing to derive from, so there its totals are
+   * the editable surface from the start.
+   *
+   * Nothing is written here, and nothing about the template is touched by what
+   * follows: logging copies (ADR-0014).
+   */
+  function loadSavedMeal(saved: SavedMealResponse) {
+    form.reset(draftFromMeal(saved));
+    setTotalsOverridden(saved.items.length === 0);
+    setView({ step: 'saved-log', saved });
   }
 
   async function runParse({ description }: AiParseRequest) {
@@ -463,7 +463,10 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
 
       {step === 'ai-input' && (
         <StepPanel key="input">
-          <DrawerBody>
+          {/* `gap-5` because the body now has two children: DrawerBody sets no
+              rhythm of its own, and the picker is not a field, so this is the
+              body's spacing rather than a margin on the child. */}
+          <DrawerBody className="gap-5">
             <form
               id={PARSE_FORM_ID}
               onSubmit={(event) => parseForm.handleSubmit(runParse)(event)}
@@ -479,6 +482,9 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
               />
               <ExampleChips control={parseForm.control} onPick={pickExample} />
             </form>
+            {/* Below the parse input, not instead of it: the AI is still the way
+                in for a meal you have not eaten before. */}
+            <SavedMealPicker onPick={loadSavedMeal} />
           </DrawerBody>
           <StepFooter
             primary={{
@@ -540,17 +546,39 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
 
       {view.step === 'preview' && (
         <StepPanel key="preview">
-          <ReviewStep
+          <MealReviewBody
             form={form}
-            description={readDescription()}
-            confidenceNote={view.confidenceNote}
-            source={draftSource}
+            parse={{
+              description: readDescription(),
+              confidenceNote: view.confidenceNote,
+              onReparse: () => setView({ step: 'ai-input' }),
+            }}
             totalsOverridden={totalsOverridden}
             onTakeOverTotals={() => setTotalsOverridden(true)}
             onItemsChange={handleItemsChange}
-            onReparse={() => setView({ step: 'ai-input' })}
             onSubmit={form.handleSubmit(handleSave)}
           />
+          <DrawerFooter className="items-center gap-2 pb-5">
+            <SaveButton control={form.control} />
+            <SaveToMyMealsButton form={form} source={draftSource} />
+          </DrawerFooter>
+        </StepPanel>
+      )}
+
+      {view.step === 'saved-log' && (
+        <StepPanel key="saved-log">
+          <MealReviewBody
+            form={form}
+            totalsOverridden={totalsOverridden}
+            onTakeOverTotals={() => setTotalsOverridden(true)}
+            onItemsChange={handleItemsChange}
+            onSubmit={form.handleSubmit(handleSave)}
+          />
+          {/* No "Save to My meals" here — it already is one. Writing changes
+              back to the template is its own control, added with the pencil. */}
+          <DrawerFooter className="items-center gap-2 pb-5">
+            <SaveButton control={form.control} label="Log" />
+          </DrawerFooter>
         </StepPanel>
       )}
 
@@ -638,44 +666,52 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
 }
 
 /**
- * The AI's proposal, up for confirmation. The items are the editable surface
- * here — correcting a figure there recomputes the totals tiles — so the totals
- * stay read-only until the user takes them over.
+ * The body of a meal up for review, shared by the two steps a meal reaches
+ * without being typed: an AI proposal, and a Saved Meal picked off the list. The
+ * items are the editable surface — correcting a figure or a weight recomputes
+ * the totals tiles — so the totals stay read-only until the user takes them over.
+ *
+ * `parse` is what only the AI route has: the description to re-read and the
+ * Confidence Note to weigh. Omitting it is the whole difference between the two
+ * bodies, which is why this is one component and not a near-copy.
+ *
+ * The body only. What the two steps *do* at the end genuinely differs — one
+ * saves a new meal and can keep it, the other logs a copy — so each renders its
+ * own `DrawerFooter` beside this, where the actions sit next to the step that
+ * owns them instead of being handed in as markup.
  */
-function ReviewStep({
+function MealReviewBody({
   form,
-  description,
-  confidenceNote,
-  source,
+  parse,
   totalsOverridden,
   onTakeOverTotals,
   onItemsChange,
-  onReparse,
   onSubmit,
 }: {
   form: UseFormReturn<MealDraftValues>;
-  description: string;
-  confidenceNote: string | null;
-  source: MealSource;
+  parse?: {
+    description: string;
+    confidenceNote: string | null;
+    onReparse: () => void;
+  };
   totalsOverridden: boolean;
   onTakeOverTotals: () => void;
   onItemsChange: () => void;
-  onReparse: () => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
 }) {
   return (
-    <>
-      <DrawerBody>
-        <form
-          id={MEAL_FORM_ID}
-          onSubmit={onSubmit}
-          noValidate
-          className="flex flex-col gap-5"
-        >
+    <DrawerBody>
+      <form
+        id={MEAL_FORM_ID}
+        onSubmit={onSubmit}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        {parse && (
           <Item size="sm" className="bg-accent">
             <ItemContent>
               <ItemTitle className="text-muted-foreground">
-                “{description}”
+                “{parse.description}”
               </ItemTitle>
             </ItemContent>
             <ItemActions>
@@ -683,69 +719,62 @@ function ReviewStep({
                 type="button"
                 variant="link"
                 className="h-auto gap-2 p-0"
-                onClick={onReparse}
+                onClick={parse.onReparse}
               >
                 <Pencil className="size-3" />
                 Edit &amp; re-parse
               </Button>
             </ItemActions>
           </Item>
+        )}
 
-          <MealNameField form={form} />
-          <MealItemsFields form={form} onItemsChange={onItemsChange} />
+        <MealNameField form={form} />
+        <MealItemsFields form={form} onItemsChange={onItemsChange} />
 
-          {totalsOverridden ? (
-            <>
-              <MealTotalsFields form={form} onUserEdit={onTakeOverTotals} />
-              <p className="text-sm text-muted-foreground">
-                Totals set by hand — they no longer follow the items.
-              </p>
-            </>
-          ) : (
-            <MealTotalsSummary control={form.control} />
-          )}
+        {totalsOverridden ? (
+          <>
+            <MealTotalsFields form={form} onUserEdit={onTakeOverTotals} />
+            <p className="text-sm text-muted-foreground">
+              Totals set by hand — they no longer follow the items.
+            </p>
+          </>
+        ) : (
+          <MealTotalsSummary control={form.control} />
+        )}
 
-          <MacroSuggestion
-            control={form.control}
-            onUse={(kcal) => {
-              form.setValue('totalCalories', kcal);
-              onTakeOverTotals();
-            }}
-          />
+        <MacroSuggestion
+          control={form.control}
+          onUse={(kcal) => {
+            form.setValue('totalCalories', kcal);
+            onTakeOverTotals();
+          }}
+        />
 
-          <MealTypeField form={form} />
+        <MealTypeField form={form} />
 
-          {confidenceNote && (
-            <Item className="bg-accent">
-              <ItemMedia variant="image">
-                <Image
-                  src="/mascot/reassure.webp"
-                  alt=""
-                  width={40}
-                  height={40}
-                />
-              </ItemMedia>
-              <ItemContent>
-                {/* `line-clamp-none`: the note is the model's own words about
+        {parse?.confidenceNote && (
+          <Item className="bg-accent">
+            <ItemMedia variant="image">
+              <Image
+                src="/mascot/reassure.webp"
+                alt=""
+                width={40}
+                height={40}
+              />
+            </ItemMedia>
+            <ItemContent>
+              {/* `line-clamp-none`: the note is the model's own words about
                     what it wasn't sure of, and two lines truncates the reason
                     away. */}
-                <ItemDescription className="line-clamp-none text-foreground">
-                  {confidenceNote}
-                </ItemDescription>
-                <Disclaimer />
-              </ItemContent>
-            </Item>
-          )}
-        </form>
-      </DrawerBody>
-
-      {/* `items-center gap-2`, as StepFooter does: one full-width action with a
-          quiet link under it. */}
-      <DrawerFooter className="items-center gap-2 pb-5">
-        <SaveButton control={form.control} />
-        <SaveToMyMealsButton form={form} source={source} />
-      </DrawerFooter>
-    </>
+              <ItemDescription className="line-clamp-none text-foreground">
+                {parse.confidenceNote}
+              </ItemDescription>
+              <Disclaimer />
+            </ItemContent>
+          </Item>
+        )}
+      </form>
+    </DrawerBody>
   );
 }
 
@@ -1063,63 +1092,19 @@ function RecoverStep({
 }
 
 /**
- * Keeps the draft on screen as a Saved Meal, to log again later without a parse.
+ * Carries the running total, which is the flow's main trust signal.
  *
- * Its own press rather than a checkbox on the save: the two are independent
- * records (ADR-0014), either order is valid, and this is the only way to keep a
- * meal that was logged days ago — the Edit step gets the same control.
- *
- * It latches once it succeeds. Nothing stops duplicate names server-side, so
- * without this a second press would quietly make a second copy.
+ * `label` because the same button ends three different sentences: a parse and a
+ * manual entry are *saved*, a Saved Meal is *logged* — and calling the latter
+ * "Save" would read as saving the template, which is exactly what it does not do.
  */
-function SaveToMyMealsButton({
-  form,
-  source,
+function SaveButton({
+  control,
+  label = 'Save',
 }: {
-  form: UseFormReturn<MealDraftValues>;
-  source: MealSource;
+  control: Control<MealDraftValues>;
+  label?: string;
 }) {
-  const [state, setState] = useState<'idle' | 'saving' | 'kept'>('idle');
-
-  async function keep() {
-    // A template is the draft as shown, so it has to clear the same validation a
-    // Meal Entry does — an unnamed meal is no more keepable than it is loggable.
-    if (!(await form.trigger())) return;
-    setState('saving');
-    const values = form.getValues();
-    try {
-      // No mealType and no recordedAt: those describe an occasion, and a Saved
-      // Meal has none — the user picks them each time it is logged.
-      await savedMealsApi.create({
-        mealName: values.mealName,
-        totalCalories: values.totalCalories,
-        proteinGrams: values.proteinGrams,
-        carbsGrams: values.carbsGrams,
-        fatGrams: values.fatGrams,
-        source,
-        items: toWireItems(values.items),
-      });
-      setState('kept');
-      toast.success(`“${values.mealName}” is in My meals`);
-    } catch {
-      // Back to idle, not to a dead end: the meal is still there to keep.
-      setState('idle');
-      toast.error("Couldn't keep that meal. Please try again.");
-    }
-  }
-
-  const kept = state === 'kept';
-
-  return (
-    <QuietButton onClick={keep} disabled={state !== 'idle'}>
-      {kept ? <BookmarkCheck aria-hidden /> : <Bookmark aria-hidden />}
-      {kept ? 'In My meals' : 'Save to My meals'}
-    </QuietButton>
-  );
-}
-
-/** Carries the running total, which is the flow's main trust signal. */
-function SaveButton({ control }: { control: Control<MealDraftValues> }) {
   const { totalCalories } = useMealTotals(control);
   return (
     <>
@@ -1129,7 +1114,7 @@ function SaveButton({ control }: { control: Control<MealDraftValues> }) {
         {totalCalories} kcal total
       </span>
       <Button type="submit" form={MEAL_FORM_ID} size="lg" className="w-full">
-        Save
+        {label}
         {totalCalories > 0 && (
           <>
             {' · '}
