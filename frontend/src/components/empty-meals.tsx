@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import {
   Empty,
   EmptyDescription,
@@ -22,7 +22,7 @@ export function EmptyMeals({ className }: { className?: string }) {
     <Empty className={cn('p-8', className)}>
       <EmptyHeader>
         <EmptyMedia>
-          <Image src="/mascot/accompany.webp" alt="" width={56} height={56} />
+          <Mascot src="/mascot/accompany.webp" className="w-14" />
         </EmptyMedia>
         <EmptyTitle>Nothing logged yet</EmptyTitle>
         <EmptyDescription>Your first meal starts the day.</EmptyDescription>

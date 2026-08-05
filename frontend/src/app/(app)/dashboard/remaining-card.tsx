@@ -1,7 +1,7 @@
 'use client';
 
 import NumberFlow from '@number-flow/react';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { Progress } from '@/components/ui/progress';
 import { fullnessMascot, remainingStat } from './helpers';
 import { StatCard, StatFigure } from './stat-card';
@@ -43,12 +43,7 @@ export function RemainingCard({
         aria-hidden="true"
         className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums"
       >
-        <Image
-          src={fullnessMascot(eatenKcal, goalKcal)}
-          alt=""
-          width={20}
-          height={20}
-        />
+        <Mascot src={fullnessMascot(eatenKcal, goalKcal)} className="w-5" />
         <span>
           <NumberFlow value={eatenKcal} /> / <NumberFlow value={goalKcal} />
           {' kcal · '}

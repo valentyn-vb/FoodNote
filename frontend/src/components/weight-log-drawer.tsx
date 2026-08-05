@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useTransition, type ReactElement } from 'react';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -117,9 +117,7 @@ export function WeightLogDrawer(props: WeightLogDrawerProps) {
           return;
         }
         toast.success('Weight logged', {
-          icon: (
-            <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
-          ),
+          icon: <Mascot src="/mascot/celebrate.webp" className="w-6" />,
         });
       } else {
         // Only send recordedAt if the user actually changed it. The date

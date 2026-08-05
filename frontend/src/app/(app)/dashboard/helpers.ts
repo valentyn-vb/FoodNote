@@ -1,3 +1,5 @@
+import type { MascotSrc } from '@/components/mascot';
+
 // Matches what NumberFlow renders, so a spoken value and the visible digits
 // cannot disagree. The locale is pinned rather than left to the browser: these
 // components server-render, and a server whose locale differs from the visitor's
@@ -51,7 +53,11 @@ export function remainingStat(
 
 // REFLECT mascot: fullness mirrors intake (see design doc mascot table).
 // Hungry under 50% of goal, halo while on budget, nervous sweat when over.
-export function fullnessMascot(eatenKcal: number, goalKcal: number) {
+//
+// The return type is declared rather than inferred, so a path that has no entry
+// in `MASCOT_SIZE` fails here — where it was written — instead of at the card
+// that draws it.
+export function fullnessMascot(eatenKcal: number, goalKcal: number): MascotSrc {
   if (eatenKcal > goalKcal) return '/mascot/reassure.webp';
   if (eatenKcal < goalKcal * 0.5) return '/mascot/hungry.webp';
   return '/mascot/halo.webp';

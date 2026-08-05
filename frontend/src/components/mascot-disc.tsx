@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { Mascot, type MascotSrc } from '@/components/mascot';
 import { cn } from '@/lib/utils';
 
 /**
@@ -22,10 +22,16 @@ import { cn } from '@/lib/utils';
  * that eats the ears. A caller may re-tint the disc through `className` — the
  * recover step washes it with `--destructive` — and the veil then dims the wash
  * and the drawing together, as before.
+ *
+ * The inscribed size is a **width**, not a box. It was `size-21`, which for the
+ * two square drawings is the same thing — and for `recover.webp`, which the meal
+ * drawer frames here, was a 15% vertical stretch: 310×269 forced into 84×84.
+ * `Mascot` keeps every drawing at its own ratio, so the one number below is the
+ * only one the disc gets to decide.
  */
 const SIZES = {
-  lg: { disc: 'size-40', image: 'size-28', px: 112 },
-  md: { disc: 'size-30', image: 'size-21', px: 84 },
+  lg: { disc: 'size-40', image: 'w-28' },
+  md: { disc: 'size-30', image: 'w-21' },
 } as const;
 
 export function MascotDisc({
@@ -35,14 +41,14 @@ export function MascotDisc({
   priority,
   className,
 }: {
-  src: string;
+  src: MascotSrc;
   /** Empty by default: beside a wordmark or a status line the mascot is decoration. */
   alt?: string;
   size?: keyof typeof SIZES;
   priority?: boolean;
   className?: string;
 }) {
-  const { disc, image, px } = SIZES[size];
+  const { disc, image } = SIZES[size];
 
   return (
     <div
@@ -52,14 +58,7 @@ export function MascotDisc({
         className,
       )}
     >
-      <Image
-        src={src}
-        alt={alt}
-        width={px}
-        height={px}
-        priority={priority}
-        className={image}
-      />
+      <Mascot src={src} alt={alt} priority={priority} className={image} />
     </div>
   );
 }

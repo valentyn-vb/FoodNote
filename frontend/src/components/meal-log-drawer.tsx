@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { toast } from 'sonner';
 import { MascotDisc } from '@/components/mascot-disc';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
@@ -417,9 +417,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
         const saved = result.data;
         // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
         toast.success('Meal saved', {
-          icon: (
-            <Image src="/mascot/celebrate.webp" alt="" width={24} height={24} />
-          ),
+          icon: <Mascot src="/mascot/celebrate.webp" className="w-6" />,
           action: {
             label: 'Undo',
             onClick: () => {
@@ -718,12 +716,7 @@ function ReviewStep({
           {confidenceNote && (
             <Item className="bg-accent">
               <ItemMedia variant="image">
-                <Image
-                  src="/mascot/reassure.webp"
-                  alt=""
-                  width={40}
-                  height={40}
-                />
+                <Mascot src="/mascot/reassure.webp" className="w-10" />
               </ItemMedia>
               <ItemContent>
                 {/* `line-clamp-none`: the note is the model's own words about

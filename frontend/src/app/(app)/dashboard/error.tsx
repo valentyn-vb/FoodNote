@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -33,7 +33,7 @@ export default function DashboardError({ reset }: { reset: () => void }) {
       <EmptyHeader>
         <EmptyMedia>
           {/* RECOVER mascot moment: the one place the app admits a fault. */}
-          <Image src="/mascot/recover.webp" alt="" width={72} height={72} />
+          <Mascot src="/mascot/recover.webp" className="w-18" priority />
         </EmptyMedia>
         <EmptyTitle>Couldn&apos;t load your dashboard</EmptyTitle>
         <EmptyDescription>

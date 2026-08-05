@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import confetti from 'canvas-confetti';
 import { useReducedMotion } from 'motion/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -164,13 +164,7 @@ export function GoalReachedOverlay({
         {view === 'choice' && (
           <>
             <DialogHeader className="items-center gap-2 text-center">
-              <Image
-                src="/mascot/celebrate.webp"
-                alt=""
-                width={96}
-                height={96}
-                priority
-              />
+              <Mascot src="/mascot/celebrate.webp" className="w-24" priority />
               <DialogTitle>You hit your target</DialogTitle>
               <DialogDescription>
                 {goal

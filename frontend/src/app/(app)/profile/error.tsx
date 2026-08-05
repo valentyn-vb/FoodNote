@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -23,7 +23,7 @@ export default function ProfileError({ reset }: { reset: () => void }) {
     <Empty className="w-full max-w-xl rounded-lg border border-dashed">
       <EmptyHeader>
         <EmptyMedia>
-          <Image src="/mascot/recover.webp" alt="" width={56} height={56} />
+          <Mascot src="/mascot/recover.webp" className="w-14" priority />
         </EmptyMedia>
         <EmptyTitle>Couldn&apos;t load your profile</EmptyTitle>
         <EmptyDescription>
