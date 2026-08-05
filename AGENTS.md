@@ -26,7 +26,42 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `CONTEXT.md` is the domain glossary (the ubiquitous language) — use its terms in code, tests, and docs, and update it when the model changes; architectural decisions are recorded in `docs/adr/`
 - adding, removing, or changing an endpoint means updating the OpenAPI docs (`backend/src/docs/openapi.ts`, served at `/api/docs`) in the same change — schemas come from `shared/`, so only the route wiring needs a new entry
 - every form — including a single field inside a drawer or dialog — follows **Forms** below
+- a read belongs to the route that shows it — see **Reading data** below for the three reads that don't, and why
 - comment only what the code can't say: a constraint, a measured value, a decision that reads as a mistake. Never restate the line below it, and don't narrate a change — that belongs in the commit
+
+## Reading data
+
+Server components read; the browser doesn't. `serverFetch` is the only door to
+data and redirects to `/login` on a 401, so the session check cannot be forgotten
+by a page that forgets to ask. Server data crosses to a client component as a
+prop (#89) — a client hook reading the query string obliges its page into a
+Suspense boundary, which is why `/login` takes `next` as a prop rather than
+calling `useSearchParams()`.
+
+**A read belongs to the route that shows it.** A layout does **not** re-render on
+navigation, so what a layout must not hold is route-varying data: put the day's
+meals in one and `?date=` stops working. `(app)/layout.tsx` reads three things
+anyway, and the three are the whole list — the argument for each is in its
+docblock, and a fourth needs one there too:
+
+- **the user** (`getCurrentUser()`), because identity does not vary by route. It
+  changes through one mutation, the profile-edit action, and that action's
+  `refresh()` re-renders the layout along with the page — `refresh()` rather than
+  `revalidatePath()` because nothing here is cached (`meals.ts` argues it).
+- **the present-state half of the dashboard**, for the reached-target dialog. A
+  weight can be logged from the header or the sidebar sheet on any route, so that
+  dialog outlives the page — and `reachedTarget`, the current weight and
+  maintenance calories are present-state anyway: `?date=` scopes the meal window,
+  never the goal block.
+- **the profile**, for two properties of the user rather than of a route: the
+  `appearance` when the cookie caching it is absent (ADR 0014 — the cookie is the
+  cache, the profile is the truth), and the body figures the dialog's plan step
+  computes its options from.
+
+Both conditional reads are skipped when their reason doesn't apply — the dashboard
+when there is no goal, since `GET /dashboard` 404s until onboarding is finished —
+and `getCurrentGoal()` / `getProfile()` are memoized, so a page that reads the
+same thing pays once.
 
 ## Forms
 
