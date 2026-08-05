@@ -27,7 +27,7 @@ import type { UseFormReturn } from 'react-hook-form';
  * not, which is why the control is hidden rather than disabled. Chrome's
  * recogniser is also a cloud service — the audio leaves the device, just not
  * through us — so this is not a privacy improvement over a server route, only a
- * simpler one. See ADR-0011 for the route this replaced and what it cost.
+ * simpler one. See ADR-0015 for the route this replaced and what it cost.
  */
 
 /**

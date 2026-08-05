@@ -1,7 +1,11 @@
 # 0010 — Values come from the theme, not styles from components
 
 Status: accepted (2026-07-31). Supersedes
-[ADR 0009](0009-visual-style-lives-in-components.md).
+[ADR 0009](0009-visual-style-lives-in-components.md). Two of its rulings are in
+turn superseded by
+[ADR 0014](0014-a-second-appearance-is-chosen-not-inverted.md): the app now has a
+second appearance, so "no dark mode" and "`dark:` rules are dropped" no longer
+hold. Everything else here stands — and 0014 is only tractable because it does.
 
 ## Context
 
@@ -82,6 +86,8 @@ Not everything in it was the boundary, and the parts that were not are kept:
   the element: `trigger={<Button …/>}`. Under 0009 this was a boundary leak;
   under 0010 it is an interface argument, and it holds either way.
 - **No dark mode.** Removed, not disabled. Adding one back is a design effort.
+  _Superseded by ADR 0014, which did that effort. It was a token pass at the end
+  of a design decision, exactly as this said._
 - **The contrast findings**, which are measurements and do not depend on where
   style lives: `#F5A65C` reads 2.0:1 as text and is a fill; brand text is
   `--brand-ink` at 5.0:1. A filled button's label was the app's own ink at
@@ -157,6 +163,9 @@ ring-foreground/10`. A ring means focus and invalid state here, so a card and
   selector of the same shape one attribute narrower, not an `!important`.
 - **`dark:` rules are dropped** from registry files. This app has no dark mode,
   and a rule that can never match is a rule nobody can verify.
+  _Superseded by ADR 0014. The eight that survived in `ui/**` turned out to split
+  in two: seven raise an opacity, which is true of any palette, and one encoded a
+  different outline button. Only the last was replaced._
 - **`ring-[3px]` and the tooltip arrow's `rounded-[2px]` are upstream's**, which
   is why the lint rule allows an untokenised _length_ inside `ui/**` — but never
   a colour literal or a hardcoded type value.
@@ -175,7 +184,9 @@ black-on-orange. Both alternatives were measured before the choice was made:
   the lightest this hue and chroma go while clearing it. Rejected: at that
   lightness the brand orange reads brown, and it is 1.17:1 from `--brand-ink`,
   which would have collapsed the fill/text pair the palette is built on.
-- Keep the dark label. Rejected by the team on look.
+- Keep the dark label. Rejected by the team on look. _Still true, and still about
+  the light appearance: ADR 0014 flips the label in **dark** only, where the same
+  ink measures 7.30:1 on the unchanged fill._
 
 Two things follow, and they are the reason this is written down rather than left
 in a comment. **It is not precedent** — 4.5:1 still governs every other pair

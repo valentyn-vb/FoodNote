@@ -6,8 +6,7 @@ import {
   type PathValue,
 } from 'react-hook-form';
 import { Field, FieldError } from '@/components/ui/field';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
+import { OptionToggle } from './option-toggle';
 import { FormLabel } from './form-fields';
 
 export function ToggleField<T extends FieldValues>({
@@ -33,38 +32,17 @@ export function ToggleField<T extends FieldValues>({
         name={name}
         defaultValue={defaultValue}
         render={({ field }) => (
-          <ToggleGroup
-            value={field.value ? [field.value] : []}
-            onValueChange={(values) => values[0] && field.onChange(values[0])}
+          <OptionToggle
+            value={field.value}
+            onValueChange={field.onChange}
+            // Meal types and sexes are their own labels; the items capitalize
+            // them for display.
+            options={options.map((value) => ({ value, label: value }))}
             // The visible FormLabel has no `for` target to bind to a group, so
             // name the group itself or a screen reader announces bare options.
             aria-label={label}
             aria-invalid={!!error || undefined}
-            spacing={2}
-            className="w-full gap-2"
-          >
-            {options.map((option) => (
-              <ToggleGroupItem
-                key={option}
-                value={option}
-                size="lg"
-                className={cn(
-                  // One choice among a few, reading as its own option rather
-                  // than as a pressed button. Selection is on `data-pressed`,
-                  // the attribute Base UI actually emits; the border keeps its
-                  // width and only changes colour, so choosing an option
-                  // doesn't nudge it half a pixel in every direction.
-                  'grow basis-0 border border-border bg-card capitalize text-muted-foreground hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground',
-                  // Four labels (meal types) need tighter items than two (sex)
-                  // to fit one row on a narrow screen. Narrower, not smaller:
-                  // the type level is the same either way.
-                  options.length > 2 && 'px-1',
-                )}
-              >
-                {option}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          />
         )}
       />
       {error && <FieldError>{error}</FieldError>}

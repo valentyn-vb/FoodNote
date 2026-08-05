@@ -24,6 +24,19 @@ export const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
 
 export const mealSourceSchema = z.enum(['manual', 'ai']);
 
+/**
+ * Which of the app's two appearances is live. `system` is a value rather than the
+ * absence of one: the routes with no profile to read — auth, onboarding, the
+ * marketing page — are in that state, and it is the default (ADR 0014).
+ *
+ * Not `theme`: in this codebase that word means the token set (`@theme`,
+ * ADR 0010).
+ */
+export const appearanceSchema = z.enum(['light', 'dark', 'system']);
+
+export const DEFAULT_APPEARANCE: Appearance = 'system';
+
+export type Appearance = z.infer<typeof appearanceSchema>;
 export type Sex = z.infer<typeof sexSchema>;
 export type ActivityLevel = z.infer<typeof activityLevelSchema>;
 export type MealType = z.infer<typeof mealTypeSchema>;

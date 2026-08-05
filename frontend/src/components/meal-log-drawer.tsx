@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
+import { MascotDisc } from '@/components/mascot-disc';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -566,16 +567,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             aria-busy="true"
             className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-4 py-12"
           >
-            {/* The round wash the mascot waits in. */}
-            <div className="flex size-33 shrink-0 items-center justify-center rounded-full bg-accent">
-              <Image
-                src="/mascot/default.webp"
-                alt=""
-                width={104}
-                height={104}
-                className="size-26"
-              />
-            </div>
+            <MascotDisc src="/mascot/default.webp" />
             <p className="text-sm font-semibold">Reading your meal…</p>
             <Progress indeterminate size="sm" className="w-40" />
             {/* The same shape as the header's Back: both step out of where
@@ -1141,17 +1133,15 @@ function RecoverStep({
   return (
     <>
       <div className="flex flex-col items-center gap-3.5 px-4 pt-9 pb-2">
-        {/* The same wash, tinted by the failure: the mascot sits in it while
-            the panel below says what went wrong. */}
-        <div className="flex size-30 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]">
-          <Image
-            src="/mascot/recover.webp"
-            alt=""
-            width={96}
-            height={96}
-            className="size-24"
-          />
-        </div>
+        {/* The same disc as the loading step, washed by the failure: the mascot
+            sits in it while the panel below says what went wrong. Through
+            MascotDisc, so the drawing is framed rather than cropped — a round
+            crop here took the ears off. */}
+        <MascotDisc
+          src="/mascot/recover.webp"
+          size="md"
+          className="bg-[color-mix(in_oklch,var(--destructive),var(--card)_90%)]"
+        />
         {/* Announced and framed as a failure: the mascot alone reads as a
             friendly illustration, so nothing told the user the parse had not
             worked. The tinted panel and the icon carry that, and `role=alert`

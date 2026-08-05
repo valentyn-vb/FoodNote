@@ -60,8 +60,10 @@ export function DailyCaloriesChart({
 /**
  * The donut's colours, by segment key. Held here rather than at the call site
  * so the ring and the legend beside it cannot drift: both read this map.
- * `remaining` is deliberately the muted role — the unfilled part of the target
- * is the absence of a meal, not a fifth one.
+ * `remaining` is the absence of a meal, not a fifth one — which is why it has a
+ * role of its own rather than borrowing the muted surface: `--muted` reads as
+ * absence on a white card and reads as a drawn sector on a dark one, and it is
+ * used in too many other places to be bent toward the ring. See ADR 0014.
  */
 export const CALORIE_SPLIT_COLORS: Record<CalorieSplitSegment['key'], string> =
   {
@@ -69,7 +71,7 @@ export const CALORIE_SPLIT_COLORS: Record<CalorieSplitSegment['key'], string> =
     lunch: 'var(--color-chart-2)',
     dinner: 'var(--color-chart-3)',
     snack: 'var(--color-chart-4)',
-    remaining: 'var(--color-muted)',
+    remaining: 'var(--color-chart-empty)',
   };
 
 // Ring geometry, in the units of the 100x100 viewBox below.

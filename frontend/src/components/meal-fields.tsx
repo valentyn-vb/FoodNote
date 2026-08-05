@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import { Trash2 } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import {
@@ -393,6 +394,44 @@ export function MealItemsFields({
 }
 
 /**
+ * The density the figures above were derived from, and the reason the card shows
+ * it: "131 kcal per 100 g" can be sanity-checked against what a food is, where
+ * "196 kcal" for one portion cannot. It updates as figures are edited, so the
+ * implied density is visible while correcting one.
+ *
+ * Written out — `protein`, not `P` — because this is a sentence to read, not a
+ * row of fields to scan; the abbreviations belong on the inputs, where there is
+ * no room for anything else. Rounded to whole grams: a tenth of a gram of fat is
+ * below what the parser can honestly claim, and it made the line look like a
+ * measurement rather than a check.
+ */
+function Per100gLine({ per100g }: { per100g: NutritionPer100g }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Per 100 g<span aria-hidden> · </span>
+      {/* The figures carry the app's text colour and the words around them stay
+          muted: the line reads as prose but its numbers are still findable at a
+          glance, without a fill or a second type size. */}
+      <span className="tabular-nums text-foreground">
+        {Math.round(per100g.calories)} kcal
+      </span>
+      {/* The three that share a shape come from the one table the inputs above
+          are built from, so a renamed or added macro cannot appear on the fields
+          and go missing from the line. */}
+      {MACRO_FIELDS.map(({ name, label }) => (
+        <Fragment key={name}>
+          <span aria-hidden> · </span>
+          <span className="tabular-nums text-foreground">
+            {Math.round(per100g[name])} g
+          </span>
+          {` ${label.toLowerCase()}`}
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
+/**
  * One item card. Isolated so the per-100 g row can watch the form's per100g
  * field without re-rendering the sibling items on each density update.
  */
@@ -482,7 +521,7 @@ function MealItemRow({
         {isParsed ? (
           /* Parsed item: quantityDescription qualifies the weight input
              ("2 large [110] g"), so the calorie figure stays checkable. */
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2.5">
             <span className="text-sm text-muted-foreground">
               {field.quantityDescription}
             </span>
@@ -496,7 +535,9 @@ function MealItemRow({
                   onChange: handlePortionChange,
                 })}
               />
-              <InputGroupAddon>g</InputGroupAddon>
+              {/* After the number, like every other unit in this card — and
+                  like the way a weight is written. */}
+              <InputGroupAddon align="inline-end">g</InputGroupAddon>
             </InputGroup>
           </div>
         ) : (
@@ -529,12 +570,16 @@ function MealItemRow({
             and flat: the row already sits on a tinted wash, so a field that
             lifts off it competes with the row, and the fill is what marks it
             editable — the read-only name and quantity beside it are not. */}
-        {ITEM_NUTRIENTS.map(({ name, label }) => (
+        {ITEM_NUTRIENTS.map(({ name, label, marker }) => (
           <InputGroup
             key={name}
             className="h-9 min-w-0 rounded-sm bg-card shadow-none"
           >
-            <InputGroupAddon align="inline-end">{label}</InputGroupAddon>
+            {/* The marker, not the name: four cells across a phone's width have
+                no room for "Calories", and `kcal`/`P`/`C`/`F` is how the figures
+                are written everywhere else. The full word stays in the field's
+                accessible name below, which is what a screen reader announces. */}
+            <InputGroupAddon align="inline-end">{marker}</InputGroupAddon>
             <InputGroupInput
               aria-label={`Item ${index + 1} ${label}`}
               className="px-1 text-center"
@@ -548,18 +593,8 @@ function MealItemRow({
         ))}
       </div>
 
-      {/* The read-only per-100 g line: the density the figures were derived
-          from. Shown only for parsed items where the density is known. It is
-          what makes a calorie figure judgeable — "131 kcal per 100 g" can
-          be sanity-checked, "196 kcal" for a portion cannot. Updating when
-          the user edits a figure shows the implied density in real time. */}
-      {isParsed && per100g && (
-        <p className="text-xs tabular-nums text-muted-foreground">
-          per 100 g: {Math.round(per100g.calories)} kcal · P{' '}
-          {per100g.proteinGrams.toFixed(1)} · C {per100g.carbsGrams.toFixed(1)}{' '}
-          · F {per100g.fatGrams.toFixed(1)}
-        </p>
-      )}
+      {/* Only for parsed items: a hand-added one has no density to show. */}
+      {isParsed && per100g && <Per100gLine per100g={per100g} />}
     </Card>
   );
 }
