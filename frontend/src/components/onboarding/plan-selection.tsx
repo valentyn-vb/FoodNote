@@ -10,10 +10,11 @@ import {
   type Pace,
   type PlanInput,
 } from '@foodnote/shared';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { DEFAULT_PLAN_PACE } from './form-schema';
 import { ManualPlanDialog } from './manual-plan-dialog';
 import { PlanOptions } from './plan-options';
+import { cn } from '@/lib/utils';
 
 // The options, the disclaimer and the confirm button only: the heading, any
 // back affordance and the surrounding padding belong to the caller, because
@@ -29,6 +30,18 @@ type PlanSelectionProps = {
   fromDate?: string;
   /** Pre-selected pace (e.g. the user's current plan when re-choosing); falls back to the default. */
   initialPace?: Pace | null;
+  /**
+   * Sits beside Confirm plan — onboarding's Back. The confirm button stays here
+   * rather than moving out to each caller, because the spinner and the error
+   * under it are this component's state.
+   */
+  secondaryAction?: ReactNode;
+  /**
+   * Overrides the confirm button's copy. Onboarding's step 2 does not confirm
+   * anything — it moves to the review step, where the only write in the flow
+   * is — so it must not offer a button that says it does.
+   */
+  confirmLabel?: string;
 };
 
 // The pace pre-selected when it's among the offered options, else the first one.
@@ -46,6 +59,8 @@ export function PlanSelection({
   submitError = null,
   fromDate,
   initialPace,
+  secondaryAction,
+  confirmLabel = 'Confirm plan',
 }: PlanSelectionProps) {
   const [pickedPace, setPickedPace] = useState<Pace | null>(null);
 
@@ -84,7 +99,7 @@ export function PlanSelection({
   return (
     // A container, so the option grid answers to the width it was given —
     // one column in the onboarding column, two in the wide Change-plan dialog.
-    <div className="@container flex flex-col gap-3.5">
+    <div className="@container flex flex-col gap-4">
       <PlanOptions
         options={options}
         value={selectedPace}
@@ -112,16 +127,21 @@ export function PlanSelection({
             {submitError}
           </p>
         )}
-        <Button
-          type="button"
-          onClick={() => selectedPace !== null && onConfirm(selectedPace)}
-          disabled={selectedPace === null || submitting}
-          size="lg"
-          className="w-full"
-        >
-          {submitting && <Spinner />}
-          Confirm plan
-        </Button>
+        {/* With a second action the two take opposite ends of the row; alone,
+            the confirm button still spans it. */}
+        <div className="flex justify-between gap-2.5">
+          {secondaryAction}
+          <Button
+            type="button"
+            onClick={() => selectedPace !== null && onConfirm(selectedPace)}
+            disabled={selectedPace === null || submitting}
+            size="lg"
+            className={cn(secondaryAction ? 'px-6' : 'grow')}
+          >
+            {submitting && <Spinner />}
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
     </div>
   );
