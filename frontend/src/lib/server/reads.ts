@@ -1,3 +1,6 @@
+// Every read goes through `serverFetch`, so this module is server-side by
+// construction; the marker says so to the bundler as well (see `fetch.ts`).
+import 'server-only';
 import { cache } from 'react';
 import {
   dashboardResponseSchema,

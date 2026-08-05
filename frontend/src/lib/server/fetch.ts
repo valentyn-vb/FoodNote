@@ -1,3 +1,9 @@
+// The access cookie and the Authorization header it becomes are built here, so a
+// client import is a token in a browser bundle. `server-only` makes that a build
+// error instead of a review item — the class of mistake it catches is silent
+// otherwise: a `'use client'` module's exports reach a Server Component as client
+// references, with no type error and nothing in the console.
+import 'server-only';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { z } from 'zod';

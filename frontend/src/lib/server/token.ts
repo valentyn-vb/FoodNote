@@ -1,3 +1,5 @@
+// The session token's shape, decoded — never anything the browser should hold.
+import 'server-only';
 import { z } from 'zod';
 
 /**
