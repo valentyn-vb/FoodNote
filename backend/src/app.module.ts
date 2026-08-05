@@ -17,7 +17,6 @@ import { MealsModule } from './meals/meals.module';
 import { PlanModule } from './plan/plan.module';
 import { ProfileModule } from './profile/profile.module';
 import { SavedMealsModule } from './saved-meals/saved-meals.module';
-import { UserModule } from './user/user.module';
 import { WeightsModule } from './weights/weights.module';
 
 @Module({
@@ -51,7 +50,6 @@ import { WeightsModule } from './weights/weights.module';
       errorMessage: TOO_MANY_REQUESTS_MESSAGE,
     }),
     AuthModule,
-    UserModule,
     WeightsModule,
     GoalsModule,
     ProfileModule,
