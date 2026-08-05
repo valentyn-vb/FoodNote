@@ -5,8 +5,10 @@ import {
   dashboardResponseSchema,
   goalResponseSchema,
   listMealsResponseSchema,
+  listSavedMealsResponseSchema,
   listWeightsResponseSchema,
   mealResponseSchema,
+  savedMealResponseSchema,
   profileResponseSchema,
   refreshResponseSchema,
   weightEntryResponseSchema,
@@ -17,6 +19,10 @@ import {
   type CreateGoalRequest,
   type CreateMealRequest,
   type UpdateMealRequest,
+  type CreateSavedMealRequest,
+  type UpdateSavedMealRequest,
+  type ListSavedMealsResponse,
+  type SavedMealResponse,
   type CreateWeightRequest,
   type DashboardResponse,
   type GoalResponse,
@@ -222,6 +228,49 @@ export const meals = {
       signal,
     });
     return aiParseResponseSchema.parse(await res.json());
+  },
+};
+
+/**
+ * Saved Meals — meals kept by name to log again. Logging one goes through
+ * `meals.create`, not through here: the two records are copies, never linked
+ * (ADR-0014), so nothing in this namespace ever writes a Meal Entry.
+ */
+export const savedMeals = {
+  /** GET /saved-meals — the caller's whole list, ordered by name. */
+  async list(): Promise<ListSavedMealsResponse> {
+    const res = await apiFetch('/api/saved-meals');
+    return listSavedMealsResponseSchema.parse(await res.json());
+  },
+
+  /** POST /saved-meals — the draft as shown, minus the occasion. */
+  async create(data: CreateSavedMealRequest): Promise<SavedMealResponse> {
+    const res = await apiFetch('/api/saved-meals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return savedMealResponseSchema.parse(await res.json());
+  },
+
+  /**
+   * PATCH /saved-meals/:id — the only way a template's figures ever change.
+   * Meals already logged from it are untouched, so a correction applies to
+   * loggings from here on (ADR-0014).
+   */
+  async update(
+    id: string,
+    data: UpdateSavedMealRequest,
+  ): Promise<SavedMealResponse> {
+    const res = await apiFetch(`/api/saved-meals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return savedMealResponseSchema.parse(await res.json());
+  },
+
+  /** DELETE /saved-meals/:id — 204. Meals logged from it are untouched. */
+  async remove(id: string): Promise<void> {
+    await apiFetch(`/api/saved-meals/${id}`, { method: 'DELETE' });
   },
 };
 
