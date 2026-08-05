@@ -43,7 +43,13 @@ export function RemainingCard({
         aria-hidden="true"
         className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums"
       >
-        <Mascot src={fullnessMascot(eatenKcal, goalKcal)} className="w-5" />
+        {/* `priority`: this is the dashboard's first card at every width, so the
+            figure beside it paints while a lazy image is still being asked for. */}
+        <Mascot
+          src={fullnessMascot(eatenKcal, goalKcal)}
+          className="w-5"
+          priority
+        />
         <span>
           <NumberFlow value={eatenKcal} /> / <NumberFlow value={goalKcal} />
           {' kcal · '}
