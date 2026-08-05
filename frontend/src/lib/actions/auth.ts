@@ -100,7 +100,7 @@ export async function logout(): Promise<void> {
   const store = await cookies();
   store.delete(ACCESS_COOKIE);
   store.delete(REFRESH_COOKIE);
-  redirect('/');
+  redirect('/login');
 }
 
 async function postToNest(path: string, body: unknown): Promise<Response> {
