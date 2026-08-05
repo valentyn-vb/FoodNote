@@ -4,9 +4,12 @@ import { refresh } from 'next/cache';
 import {
   createGoalRequestSchema,
   goalResponseSchema,
+  paceSchema,
+  profileResponseSchema,
   updateGoalRequestSchema,
   type CreateGoalRequest,
   type GoalResponse,
+  type Pace,
   type UpdateGoalRequest,
 } from '@foodnote/shared';
 import { serverFetch } from '@/lib/server/fetch';
@@ -46,6 +49,35 @@ export async function updateGoal(
     return ok(goal);
   } catch {
     return failForm("Couldn't save your plan. Please try again.");
+  }
+}
+
+/**
+ * The pace, from `/profile` — and the calorie target it produced, which is why
+ * this is not `updateGoal`. The number lives on the profile, recomputed on read,
+ * so the toast that reports it needs a second call; making that call here costs
+ * the browser one round trip instead of two, and removes the client's only reason
+ * to hold a profile.
+ */
+export async function changePlanPace(
+  pace: Pace,
+): Promise<ActionResult<{ calorieTarget: number | null }>> {
+  const parsed = paceSchema.safeParse(pace);
+  if (!parsed.success) return fail('Pick a pace');
+
+  try {
+    await serverFetch('/goals/current', goalResponseSchema, {
+      method: 'PATCH',
+      body: JSON.stringify({ preferredWeeklyChangeKg: parsed.data }),
+    });
+    // Read past `getProfile`'s memo deliberately: this has to be the profile as
+    // it is *after* the write above.
+    const updated = await serverFetch('/profile', profileResponseSchema);
+
+    refresh();
+    return ok({ calorieTarget: updated.calorieTarget });
+  } catch {
+    return fail("Couldn't update your plan. Please try again.");
   }
 }
 

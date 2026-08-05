@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
+import { DEFAULT_APPEARANCE } from '@foodnote/shared';
 import { AppShell } from '@/components/app-shell';
 import { APPEARANCE_COOKIE, appearanceOrDefault } from '@/lib/appearance';
 import { todayUtc } from '@/lib/dashboard-transforms';
-import { getDashboard } from '@/lib/server/reads';
+import { getDashboard, getProfile } from '@/lib/server/reads';
 import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
 
 /**
@@ -12,8 +13,8 @@ import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
  * before this renders, and `serverFetch` — the only door to data — redirects on a
  * 401, so the check cannot be forgotten by a page that forgets to ask.
  *
- * Two reads happen here rather than at page level, and both are exceptions worth
- * stating rather than hiding:
+ * Three reads happen here rather than at page level, and each is an exception
+ * worth stating rather than hiding:
  *
  * - `getCurrentUser()`, because identity does not vary by route. The rule exists
  *   because layouts do not re-render on navigation, so what they must not hold is
@@ -24,6 +25,9 @@ import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
  *   sidebar sheet on any route, so it has to outlive the page — and what it needs
  *   (`reachedTarget`, the current weight, maintenance calories) is present-state
  *   too: `?date=` scopes only the meal window, never the goal block.
+ * - the profile, and only for its `appearance`, and only when the cookie that
+ *   caches it is absent. The appearance is a property of the user, not of a
+ *   route, and the shell is what carries it.
  *
  * The dashboard read is skipped entirely when there is no goal, because
  * `GET /dashboard` 404s until onboarding is finished and this layout renders
@@ -39,12 +43,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   const dashboard = goal ? await getDashboard(todayUtc(new Date())) : null;
 
+  // The cookie is the cache and the profile is the truth (ADR 0014), so the
+  // profile is read only when the cache is empty — a first visit from a device
+  // that has never chosen. That read used to happen in the browser, one frame
+  // after the page had painted in whatever the tokens said; here it is one frame
+  // after only when the cookie is missing, and never at all once it exists.
+  const cached = cookieStore.get(APPEARANCE_COOKIE)?.value;
+  const appearance = cached
+    ? appearanceOrDefault(cached)
+    : ((await getProfile())?.appearance ?? DEFAULT_APPEARANCE);
+
   return (
     <AppShell
       user={user}
-      appearance={appearanceOrDefault(
-        cookieStore.get(APPEARANCE_COOKIE)?.value,
-      )}
+      appearance={appearance}
       goal={dashboard?.goal ?? null}
       maintenanceKcal={dashboard?.maintenanceCalories ?? null}
     >

@@ -3,11 +3,13 @@ import {
   dashboardResponseSchema,
   listMealsResponseSchema,
   listWeightsResponseSchema,
+  profileResponseSchema,
   type DashboardResponse,
   type ListMealsResponse,
   type ListWeightsResponse,
+  type ProfileResponse,
 } from '@foodnote/shared';
-import { serverFetch } from './fetch';
+import { serverFetch, serverFetchOrNull } from './fetch';
 
 /**
  * The app's reads, on top of `serverFetch` — which means the `shared/` schema is
@@ -34,4 +36,16 @@ export const listMeals = cache(
 export const listWeights = cache(
   async (from: string, to: string): Promise<ListWeightsResponse> =>
     serverFetch(`/weights?from=${from}&to=${to}`, listWeightsResponseSchema),
+);
+
+/**
+ * One GET describes the user: the details they entered, plus the weight, goal and
+ * recomputed targets mirrored onto it. `null` until onboarding writes one — a 404
+ * here is the state `/onboarding` exists for, not a failure.
+ *
+ * Memoized, and the memo is what makes the shell's appearance fallback free on
+ * `/profile`, which reads the same profile for its own page.
+ */
+export const getProfile = cache(async (): Promise<ProfileResponse | null> =>
+  serverFetchOrNull('/profile', profileResponseSchema),
 );
