@@ -1,5 +1,8 @@
-import { aiParseResponseSchema, type AiParseRequest } from '@foodnote/shared';
-import type { AiParseResponse } from '@foodnote/shared';
+import {
+  aiParseResponseSchema,
+  type AiParseRequest,
+  type AiParseResponse,
+} from '@foodnote/shared';
 import { ApiError, apiErrorMessage } from '@/lib/api-error';
 
 /**

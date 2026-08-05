@@ -32,27 +32,39 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // Parsed here rather than passed through: this is a public POST endpoint like
   // any action, and forwarding an unvalidated body would make Nest's schema the
-  // only check on a request that has already crossed one trust boundary.
-  const parsed = aiParseRequestSchema.safeParse(await request.json());
+  // only check on a request that has already crossed one trust boundary. The
+  // `json()` is guarded too — it throws on a body that is not JSON at all, which
+  // is a malformed request and not a fault of ours.
+  const body = await request.json().catch(() => null);
+  const parsed = aiParseRequestSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ message: 'Validation failed' }, { status: 400 });
   }
 
-  const upstream = await fetch(nestUrl('/meals/ai-parse'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-      // The parse route is rate-limited per client IP, so the real address has
-      // to survive the hop through here.
-      ...forwardedFor(request.headers),
-    },
-    body: JSON.stringify(parsed.data),
-    cache: 'no-store',
-    // The drawer's abort has to reach Nest, not stop at this handler: without
-    // this, a cancelled parse still costs a completed OpenAI call.
-    signal: request.signal,
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(nestUrl('/meals/ai-parse'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        // The parse route is rate-limited per client IP, so the real address has
+        // to survive the hop through here.
+        ...forwardedFor(request.headers),
+      },
+      body: JSON.stringify(parsed.data),
+      cache: 'no-store',
+      // The drawer's abort has to reach Nest, not stop at this handler: without
+      // this, a cancelled parse still costs a completed OpenAI call.
+      signal: request.signal,
+    });
+  } catch (err) {
+    // The abort above rejects here, and it is the expected end of a cancelled
+    // parse, not a fault: the client has already hung up, so nothing will read
+    // this. Letting it throw would log a function error for every cancel.
+    if (request.signal.aborted) return new Response(null, { status: 499 });
+    throw err;
+  }
 
   // The status carries meaning the drawer branches on — 429 becomes a field
   // error rather than the error step — so it is passed through as it arrived.
