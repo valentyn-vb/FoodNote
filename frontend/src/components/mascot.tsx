@@ -25,8 +25,9 @@ export const MASCOT_SIZE = {
   '/mascot/hungry.webp': EXPRESSION,
   '/mascot/reassure.webp': EXPRESSION,
   '/mascot/recover.webp': EXPRESSION,
-  // The two the disc frames, square by design — their ink runs to all four edges
-  // (see `MascotDisc`, which is why they are framed rather than cropped).
+  // The two the disc frames, square by design — opaque, and drawn to bleed off
+  // their bottom edge (see `MascotDisc`, which is why they are framed in cream
+  // rather than cropped).
   '/mascot/default.webp': { width: 1254, height: 1254 },
   '/mascot/guide.webp': { width: 512, height: 512 },
 } as const satisfies Record<string, { width: number; height: number }>;

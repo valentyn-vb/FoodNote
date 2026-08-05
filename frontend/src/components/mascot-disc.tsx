@@ -4,13 +4,24 @@ import { cn } from '@/lib/utils';
 /**
  * The mascot shown large, as a medallion.
  *
- * `default.webp` and `guide.webp` are opaque squares whose ink runs to all four
- * edges — the ears sit 8% from the top, outside an inscribed circle — so a round
- * crop always eats something, and left square they put a lit rectangle on a dark
- * page. Instead the disc is painted in the artwork's own cream and the square is
- * inscribed in it (112 inside 160, since a square only fits a circle of its own
- * diagonal): the square's edges land on colour identical to their own and
+ * `default.webp` and `guide.webp` are opaque squares — 0% transparent pixels, both
+ * measured — and the drawing runs off the **bottom** edge of the frame: 92% of that
+ * row is ink, while the other three edges are the artwork's own cream throughout.
+ * So the square cannot be shown bare on any surface that is not exactly that
+ * cream (on a dark page it was a lit rectangle), and it cannot be round-cropped
+ * either: 13.6% of the ink lies outside an inscribed circle, and the topmost ink
+ * is 5% of the height down.
+ *
+ * Instead the disc is painted in the cream itself — `--mascot-canvas` resolves to
+ * `rgb(252,250,246)`, pixel-identical to the files, so there is no seam — and the
+ * square is inscribed in it (112 inside 160, since a square only fits a circle of
+ * its own diagonal): the square's edges land on colour identical to their own and
  * disappear, leaving air around a drawing that is never cut.
+ *
+ * Which is why the disc is not a workaround for a careless export. A transparent
+ * re-export would not remove the need for it: strip the cream and the bottom bleed
+ * becomes a hard horizontal cut with nothing behind it. Dropping the disc means
+ * redrawing the art, not re-saving it.
  *
  * `--mascot-veil` dims disc and drawing together, so the two stay the same
  * colour and the square stays hidden — which is why the dark appearance changes
