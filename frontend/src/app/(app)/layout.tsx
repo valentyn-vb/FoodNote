@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { DEFAULT_APPEARANCE } from '@foodnote/shared';
 import { AppShell } from '@/components/app-shell';
 import { APPEARANCE_COOKIE, appearanceOrDefault } from '@/lib/appearance';
+import { getProfile } from '@/lib/server/reads';
+import { getCurrentUser } from '@/lib/server/session';
 import { SIDEBAR_COOKIE_NAME } from '@/lib/sidebar-cookie';
-import { todayUtc } from '@/lib/dashboard-transforms';
-import { getDashboard, getProfile } from '@/lib/server/reads';
-import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
+import { GoalReachedGate } from './goal-reached-gate';
 
 /**
  * The session gate is gone: there is no `useAuth()`, no `router.replace` in an
@@ -14,39 +14,24 @@ import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
  * before this renders, and `serverFetch` — the only door to data — redirects on a
  * 401, so the check cannot be forgotten by a page that forgets to ask.
  *
- * Three reads happen here rather than at page level, and each is an exception
- * worth stating rather than hiding (AGENTS.md, Reading data):
+ * What it awaits is what the shell cannot be drawn without (AGENTS.md, Reading
+ * data):
  *
- * - `getCurrentUser()`, because identity does not vary by route. The rule exists
- *   because layouts do not re-render on navigation, so what they must not hold is
- *   route-varying data. Identity changes through one mutation, the profile-edit
- *   action, which revalidates this layout explicitly.
- * - the present-state half of the dashboard, for the reached-target dialog. That
- *   dialog is mounted here because a weight can be logged from the header or the
- *   sidebar sheet on any route, so it has to outlive the page — and what it needs
- *   (`reachedTarget`, the current weight, maintenance calories) is present-state
- *   too: `?date=` scopes only the meal window, never the goal block.
- * - the profile, for two things that are both properties of the user rather than
- *   of a route: the `appearance`, when the cookie that caches it is absent, and
- *   the body figures the reached-target dialog's plan step computes its options
- *   from. That dialog used to fetch them from the browser at the moment the user
- *   asked for a new target, which put a failure — and an error message under a
- *   field the user had filled in correctly — in the middle of a celebration.
- *   Reading it here costs nothing when neither reason applies.
+ * - `getCurrentUser()`, because identity does not vary by route, and the header
+ *   and the sidebar's menu name the user. It changes through one mutation, the
+ *   profile-edit action, whose `refresh()` re-renders this layout with the page.
+ * - the cookies, which carry the appearance the provider starts from and the
+ *   sidebar's collapsed state.
+ * - the profile, but only when the appearance cookie is absent — a device that
+ *   has never chosen. The cookie is the cache and the profile is the truth (ADR
+ *   0014); this read is what makes the correction one frame late instead of never,
+ *   and putting it behind the boundary below would only make the flash longer.
  *
- * The dashboard read is skipped entirely when there is no goal, because
- * `GET /dashboard` 404s until onboarding is finished and this layout renders
- * around `/onboarding` redirects rather than in front of them. `getCurrentGoal()`
- * is memoized, so the check costs the page's own read, not a second one.
+ * The reached-target dialog's reads used to be here too, and blocked all of the
+ * above. They are `GoalReachedGate` now, behind a boundary of their own.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const [user, goal, cookieStore] = await Promise.all([
-    getCurrentUser(),
-    getCurrentGoal(),
-    cookies(),
-  ]);
-
-  const dashboard = goal ? await getDashboard(todayUtc(new Date())) : null;
+  const [user, cookieStore] = await Promise.all([getCurrentUser(), cookies()]);
 
   // The cookie is the cache and the profile is the truth (ADR 0014), so the
   // appearance is read from the profile only when the cache is empty — a first
@@ -54,16 +39,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // browser, one frame after the page had painted in whatever the tokens said;
   // here it is one frame after only when the cookie is missing, and never at all
   // once it exists.
-  //
-  // A reached target is the second reason to want the profile, and it is checked
-  // together with the first so the two share one request — `getProfile` is
-  // memoized, but only a read that happens at all can be shared.
   const cached = cookieStore.get(APPEARANCE_COOKIE)?.value;
-  const profile =
-    !cached || dashboard?.goal?.reachedTarget ? await getProfile() : null;
   const appearance = cached
     ? appearanceOrDefault(cached)
-    : (profile?.appearance ?? DEFAULT_APPEARANCE);
+    : ((await getProfile())?.appearance ?? DEFAULT_APPEARANCE);
 
   // The sidebar's own cookie, which `ui/sidebar.tsx` has always written and
   // nobody read: seeded here so the first paint carries the state the provider
@@ -77,9 +56,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       user={user}
       appearance={appearance}
       sidebarOpen={sidebarOpen}
-      goal={dashboard?.goal ?? null}
-      maintenanceKcal={dashboard?.maintenanceCalories ?? null}
-      profile={profile}
+      // `null`, not a skeleton: the dialog draws nothing until a target is
+      // reached, so an un-streamed overlay looks like every ordinary visit.
+      overlay={
+        <Suspense fallback={null}>
+          <GoalReachedGate />
+        </Suspense>
+      }
     >
       {children}
     </AppShell>

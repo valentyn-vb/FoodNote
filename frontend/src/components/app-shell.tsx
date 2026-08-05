@@ -1,18 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import type {
-  Appearance,
-  AuthUser,
-  DashboardResponse,
-  ProfileResponse,
-} from '@foodnote/shared';
+import type { Appearance, AuthUser } from '@foodnote/shared';
 import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ShellFrame } from '@/components/shell-frame';
 import { AppearanceProvider } from '@/components/appearance-provider';
-import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
 
 /**
  * The shared shell for the app routes, at every width: the header names the
@@ -31,8 +25,9 @@ import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
  * No providers left. `MealsProvider` was here so the sidebar's "Log a meal"
  * trigger shared state with the dashboard's numbers; both write through actions
  * that revalidate now, so there is no shared client state to place. The
- * reached-target dialog stays mounted here for the same reason the trigger is —
- * a weight can be logged on any route — but it takes its inputs as props.
+ * reached-target dialog still hangs here for the same reason the trigger does — a
+ * weight can be logged on any route — but it arrives already rendered, from a
+ * boundary of its own, so its reads no longer hold up this shell.
  *
  * `OnboardingGuard` was the last of them. It wrapped this whole tree in a
  * spinner while a client request found out whether a goal existed; each `(app)`
@@ -40,11 +35,9 @@ import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
  */
 export function AppShell({
   user,
-  goal,
-  maintenanceKcal,
-  profile,
   appearance,
   sidebarOpen,
+  overlay,
   children,
 }: {
   user: AuthUser;
@@ -52,11 +45,8 @@ export function AppShell({
   appearance: Appearance;
   /** The same, for the sidebar: the user's last choice, or the rail on a device that has never chosen. */
   sidebarOpen: boolean;
-  /** Null until onboarding is finished — the shell renders before that check runs. */
-  goal: DashboardResponse['goal'] | null;
-  maintenanceKcal: number | null;
-  /** For the reached-target dialog's plan step; null until there is one to show. */
-  profile: ProfileResponse | null;
+  /** The reached-target dialog, rendered by the server behind its own boundary. */
+  overlay: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -80,13 +70,9 @@ export function AppShell({
           </div>
         </SidebarInset>
         {/* The "Log weight" trigger moves between the header and the sidebar
-            sheet with the width, so the celebration is mounted here — the
-            nearest shared ancestor that can see either save. */}
-        <GoalReachedOverlay
-          goal={goal}
-          maintenanceKcal={maintenanceKcal}
-          profile={profile}
-        />
+            sheet with the width, so the celebration hangs here — the nearest
+            shared ancestor that can see either save. */}
+        {overlay}
       </SidebarProvider>
     </AppearanceProvider>
   );
