@@ -1,15 +1,6 @@
 'use client';
 
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * The boundary for the layouts, which the per-route ones cannot be: `error.tsx`
@@ -28,21 +19,12 @@ import {
  */
 export default function AppError({ retry }: { retry: () => void }) {
   return (
-    <Empty className="min-h-svh">
-      <EmptyHeader>
-        <EmptyMedia>
-          <Mascot src="/mascot/recover.webp" className="w-18" priority />
-        </EmptyMedia>
-        <EmptyTitle>Something went wrong</EmptyTitle>
-        <EmptyDescription>
-          Nothing you logged is lost. Try again.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={() => retry()}>
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <RetryEmpty
+      className="min-h-svh"
+      mascotClassName="w-18"
+      title="Something went wrong"
+      description="Nothing you logged is lost. Try again."
+      onRetry={() => retry()}
+    />
   );
 }

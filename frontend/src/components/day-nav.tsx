@@ -13,6 +13,8 @@ import { StepperNav } from '@/components/stepper-nav';
 import {
   DAY_PARAM,
   addDays,
+  calendarDate,
+  calendarDay,
   formatDayLabel,
   isFutureDay,
   todayUtc,
@@ -37,10 +39,14 @@ export function DayNav({ selectedDate }: { selectedDate: string }) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const isToday = selectedDate === todayUtc(new Date());
+  // One `now` for the render, the way `WeightRangeNav` takes it as a prop: the
+  // label, the disabled arrow and the calendar's bound cannot land on different
+  // days.
+  const now = new Date();
+  const isToday = selectedDate === todayUtc(now);
 
   function goToDay(date: string) {
-    if (isFutureDay(date, new Date())) return;
+    if (isFutureDay(date, now)) return;
     // `push`, not `replace`: the day is where the user is, so Back should take
     // them to the day they came from.
     startTransition(() => {
@@ -48,13 +54,17 @@ export function DayNav({ selectedDate }: { selectedDate: string }) {
     });
   }
 
-  const now = new Date();
-  const todayAsDate = new Date(`${now.toISOString().slice(0, 10)}T00:00:00Z`);
-  const selectedAsDate = new Date(`${selectedDate}T00:00:00Z`);
+  // `calendarDate`/`calendarDay`, not `toISOString().slice(0, 10)`:
+  // react-day-picker works in local midnight, so the UTC conversion names the day
+  // *before* for any viewer east of UTC — tapping Aug 1 in Berlin asked for
+  // Jul 31. The range picker learned this first; both calendars go through the
+  // same two helpers now.
+  const todayAsDate = calendarDate(todayUtc(now));
+  const selectedAsDate = calendarDate(selectedDate);
 
   function handleSelect(date: Date | undefined) {
     if (!date) return;
-    goToDay(date.toISOString().slice(0, 10));
+    goToDay(calendarDay(date));
     setCalendarOpen(false);
   }
 

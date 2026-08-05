@@ -1,15 +1,6 @@
 'use client';
 
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * `/profile` reads the signed-in user on the server, so it can fail there and
@@ -20,21 +11,11 @@ import {
  */
 export default function ProfileError({ retry }: { retry: () => void }) {
   return (
-    <Empty className="w-full max-w-xl rounded-lg border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia>
-          <Mascot src="/mascot/recover.webp" className="w-14" priority />
-        </EmptyMedia>
-        <EmptyTitle>Couldn&apos;t load your profile</EmptyTitle>
-        <EmptyDescription>
-          Your plan and details are safe. Try again.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={() => retry()}>
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <RetryEmpty
+      className="w-full max-w-xl rounded-lg border border-dashed"
+      title="Couldn't load your profile"
+      description="Your plan and details are safe. Try again."
+      onRetry={() => retry()}
+    />
   );
 }

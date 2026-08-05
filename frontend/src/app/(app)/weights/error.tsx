@@ -1,15 +1,6 @@
 'use client';
 
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * What `WeightsError` was — a centred line of text and a button — reached by the
@@ -25,21 +16,11 @@ import {
  */
 export default function WeightsError({ retry }: { retry: () => void }) {
   return (
-    <Empty className="rounded-lg border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia>
-          <Mascot src="/mascot/recover.webp" className="w-14" priority />
-        </EmptyMedia>
-        <EmptyTitle>Couldn&apos;t load your weight history</EmptyTitle>
-        <EmptyDescription>
-          Every weigh-in is still there. Try again.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={() => retry()}>
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <RetryEmpty
+      className="rounded-lg border border-dashed"
+      title="Couldn't load your weight history"
+      description="Every weigh-in is still there. Try again."
+      onRetry={() => retry()}
+    />
   );
 }

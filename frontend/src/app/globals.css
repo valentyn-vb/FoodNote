@@ -19,6 +19,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-surface-hover: var(--surface-hover);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -124,6 +125,15 @@
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.968 0.015 70.9);
   --muted-foreground: oklch(0.515 0.04 55.3);
+  /* A row's hover, one step off --background and deliberately *not* warm: every
+     other wash in this light set carries the cream's tint, and over a list that
+     already stands on --background a tinted step read as another material laid
+     on top rather than the same surface, darker. So the chroma goes to 0.002 —
+     the hue is kept for the day someone brightens it — and the separation is
+     carried by 0.03 of lightness alone. In dark it is --muted's value: down
+     there a step off the page has to be *lighter*, and the tint is invisible
+     at that lightness anyway. */
+  --surface-hover: oklch(0.952 0.002 78.3);
   /* Both --brand-soft and --brand-softer collapsed here: two warm washes a
      tenth of a lightness step apart, which nothing on screen distinguished. */
   --accent: oklch(0.966 0.023 65.5);
@@ -228,6 +238,7 @@
     --secondary: oklch(0.268 0.01 62);
     --muted: oklch(0.285 0.012 64);
     --muted-foreground: oklch(0.72 0.02 65);
+    --surface-hover: oklch(0.285 0.012 64);
     --accent: oklch(0.31 0.014 64);
     --border: oklch(0.335 0.012 66);
     --input: oklch(0.355 0.014 66);
@@ -271,6 +282,7 @@
   --secondary: oklch(0.268 0.01 62);
   --muted: oklch(0.285 0.012 64);
   --muted-foreground: oklch(0.72 0.02 65);
+  --surface-hover: oklch(0.285 0.012 64);
   --accent: oklch(0.31 0.014 64);
   --border: oklch(0.335 0.012 66);
   --input: oklch(0.355 0.014 66);

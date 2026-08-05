@@ -64,6 +64,7 @@ import {
   withPortionFigures,
   type MealDraftValues,
 } from '@/components/meal-fields';
+import { QuietButton } from '@/components/quiet-button';
 import { SavedMealPicker } from '@/components/saved-meals/saved-meal-picker';
 import { SaveToMyMealsButton } from '@/components/saved-meals/save-to-my-meals-button';
 import { cn } from '@/lib/utils';
@@ -559,9 +560,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
               <DescriptionField
                 parseForm={parseForm}
                 autoFocus
-                rows={4}
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
-                className="min-h-32"
               />
               <ExampleChips control={parseForm.control} onPick={pickExample} />
             </form>
@@ -730,7 +729,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             }}
           >
             <DrawerBody>
-              <DescriptionField parseForm={parseForm} autoFocus rows={3} />
+              <DescriptionField parseForm={parseForm} autoFocus />
             </DrawerBody>
           </RecoverStep>
         </StepPanel>
@@ -989,35 +988,6 @@ function EditStep({
 }
 
 /**
- * The second action in a step's footer: `ghost`, the shape the title bar's
- * "Back to AI Input" has, rather than the muted `link` it used to be — under a
- * full-width primary that read as fine print.
- *
- * Full height, not `sm`: `sm`'s 32px under a 40px primary looked like a caption
- * that happened to be clickable, and this is a real branch of the flow.
- *
- * Muted until approached: at rest it must not compete with the primary above it,
- * and `hover:text-foreground` is what says it is a control. Auto width, never
- * `w-full` — two buttons of one width read as two equal choices.
- */
-function QuietButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      className={cn(
-        'gap-1 text-muted-foreground hover:text-foreground',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-/**
  * The one description field, used by the input step and by the not-food step's
  * second try — the same field of the same form, so a retry keeps what was
  * typed, and `min(3)`/`max(500)` finally produce a message instead of silently
@@ -1043,7 +1013,13 @@ function DescriptionField({
         <InputGroupTextarea
           id={id}
           aria-invalid={error ? true : undefined}
-          className={cn('min-h-22', className)}
+          // Two lines at rest, growing with what is typed: `ui/textarea` carries
+          // `field-sizing-content`, so the height follows the content and no
+          // `rows` is needed — a `rows` here would only raise the floor again,
+          // which is what a 128px empty box was. Capped, because the field
+          // takes 500 characters and the footer's action has to stay in view; the
+          // textarea scrolls past the cap.
+          className={cn('min-h-16 max-h-48', className)}
           {...props}
           {...parseForm.register('description')}
         />

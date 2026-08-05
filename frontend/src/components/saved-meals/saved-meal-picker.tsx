@@ -152,7 +152,7 @@ export function SavedMealPicker({
       )}
 
       {status === 'ready' && savedMeals.length > 0 && (
-        <ul className="-mx-1 flex min-h-24 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
+        <ul className="flex min-h-24 flex-col gap-1 overflow-y-auto p-1 overscroll-contain bg-background rounded-lg">
           {savedMeals.map((saved) => (
             // No divider between rows: each one lights up as a whole on
             // approach, and a line through the list fought that fill for the

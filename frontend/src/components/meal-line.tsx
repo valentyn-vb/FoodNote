@@ -5,6 +5,7 @@ import { deleteMeal, updateMeal } from '@/lib/actions/meals';
 import { createSavedMeal } from '@/lib/actions/saved-meals';
 import {
   mealTypeSchema,
+  savedMealFrom,
   type MealResponse,
   type MealType,
 } from '@foodnote/shared';
@@ -78,17 +79,10 @@ export function MealLine({ meal }: { meal: MealResponse }) {
   // server-side either, so two presses make two templates.
   function handleSaveToMyMeals() {
     startAction(async () => {
-      // No mealType and no recordedAt — those describe an occasion, and a Saved
-      // Meal has none (ADR-0014).
-      const result = await createSavedMeal({
-        mealName: meal.mealName,
-        totalCalories: meal.totalCalories,
-        proteinGrams: meal.proteinGrams,
-        carbsGrams: meal.carbsGrams,
-        fatGrams: meal.fatGrams,
-        source: meal.source,
-        items: meal.items,
-      });
+      // `savedMealFrom` drops the occasion — a Saved Meal has no mealType and no
+      // recordedAt (ADR-0014) — and drops it through the schema, so the two are
+      // omitted in one place rather than re-listed here.
+      const result = await createSavedMeal(savedMealFrom(meal));
       if (!result.ok) {
         toast.error(result.message);
         return;

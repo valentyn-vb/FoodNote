@@ -2,16 +2,7 @@
 
 import { Figtree } from 'next/font/google';
 import './globals.css';
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * The boundary for the root layout, which `app/error.tsx` cannot be: `error.tsx`
@@ -47,22 +38,13 @@ export default function GlobalError({ retry }: { retry: () => void }) {
           name is React's own <title>. */}
       <title>Something went wrong — FoodNote</title>
       <body className="min-h-full">
-        <Empty className="min-h-svh">
-          <EmptyHeader>
-            <EmptyMedia>
-              <Mascot src="/mascot/recover.webp" className="w-18" priority />
-            </EmptyMedia>
-            <EmptyTitle>Something went wrong</EmptyTitle>
-            <EmptyDescription>
-              Nothing you logged is lost. Try again.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button variant="outline" onClick={() => retry()}>
-              Try again
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <RetryEmpty
+          className="min-h-svh"
+          mascotClassName="w-18"
+          title="Something went wrong"
+          description="Nothing you logged is lost. Try again."
+          onRetry={() => retry()}
+        />
       </body>
     </html>
   );

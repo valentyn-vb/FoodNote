@@ -32,14 +32,19 @@ export default async function MealsPage({
     new Date(),
   );
 
-  await requireOnboarded();
-
-  // Still through `todaysMeals`: the bounds are UTC days, but the order is the
-  // page's own — newest first, matching where an optimistic insert puts a meal.
-  const meals = todaysMeals(
-    await listMeals(selectedDate, selectedDate),
-    selectedDate,
-  );
+  // In parallel, not guard-first: `GET /meals` needs no goal, so waiting on the
+  // onboarding read before starting the day's own read cost a serial round trip
+  // on every day step — and unlike the dashboard's, this page's read does not
+  // 404 without a goal. A redirect still wins: it throws out of the `await`
+  // below with the meals request already in flight and unread.
+  const [, meals] = await Promise.all([
+    requireOnboarded(),
+    // Still through `todaysMeals`: the bounds are UTC days, but the order is the
+    // page's own — newest first, matching where an optimistic insert puts a meal.
+    listMeals(selectedDate, selectedDate).then((list) =>
+      todaysMeals(list, selectedDate),
+    ),
+  ]);
 
   // No max-width: the shell owns the page frame (#127). The cap this page used
   // to carry is what left 1440 mostly empty beside truncated meal names.

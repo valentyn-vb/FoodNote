@@ -1,4 +1,4 @@
-import { addDays, todayUtc } from './dashboard-transforms';
+import { DAY_MS, addDays, isDay, todayUtc } from './dashboard-transforms';
 
 /**
  * The weights page's range control: which span of the journal is on screen.
@@ -65,8 +65,6 @@ export const RANGE_TO_PARAM = 'to';
 /** The window a bare `/weights` shows. */
 export const DEFAULT_RANGE_PRESET: WeightRangePreset = '7D';
 
-const DAY_MS = 86_400_000;
-
 /**
  * The window a request is asking for — the range control's `trackingDayFrom`.
  *
@@ -92,23 +90,6 @@ export function weightRangeFrom(
   if (from >= to) return fallback;
   if (to > todayUtc(now)) return fallback;
   return { from, to };
-}
-
-/**
- * A day that exists, not merely one shaped like a day.
- *
- * The round trip is the point: `Date.parse` accepts `2026-02-30` — DD is within
- * 01–31, so the format matches and the arithmetic then rolls it over to March 2.
- * A NaN check alone therefore passes a day that is not a day, and the window
- * silently becomes one nobody named. Re-formatting what was parsed and comparing
- * catches every such rollover in one line.
- */
-function isDay(value: string | string[] | null | undefined): value is string {
-  if (typeof value !== 'string') return false;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = Date.parse(`${value}T00:00:00Z`);
-  if (Number.isNaN(parsed)) return false;
-  return new Date(parsed).toISOString().slice(0, 10) === value;
 }
 
 /** Whole days from `from` to `to` — the window's own length, and its step. */
@@ -182,29 +163,6 @@ const utcMonthDayYear = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 });
-
-/**
- * A calendar cell's date as the day string the API takes.
- *
- * react-day-picker works in local midnight, so `toISOString().slice(0, 10)` —
- * what the rest of this app does to a `Date` — names the day *before* for any
- * viewer east of UTC: tapping Aug 1 in Berlin fetched Jul 31. The day the
- * reader tapped is the one printed on the cell, which is its local parts.
- */
-export function calendarDay(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-/**
- * The inverse, for the calendar's `disabled` bound and its opening month: a
- * UTC-midnight `Date` would be a different *day* to the cells it is compared
- * against, and west of UTC that disabled today.
- */
-export function calendarDate(day: string): Date {
-  return new Date(`${day}T00:00:00`);
-}
 
 /**
  * The window in words, for under the hero figure — "Jul 5 – Aug 4".

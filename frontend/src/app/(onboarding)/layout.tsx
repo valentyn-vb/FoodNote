@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { MascotDisc } from '@/components/mascot-disc';
+import { BrandMark } from '@/components/brand-mark';
 
 /**
  * A focused, full-screen flow: no sidebar shell, and no gate of its own.
@@ -22,10 +22,7 @@ export default function OnboardingLayout({
 }) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-10">
-      <div className="flex flex-col items-center gap-3">
-        <MascotDisc src="/mascot/guide.webp" alt="FoodNote mascot" priority />
-        <p className="font-heading text-2xl font-semibold">FoodNote</p>
-      </div>
+      <BrandMark />
       <div className="w-full max-w-xl">{children}</div>
     </main>
   );

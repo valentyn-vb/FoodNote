@@ -12,6 +12,7 @@ import {
   weightAsOf,
   weightChangeOverDays,
 } from '@/lib/dashboard-transforms';
+import type { MacroGrams } from '@/lib/macros';
 
 /**
  * Every figure the dashboard draws, derived in one pass.
@@ -65,12 +66,13 @@ export function dashboardFigures({
         ? Math.min(100, Math.round((eatenKcal / goalKcal) * 100))
         : 0,
     // Straight from the read model, never re-summed from the meal list, whose
-    // items may legitimately disagree with it.
+    // items may legitimately disagree with it. Typed as `MacroGrams`, so the one
+    // derivation outside `MACRO_FIELDS` fails to compile if a macro is renamed.
     macros: {
       proteinGrams: dashboard.today.proteinGrams,
       carbsGrams: dashboard.today.carbsGrams,
       fatGrams: dashboard.today.fatGrams,
-    },
+    } satisfies MacroGrams,
     selectedDayMeals: todaysMeals(meals, dashboard.date),
     dailyCalories: bucketDailyCalories(meals, dashboard.date),
     // The count, not the entries. The trend card names how many readings its

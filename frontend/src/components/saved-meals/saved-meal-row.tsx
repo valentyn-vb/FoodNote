@@ -45,7 +45,14 @@ export function SavedMealRow({
     // `has-[button:hover]:` on the container, so hovering the pencil or the
     // trash lights the row too: all three act on the same meal, and a row that
     // stays cold under the control you are about to press reads as two objects.
-    <div className="flex items-center gap-3 rounded-md pr-2 transition-colors has-[button:hover]:bg-accent/40 has-[button:focus-visible]:bg-accent/40">
+    //
+    // `surface-hover`, a token of its own, because no existing wash did this job:
+    // the light set's `muted` and `accent` both carry the cream's tint, and over a
+    // list standing on `background` a tinted step read as another material laid on
+    // top rather than the same surface, darker. The token is grey in light and
+    // `muted`'s value in dark, where a step off the page has to be lighter — a
+    // difference per appearance, which is what a token is for (ADR 0014).
+    <div className="flex items-center gap-3 rounded-md pr-2 transition-colors has-[button:hover]:bg-muted-foreground/5 has-[button:focus-visible]:bg-muted-foreground/5">
       <button
         type="button"
         onClick={onPick}
@@ -74,7 +81,7 @@ export function SavedMealRow({
           size="icon-sm"
           aria-label={`Edit ${saved.mealName}`}
           onClick={onEdit}
-          className="touch-target text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+          className="touch-target text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
         >
           <PencilIcon />
         </Button>
@@ -84,7 +91,7 @@ export function SavedMealRow({
           size="icon-sm"
           aria-label={`Delete ${saved.mealName} from My meals`}
           onClick={onDelete}
-          className="touch-target text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+          className="touch-target text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
         >
           <Trash2Icon />
         </Button>

@@ -12,14 +12,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { todayUtc } from '@/lib/dashboard-transforms';
+import {
+  calendarDate,
+  calendarDay,
+  todayUtc,
+} from '@/lib/dashboard-transforms';
 import {
   RANGE_FROM_PARAM,
   RANGE_LABELS,
   RANGE_TO_PARAM,
   WEIGHT_RANGE_PRESETS,
-  calendarDate,
-  calendarDay,
   canStepForward,
   matchPreset,
   presetRange,
@@ -103,7 +105,7 @@ export function WeightRangeNav({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-4">
       <StepperNav
         previousLabel="Earlier period"
         nextLabel="Later period"

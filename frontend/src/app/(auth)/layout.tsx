@@ -1,4 +1,4 @@
-import { MascotDisc } from '@/components/mascot-disc';
+import { BrandMark } from '@/components/brand-mark';
 
 /**
  * The mascot and the wordmark, and nothing else.
@@ -16,13 +16,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-10">
-      <div className="flex flex-col items-center gap-3">
-        {/* In a disc of the artwork's own cream: `guide.webp` is opaque, so on a
-            dark page it was a lit square. See MascotDisc. */}
-        <MascotDisc src="/mascot/guide.webp" alt="FoodNote mascot" priority />
-        {/* The wordmark: a page title, so it keeps the brand face. */}
-        <p className="font-heading text-2xl font-semibold">FoodNote</p>
-      </div>
+      <BrandMark />
       <div className="w-full max-w-sm">{children}</div>
     </div>
   );

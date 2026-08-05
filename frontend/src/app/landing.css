@@ -46,6 +46,7 @@
   --secondary: oklch(0.986 0.006 75.4);
   --muted: oklch(0.968 0.015 70.9);
   --muted-foreground: oklch(0.515 0.04 55.3);
+  --surface-hover: oklch(0.952 0.002 78.3);
   --accent: oklch(0.966 0.023 65.5);
   --border: oklch(0.925 0.021 67.6);
   --input: oklch(0.915 0.025 65.6);

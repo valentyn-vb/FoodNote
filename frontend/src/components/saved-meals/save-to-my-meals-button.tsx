@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import type { MealSource } from '@foodnote/shared';
+import { savedMealFrom, type MealSource } from '@foodnote/shared';
 import type { UseFormReturn } from 'react-hook-form';
 import { createSavedMeal } from '@/lib/actions/saved-meals';
-import { Button } from '@/components/ui/button';
+import { QuietButton } from '@/components/quiet-button';
 import { toWireItems, type MealDraftValues } from '@/components/meal-fields';
 
 /**
@@ -35,16 +35,11 @@ export function SaveToMyMealsButton({
     setState('saving');
     const values = form.getValues();
     // No mealType and no recordedAt: those describe an occasion, and a Saved
-    // Meal has none — the user picks them each time it is logged.
-    const result = await createSavedMeal({
-      mealName: values.mealName,
-      totalCalories: values.totalCalories,
-      proteinGrams: values.proteinGrams,
-      carbsGrams: values.carbsGrams,
-      fatGrams: values.fatGrams,
-      source,
-      items: toWireItems(values.items),
-    });
+    // Meal has none — the user picks them each time it is logged. `savedMealFrom`
+    // is what drops them, over the schema rather than a field list.
+    const result = await createSavedMeal(
+      savedMealFrom({ ...values, source, items: toWireItems(values.items) }),
+    );
     if (!result.ok) {
       // Back to idle, not a dead end: the meal is still there to keep.
       setState('idle');
@@ -58,19 +53,9 @@ export function SaveToMyMealsButton({
   const kept = state === 'kept';
 
   return (
-    // The same shape as the drawer's other footer seconds (`QuietButton`):
-    // `ghost` at full height, muted until approached. Not a muted `link`, which
-    // under a full-width primary read as fine print, and not `sm`, which read as
-    // a caption that happened to be clickable.
-    <Button
-      type="button"
-      variant="ghost"
-      className="gap-1 text-muted-foreground hover:text-foreground"
-      onClick={keep}
-      disabled={state !== 'idle'}
-    >
+    <QuietButton onClick={keep} disabled={state !== 'idle'}>
       {kept ? <BookmarkCheck aria-hidden /> : <Bookmark aria-hidden />}
       {kept ? 'In My meals' : 'Save to My meals'}
-    </Button>
+    </QuietButton>
   );
 }

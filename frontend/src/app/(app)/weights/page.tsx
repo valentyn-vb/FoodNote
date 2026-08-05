@@ -15,8 +15,9 @@ import {
   todayUtc,
   utcDay,
   weightAsOf,
-  weightChangeOverDays,
+  weightChangesOverDays,
 } from '@/lib/dashboard-transforms';
+import { spokenStat } from '@/app/(app)/dashboard/helpers';
 import { getDashboard, listWeights } from '@/lib/server/reads';
 import { requireOnboarded } from '@/lib/server/session';
 import {
@@ -133,6 +134,15 @@ export default async function WeightsPage({
   // month of weigh-ins drawn directly beneath it. The change table below is
   // still carry-forward, because a "7-day change" genuinely is a fixed period
   // rather than the span on screen.
+  // One carry-forward index for all four periods, built here rather than inside
+  // the map below, which rebuilt and re-sorted the journal per period.
+  const periodChanges = weightChangesOverDays(
+    history,
+    currentWeightKg,
+    rangeEnd,
+    CHANGE_PERIODS,
+  );
+
   const oldestVisible = visible.at(-1);
   const newestVisible = visible.at(0);
   const rangeChange =
@@ -156,10 +166,11 @@ export default async function WeightsPage({
       <div className="grid gap-5 lg:grid-cols-2 lg:gap-3.5">
         <StatCard label="Current weight">
           {/* NumberFlow has no accessible name of its own, so the figure is
-              spoken here once and the visual parts are hidden — the pattern
-              the dashboard's stat cards already use. */}
+              spoken here once and the visual parts are hidden. Through
+              `spokenStat`, so the spoken value and the visible digits cannot
+              disagree on grouping — it is the same formatter NumberFlow gets. */}
           <span className="sr-only">
-            {`Current weight: ${currentWeightKg} kg`}
+            {spokenStat('Current weight', currentWeightKg, ' kg')}
           </span>
           {/* Animated because the range control changes it: stepping from one
               window to the next moves this figure, and the digits carrying
@@ -182,13 +193,8 @@ export default async function WeightsPage({
           {/* A term/value list, not a table: each row is one period and its
               one figure, with no second column to align against. */}
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-            {CHANGE_PERIODS.map((days) => {
-              const change = weightChangeOverDays(
-                history,
-                currentWeightKg,
-                rangeEnd,
-                days,
-              );
+            {CHANGE_PERIODS.map((days, index) => {
+              const change = periodChanges[index];
               return (
                 <div key={days} className="flex flex-col gap-0.5">
                   <dt className="text-sm text-muted-foreground">{days} days</dt>
@@ -286,9 +292,17 @@ function DirectionChip({ changeKg }: { changeKg: number | null }) {
   return (
     <StatChip tone="neutral">
       <span className="sr-only">
-        {`Change over this range: ${changeKg} kg, ${
-          changeKg < 0 ? 'decreasing' : changeKg > 0 ? 'increasing' : 'holding'
-        }`}
+        {spokenStat(
+          'Change over this range',
+          changeKg,
+          ` kg, ${
+            changeKg < 0
+              ? 'decreasing'
+              : changeKg > 0
+                ? 'increasing'
+                : 'holding'
+          }`,
+        )}
       </span>
       {moving && <Arrow aria-hidden="true" className="size-3.5" />}
       <span aria-hidden="true">

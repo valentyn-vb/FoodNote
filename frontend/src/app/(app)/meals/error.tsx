@@ -1,15 +1,6 @@
 'use client';
 
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * What `MealsError` was; `retry()` re-runs the read the old `retry()` re-ran.
@@ -20,19 +11,11 @@ import {
  */
 export default function MealsError({ retry }: { retry: () => void }) {
   return (
-    <Empty className="rounded-lg border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia>
-          <Mascot src="/mascot/recover.webp" className="w-14" priority />
-        </EmptyMedia>
-        <EmptyTitle>Couldn&apos;t load your meals</EmptyTitle>
-        <EmptyDescription>The day is still there. Try again.</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={() => retry()}>
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <RetryEmpty
+      className="rounded-lg border border-dashed"
+      title="Couldn't load your meals"
+      description="The day is still there. Try again."
+      onRetry={() => retry()}
+    />
   );
 }

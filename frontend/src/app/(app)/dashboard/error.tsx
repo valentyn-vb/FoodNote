@@ -1,15 +1,6 @@
 'use client';
 
-import { Mascot } from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { RetryEmpty } from '@/components/retry-empty';
 
 /**
  * What `DashboardError` was, on upstream's Empty primitives and reached the way
@@ -33,22 +24,12 @@ export default function DashboardError({ retry }: { retry: () => void }) {
     // No `border`, so upstream's `border-dashed` draws nothing: this stands in
     // for the whole page, where a dashed frame around a failure reads as a
     // placeholder for something still coming.
-    <Empty className="grow basis-0">
-      <EmptyHeader>
-        <EmptyMedia>
-          {/* RECOVER mascot moment: the one place the app admits a fault. */}
-          <Mascot src="/mascot/recover.webp" className="w-18" priority />
-        </EmptyMedia>
-        <EmptyTitle>Couldn&apos;t load your dashboard</EmptyTitle>
-        <EmptyDescription>
-          The numbers are still on the server. Try again.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={() => retry()}>
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <RetryEmpty
+      className="grow basis-0"
+      mascotClassName="w-18"
+      title="Couldn't load your dashboard"
+      description="The numbers are still on the server. Try again."
+      onRetry={() => retry()}
+    />
   );
 }
