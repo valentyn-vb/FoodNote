@@ -5,8 +5,12 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 /**
- * The shell the three chart cards share: a title, a line of context under it,
- * an optional action opposite, and the chart filling whatever is left.
+ * The shell every chart card shares: a title, a line of context under it, an
+ * optional action opposite, and the chart filling whatever is left.
+ *
+ * In `components/` rather than under `dashboard/`, as `stat-card` is, because
+ * /weights draws this shape too — and had it written out inline, which is how a
+ * shared look drifts: that copy stood at a different horizontal padding.
  *
  * The header is `shrink-0` and the body `min-h-0`, so the chart absorbs the
  * card's height rather than pushing the header out of it — a recharts

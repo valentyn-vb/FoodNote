@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react';
 import { CALORIE_SPLIT_COLORS, CalorieSplitDonut } from '@/components/charts';
 import type { CalorieSplitSegment } from '@/lib/dashboard-transforms';
-import { ChartCard } from './chart-card';
+import { ChartCard } from '@/components/chart-card';
 import { remainingStat } from './helpers';
 
 /**

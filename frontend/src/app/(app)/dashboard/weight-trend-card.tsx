@@ -1,16 +1,15 @@
 'use client';
 
-import type { WeightEntryResponse } from '@foodnote/shared';
+import Link from 'next/link';
+import { ChartCard } from '@/components/chart-card';
 import { WeightTrendChart } from '@/components/weight-trend-chart';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import {
   formatGoalDate,
   formatTrendDate,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
-import { ChartCard } from './chart-card';
-import { WeightHistoryDrawer } from './weight-history-drawer';
 
 /**
  * The weight journal as a line, with the projection to the target picking up
@@ -27,13 +26,13 @@ import { WeightHistoryDrawer } from './weight-history-drawer';
  * survived.
  */
 export function WeightTrendCard({
-  entries,
+  weighInCount,
   trend,
   monthChangeKg,
   projectedGoalDate,
   className,
 }: {
-  entries: WeightEntryResponse[];
+  weighInCount: number;
   trend: WeightTrendPoint[];
   monthChangeKg: number;
   projectedGoalDate: string | null;
@@ -44,7 +43,7 @@ export function WeightTrendCard({
   // provider's 60-day window: the axis is cropped to the readings, so naming
   // the window described a span the chart no longer draws.
   const firstWeighIn = trend.find((point) => point.actual !== undefined)?.t;
-  const count = `${entries.length} ${entries.length === 1 ? 'weigh-in' : 'weigh-ins'}`;
+  const count = `${weighInCount} ${weighInCount === 1 ? 'weigh-in' : 'weigh-ins'}`;
   const subtitle = [
     firstWeighIn === undefined
       ? count
@@ -60,20 +59,27 @@ export function WeightTrendCard({
     <ChartCard
       title="Weight trend"
       subtitle={subtitle}
+      // A link, not a drawer. The drawer was the whole journal's only home
+      // before /weights existed; now it was a second, smaller copy of that page
+      // — the same rows over the dashboard's 60-day window, with no range to
+      // move and no chart beside them. Two lists of one journal drift, and this
+      // one already had: it offered a delete on entries the page would not.
+      // `buttonVariants` on the Link, not `Button render={<Link/>}` — ui/button
+      // says why: the latter logs that Base UI wanted a real <button>, and the
+      // `nativeButton={false}` that silences it stamps `role="button"` on the
+      // anchor, so the a11y tree announces a button and drops the URL.
       action={
-        <WeightHistoryDrawer
-          entries={entries}
-          trigger={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="touch-target -my-1 text-brand-ink"
-            >
-              View full history
-              <ChevronRight />
-            </Button>
-          }
-        />
+        <Link
+          href="/weights"
+          className={buttonVariants({
+            variant: 'ghost',
+            size: 'sm',
+            className: 'touch-target -my-1 text-brand-ink',
+          })}
+        >
+          View full history
+          <ChevronRight />
+        </Link>
       }
       className={className}
     >

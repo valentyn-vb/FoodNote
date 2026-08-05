@@ -56,7 +56,15 @@ export function AppShell({
     <AppearanceProvider initial={appearance}>
       <SidebarProvider defaultOpen={sidebarOpen}>
         <AppSidebar user={user} />
-        <SidebarInset>
+        {/* `min-w-0` because this is a flex item beside a 256px sidebar, and
+            without it a flex item's minimum size is its *content's* min-content
+            width. The header's is the widest thing in the shell — the route
+            title is `whitespace-nowrap` via `truncate` — so the shell refused
+            to shrink below the title's full width and the page scrolled
+            horizontally at 768 instead of the title ellipsing. Written here
+            rather than in `ui/sidebar.tsx`, which stays as `shadcn add`
+            shipped it. */}
+        <SidebarInset className="min-w-0">
           <AppHeader />
           {/* A div, not a `main`: SidebarInset is already the page's `main`.
               The flat `px-8` was 64 of the 360px a phone has. */}

@@ -5,7 +5,7 @@ import type { GoalDirection } from '@/lib/dashboard-transforms';
 import { formatGoalDate } from '@/lib/dashboard-transforms';
 import { cn, formatPace } from '@/lib/utils';
 import { formatFigure } from './helpers';
-import { StatCard } from './stat-card';
+import { StatCard } from '@/components/stat-card';
 
 const DIRECTION_LABEL: Record<GoalDirection, string> = {
   lose: 'Lose weight',

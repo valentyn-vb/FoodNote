@@ -73,7 +73,10 @@ export function dashboardFigures({
     },
     selectedDayMeals: todaysMeals(meals, dashboard.date),
     dailyCalories: bucketDailyCalories(meals, dashboard.date),
-    weightEntries: weights,
+    // The count, not the entries. The trend card names how many readings its
+    // line is drawn from and nothing else needs them — the journal itself is
+    // /weights now, so shipping every entry to the client bought one integer.
+    weighInCount: weights.length,
     currentWeightKg,
     weightTrend: buildWeightTrend(
       weights,

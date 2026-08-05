@@ -76,7 +76,7 @@ function DashboardBands({
   selectedDayMeals,
   dailyCalories,
   isToday,
-  weightEntries,
+  weighInCount,
   currentWeightKg,
   weightTrend,
   weightChangeKg,
@@ -199,7 +199,7 @@ function DashboardBands({
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-3.5">
         <WeightTrendCard
           className="h-72 lg:col-span-2"
-          entries={weightEntries}
+          weighInCount={weighInCount}
           trend={weightTrend}
           monthChangeKg={weightChangeKg}
           projectedGoalDate={goal.projectedGoalDate}
