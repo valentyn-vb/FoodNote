@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -9,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { StepperNav } from '@/components/stepper-nav';
 import { useMeals } from '@/lib/meals-context';
 import {
   addDays,
@@ -44,23 +44,13 @@ export function DayNav() {
   }
 
   return (
-    // One control, not three: the arrows and the label share a card-coloured
-    // track, so the group reads as a single day switcher on the page ground.
-    //
-    // `gap-2`, not `gap-0.5`: each arrow's touch target overflows its 36px box
-    // by 4px a side, and at 2px of gap that overflow reached into the label,
-    // handing the label's own edge to the arrow.
-    <div className="h-10 inline-flex items-center gap-2 rounded-md border bg-card p-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="touch-target h-8 rounded-sm text-muted-foreground"
-        aria-label="Previous day"
-        onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-      >
-        <ChevronLeft className="size-5" />
-      </Button>
-
+    <StepperNav
+      previousLabel="Previous day"
+      nextLabel="Next day"
+      onPrevious={() => setSelectedDate(addDays(selectedDate, -1))}
+      onNext={() => setSelectedDate(addDays(selectedDate, 1))}
+      nextDisabled={isToday}
+    >
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
           aria-label="Pick a date"
@@ -87,17 +77,6 @@ export function DayNav() {
           />
         </PopoverContent>
       </Popover>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="touch-target h-8 rounded-sm text-muted-foreground"
-        aria-label="Next day"
-        disabled={isToday}
-        onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-      >
-        <ChevronRight className="size-5" />
-      </Button>
-    </div>
+    </StepperNav>
   );
 }

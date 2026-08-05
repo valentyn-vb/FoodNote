@@ -4,9 +4,9 @@ import NumberFlow from '@number-flow/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { GoalDirection } from '@/lib/dashboard-transforms';
 import { remainingToGoalKg } from '@/lib/dashboard-transforms';
-import { cn } from '@/lib/utils';
 import { spokenStat } from './helpers';
-import { StatCard, StatFigure } from './stat-card';
+import { StatCard, StatFigure } from '@/components/stat-card';
+import { StatChip } from '@/components/stat-chip';
 
 /**
  * The weight on the Tracking Day on show, how it moved over the week before it,
@@ -61,14 +61,7 @@ export function CurrentWeightCard({
           No weigh-in from a week ago to compare
         </p>
       ) : (
-        <p
-          className={cn(
-            'flex w-fit items-center gap-1.5 rounded-4xl px-2.5 py-0.5 text-sm font-medium tabular-nums',
-            towardGoal
-              ? 'bg-success/15 text-success-text'
-              : 'bg-muted text-muted-foreground',
-          )}
-        >
+        <StatChip tone={towardGoal ? 'positive' : 'neutral'}>
           <span className="sr-only">
             {spokenStat('Change this week', weekChangeKg, ' kg')}
           </span>
@@ -77,7 +70,7 @@ export function CurrentWeightCard({
             <NumberFlow value={Math.abs(weekChangeKg)} suffix=" kg" />
             {' this week'}
           </span>
-        </p>
+        </StatChip>
       )}
 
       <p className="text-sm text-muted-foreground tabular-nums">

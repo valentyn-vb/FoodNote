@@ -2,7 +2,7 @@
 
 import NumberFlow from '@number-flow/react';
 import { spokenStat } from './helpers';
-import { StatCard, StatFigure } from './stat-card';
+import { StatCard, StatFigure } from '@/components/stat-card';
 
 /**
  * What the day added up to: total calories over the three macro totals. The
