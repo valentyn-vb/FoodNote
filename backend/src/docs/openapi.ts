@@ -516,6 +516,22 @@ export function buildOpenApiDocument(): OpenAPIObject {
           },
         },
       },
+      '/saved-meals/{id}': {
+        delete: {
+          tags: ['saved-meals'],
+          summary: 'Delete an owned saved meal (its items cascade)',
+          description:
+            'Meals already logged from it are untouched — nothing links them ' +
+            'to it, so deleting what you keep never rewrites a day already ' +
+            'counted.',
+          parameters: [idParam],
+          responses: {
+            204: { description: 'Deleted' },
+            401: unauthorized,
+            404: errorResponse('No such saved meal owned by the caller'),
+          },
+        },
+      },
       '/health': {
         get: {
           tags: ['health'],

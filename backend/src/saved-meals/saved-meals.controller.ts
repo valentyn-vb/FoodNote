@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { createSavedMealRequestSchema } from '@foodnote/shared';
 import type {
   CreateSavedMealRequest,
@@ -43,5 +54,14 @@ export class SavedMealsController {
   async list(@Req() req: AuthenticatedRequest): Promise<SavedMealResponse[]> {
     const saved = await this.savedMeals.list(req.user.id);
     return saved.map(toResponse);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    await this.savedMeals.remove(req.user.id, id);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import type { CreateSavedMealRequest } from '@foodnote/shared';
@@ -44,6 +44,19 @@ export class SavedMealsService {
       relations: { items: true },
       order: { mealName: 'ASC' },
     });
+  }
+
+  /**
+   * Drops a template. Item rows cascade via the FK; the meals logged from it are
+   * untouched, because nothing links them to it (ADR-0014) — deleting what you
+   * keep must never rewrite a day you have already counted.
+   *
+   * Scoped by (id, userId) together, as MealsService does, so a wrong-owner id
+   * and a missing one are the same 404.
+   */
+  async remove(userId: string, id: string): Promise<void> {
+    const result = await this.savedMeals.delete({ id, userId });
+    if (!result.affected) throw new NotFoundException('Saved meal not found');
   }
 
   // Delete-then-insert the whole list, as MealsService does: there are no

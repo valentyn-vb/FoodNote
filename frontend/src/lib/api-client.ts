@@ -249,6 +249,11 @@ export const savedMeals = {
     });
     return savedMealResponseSchema.parse(await res.json());
   },
+
+  /** DELETE /saved-meals/:id — 204. Meals logged from it are untouched. */
+  async remove(id: string): Promise<void> {
+    await apiFetch(`/api/saved-meals/${id}`, { method: 'DELETE' });
+  },
 };
 
 export const dashboard = {

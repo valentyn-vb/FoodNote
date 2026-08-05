@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import type { SavedMealResponse } from '@foodnote/shared';
 import { savedMeals as savedMealsApi } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormGroupLabel } from '@/components/form-fields';
 import { SavedMealRow } from './saved-meal-row';
+
+/** The server's order, so a row put back lands where a refetch would show it. */
+const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
+  a.mealName.localeCompare(b.mealName);
 
 /**
  * The user's Saved Meals, under the parse input. Picking one is the point of the
@@ -51,6 +56,43 @@ export function SavedMealPicker({
     };
   }, [reloadKey]);
 
+  /**
+   * Drops a template, optimistically. The row goes first so the list answers the
+   * tap, and comes back if the request fails.
+   *
+   * Undo re-creates rather than restoring: there is no endpoint to un-delete, and
+   * a Saved Meal is fully described by what we already hold, so posting the row
+   * straight back is lossless. It gets a new id, which nothing refers to — no
+   * meal links to a template (ADR-0014) — and the request schema drops the old
+   * one. Meals already logged from it were never affected either way.
+   */
+  function remove(saved: SavedMealResponse) {
+    setSavedMeals((prev) => prev.filter((m) => m.id !== saved.id));
+    savedMealsApi
+      .remove(saved.id)
+      .then(() =>
+        toast.success(`“${saved.mealName}” removed from My meals`, {
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              savedMealsApi
+                .create(saved)
+                .then((again) =>
+                  setSavedMeals((prev) => [...prev, again].sort(byName)),
+                )
+                .catch(() =>
+                  toast.error("Couldn't undo — the meal is still removed."),
+                );
+            },
+          },
+        }),
+      )
+      .catch(() => {
+        setSavedMeals((prev) => [...prev, saved].sort(byName));
+        toast.error("Couldn't remove that meal. Please try again.");
+      });
+  }
+
   return (
     <section className="flex flex-col gap-2">
       <FormGroupLabel>My meals</FormGroupLabel>
@@ -93,7 +135,11 @@ export function SavedMealPicker({
         <ul className="-mx-1 flex max-h-64 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
           {savedMeals.map((saved) => (
             <li key={saved.id}>
-              <SavedMealRow saved={saved} onPick={() => onPick(saved)} />
+              <SavedMealRow
+                saved={saved}
+                onPick={() => onPick(saved)}
+                onDelete={() => remove(saved)}
+              />
             </li>
           ))}
         </ul>
