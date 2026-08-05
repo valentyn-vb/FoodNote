@@ -471,12 +471,15 @@ function MealItemRow({
           <Input
             aria-label={`Item ${index + 1} name`}
             placeholder="Item name"
-            // Reads as text until focused — an item's name, not a form field:
-            // no box, no shadow. Focus is the ring the field already carries and
-            // nothing else: an underline decorates the *element*, so on an empty
-            // item it drew a line under the placeholder and "Item name" read as
-            // a value that had to be cleared before typing.
-            className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none"
+            // The same fill and radius as the figure fields under it: the row
+            // sits on a tinted wash, so a transparent field disappeared into the
+            // card and only the placeholder said anything was editable. Flat, and
+            // focus is the ring the field already carries — an underline
+            // decorates the *element*, so on an empty item it drew a line under
+            // the placeholder and "Item name" read as a value to clear first.
+            // `placeholder:font-normal` because the weight is on the element:
+            // a semibold placeholder reads as a name already typed in.
+            className="min-w-24 grow-2 basis-0 rounded-sm bg-card font-semibold shadow-none placeholder:font-normal"
             {...form.register(`items.${index}.name`)}
           />
         )}
