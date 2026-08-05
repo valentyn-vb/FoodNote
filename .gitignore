@@ -19,6 +19,7 @@ skills-lock.json
 
 # Wayfinder maps and scratch notes — working artifacts, not team-facing.
 .scratch/
+plans/
 
 # The designer's handoff prototype: a reference to look at, not a repo artifact.
 # ADR 0009 cites it by description rather than by path for this reason.
@@ -32,3 +33,9 @@ e2e/playwright-report/
 # Editor-local Claude Code config. `settings.local.json` is tracked on purpose —
 # it is the project's own; `launch.json` is one machine's run configuration.
 .claude/launch.json
+
+# Throwaway checkouts an agent works in. Each holds its own copy of the repo and
+# is removed once its commit is cherry-picked out, but an interrupted run leaves
+# one behind — and an untracked worktree inside the repo makes `git status` lie
+# about what is uncommitted.
+.claude/worktrees/
