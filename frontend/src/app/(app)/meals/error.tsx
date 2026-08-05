@@ -12,13 +12,13 @@ import {
 } from '@/components/ui/empty';
 
 /**
- * What `MealsError` was; `reset()` re-runs the read the old `retry()` re-ran.
+ * What `MealsError` was; `retry()` re-runs the read the old `retry()` re-ran.
  *
  * Framed, unlike the dashboard's: this page stands on the background with
  * nothing around it, so without an edge the mascot floats in the middle of an
  * empty screen — the same reason `EmptyMeals` asks for a border here.
  */
-export default function MealsError({ reset }: { reset: () => void }) {
+export default function MealsError({ retry }: { retry: () => void }) {
   return (
     <Empty className="rounded-lg border border-dashed">
       <EmptyHeader>
@@ -29,7 +29,7 @@ export default function MealsError({ reset }: { reset: () => void }) {
         <EmptyDescription>The day is still there. Try again.</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" onClick={reset}>
+        <Button variant="outline" onClick={() => retry()}>
           Try again
         </Button>
       </EmptyContent>

@@ -26,7 +26,7 @@ import {
  * `(app)`, `(auth)`, `(onboarding)` and the landing page alike, and it cannot know
  * which one it stands in for.
  */
-export default function AppError({ reset }: { reset: () => void }) {
+export default function AppError({ retry }: { retry: () => void }) {
   return (
     <Empty className="min-h-svh">
       <EmptyHeader>
@@ -39,7 +39,7 @@ export default function AppError({ reset }: { reset: () => void }) {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" onClick={reset}>
+        <Button variant="outline" onClick={() => retry()}>
           Try again
         </Button>
       </EmptyContent>

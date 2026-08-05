@@ -379,18 +379,20 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
   }
 
   function handleSave(values: MealDraftValues) {
-    // Strip the per-portion display fields (calories, proteinGrams, carbsGrams,
-    // fatGrams at item level) — only portionGrams + per100g go into the request.
-    // The meal-level totals (totalCalories, proteinGrams…) are untouched.
+    // The wire shape of an item, named rather than reached by discarding the
+    // per-portion display fields (calories, proteinGrams, carbsGrams, fatGrams):
+    // four bindings nothing read, and an eslint-disable to say so. Naming what is
+    // sent costs nothing here — the request type is checked at the two calls
+    // below, so a field the wire schema gains fails to compile in this line
+    // rather than going missing at runtime. The meal-level totals
+    // (totalCalories, proteinGrams…) are untouched.
     const items = (values.items ?? []).map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({
-        calories: _c,
-        proteinGrams: _p,
-        carbsGrams: _carb,
-        fatGrams: _f,
-        ...item
-      }) => item,
+      ({ name, quantityDescription, portionGrams, per100g }) => ({
+        name,
+        quantityDescription,
+        portionGrams,
+        per100g,
+      }),
     );
     if (editing) {
       // No recordedAt and no source in the patch: an edit corrects a meal's

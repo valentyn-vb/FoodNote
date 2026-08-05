@@ -18,7 +18,7 @@ import {
  *
  * Framed like `/meals`: this page stands on the background, not inside a card.
  */
-export default function ProfileError({ reset }: { reset: () => void }) {
+export default function ProfileError({ retry }: { retry: () => void }) {
   return (
     <Empty className="w-full max-w-xl rounded-lg border border-dashed">
       <EmptyHeader>
@@ -31,7 +31,7 @@ export default function ProfileError({ reset }: { reset: () => void }) {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" onClick={reset}>
+        <Button variant="outline" onClick={() => retry()}>
           Try again
         </Button>
       </EmptyContent>

@@ -22,7 +22,7 @@ import {
  * A full-screen frame, like the flow it stands in: this route has no shell to sit
  * inside.
  */
-export default function OnboardingError({ reset }: { reset: () => void }) {
+export default function OnboardingError({ retry }: { retry: () => void }) {
   return (
     <Empty className="min-h-screen">
       <EmptyHeader>
@@ -35,7 +35,7 @@ export default function OnboardingError({ reset }: { reset: () => void }) {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" onClick={reset}>
+        <Button variant="outline" onClick={() => retry()}>
           Try again
         </Button>
       </EmptyContent>
