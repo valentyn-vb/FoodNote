@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2Icon } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import {
   caloriesSchema,
@@ -243,20 +243,17 @@ export function MealTotalsSummary({
   return (
     <div className={NUTRIENT_GRID}>
       {cells.map(({ label, unit, value }) => (
-        <Card
-          key={label}
-          className="items-center gap-0.5 rounded-lg px-4 py-3 shadow-none"
-        >
-          <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+        <div key={label} className="rounded-md bg-muted px-3 py-1.5">
+          <span className="block text-xs font-medium tracking-wide text-muted-foreground">
             {label}
           </span>
-          <span className="flex items-baseline gap-1 text-lg font-bold tabular-nums">
-            <NumberFlow value={value} />
+          <span className="flex items-baseline gap-1 text-base font-semibold tabular-nums">
+            <NumberFlow value={Math.round(value)} />
             <span className="text-sm font-normal text-muted-foreground">
               {unit}
             </span>
           </span>
-        </Card>
+        </div>
       ))}
     </div>
   );
@@ -474,9 +471,12 @@ function MealItemRow({
           <Input
             aria-label={`Item ${index + 1} name`}
             placeholder="Item name"
-            // Reads as text until focused — an item's name, not a form
-            // field: no box, no shadow, the underline does the work.
-            className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
+            // Reads as text until focused — an item's name, not a form field:
+            // no box, no shadow. Focus is the ring the field already carries and
+            // nothing else: an underline decorates the *element*, so on an empty
+            // item it drew a line under the placeholder and "Item name" read as
+            // a value that had to be cleared before typing.
+            className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none"
             {...form.register(`items.${index}.name`)}
           />
         )}
@@ -514,14 +514,19 @@ function MealItemRow({
           </span>
         )}
 
+        {/* The same control as the one on a meal row (`meal-line.tsx`): a muted
+            ghost icon carrying its own 44px touch target. `gap-2.5` on the row
+            clears the overhang — the target is 6px wider than the 32px box on
+            each side, so nothing of the weight input beside it is covered. */}
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label={`Remove item ${index + 1}`}
           onClick={onRemove}
+          className="touch-target text-muted-foreground"
         >
-          <Trash2 />
+          <Trash2Icon />
         </Button>
       </div>
 
