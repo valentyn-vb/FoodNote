@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import {
   DAY_PARAM,
   WEIGHT_WINDOW_DAYS,
@@ -9,6 +10,10 @@ import { getDashboard, listMeals, listWeights } from '@/lib/server/reads';
 import { requireOnboarded } from '@/lib/server/session';
 import { Dashboard } from './dashboard';
 import { dashboardFigures } from './figures';
+
+export const metadata: Metadata = {
+  title: 'Dashboard — FoodNote',
+};
 
 /**
  * Three reads in parallel, and every figure derived before the first byte of

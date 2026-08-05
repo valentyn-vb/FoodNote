@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { DayNav } from '@/components/day-nav';
 import { EmptyMeals } from '@/components/empty-meals';
 import {
@@ -8,6 +9,10 @@ import {
 import { listMeals } from '@/lib/server/reads';
 import { requireOnboarded } from '@/lib/server/session';
 import { MealGroups } from './meal-groups';
+
+export const metadata: Metadata = {
+  title: 'Meals — FoodNote',
+};
 
 /**
  * One Tracking Day's meals, grouped by meal time; the day nav steps back through

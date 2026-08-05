@@ -1,5 +1,3 @@
-'use client';
-
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { EmptyMeals } from '@/components/empty-meals';
@@ -31,6 +29,12 @@ import { WeightTrendCard } from './weight-trend-card';
  * Calorie widgets follow the selected Tracking Day; weight and goal are always
  * present-state, which is what the API serves — `date` scopes only the meal
  * window (ADR-0005). The calorie labels say which day they mean.
+ *
+ * No `'use client'`: this composes, it does not interact. The directive was here
+ * while the numbers came from two providers, and stayed for a while after they
+ * were deleted — which put this whole file and everything it composes in one
+ * client bundle. The cards that need a browser (a chart, a NumberFlow digit, the
+ * day nav) declare it for themselves, each becoming its own boundary.
  */
 export function Dashboard({
   selectedDate,
