@@ -21,8 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { cn } from '@/lib/utils';
+import { DetailRow } from '@/components/detail-row';
+import { ACTIVITY_LEVEL_LABELS, SEX_LABELS } from '@/lib/enum-labels';
 import { saveDetails } from '@/lib/actions/profile';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,37 +30,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Edit2Icon } from 'lucide-react';
-
-const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
-
-/**
- * One label/value pair of the details list. The dividers live on the `<dl>`
- * rather than as a `border-b … last:border-b-0` on every row. `numeric` gives
- * the value tabular figures — a weight, an age.
- */
-function DetailRow({
-  label,
-  value,
-  numeric = true,
-}: {
-  label: string;
-  value: React.ReactNode;
-  numeric?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3.5">
-      <dt className="text-sm font-semibold">{label}</dt>
-      <dd
-        className={cn(
-          'text-sm font-semibold text-muted-foreground',
-          numeric && 'tabular-nums',
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
 
 export function PersonalDetailsSection({
   profile,

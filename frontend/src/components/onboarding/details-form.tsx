@@ -8,10 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
+import { ACTIVITY_LEVEL_LABELS } from '@/lib/enum-labels';
 import { activityLevelSchema, sexSchema } from '@foodnote/shared';
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { FormLabel, InputField } from '../form-fields';
+import { FigureField, FormLabel, InputField } from '../form-fields';
 import { ToggleField } from '../toggle-field';
 import type { OnboardingFormValues } from './form-schema';
 
@@ -39,17 +39,22 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       className="flex flex-col gap-5"
     >
       <div className="flex gap-3">
+        {/* Centred and tabular like the figure fields beside it: Age is the one
+            number in this form with no unit to put in an addon, and left-aligned
+            it was the only value in the row sitting under its label. */}
         <InputField
           id="age"
           label="Age"
           type="number"
           inputMode="numeric"
+          className="text-center tabular-nums"
           error={errors.age?.message}
           {...register('age', { valueAsNumber: true })}
         />
-        <InputField
+        <FigureField
           id="heightCm"
-          label="Height (cm)"
+          label="Height"
+          unit="cm"
           type="number"
           inputMode="numeric"
           error={errors.heightCm?.message}
@@ -67,17 +72,19 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
       />
 
       <div className="flex gap-3">
-        <InputField
+        <FigureField
           id="currentWeightKg"
-          label="Current weight (kg)"
+          label="Current weight"
+          unit="kg"
           type="number"
           inputMode="numeric"
           error={errors.currentWeightKg?.message}
           {...register('currentWeightKg', { valueAsNumber: true })}
         />
-        <InputField
+        <FigureField
           id="targetWeightKg"
-          label="Target weight (kg)"
+          label="Target weight"
+          unit="kg"
           type="number"
           inputMode="numeric"
           error={errors.targetWeightKg?.message}
@@ -85,7 +92,7 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
         />
       </div>
 
-      <Field className="gap-1.75">
+      <Field>
         <FormLabel>Activity level</FormLabel>
         <Controller
           control={control}
@@ -97,11 +104,21 @@ export function DetailsForm({ form, onSubmit }: DetailsFormProps) {
               items={ACTIVITY_LEVEL_LABELS}
             >
               {/* `w-fit` is the stock trigger's default; a select filling a
-                  form row is layout, not a variant. */}
-              <SelectTrigger className="w-full">
+                  form row is layout, not a variant. `shadow-none` because
+                  `Input` carries no shadow: side by side in one form, the
+                  trigger was the only control sitting on a lip. */}
+              <SelectTrigger className="w-full shadow-none">
                 <SelectValue placeholder="Select activity level" />
               </SelectTrigger>
-              <SelectContent>
+              {/* Drawn and placed as the sidebar's user menu is: `p-1` around
+                  the list, and dropped below the trigger's leading edge rather
+                  than over it — `alignItemWithTrigger` overlays the popup on
+                  the control, which no other menu in the app does. */}
+              <SelectContent
+                className="p-1"
+                align="start"
+                alignItemWithTrigger={false}
+              >
                 {activityLevelSchema.options.map((level) => (
                   <SelectItem key={level} value={level}>
                     {ACTIVITY_LEVEL_LABELS[level]}
