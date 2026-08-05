@@ -171,7 +171,16 @@ export const config = {
   // Without a matcher this runs on every static asset too, and an auth redirect
   // would then apply to the CSS. Renewal must stay cheap because it is on the
   // path of every navigation and every prefetch.
+  //
+  // The extension list is exhaustive of what `public/` holds, and has to stay
+  // that way. `_next/image` above exempts the optimiser's own route but not the
+  // file it goes on to fetch, and that fetch carries no cookie: an asset missing
+  // from this list is answered with a 307 to `/login`, which the optimiser
+  // reports as a 400. That is what `avif` and `glb` cost the landing page —
+  // seven of its nine images, in both appearances, while the two `.webp` ones
+  // beside them loaded. `txt` was the same omission without an optimiser to
+  // report it: `public/llms.txt` answered a signed-out reader with a login page.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff2?)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|avif|gif|ico|woff2?|glb|txt)$).*)',
   ],
 };
