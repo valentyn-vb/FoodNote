@@ -14,6 +14,7 @@ import { UtensilsIcon } from 'lucide-react';
 const TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/meals': 'Meals',
+  '/weights': 'Weights',
   '/profile': 'Profile',
 };
 

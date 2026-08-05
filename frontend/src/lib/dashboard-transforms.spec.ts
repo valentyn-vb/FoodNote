@@ -524,6 +524,15 @@ describe('monthTicks', () => {
     expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);
   });
 
+  it('returns a single tick when the span is one instant', () => {
+    // A window holding one weigh-in. Two ticks of the same value collide on
+    // recharts' tick key, which React reports as a duplicate-key error and
+    // resolves by dropping one child.
+    const t = Date.UTC(2024, 6, 5);
+    expect(monthTicks([{ t }])).toEqual([t]);
+    expect(monthTicks([{ t }, { t }])).toEqual([t]);
+  });
+
   it('falls back to the endpoints when the span contains only one month boundary', () => {
     const points = [{ t: Date.UTC(2024, 6, 15) }, { t: Date.UTC(2024, 7, 15) }];
     expect(monthTicks(points)).toEqual([points[0].t, points[1].t]);

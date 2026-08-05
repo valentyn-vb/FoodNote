@@ -276,7 +276,11 @@ export function monthTicks(points: WeightTrendPoint[]): number[] {
     t = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1);
   }
 
-  return ticks.length >= 2 ? ticks : [first, last];
+  if (ticks.length >= 2) return ticks;
+  // One tick, not two of the same: a window holding a single weigh-in has
+  // first === last, and recharts keys a tick by its value and coordinate, so
+  // the duplicate pair collided on both and React dropped one.
+  return first === last ? [first] : [first, last];
 }
 
 /**
