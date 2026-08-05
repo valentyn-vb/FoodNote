@@ -160,13 +160,18 @@ const UI_PAIRS: [string, string, string][] = [
  * button names itself with its label, and darkening the fill to earn the ratio is
  * the #106 argument again, so it stays pinned rather than fixed.
  *
- * `--ring` used to be here too, measuring *lower* than the fill it was
- * introduced to improve on. It clears 3:1 in both appearances now, which is why
- * this list is two entries shorter than the day it was written.
+ * `--ring` is the fill orange as of the onboarding restyle: a ring dark enough
+ * for 3:1 read as brown, and the app draws chosen-ness in this colour
+ * everywhere else — the selected plan plate, the pressed toggle — so focus was
+ * made to match. Light is the appearance that pays; dark still clears 3:1 and
+ * is deliberately not listed here. The two entries carry the same numbers as
+ * `--primary` against the same surfaces, because they are now the same colour.
  */
 const KNOWN_GAPS = new Map([
   ['light:--primary-foreground/--primary', 2.0],
   ['light:--primary/--background', 1.9],
+  ['light:--ring/--background', 1.9],
+  ['light:--ring/--card', 2.0],
 ]);
 
 describe.each([
