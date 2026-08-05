@@ -1,7 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import type { Appearance, AuthUser, DashboardResponse } from '@foodnote/shared';
+import type {
+  Appearance,
+  AuthUser,
+  DashboardResponse,
+  ProfileResponse,
+} from '@foodnote/shared';
 import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -34,6 +39,7 @@ export function AppShell({
   user,
   goal,
   maintenanceKcal,
+  profile,
   appearance,
   children,
 }: {
@@ -43,6 +49,8 @@ export function AppShell({
   /** Null until onboarding is finished — the shell renders before that check runs. */
   goal: DashboardResponse['goal'] | null;
   maintenanceKcal: number | null;
+  /** For the reached-target dialog's plan step; null until there is one to show. */
+  profile: ProfileResponse | null;
   children: ReactNode;
 }) {
   return (
@@ -75,7 +83,11 @@ export function AppShell({
         {/* The "Log weight" trigger moves between the header and the sidebar
             sheet with the width, so the celebration is mounted here — the
             nearest shared ancestor that can see either save. */}
-        <GoalReachedOverlay goal={goal} maintenanceKcal={maintenanceKcal} />
+        <GoalReachedOverlay
+          goal={goal}
+          maintenanceKcal={maintenanceKcal}
+          profile={profile}
+        />
       </SidebarProvider>
     </AppearanceProvider>
   );

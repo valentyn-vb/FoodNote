@@ -37,16 +37,18 @@ const PUBLIC_PATHS = new Set(['/', ...AUTH_PATHS]);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The transitional bridge (`app/api/[...path]/route.ts`) benefits from
+  // The app's one Route Handler (`app/api/meals/ai-parse/route.ts`) benefits from
   // renewal like any other request, but it is called by client JS: answering it
   // with a redirect to `/login` would hand a `fetch()` a page of HTML. It gets
-  // the new token and nothing else; a dead session there surfaces as the 401 the
-  // bridge already returns.
-  const isBridge = pathname.startsWith('/api/');
+  // the new token and nothing else — `handOn` puts it in the request headers the
+  // handler reads — and a dead session there surfaces as the 401 it already
+  // returns. Matched by prefix rather than by that one path, because the reason is
+  // about who calls it, and it holds for any handler added under `/api/`.
+  const isRouteHandler = pathname.startsWith('/api/');
 
   // Written once because it is asked three times below, twice as its own
   // negation — a public path gained later has to reach all three.
-  const mayRedirect = !isBridge && !PUBLIC_PATHS.has(pathname);
+  const mayRedirect = !isRouteHandler && !PUBLIC_PATHS.has(pathname);
 
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
@@ -77,7 +79,7 @@ export async function proxy(request: NextRequest) {
   // renewed. The renewed token rides on whichever response we return, a redirect
   // included — dropping it would send the next request straight back for another
   // refresh.
-  if (!isBridge && AUTH_PATHS.has(pathname)) {
+  if (!isRouteHandler && AUTH_PATHS.has(pathname)) {
     const response = NextResponse.redirect(new URL('/dashboard', request.url));
     if (renewed) {
       response.cookies.set(ACCESS_COOKIE, renewed, SESSION_COOKIE_OPTIONS);

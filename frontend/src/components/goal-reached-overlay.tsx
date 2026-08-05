@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
-import { profile } from '@/lib/api-client';
 import { createGoal, updateGoal } from '@/lib/actions/goals';
 import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
@@ -71,18 +70,30 @@ type DialogView = 'choice' | 'target-input' | 'target-plan';
  * that revalidate, and the re-rendered tree arrives with `reachedTarget` false —
  * which is what closes this. Nothing here has to ask for that refetch, and
  * nothing here holds a copy of the answer.
+ *
+ * The profile arrives as a prop for the same reason. The plan step needs the
+ * body figures the options are computed from, and this used to fetch them from the
+ * browser when the user asked for a new target — a request that could fail, with
+ * an error message under a field for a value the user had just typed correctly.
+ * The layout reads it instead, and only when a reached target makes this
+ * reachable.
  */
 export function GoalReachedOverlay({
   goal,
   maintenanceKcal,
+  profile,
 }: {
   goal: DashboardResponse['goal'] | null;
   maintenanceKcal: number | null;
+  /**
+   * Null when the layout had no reason to read it, which includes every render
+   * where this dialog stays closed — the plan step is the only thing that needs it.
+   */
+  profile: ProfileResponse | null;
 }) {
   const shouldReduceMotion = useReducedMotion();
   const [view, setView] = useState<DialogView>('choice');
   const [switchingMaintenance, setSwitchingMaintenance] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [targetWeightValue, setTargetWeightValue] = useState<number | null>(
     null,
   );
@@ -122,17 +133,9 @@ export function GoalReachedOverlay({
     setSwitchingMaintenance(false);
   }
 
-  async function handleTargetInputContinue(data: TargetWeightForm) {
-    try {
-      setTargetWeightValue(data.targetWeightKg);
-      const profileResponse = await profile.current();
-      setProfileData(profileResponse);
-      setView('target-plan');
-    } catch {
-      form.setError('targetWeightKg', {
-        message: "Couldn't load your profile. Please try again.",
-      });
-    }
+  function handleTargetInputContinue(data: TargetWeightForm) {
+    setTargetWeightValue(data.targetWeightKg);
+    setView('target-plan');
   }
 
   async function handlePlanConfirm(pace: Pace) {
@@ -257,7 +260,7 @@ export function GoalReachedOverlay({
           </>
         )}
 
-        {view === 'target-plan' && profileData && targetWeightValue && (
+        {view === 'target-plan' && profile && targetWeightValue && (
           <>
             <DialogHeader className="gap-2">
               <Button
@@ -278,10 +281,10 @@ export function GoalReachedOverlay({
 
             <PlanSelection
               input={{
-                ...profileData,
+                ...profile,
                 targetWeightKg: targetWeightValue,
                 currentWeightKg:
-                  profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
+                  profile.currentWeightKg ?? goal?.currentWeightKg ?? 0,
               }}
               onConfirm={handlePlanConfirm}
               fromDate={new Date().toISOString().slice(0, 10)}

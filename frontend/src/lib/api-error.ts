@@ -1,8 +1,9 @@
 import { errorResponseSchema } from '@foodnote/shared';
 
 /**
- * One error type for both doors to Nest — the client-side `api-client.ts` and
- * the server-side `server/fetch.ts`.
+ * One error type for both doors to Nest — `server/fetch.ts`, which everything
+ * reads and writes through, and `ai-parse.ts`, the one call the browser makes for
+ * itself.
  *
  * It has to be one class rather than one shape: call sites branch with
  * `err instanceof ApiError && err.status === 404`, and `instanceof` is false

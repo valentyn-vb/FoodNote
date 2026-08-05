@@ -4,8 +4,8 @@ import { env } from './env';
  * The two things every server-to-Nest call has in common, in one place.
  *
  * Pure — no `next/headers` — so `proxy.ts` can import it alongside
- * `lib/server/fetch.ts`, the bridge and the auth actions. Each of those keeps its
- * own auth and error policy; only the transport is shared.
+ * `lib/server/fetch.ts`, the auth actions and the ai-parse Route Handler. Each of
+ * those keeps its own auth and error policy; only the transport is shared.
  */
 
 /** Nest serves everything under `/api`; the prefix is joined here and nowhere else. */

@@ -25,9 +25,13 @@ import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
  *   sidebar sheet on any route, so it has to outlive the page — and what it needs
  *   (`reachedTarget`, the current weight, maintenance calories) is present-state
  *   too: `?date=` scopes only the meal window, never the goal block.
- * - the profile, and only for its `appearance`, and only when the cookie that
- *   caches it is absent. The appearance is a property of the user, not of a
- *   route, and the shell is what carries it.
+ * - the profile, for two things that are both properties of the user rather than
+ *   of a route: the `appearance`, when the cookie that caches it is absent, and
+ *   the body figures the reached-target dialog's plan step computes its options
+ *   from. That dialog used to fetch them from the browser at the moment the user
+ *   asked for a new target, which put a failure — and an error message under a
+ *   field the user had filled in correctly — in the middle of a celebration.
+ *   Reading it here costs nothing when neither reason applies.
  *
  * The dashboard read is skipped entirely when there is no goal, because
  * `GET /dashboard` 404s until onboarding is finished and this layout renders
@@ -44,14 +48,21 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const dashboard = goal ? await getDashboard(todayUtc(new Date())) : null;
 
   // The cookie is the cache and the profile is the truth (ADR 0014), so the
-  // profile is read only when the cache is empty — a first visit from a device
-  // that has never chosen. That read used to happen in the browser, one frame
-  // after the page had painted in whatever the tokens said; here it is one frame
-  // after only when the cookie is missing, and never at all once it exists.
+  // appearance is read from the profile only when the cache is empty — a first
+  // visit from a device that has never chosen. That read used to happen in the
+  // browser, one frame after the page had painted in whatever the tokens said;
+  // here it is one frame after only when the cookie is missing, and never at all
+  // once it exists.
+  //
+  // A reached target is the second reason to want the profile, and it is checked
+  // together with the first so the two share one request — `getProfile` is
+  // memoized, but only a read that happens at all can be shared.
   const cached = cookieStore.get(APPEARANCE_COOKIE)?.value;
+  const profile =
+    !cached || dashboard?.goal?.reachedTarget ? await getProfile() : null;
   const appearance = cached
     ? appearanceOrDefault(cached)
-    : ((await getProfile())?.appearance ?? DEFAULT_APPEARANCE);
+    : (profile?.appearance ?? DEFAULT_APPEARANCE);
 
   return (
     <AppShell
@@ -59,6 +70,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       appearance={appearance}
       goal={dashboard?.goal ?? null}
       maintenanceKcal={dashboard?.maintenanceCalories ?? null}
+      profile={profile}
     >
       {children}
     </AppShell>

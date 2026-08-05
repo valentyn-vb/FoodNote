@@ -64,7 +64,8 @@ import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { deleteMeal, saveMeal, updateMeal } from '@/lib/actions/meals';
 import { DAY_PARAM, trackingDayFrom } from '@/lib/dashboard-transforms';
-import { ApiError, meals as mealsApi } from '@/lib/api-client';
+import { requestAiParse } from '@/lib/ai-parse';
+import { ApiError } from '@/lib/api-error';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -322,7 +323,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
     setView({ step: 'loading' });
 
     try {
-      const result = await mealsApi.aiParse({ description }, controller.signal);
+      const result = await requestAiParse({ description }, controller.signal);
       if (controller.signal.aborted) return;
       if (result.parsed) loadParsedMeal(result.meal);
       else setView({ step: 'not-food', reason: result.reason });
