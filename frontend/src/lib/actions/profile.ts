@@ -1,6 +1,7 @@
 'use server';
 
 import { refresh } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import {
   appearanceSchema,
   authUserSchema,
@@ -91,7 +92,8 @@ export async function saveDetails(
       // fits, and only the user can judge that — so the caller says so.
       replan: weightChanged || targetChanged,
     });
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return fail("Couldn't save your details. Please try again.");
   }
 }
@@ -115,7 +117,8 @@ export async function updateAccount(
     });
     refresh();
     return ok();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return fail("Couldn't save your profile. Please try again.");
   }
 }
@@ -136,7 +139,8 @@ export async function saveAppearance(next: Appearance): Promise<ActionResult> {
       body: JSON.stringify({ appearance: parsed.data }),
     });
     return ok();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return fail("Couldn't save your appearance.");
   }
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { refresh } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import {
   createGoalRequestSchema,
   goalResponseSchema,
@@ -47,7 +48,8 @@ export async function updateGoal(
     });
     refresh();
     return ok(goal);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't save your plan. Please try again.");
   }
 }
@@ -76,7 +78,8 @@ export async function changePlanPace(
 
     refresh();
     return ok({ calorieTarget: updated.calorieTarget });
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return fail("Couldn't update your plan. Please try again.");
   }
 }
@@ -101,7 +104,8 @@ export async function createGoal(
     });
     refresh();
     return ok(goal);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't set your new target. Please try again.");
   }
 }

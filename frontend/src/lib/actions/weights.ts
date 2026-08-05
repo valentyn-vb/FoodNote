@@ -1,6 +1,7 @@
 'use server';
 
 import { refresh } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import {
   createWeightRequestSchema,
   updateWeightRequestSchema,
@@ -44,7 +45,8 @@ export async function saveWeight(
     });
     refresh();
     return ok(entry);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't save your weight. Please try again.");
   }
 }
@@ -66,7 +68,8 @@ export async function updateWeight(
     );
     refresh();
     return ok(entry);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't save your changes. Please try again.");
   }
 }
@@ -84,7 +87,8 @@ export async function deleteWeight(
     await serverSend(`/weights/${id}`, { method: 'DELETE' });
     refresh();
     return ok();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm(failure);
   }
 }

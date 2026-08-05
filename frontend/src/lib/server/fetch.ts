@@ -40,6 +40,10 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     },
   });
 
+  // A redirect *is* a thrown error, so an action that wraps this call in a
+  // try/catch swallows it and reports a save failure instead — leaving the user
+  // on a form that can never succeed. Every action therefore opens its catch with
+  // `unstable_rethrow(err)`; that repetition is this line's cost.
   if (res.status === 401) redirect('/login');
 
   if (!res.ok) {

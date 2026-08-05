@@ -1,6 +1,7 @@
 'use server';
 
 import { refresh } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import {
   createMealRequestSchema,
   mealResponseSchema,
@@ -46,7 +47,8 @@ export async function saveMeal(
     // The saved meal comes back because the caller offers Undo, which needs its
     // id — the toast is drawn on the client and outlives this action.
     return ok(meal);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't save your meal. Please try again.");
   }
 }
@@ -67,7 +69,8 @@ export async function updateMeal(
     });
     refresh();
     return ok(meal);
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm("Couldn't save your changes. Please try again.");
   }
 }
@@ -85,7 +88,8 @@ export async function deleteMeal(
     await serverSend(`/meals/${id}`, { method: 'DELETE' });
     refresh();
     return ok();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return failForm(failure);
   }
 }
