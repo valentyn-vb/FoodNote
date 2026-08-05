@@ -25,7 +25,7 @@ test('a parsed meal reaches the day’s list and the calorie total', async ({
   await page.getByRole('button', { name: 'Parse with AI' }).click();
 
   await expect(page.getByText('Review your meal')).toBeVisible();
-  await page.getByRole('button', { name: /^Save/ }).click();
+  await page.getByRole('button', { name: /^Save ·/ }).click();
 
   await expect(eaten).not.toHaveText(before ?? '');
 

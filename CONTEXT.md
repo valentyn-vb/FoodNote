@@ -78,6 +78,16 @@ typically the portion assumed when the description gave no quantity. It exists
 because the numbers are estimates the user is asked to trust.
 _Avoid_: disclaimer, warning
 
+**Saved Meal**:
+A meal the user keeps by name to log again — a name, macro totals and Meal
+Items, with no occasion: it carries neither a meal type nor a `recordedAt`, and
+both are chosen when it is logged. Its Items keep their Nutrition Density, which
+is the point: the same food can be logged at a different Portion Weight next
+time without another AI Parse. Logging **copies** it into a Meal Entry and never
+links the two, so correcting or removing either one leaves the other untouched;
+a Saved Meal is changed only by editing it directly.
+_Avoid_: template, favourite, recipe, preset
+
 **Goal**:
 A weight plan: start weight/date, target weight, and Pace. Direction (loss or
 gain) comes from target vs. **start** weight, so it survives overshooting the

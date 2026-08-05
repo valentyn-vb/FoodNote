@@ -13,6 +13,7 @@ import {
   perPortion,
   densityFrom,
   type MacroTotals,
+  type MealItem,
   type NutritionPer100g,
 } from '@foodnote/shared';
 import {
@@ -71,6 +72,49 @@ export const mealDraftSchema = createMealRequestSchema
 export type MealDraftValues = z.infer<typeof mealDraftSchema>;
 
 export const MEAL_FORM_ID = 'meal-draft-form';
+
+/**
+ * The two directions between an item as this form holds it and as the contract
+ * carries it. They live beside `formItemSchema` because that schema is what they
+ * translate — the four per-portion figures are the form's own, added here.
+ */
+
+/**
+ * An item with its per-portion display figures filled in from the density and
+ * the weight: what the inputs show, and what `sumItems` adds up. A hand-added
+ * item has no density to derive them from, so it starts at zero and the user
+ * types them.
+ */
+export function withPortionFigures(item: MealItem): FormMealItem {
+  return {
+    ...item,
+    ...(item.per100g && item.portionGrams
+      ? perPortion(item.per100g, item.portionGrams)
+      : { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }),
+  };
+}
+
+/**
+ * The items as the contract wants them — the inverse of the above. The four
+ * per-portion figures are display only and are not part of `mealItemSchema`;
+ * only the weight and the density go on the wire. A meal's own totals are a
+ * different thing and are untouched.
+ *
+ * Two callers: logging a meal, and keeping one for reuse.
+ */
+export function toWireItems(items: MealDraftValues['items']): MealItem[] {
+  // Named rather than reached by discarding the four display fields: that took
+  // an eslint-disable for bindings nothing read, and a field the wire schema
+  // gains would go missing at runtime instead of failing to compile here.
+  return (items ?? []).map(
+    ({ name, quantityDescription, portionGrams, per100g }) => ({
+      name,
+      quantityDescription,
+      portionGrams,
+      per100g,
+    }),
+  );
+}
 
 const MACRO_FIELDS = [
   { name: 'proteinGrams', label: 'Protein', short: 'P' },

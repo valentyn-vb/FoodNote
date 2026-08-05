@@ -5,6 +5,8 @@ import { Goal } from '../goal/goal.entity';
 import { MealEntry } from '../meal/meal-entry.entity';
 import { MealItem } from '../meal/meal-item.entity';
 import { UserProfile } from '../profile/user-profile.entity';
+import { SavedMeal } from '../saved-meal/saved-meal.entity';
+import { SavedMealItem } from '../saved-meal/saved-meal-item.entity';
 import { User } from '../user/user.entity';
 import { WeightEntry } from '../weight/weight-entry.entity';
 
@@ -21,6 +23,8 @@ export const entities = [
   WeightEntry,
   MealEntry,
   MealItem,
+  SavedMeal,
+  SavedMealItem,
 ];
 
 export function buildDataSourceOptions(

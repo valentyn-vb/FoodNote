@@ -1,11 +1,13 @@
 import 'reflect-metadata';
 import { ConflictException, INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { CreateSavedMealRequest } from '@foodnote/shared';
 import { AppModule } from '../app.module';
 import { AuthService } from '../auth/auth.service';
 import { GoalsService } from '../goal/goals.service';
 import { MealsService } from '../meals/meals.service';
 import { ProfileService } from '../profile/profile.service';
+import { SavedMealsService } from '../saved-meals/saved-meals.service';
 import { WeightsService } from '../weights/weights.service';
 
 /**
@@ -97,8 +99,110 @@ const SNACKS = [
   { name: 'Handful of mixed nuts', kcal: 190, p: 6, c: 8, f: 16 },
 ];
 
+/**
+ * Saved Meals for the demo. Two carry an item breakdown with Nutrition Density,
+ * which is what makes the portion-weight rescaling demoable — pick the pasta and
+ * change 100 g of spaghetti to 200 g and every figure follows. The third has no
+ * items, like a meal kept from a hand-typed entry, so the totals-only branch is
+ * on screen too.
+ *
+ * The totals are the items' sum at these weights, so a freshly picked meal reads
+ * as consistent before anything is touched (the server never checks — ADR-0008).
+ */
+const SAVED_MEALS: CreateSavedMealRequest[] = [
+  {
+    mealName: 'Pasta bolognese',
+    totalCalories: 768,
+    proteinGrams: 46.8,
+    carbsGrams: 96,
+    fatGrams: 22.5,
+    source: 'ai',
+    items: [
+      {
+        name: 'Spaghetti, dry',
+        quantityDescription: '100 g',
+        portionGrams: 100,
+        per100g: {
+          calories: 358,
+          proteinGrams: 12.5,
+          carbsGrams: 72,
+          fatGrams: 1.5,
+        },
+      },
+      {
+        name: 'Bolognese sauce',
+        quantityDescription: '300 g',
+        portionGrams: 300,
+        per100g: {
+          calories: 70,
+          proteinGrams: 4.5,
+          carbsGrams: 8,
+          fatGrams: 3,
+        },
+      },
+      {
+        name: 'Ground beef',
+        quantityDescription: '80 g',
+        portionGrams: 80,
+        per100g: {
+          calories: 250,
+          proteinGrams: 26,
+          carbsGrams: 0,
+          fatGrams: 15,
+        },
+      },
+    ],
+  },
+  {
+    mealName: 'Cottage cheese with honey',
+    totalCalories: 257,
+    proteinGrams: 22.1,
+    carbsGrams: 23.2,
+    fatGrams: 8.6,
+    source: 'ai',
+    items: [
+      {
+        name: 'Cottage cheese',
+        quantityDescription: '200 g',
+        portionGrams: 200,
+        per100g: {
+          calories: 98,
+          proteinGrams: 11,
+          carbsGrams: 3.4,
+          fatGrams: 4.3,
+        },
+      },
+      {
+        name: 'Honey',
+        quantityDescription: '1 tbsp',
+        portionGrams: 20,
+        per100g: {
+          calories: 304,
+          proteinGrams: 0.3,
+          carbsGrams: 82,
+          fatGrams: 0,
+        },
+      },
+    ],
+  },
+  {
+    mealName: 'Protein shake with milk',
+    totalCalories: 320,
+    proteinGrams: 34,
+    carbsGrams: 28,
+    fatGrams: 7,
+    source: 'manual',
+  },
+];
+
 export type SeedResult =
-  | { created: true; userId: string; weightCount: number; mealCount: number }
+  | {
+      created: true;
+      userId: string;
+      weightCount: number;
+      mealCount: number;
+      savedMealCount: number;
+    }
   | { created: false };
 
 export type SeedOptions = {
@@ -120,6 +224,7 @@ export async function seedDemoAccount(
   const profiles = app.get(ProfileService);
   const weights = app.get(WeightsService);
   const meals = app.get(MealsService);
+  const savedMeals = app.get(SavedMealsService);
   const goals = app.get(GoalsService);
 
   let userId: string;
@@ -216,6 +321,12 @@ export async function seedDemoAccount(
     }
   }
 
+  // No dates and no Tracking Day: a Saved Meal has no occasion, so unlike the
+  // meals above these are not spread across the 21 days.
+  for (const savedMeal of SAVED_MEALS) {
+    await savedMeals.create(userId, savedMeal);
+  }
+
   // Last, on purpose — see the file header. startWeightKg reads today's
   // seeded weight; the trend the goal measures progress against is real.
   await goals.create(userId, {
@@ -223,7 +334,13 @@ export async function seedDemoAccount(
     preferredWeeklyChangeKg: 0.5,
   });
 
-  return { created: true, userId, weightCount, mealCount };
+  return {
+    created: true,
+    userId,
+    weightCount,
+    mealCount,
+    savedMealCount: SAVED_MEALS.length,
+  };
 }
 
 async function main() {
@@ -246,6 +363,7 @@ async function main() {
     console.log(`  password: ${password}`);
     console.log(`  weights:  ${result.weightCount} entries over ${DAYS} days`);
     console.log(`  meals:    ${result.mealCount} entries over ${DAYS} days`);
+    console.log(`  saved:    ${result.savedMealCount} meals kept for reuse`);
   }
 
   await app.close();

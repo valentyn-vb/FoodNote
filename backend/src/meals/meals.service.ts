@@ -11,6 +11,7 @@ import {
 import type { CreateMealRequest, UpdateMealRequest } from '@foodnote/shared';
 import { MealEntry } from '../meal/meal-entry.entity';
 import { MealItem } from '../meal/meal-item.entity';
+import { toItemColumns, toMealColumns } from '../meal/meal-mapping';
 
 @Injectable()
 export class MealsService {
@@ -27,14 +28,10 @@ export class MealsService {
     return this.dataSource.transaction(async (manager) => {
       const meal = manager.create(MealEntry, {
         userId,
-        mealName: data.mealName,
+        ...toMealColumns(data),
+        // The occasion, which is all a logged meal adds to a kept one.
         mealType: data.mealType,
         recordedAt: new Date(data.recordedAt),
-        totalCalories: data.totalCalories,
-        proteinGrams: data.proteinGrams,
-        carbsGrams: data.carbsGrams,
-        fatGrams: data.fatGrams,
-        source: data.source,
       });
       const saved = await manager.save(meal);
       saved.items = await this.replaceItems(
@@ -122,16 +119,7 @@ export class MealsService {
     await manager.delete(MealItem, { mealEntryId });
     if (items.length === 0) return [];
     const rows = items.map((item) =>
-      manager.create(MealItem, {
-        mealEntryId,
-        name: item.name,
-        quantityDescription: item.quantityDescription,
-        portionGrams: item.portionGrams,
-        caloriesPer100g: item.per100g?.calories ?? null,
-        proteinGramsPer100g: item.per100g?.proteinGrams ?? null,
-        carbsGramsPer100g: item.per100g?.carbsGrams ?? null,
-        fatGramsPer100g: item.per100g?.fatGrams ?? null,
-      }),
+      manager.create(MealItem, { mealEntryId, ...toItemColumns(item) }),
     );
     return manager.save(rows);
   }

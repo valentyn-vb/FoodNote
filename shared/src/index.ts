@@ -21,6 +21,7 @@ export * from './goals';
 export * from './plan';
 export * from './weights';
 export * from './meals';
+export * from './saved-meals';
 export * from './dashboard';
 export * from './calc';
 export * from './calc.types';
