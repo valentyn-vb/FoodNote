@@ -51,7 +51,11 @@ export function SiteNav({ authed }: { authed: boolean }) {
           <a
             key={section.href}
             href={section.href}
-            className="text-sm text-foreground/70 transition-colors hover:text-foreground"
+            // Full ink at rest, not 70% of it: these are two of the four things
+            // in the pill, and a dimmed resting state reads as disabled beside
+            // the wordmark and the Dashboard link. Hover moves to the writing
+            // orange, so the cue survives the change.
+            className="text-sm text-foreground transition-colors hover:text-brand-ink"
           >
             {section.label}
           </a>

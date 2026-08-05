@@ -36,8 +36,14 @@ const instrumentSerif = Instrument_Serif({
 export default async function Home() {
   const authed = (await verifySession()) !== null;
 
+  // data-landing is what landing.css's `:root:has()` pins the appearance
+  // through — the deck is light-only, and this is the only signal a page can
+  // give a rule that has to land on the document root.
   return (
-    <main className={cn('overflow-x-clip', instrumentSerif.variable)}>
+    <main
+      data-landing
+      className={cn('overflow-x-clip', instrumentSerif.variable)}
+    >
       <SiteNav authed={authed} />
       <CoverSlide authed={authed} />
       <ScrollReveal>
