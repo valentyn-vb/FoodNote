@@ -13,6 +13,11 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `npm run dev` — shared (watch) + backend + frontend
 - `npm test` / `npm run typecheck` / `npm run format:check` — must pass before a PR
 - `npm run db:up` — start local Postgres 16 (Docker, waits for healthy); `db:down` / `db:logs` to stop / tail
+- `npm run test:e2e -w backend` — the Nest integration suite (`backend/test/`,
+  supertest against the real AppModule). Needs Postgres and **its own database**:
+  pass `DATABASE_URL=…/foodnote_test`, never the dev `foodnote` — these specs
+  write and delete rows. Outside `npm test` for the same reason the smoke net
+  is: it needs Docker
 - `npm run test:e2e` — the smoke net. Needs Docker; creates the `foodnote_e2e`
   database, builds `shared` and `backend`, seeds a fresh account for the run,
   then starts both servers itself. Deliberately outside `npm test`: the default

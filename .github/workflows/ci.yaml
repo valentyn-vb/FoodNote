@@ -39,17 +39,53 @@ jobs:
       - name: Install & test
         run: npm ci && npm run test
 
+  backend-integration:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: foodnote
+          POSTGRES_PASSWORD: foodnote
+          POSTGRES_DB: foodnote_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U foodnote -d foodnote_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # NODE_ENV is deliberately unset: app.module.ts runs migrations on boot
+    # unless it is production, and that is what creates the schema here.
+    env:
+      DATABASE_URL: postgresql://foodnote:foodnote@localhost:5432/foodnote_test
+      JWT_ACCESS_SECRET: ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: 'npm'
+
+      # No OPENAI_API_KEY: createTestApp always overrides the MealParser port,
+      # so the provider factory that reads the key never runs. Runs on every
+      # push, unlike the smoke net below — it takes seconds, and it is the suite
+      # most likely to catch a backend regression early.
+      - name: Install & run the Nest integration suite
+        run: npm ci && npm run build -w shared && npm run test:e2e -w backend
+
   e2e:
     # Pull requests only: the triggers above also fire on every push to every
     # branch, and a full-stack run per intermediate commit is slow and a good way
     # to teach everyone to ignore a red tick.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    # Non-blocking while the dashboard is still moving underneath the suite.
-    # Removed by the PR that declares the dashboard frozen — from then on a red
-    # run means the migration broke something a user can see, which is the whole
-    # reason the net exists.
-    continue-on-error: true
 
     services:
       db:
