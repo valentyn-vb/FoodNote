@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { DEFAULT_APPEARANCE } from '@foodnote/shared';
 import { AppShell } from '@/components/app-shell';
 import { APPEARANCE_COOKIE, appearanceOrDefault } from '@/lib/appearance';
+import { SIDEBAR_COOKIE_NAME } from '@/lib/sidebar-cookie';
 import { todayUtc } from '@/lib/dashboard-transforms';
 import { getDashboard, getProfile } from '@/lib/server/reads';
 import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
@@ -14,7 +15,7 @@ import { getCurrentGoal, getCurrentUser } from '@/lib/server/session';
  * 401, so the check cannot be forgotten by a page that forgets to ask.
  *
  * Three reads happen here rather than at page level, and each is an exception
- * worth stating rather than hiding:
+ * worth stating rather than hiding (AGENTS.md, Reading data):
  *
  * - `getCurrentUser()`, because identity does not vary by route. The rule exists
  *   because layouts do not re-render on navigation, so what they must not hold is
@@ -64,10 +65,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ? appearanceOrDefault(cached)
     : (profile?.appearance ?? DEFAULT_APPEARANCE);
 
+  // The sidebar's own cookie, which `ui/sidebar.tsx` has always written and
+  // nobody read: seeded here so the first paint carries the state the provider
+  // holds. Absent — a device that has never chosen — is the rail, because the
+  // viewport is not knowable here and an expanded panel below 1024 leaves too
+  // little for the header row. One press opens it, and that is remembered.
+  const sidebarOpen = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value === 'true';
+
   return (
     <AppShell
       user={user}
       appearance={appearance}
+      sidebarOpen={sidebarOpen}
       goal={dashboard?.goal ?? null}
       maintenanceKcal={dashboard?.maintenanceCalories ?? null}
       profile={profile}

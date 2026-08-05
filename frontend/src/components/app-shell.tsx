@@ -13,7 +13,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ShellFrame } from '@/components/shell-frame';
 import { AppearanceProvider } from '@/components/appearance-provider';
 import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
-import { DESKTOP_QUERY } from '@/hooks/use-media-query';
 
 /**
  * The shared shell for the app routes, at every width: the header names the
@@ -21,9 +20,13 @@ import { DESKTOP_QUERY } from '@/hooks/use-media-query';
  * or a panel above it.
  *
  * Split out of `(app)/layout.tsx` because the layout had to become a Server
- * Component to read the signed-in user, while this needs the client: it reads the
- * viewport to decide the sidebar's starting state, and `SidebarProvider` holds
- * that state. The user arrives as a prop rather than from a context.
+ * Component to read the signed-in user, while `SidebarProvider` and the overlay
+ * need the client. Everything it renders from arrives as a prop rather than from
+ * a context — including the sidebar's starting state, which used to be decided
+ * here from `window.matchMedia` during render. That question has no answer on the
+ * server, so SSR sent an expanded panel and hydration set the state to collapsed
+ * without repainting: below 1024 the shell started as a panel the code meant to
+ * be a rail, and the first press of the toggle was swallowed reconciling the two.
  *
  * No providers left. `MealsProvider` was here so the sidebar's "Log a meal"
  * trigger shared state with the dashboard's numbers; both write through actions
@@ -41,11 +44,14 @@ export function AppShell({
   maintenanceKcal,
   profile,
   appearance,
+  sidebarOpen,
   children,
 }: {
   user: AuthUser;
   /** Read from the cookie on the server, so the provider's first value matches the paint. */
   appearance: Appearance;
+  /** The same, for the sidebar: the user's last choice, or the rail on a device that has never chosen. */
+  sidebarOpen: boolean;
   /** Null until onboarding is finished — the shell renders before that check runs. */
   goal: DashboardResponse['goal'] | null;
   maintenanceKcal: number | null;
@@ -58,14 +64,7 @@ export function AppShell({
     // the section on /profile offer one setting, and one owner is what keeps them
     // agreeing.
     <AppearanceProvider initial={appearance}>
-      {/* Below 1024 the panel would leave too little for the header row, so the
-          rail is the starting state there. */}
-      <SidebarProvider
-        defaultOpen={
-          typeof window === 'undefined' ||
-          window.matchMedia(DESKTOP_QUERY).matches
-        }
-      >
+      <SidebarProvider defaultOpen={sidebarOpen}>
         <AppSidebar user={user} />
         <SidebarInset>
           <AppHeader />
