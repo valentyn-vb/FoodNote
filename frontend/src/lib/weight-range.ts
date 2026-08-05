@@ -13,12 +13,20 @@ import { addDays, todayUtc } from './dashboard-transforms';
  * name; deriving the pressed preset from the range instead means a custom pick
  * deselects the row for free, rather than the two having to be kept agreeing.
  */
-export const WEIGHT_RANGE_PRESETS = ['7D', '30D', '3M', '6M', '1Y'] as const;
+export const WEIGHT_RANGE_PRESETS = [
+  '7D',
+  '30D',
+  '3M',
+  '6M',
+  '1Y',
+  'All',
+] as const;
 
 export type WeightRangePreset = (typeof WEIGHT_RANGE_PRESETS)[number];
 
 /**
- * Preset lengths in whole days, not calendar months.
+ * Preset lengths in whole days, not calendar months. "All" is absent because it
+ * has no length: see presetRange.
  *
  * A rolling window, matching weightChangeOverDays: "3M" is 90 days ending
  * today, not "the 1st of three months ago". Calendar months would make the
@@ -27,7 +35,7 @@ export type WeightRangePreset = (typeof WEIGHT_RANGE_PRESETS)[number];
  * describe spans of different lengths, and the change figures under them would
  * not be comparable.
  */
-export const RANGE_DAYS: Record<WeightRangePreset, number> = {
+export const RANGE_DAYS: Record<Exclude<WeightRangePreset, 'All'>, number> = {
   '7D': 7,
   '30D': 30,
   '3M': 90,
@@ -37,7 +45,7 @@ export const RANGE_DAYS: Record<WeightRangePreset, number> = {
 
 /**
  * Long labels for desktop, where there is room to say what a preset means. The
- * short forms stay on narrow screens, where five full labels do not fit a row.
+ * short forms stay on narrow screens, where six full labels do not fit a row.
  */
 export const RANGE_LABELS: Record<WeightRangePreset, string> = {
   '7D': '7 days',
@@ -45,7 +53,19 @@ export const RANGE_LABELS: Record<WeightRangePreset, string> = {
   '3M': '3 months',
   '6M': '6 months',
   '1Y': '1 year',
+  All: 'All time',
 };
+
+/**
+ * Where the "All" window starts.
+ *
+ * A fixed floor rather than the first weigh-in, which the page cannot know
+ * without first fetching the whole journal — the request this window exists to
+ * make. It only has to predate any entry the journal can hold, and FoodNote did
+ * not exist in 2020. The chart crops to the weigh-ins it actually finds, so the
+ * empty years in front of them are never drawn.
+ */
+const JOURNAL_FLOOR = '2020-01-01';
 
 /** Inclusive UTC day bounds for `GET /weights?from&to`. */
 export type WeightRange = { from: string; to: string };
@@ -59,10 +79,13 @@ export function rangeDays({ from, to }: WeightRange): number {
   );
 }
 
-/** The window a preset names: its length back from today. */
+/** The window a preset names: its length back from today, or the whole journal. */
 export function presetRange(preset: WeightRangePreset, now: Date): WeightRange {
   const to = todayUtc(now);
-  return { from: addDays(to, -RANGE_DAYS[preset]), to };
+  return {
+    from: preset === 'All' ? JOURNAL_FLOOR : addDays(to, -RANGE_DAYS[preset]),
+    to,
+  };
 }
 
 /**
@@ -70,14 +93,19 @@ export function presetRange(preset: WeightRangePreset, now: Date): WeightRange {
  *
  * Derived rather than stored, so the preset row can never claim "30 days" over
  * a window the reader narrowed by hand — the contradiction the call was about.
+ * Compared as whole ranges rather than by length, so "All", which has no
+ * length, needs no case of its own.
  */
 export function matchPreset(
   range: WeightRange,
   now: Date,
 ): WeightRangePreset | null {
-  if (range.to !== todayUtc(now)) return null;
-  const days = rangeDays(range);
-  return WEIGHT_RANGE_PRESETS.find((p) => RANGE_DAYS[p] === days) ?? null;
+  return (
+    WEIGHT_RANGE_PRESETS.find((preset) => {
+      const candidate = presetRange(preset, now);
+      return candidate.from === range.from && candidate.to === range.to;
+    }) ?? null
+  );
 }
 
 /**
@@ -107,6 +135,15 @@ export function shiftRange(
  */
 export function canStepForward(range: WeightRange, now: Date): boolean {
   return range.to < todayUtc(now);
+}
+
+/**
+ * Whether the window can move back. False at the journal floor, which "All"
+ * starts from: a window already holding every entry has no earlier one, and
+ * stepping would open a span of years the journal cannot reach into.
+ */
+export function canStepBack(range: WeightRange): boolean {
+  return range.from > JOURNAL_FLOOR;
 }
 
 // Built once at module scope, as in dashboard-transforms: Intl.DateTimeFormat
@@ -159,4 +196,15 @@ export function rangeLabel({ from, to }: WeightRange): string {
     from.slice(0, 4) === to.slice(0, 4) ? utcMonthDay : utcMonthDayYear;
   const day = (iso: string) => format.format(new Date(`${iso}T00:00:00Z`));
   return `${day(from)} – ${day(to)}`;
+}
+
+/**
+ * What the window is called on screen.
+ *
+ * "All time" for the whole-journal window, because its bounds are a floor date
+ * and today: spelling them out would read "Jan 1, 2020 – Aug 5, 2026" and
+ * promise years of history that nobody logged.
+ */
+export function windowLabel(range: WeightRange, now: Date): string {
+  return matchPreset(range, now) === 'All' ? 'All time' : rangeLabel(range);
 }

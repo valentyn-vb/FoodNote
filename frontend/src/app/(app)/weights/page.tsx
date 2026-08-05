@@ -20,7 +20,7 @@ import {
   weightChangeOverDays,
 } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
-import { presetRange, rangeLabel, type WeightRange } from '@/lib/weight-range';
+import { presetRange, windowLabel, type WeightRange } from '@/lib/weight-range';
 import { useWeightsInRange } from './use-weights-in-range';
 
 /** The change table's rows, shortest span first. */
@@ -148,7 +148,7 @@ export default function WeightsPage() {
               </StatFigure>
               <DirectionChip changeKg={rangeChange} />
               <p className="text-sm text-muted-foreground tabular-nums">
-                {rangeLabel(range)}
+                {windowLabel(range, now)}
               </p>
             </StatCard>
 

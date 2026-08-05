@@ -4,12 +4,14 @@ import {
   calendarDate,
   calendarDay,
   WEIGHT_RANGE_PRESETS,
+  canStepBack,
   canStepForward,
   matchPreset,
   presetRange,
   rangeDays,
   rangeLabel,
   shiftRange,
+  windowLabel,
 } from './weight-range';
 
 // Fixed instant, mid-day UTC, so nothing here depends on when the suite runs.
@@ -45,11 +47,20 @@ describe('presetRange', () => {
     expect(presetRange('1Y', NOW).from < '2026-06-05').toBe(true);
   });
 
-  it('given any preset, when its length is read, then it is a whole number of days', () => {
-    for (const preset of WEIGHT_RANGE_PRESETS) {
-      expect(Number.isInteger(RANGE_DAYS[preset])).toBe(true);
-      expect(RANGE_DAYS[preset]).toBeGreaterThan(0);
+  it('given any fixed-length preset, when its length is read, then it is a whole number of days', () => {
+    for (const days of Object.values(RANGE_DAYS)) {
+      expect(Number.isInteger(days)).toBe(true);
+      expect(days).toBeGreaterThan(0);
     }
+  });
+
+  it('given the All preset, when its window is computed, then it starts before any entry the journal can hold', () => {
+    const { from, to } = presetRange('All', NOW);
+
+    // FoodNote did not exist in 2020, so nothing can be logged before this and
+    // "All" cannot silently crop the journal's own start.
+    expect(from < '2021-01-01').toBe(true);
+    expect(to).toBe('2026-08-04');
   });
 });
 
@@ -131,6 +142,19 @@ describe('canStepForward', () => {
   });
 });
 
+describe('canStepBack', () => {
+  it('given any window inside the journal, when asked whether it can step back, then it can', () => {
+    expect(canStepBack(presetRange('30D', NOW))).toBe(true);
+    expect(canStepBack({ from: '2026-06-05', to: '2026-07-05' })).toBe(true);
+  });
+
+  it('given the All window, when asked whether it can step back, then it cannot', () => {
+    // It already holds every entry, so an earlier window is empty years by
+    // construction.
+    expect(canStepBack(presetRange('All', NOW))).toBe(false);
+  });
+});
+
 describe('matchPreset', () => {
   it('given a preset’s own window, when matched, then it names that preset', () => {
     for (const preset of WEIGHT_RANGE_PRESETS) {
@@ -166,5 +190,20 @@ describe('rangeLabel', () => {
     expect(rangeLabel(presetRange('1Y', NOW))).toBe(
       'Aug 4, 2025 – Aug 4, 2026',
     );
+  });
+});
+
+describe('windowLabel', () => {
+  it('given an ordinary window, when labelled, then it names both ends', () => {
+    expect(windowLabel(presetRange('30D', NOW), NOW)).toBe('Jul 5 – Aug 4');
+    expect(windowLabel({ from: '2026-07-20', to: '2026-08-03' }, NOW)).toBe(
+      'Jul 20 – Aug 3',
+    );
+  });
+
+  it('given the All window, when labelled, then it says so instead of printing the floor', () => {
+    // Its bounds are a floor date and today, so "Jan 1, 2020 – Aug 4, 2026"
+    // would promise years of history nobody logged.
+    expect(windowLabel(presetRange('All', NOW), NOW)).toBe('All time');
   });
 });

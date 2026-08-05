@@ -127,12 +127,59 @@ describe('WeightRangeNav', () => {
       '3 months',
       '6 months',
       '1 year',
+      'All time',
     ]) {
       expect(screen.getByRole('button', { name })).toHaveAttribute(
         'aria-pressed',
         'false',
       );
     }
+  });
+
+  it('given the All window, when rendered, then All is pressed and there is nothing earlier to step to', () => {
+    render(
+      <WeightRangeNav
+        range={presetRange('All', NOW)}
+        now={NOW}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'All time' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    // Both arrows are dead here by construction: the window already holds every
+    // entry, and it ends today.
+    expect(screen.getByRole('button', { name: /earlier/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /later/i })).toBeDisabled();
+  });
+
+  it('given a shorter window, when All is chosen, then the window becomes the whole journal', async () => {
+    const onChange = vi.fn();
+    render(
+      <WeightRangeNav range={CURRENT_30D} now={NOW} onChange={onChange} />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'All time' }));
+
+    expect(onChange).toHaveBeenCalledWith(presetRange('All', NOW));
+  });
+
+  it('given the All window, when rendered, then the label says so rather than printing the floor date', () => {
+    render(
+      <WeightRangeNav
+        range={presetRange('All', NOW)}
+        now={NOW}
+        onChange={vi.fn()}
+      />,
+    );
+
+    // Queried through the trigger, not by text: the chip in the preset row
+    // carries the same words at desktop width.
+    expect(
+      screen.getByRole('button', { name: /pick a date range/i }),
+    ).toHaveTextContent('All time');
   });
 
   it('given the calendar, when two days are picked, then the window is those two days', async () => {

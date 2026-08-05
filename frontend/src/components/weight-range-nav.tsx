@@ -17,11 +17,12 @@ import {
   WEIGHT_RANGE_PRESETS,
   calendarDate,
   calendarDay,
+  canStepBack,
   canStepForward,
   matchPreset,
   presetRange,
-  rangeLabel,
   shiftRange,
+  windowLabel,
   type WeightRange,
   type WeightRangePreset,
 } from '@/lib/weight-range';
@@ -71,6 +72,7 @@ export function WeightRangeNav({
         nextLabel="Later period"
         onPrevious={() => onChange(shiftRange(range, -1, now))}
         onNext={() => onChange(shiftRange(range, 1, now))}
+        previousDisabled={!canStepBack(range)}
         nextDisabled={!canStepForward(range, now)}
       >
         <Popover
@@ -89,7 +91,7 @@ export function WeightRangeNav({
               />
             }
           >
-            {rangeLabel(range)}
+            {windowLabel(range, now)}
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="center">
             <Calendar
@@ -125,7 +127,7 @@ export function WeightRangeNav({
           if (next) onChange(presetRange(next, now));
         }}
         // The group has no visible label to bind to, so it names itself or a
-        // screen reader announces five bare options.
+        // screen reader announces six bare options.
         aria-label="Range"
         spacing={1}
         className="gap-1"
@@ -137,7 +139,7 @@ export function WeightRangeNav({
             aria-label={RANGE_LABELS[option]}
             className="border border-border bg-card px-3 text-muted-foreground tabular-nums hover:border-primary/60 data-pressed:border-primary data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-foreground"
           >
-            {/* Two text nodes, one button: five long labels do not fit a
+            {/* Two text nodes, one button: six long labels do not fit a
                 phone row, and the short forms read as jargon where there is
                 room to spell them out. Both are hidden from the accessibility
                 tree and the button carries the full form as its name, so a
