@@ -70,9 +70,10 @@ export function WeightHistoryRow({
           className="touch-target text-text-muted"
           aria-label="Delete entry"
           // Stated as the constraint, not as a claim about the journal:
-          // `canDelete` is derived from the provider's 60-day window, so an
-          // older entry outside it would make "your only entry" false. The
-          // rule belongs in weights.service.remove() — this only fails closed.
+          // `canDelete` counts only the entries the drawer was handed — the
+          // page's WEIGHT_WINDOW_DAYS read — so an older entry outside it makes
+          // "your only entry" false. The rule belongs in
+          // weights.service.remove(); this only fails closed.
           title={
             canDelete ? undefined : 'Your dashboard needs at least one weight'
           }
