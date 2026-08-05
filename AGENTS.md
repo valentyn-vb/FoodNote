@@ -11,7 +11,7 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 ## Commands
 
 - `npm run dev` — shared (watch) + backend + frontend
-- `npm test` / `npm run format:check` — must pass before a PR
+- `npm test` / `npm run typecheck` / `npm run format:check` — must pass before a PR
 - `npm run db:up` — start local Postgres 16 (Docker, waits for healthy); `db:down` / `db:logs` to stop / tail
 - `npm run test:e2e` — the smoke net. Needs Docker; creates the `foodnote_e2e`
   database, builds `shared` and `backend`, seeds a fresh account for the run,
