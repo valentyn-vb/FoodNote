@@ -143,6 +143,13 @@ export function WeightTrendChart({
         allowDataOverflow={croppedTo !== null}
         ticks={monthTicks(croppedTo?.weighIns ?? data)}
         tickFormatter={formatTrendTick}
+        // The domain starts at the first weigh-in and ends at the last, so
+        // without this the outermost marks are drawn *on* the plot's edges: the
+        // first dot half over the y-axis numbers, and the goal ring with its
+        // outer half past the right edge. Pixels rather than a share of the
+        // span, so the gap is the same at 7 days and at a year, and the domain
+        // keeps saying only what was measured.
+        padding={{ left: 8, right: 8 }}
       />
       {/* Markers make a lone weigh-in visible: one measurement cannot stroke a
           line, so without a dot a new account saw nothing for its own weight.

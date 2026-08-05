@@ -1,65 +1,131 @@
 'use client';
 
+import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { StepperNav } from '@/components/stepper-nav';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { todayUtc } from '@/lib/dashboard-transforms';
 import {
   RANGE_LABELS,
   WEIGHT_RANGE_PRESETS,
+  calendarDate,
+  calendarDay,
   canStepForward,
+  matchPreset,
+  presetRange,
   rangeLabel,
+  shiftRange,
+  type WeightRange,
   type WeightRangePreset,
 } from '@/lib/weight-range';
 
-export type WeightRangeSelection = {
-  preset: WeightRangePreset;
-  offset: number;
-};
-
 /**
- * Which span of the weight journal is on screen: a preset length, and how many
- * of those periods back from today.
+ * Which span of the weight journal is on screen: a preset length, a step
+ * through the journal in units of that length, or two dates picked by hand.
  *
  * Controlled, and `now` is a prop rather than read from the clock — the page
- * owns the selection so the chart, the change figures and the entry list all
- * read one range, and the module's own convention is that time is passed in
+ * owns the range so the chart, the change figures and the entry list all read
+ * one window, and the module's own convention is that time is passed in
  * (dashboard-transforms' header) so this stays testable without faking a clock.
+ *
+ * Which preset reads as pressed is derived from the range, never stored, so a
+ * hand-picked window presses none of them: the row cannot say "30 days" over a
+ * fortnight the reader chose.
  */
 export function WeightRangeNav({
-  preset,
-  offset,
+  range,
   now,
   onChange,
-}: WeightRangeSelection & {
+}: {
+  range: WeightRange;
   now: Date;
-  onChange: (next: WeightRangeSelection) => void;
+  onChange: (next: WeightRange) => void;
 }) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  // The calendar's own draft, cleared each time it opens so picking a window is
+  // always the same two clicks. Seeding it with the current range instead would
+  // make the first click *extend* that range and commit on the spot, which is a
+  // different gesture depending on which day you happen to hit.
+  const [draft, setDraft] = useState<DateRange | undefined>(undefined);
+
+  const active = matchPreset(range, now);
+
+  function handleSelect(next: DateRange | undefined) {
+    setDraft(next);
+    if (!next?.from || !next.to) return;
+    onChange({ from: calendarDay(next.from), to: calendarDay(next.to) });
+    setCalendarOpen(false);
+  }
+
   return (
     <div className="flex flex-col items-center gap-2">
       <StepperNav
         previousLabel="Earlier period"
         nextLabel="Later period"
-        onPrevious={() => onChange({ preset, offset: offset - 1 })}
-        onNext={() => onChange({ preset, offset: offset + 1 })}
-        nextDisabled={!canStepForward(offset)}
+        onPrevious={() => onChange(shiftRange(range, -1, now))}
+        onNext={() => onChange(shiftRange(range, 1, now))}
+        nextDisabled={!canStepForward(range, now)}
       >
-        {/* The same height and type as the day nav's own middle, which is a
-            button because it opens a calendar; this one only names the span. */}
-        <span className="flex h-8 min-w-40 items-center justify-center text-sm tabular-nums">
-          {rangeLabel(preset, offset, now)}
-        </span>
+        <Popover
+          open={calendarOpen}
+          onOpenChange={(open) => {
+            setCalendarOpen(open);
+            if (open) setDraft(undefined);
+          }}
+        >
+          <PopoverTrigger
+            aria-label="Pick a date range"
+            render={
+              <Button
+                variant="ghost"
+                className="h-8 min-w-40 rounded-sm text-sm tabular-nums"
+              />
+            }
+          >
+            {rangeLabel(range)}
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <Calendar
+              // The whole calendar sizes off `--cell-size`, 32 upstream. At 44
+              // the popover is 332 of a 360px phone, which fits — and a date
+              // grid is the one place where a missed tap silently opens the
+              // wrong window.
+              className="[--cell-size:--spacing(11)]"
+              mode="range"
+              // A window of one day is not a window: every change figure under
+              // it would compare a reading against itself. `min` makes the
+              // second click land on a different day or clear the draft.
+              min={1}
+              selected={draft}
+              onSelect={handleSelect}
+              defaultMonth={calendarDate(range.to)}
+              disabled={{ after: calendarDate(todayUtc(now)) }}
+            />
+          </PopoverContent>
+        </Popover>
       </StepperNav>
 
       <ToggleGroup
-        value={[preset]}
-        // Changing the length always returns to the window ending today:
-        // "three periods back" is 90 days at 30D and three years at 1Y, so
-        // carrying the offset across a change lands somewhere nobody asked for.
+        // Empty when the reader picked their own dates: no preset describes
+        // that window, so none of them may look chosen.
+        value={active ? [active] : []}
         onValueChange={(values) => {
           const next = values[0] as WeightRangePreset | undefined;
-          if (next) onChange({ preset: next, offset: 0 });
+          // Changing the length always returns to the window ending today —
+          // "three periods back" is 90 days at 30D and three years at 1Y, so
+          // carrying a past window across a change lands somewhere nobody
+          // asked for.
+          if (next) onChange(presetRange(next, now));
         }}
         // The group has no visible label to bind to, so it names itself or a
-        // screen reader announces four bare options.
+        // screen reader announces five bare options.
         aria-label="Range"
         spacing={1}
         className="gap-1"

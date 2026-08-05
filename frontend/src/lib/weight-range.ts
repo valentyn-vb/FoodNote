@@ -7,6 +7,11 @@ import { addDays, todayUtc } from './dashboard-transforms';
  * 60 days it never lets the reader move (WEIGHT_WINDOW_DAYS), while this page's
  * whole point is stepping the window — so the two have no shared state, only
  * the same UTC date arithmetic, which is imported rather than restated.
+ *
+ * The state is the range itself, not a preset and an offset. A reader can pick
+ * their own two dates from the calendar, which no (preset, offset) pair can
+ * name; deriving the pressed preset from the range instead means a custom pick
+ * deselects the row for free, rather than the two having to be kept agreeing.
  */
 export const WEIGHT_RANGE_PRESETS = ['7D', '30D', '3M', '6M', '1Y'] as const;
 
@@ -42,32 +47,66 @@ export const RANGE_LABELS: Record<WeightRangePreset, string> = {
   '1Y': '1 year',
 };
 
+/** Inclusive UTC day bounds for `GET /weights?from&to`. */
 export type WeightRange = { from: string; to: string };
 
-/**
- * Inclusive UTC day bounds for `GET /weights?from&to`.
- *
- * `offset` counts whole periods back from the current window: 0 is the window
- * ending today, -1 the period before it, and so on. Adjacent windows share a
- * boundary day rather than leaving a one-day gap between them, so stepping back
- * through the journal can never skip a weigh-in.
- */
-export function weightRangeBounds(
-  preset: WeightRangePreset,
-  offset: number,
-  now: Date,
-): WeightRange {
-  const days = RANGE_DAYS[preset];
-  const to = addDays(todayUtc(now), offset * days);
-  return { from: addDays(to, -days), to };
+const DAY_MS = 86_400_000;
+
+/** Whole days from `from` to `to` — the window's own length, and its step. */
+export function rangeDays({ from, to }: WeightRange): number {
+  return Math.round(
+    (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS,
+  );
+}
+
+/** The window a preset names: its length back from today. */
+export function presetRange(preset: WeightRangePreset, now: Date): WeightRange {
+  const to = todayUtc(now);
+  return { from: addDays(to, -RANGE_DAYS[preset]), to };
 }
 
 /**
- * Whether the window can move forward. False at offset 0: forward from the
- * current window is the future, where the journal has nothing to show.
+ * Which preset this range *is*, or null when the reader picked their own dates.
+ *
+ * Derived rather than stored, so the preset row can never claim "30 days" over
+ * a window the reader narrowed by hand — the contradiction the call was about.
  */
-export function canStepForward(offset: number): boolean {
-  return offset < 0;
+export function matchPreset(
+  range: WeightRange,
+  now: Date,
+): WeightRangePreset | null {
+  if (range.to !== todayUtc(now)) return null;
+  const days = rangeDays(range);
+  return WEIGHT_RANGE_PRESETS.find((p) => RANGE_DAYS[p] === days) ?? null;
+}
+
+/**
+ * The window moved one of its own lengths back, or forward.
+ *
+ * Adjacent windows share a boundary day rather than leaving a one-day gap
+ * between them, so stepping back through the journal can never skip a weigh-in.
+ * Forward is clamped to today: a 90-day window whose end is two days back has
+ * two days of room, not ninety, and the journal has nothing past today.
+ */
+export function shiftRange(
+  range: WeightRange,
+  direction: -1 | 1,
+  now: Date,
+): WeightRange {
+  const span = rangeDays(range);
+  const step =
+    direction < 0
+      ? -span
+      : Math.min(span, rangeDays({ from: range.to, to: todayUtc(now) }));
+  return { from: addDays(range.from, step), to: addDays(range.to, step) };
+}
+
+/**
+ * Whether the window can move forward. False once it ends today: forward from
+ * there is the future, where the journal has nothing to show.
+ */
+export function canStepForward(range: WeightRange, now: Date): boolean {
+  return range.to < todayUtc(now);
 }
 
 // Built once at module scope, as in dashboard-transforms: Intl.DateTimeFormat
@@ -86,18 +125,36 @@ const utcMonthDayYear = new Intl.DateTimeFormat('en-US', {
 });
 
 /**
+ * A calendar cell's date as the day string the API takes.
+ *
+ * react-day-picker works in local midnight, so `toISOString().slice(0, 10)` —
+ * what the rest of this app does to a `Date` — names the day *before* for any
+ * viewer east of UTC: tapping Aug 1 in Berlin fetched Jul 31. The day the
+ * reader tapped is the one printed on the cell, which is its local parts.
+ */
+export function calendarDay(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * The inverse, for the calendar's `disabled` bound and its opening month: a
+ * UTC-midnight `Date` would be a different *day* to the cells it is compared
+ * against, and west of UTC that disabled today.
+ */
+export function calendarDate(day: string): Date {
+  return new Date(`${day}T00:00:00`);
+}
+
+/**
  * The window in words, for under the hero figure — "Jul 5 – Aug 4".
  *
  * The year appears only when the two ends fall in different ones, which is
  * exactly the case that needs it: the 1Y window's ends share a month and a day,
  * so without the year it reads "Aug 4 – Aug 4".
  */
-export function rangeLabel(
-  preset: WeightRangePreset,
-  offset: number,
-  now: Date,
-): string {
-  const { from, to } = weightRangeBounds(preset, offset, now);
+export function rangeLabel({ from, to }: WeightRange): string {
   const format =
     from.slice(0, 4) === to.slice(0, 4) ? utcMonthDay : utcMonthDayYear;
   const day = (iso: string) => format.format(new Date(`${iso}T00:00:00Z`));

@@ -10,10 +10,7 @@ import { StatCard, StatFigure } from '@/components/stat-card';
 import { StatChip } from '@/components/stat-chip';
 import { WeightHistoryRow } from '@/components/weight-history-row';
 import { WeightTrendChart } from '@/components/weight-trend-chart';
-import {
-  WeightRangeNav,
-  type WeightRangeSelection,
-} from '@/components/weight-range-nav';
+import { WeightRangeNav } from '@/components/weight-range-nav';
 import {
   addDays,
   buildWeightTrend,
@@ -23,7 +20,7 @@ import {
   weightChangeOverDays,
 } from '@/lib/dashboard-transforms';
 import { useMeals } from '@/lib/meals-context';
-import { rangeLabel, weightRangeBounds } from '@/lib/weight-range';
+import { presetRange, rangeLabel, type WeightRange } from '@/lib/weight-range';
 import { useWeightsInRange } from './use-weights-in-range';
 
 /** The change table's rows, shortest span first. */
@@ -56,15 +53,13 @@ const LOOKBACK_DAYS = Math.max(...CHANGE_PERIODS);
  * searchParams and a server fetch is a real option once those providers move.
  */
 export default function WeightsPage() {
-  const [selection, setSelection] = useState<WeightRangeSelection>({
-    preset: '7D',
-    offset: 0,
-  });
   // One `now` for the whole render, so the bounds, the labels and the change
   // anchors below cannot land on different instants.
   const [now] = useState(() => new Date());
+  const [range, setRange] = useState<WeightRange>(() =>
+    presetRange('7D', new Date()),
+  );
 
-  const range = weightRangeBounds(selection.preset, selection.offset, now);
   // Fetched wider than shown — see LOOKBACK_DAYS. `history` is every reading the
   // figures are derived from; `visible` is the window the reader asked for.
   const {
@@ -123,12 +118,7 @@ export default function WeightsPage() {
   return (
     <div className="flex w-full flex-col gap-5">
       <div className="flex justify-center">
-        <WeightRangeNav
-          preset={selection.preset}
-          offset={selection.offset}
-          now={now}
-          onChange={setSelection}
-        />
+        <WeightRangeNav range={range} now={now} onChange={setRange} />
       </div>
 
       {status === 'error' ? (
@@ -158,7 +148,7 @@ export default function WeightsPage() {
               </StatFigure>
               <DirectionChip changeKg={rangeChange} />
               <p className="text-sm text-muted-foreground tabular-nums">
-                {rangeLabel(selection.preset, selection.offset, now)}
+                {rangeLabel(range)}
               </p>
             </StatCard>
 
