@@ -8,13 +8,11 @@ import {
   APPEARANCE_COOKIE,
   appearanceOrDefault,
 } from '@/lib/appearance';
-import { AuthProvider } from '@/components/auth-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
-
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-display' });
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'FoodNote',
@@ -54,9 +52,10 @@ export default async function RootLayout({
       {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla) inject
           attributes into <body> before hydration — harmless, but noisy in dev. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <AuthProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </AuthProvider>
+        {/* Nothing session-shaped wraps the app any more: `(auth)` and the
+            marketing landing carry none of it, and session knowledge appears
+            only where it is used. */}
+        <TooltipProvider>{children}</TooltipProvider>
         <Toaster />
       </body>
     </html>

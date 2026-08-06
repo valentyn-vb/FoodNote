@@ -14,7 +14,11 @@ import { UtensilsIcon } from 'lucide-react';
 const TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/meals': 'Meals',
-  '/weights': 'Weights',
+  // "Weight History", not "Weights": the route is the journal, and the header
+  // sits under a "Log weight" button that writes one. The path stays `/weights`
+  // — it is the resource, and the dashboard's link and every bookmark point at
+  // it.
+  '/weights': 'Weight History',
   '/profile': 'Profile',
 };
 

@@ -15,6 +15,16 @@ export const ACCESS_COOKIE = 'foodnote_access';
 export const REFRESH_COOKIE = 'foodnote_refresh';
 
 /**
+ * Nest's own refresh cookie name — `REFRESH_COOKIE` in
+ * `backend/src/auth/auth.controller.ts`. Two places need it and neither is that
+ * file: `proxy.ts` sends it when renewing, because `POST /api/auth/refresh`
+ * reads the token from `req.cookies` rather than from a body, and the login
+ * action lifts it back off Nest's `Set-Cookie`. Spelled wrong in either place
+ * the app still compiles and simply never keeps a session.
+ */
+export const NEST_REFRESH_COOKIE = 'refreshToken';
+
+/**
  * Mirrors Nest's own refresh TTL (7d). The access cookie deliberately does not
  * carry a `maxAge`: it is a session cookie whose real expiry is the `exp` claim
  * inside the JWT, and pinning a second, independent lifetime on the outside is

@@ -2,7 +2,7 @@
 
 import { DailyCaloriesChart } from '@/components/charts';
 import type { DailyCaloriePoint } from '@/lib/dashboard-transforms';
-import { ChartCard } from './chart-card';
+import { ChartCard } from '@/components/chart-card';
 import { formatFigure } from './helpers';
 
 /**

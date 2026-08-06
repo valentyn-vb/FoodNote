@@ -1,89 +1,70 @@
-'use client';
+import { Suspense, type ReactNode } from 'react';
+import { cookies } from 'next/headers';
+import { DEFAULT_APPEARANCE } from '@foodnote/shared';
+import { AppShell } from '@/components/app-shell';
+import { APPEARANCE_COOKIE, appearanceOrDefault } from '@/lib/appearance';
+import { getProfile } from '@/lib/server/reads';
+import { getCurrentUser } from '@/lib/server/session';
+import { SIDEBAR_COOKIE_NAME } from '@/lib/sidebar-cookie';
+import { GoalReachedGate } from './goal-reached-gate';
 
-import { useEffect, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { AppHeader } from '@/components/app-header';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { ShellFrame } from '@/components/shell-frame';
-import { Spinner } from '@/components/ui/spinner';
-import { useAuth } from '@/components/auth-provider';
-import { OnboardingGuard } from '@/components/onboarding-guard';
-import { GoalReachedOverlay } from '@/components/goal-reached-overlay';
-import { DESKTOP_QUERY } from '@/hooks/use-media-query';
-import { AppearanceProvider } from '@/components/appearance-provider';
-import { MealsProvider } from '@/lib/meals-context';
-import { WeightProvider } from '@/lib/weight-context';
+/**
+ * The session gate is gone: there is no `useAuth()`, no `router.replace` in an
+ * effect and no full-screen spinner. `proxy.ts` bounces a visitor with no session
+ * before this renders, and `serverFetch` — the only door to data — redirects on a
+ * 401, so the check cannot be forgotten by a page that forgets to ask.
+ *
+ * What it awaits is what the shell cannot be drawn without (AGENTS.md, Reading
+ * data):
+ *
+ * - `getCurrentUser()`, because identity does not vary by route, and the header
+ *   and the sidebar's menu name the user. It changes through one mutation, the
+ *   profile-edit action, whose `refresh()` re-renders this layout with the page.
+ * - the cookies, which carry the appearance the provider starts from and the
+ *   sidebar's collapsed state.
+ * - the profile, but only when the appearance cookie is absent — a device that
+ *   has never chosen. The cookie is the cache and the profile is the truth (ADR
+ *   0014); this read is what makes the correction one frame late instead of never,
+ *   and putting it behind the boundary below would only make the flash longer.
+ *
+ * The reached-target dialog's reads used to be here too, and blocked all of the
+ * above. They are `GoalReachedGate` now, behind a boundary of their own.
+ */
+export default async function AppLayout({ children }: { children: ReactNode }) {
+  const [user, cookieStore] = await Promise.all([getCurrentUser(), cookies()]);
 
-// Every page in the (app) group requires a session: while AuthProvider is
-// restoring one (refresh cookie → access token) we show a loader; once the
-// status settles as unauthenticated we bounce to /login.
-//
-// Once authenticated, this is the shared shell for the app routes, at every
-// width: the header names the route and carries the actions, and the sidebar is
-// a sheet below 768 and a rail or a panel above it. No route hand-rolls a header
-// of its own any more.
-// MealsProvider lives here (not in the dashboard page) so the sidebar's
-// "Log a meal" trigger shares the same state as the dashboard's numbers.
-export default function AppLayout({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
-  const router = useRouter();
+  // The cookie is the cache and the profile is the truth (ADR 0014), so the
+  // appearance is read from the profile only when the cache is empty — a first
+  // visit from a device that has never chosen. That read used to happen in the
+  // browser, one frame after the page had painted in whatever the tokens said;
+  // here it is one frame after only when the cookie is missing, and never at all
+  // once it exists.
+  const cached = cookieStore.get(APPEARANCE_COOKIE)?.value;
+  const appearance = cached
+    ? appearanceOrDefault(cached)
+    : ((await getProfile())?.appearance ?? DEFAULT_APPEARANCE);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') router.replace('/login');
-  }, [status, router]);
-
-  if (status !== 'authenticated') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" tone="muted" />
-      </div>
-    );
-  }
+  // The sidebar's own cookie, which `ui/sidebar.tsx` has always written and
+  // nobody read: seeded here so the first paint carries the state the provider
+  // holds. Absent — a device that has never chosen — is the rail, because the
+  // viewport is not knowable here and an expanded panel below 1024 leaves too
+  // little for the header row. One press opens it, and that is remembered.
+  const sidebarOpen = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value === 'true';
 
   return (
-    // Beside MealsProvider for the same reason it is here: the sidebar's menu
-    // and the section on /profile offer one setting, and one owner is what keeps
-    // them agreeing. Outside OnboardingGuard so the appearance survives the
-    // redirect a half-finished profile causes.
-    <AppearanceProvider>
-      <OnboardingGuard>
-        {/* Below 1024 the panel would leave too little for the header row, so the
-          rail is the starting state there. Safe to read the viewport during
-          render: the spinner above means the shell's first paint is already a
-          client one, so there is no expanded→collapsed flash to hide. */}
-        <SidebarProvider
-          defaultOpen={
-            typeof window === 'undefined' ||
-            window.matchMedia(DESKTOP_QUERY).matches
-          }
-        >
-          <MealsProvider>
-            <WeightProvider>
-              <AppSidebar />
-              <SidebarInset>
-                <AppHeader />
-                {/* A div, not a `main`: SidebarInset is already the page's `main`.
-                  The flat `px-8` was 64 of the 360px a phone has. */}
-                {/* `flex-1` down to the page: the shell wrapper is `min-h-svh`,
-                  so this makes the page column at least as tall as what is left
-                  of the viewport under the header — which is what lets a page
-                  push its own footer to the bottom with `mt-auto` instead of
-                  leaving it floating under short content. */}
-                <div className="flex flex-1 flex-col px-4 py-5 md:px-6 lg:px-8 lg:py-6">
-                  <ShellFrame className="flex flex-1 flex-col">
-                    {children}
-                  </ShellFrame>
-                </div>
-              </SidebarInset>
-              {/* The "Log weight" trigger moves between the header and the sidebar
-                sheet with the width, so the celebration is mounted here — the
-                nearest shared ancestor that can see either save. */}
-              <GoalReachedOverlay />
-            </WeightProvider>
-          </MealsProvider>
-        </SidebarProvider>
-      </OnboardingGuard>
-    </AppearanceProvider>
+    <AppShell
+      user={user}
+      appearance={appearance}
+      sidebarOpen={sidebarOpen}
+      // `null`, not a skeleton: the dialog draws nothing until a target is
+      // reached, so an un-streamed overlay looks like every ordinary visit.
+      overlay={
+        <Suspense fallback={null}>
+          <GoalReachedGate />
+        </Suspense>
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

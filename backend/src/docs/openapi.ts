@@ -5,7 +5,10 @@ import {
   authUserSchema,
   createGoalRequestSchema,
   createMealRequestSchema,
+  createPlanRequestSchema,
   createWeightRequestSchema,
+  dashboardQuerySchema,
+  dashboardResponseSchema,
   errorResponseSchema,
   goalResponseSchema,
   healthResponseSchema,
@@ -19,6 +22,9 @@ import {
   listWeightsResponseSchema,
   loginRequestSchema,
   mealResponseSchema,
+  patchProfileRequestSchema,
+  profileResponseSchema,
+  putProfileRequestSchema,
   refreshResponseSchema,
   registerRequestSchema,
   updateAccountRequestSchema,
@@ -36,8 +42,7 @@ import { z } from 'zod';
  * re-declares a request/response shape; the paths below only wire the existing
  * schemas to routes, so the docs cannot drift from validation.
  *
- * Scope: auth, the weight journal, meals, goals, and health. Profile and
- * dashboard join as their modules are documented.
+ * Scope: every route the API serves.
  */
 
 type Io = 'input' | 'output';
@@ -87,6 +92,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
     ListMealsResponse: schemaObject(listMealsResponseSchema, 'output'),
     AiParseRequest: schemaObject(aiParseRequestSchema, 'input'),
     AiParseResponse: schemaObject(aiParseResponseSchema, 'output'),
+    CreatePlanRequest: schemaObject(createPlanRequestSchema, 'input'),
     CreateSavedMealRequest: schemaObject(createSavedMealRequestSchema, 'input'),
     UpdateSavedMealRequest: schemaObject(updateSavedMealRequestSchema, 'input'),
     SavedMealResponse: schemaObject(savedMealResponseSchema, 'output'),
@@ -97,6 +103,10 @@ export function buildOpenApiDocument(): OpenAPIObject {
     CreateGoalRequest: schemaObject(createGoalRequestSchema, 'input'),
     UpdateGoalRequest: schemaObject(updateGoalRequestSchema, 'input'),
     GoalResponse: schemaObject(goalResponseSchema, 'output'),
+    PutProfileRequest: schemaObject(putProfileRequestSchema, 'input'),
+    PatchProfileRequest: schemaObject(patchProfileRequestSchema, 'input'),
+    ProfileResponse: schemaObject(profileResponseSchema, 'output'),
+    DashboardResponse: schemaObject(dashboardResponseSchema, 'output'),
     HealthResponse: schemaObject(healthResponseSchema, 'output'),
     ErrorResponse: schemaObject(errorResponseSchema, 'output'),
   };
@@ -130,6 +140,22 @@ export function buildOpenApiDocument(): OpenAPIObject {
       schema,
     }),
   );
+
+  // GET /dashboard takes one optional day, derived from its own schema for the
+  // same reason the two list endpoints are.
+  const dashboardQueryParams = Object.entries(
+    (
+      schemaObject(dashboardQuerySchema, 'input') as {
+        properties?: Record<string, unknown>;
+        required?: string[];
+      }
+    ).properties ?? {},
+  ).map(([name, schema]) => ({
+    name,
+    in: 'query',
+    required: false,
+    schema,
+  }));
 
   const idParam = {
     name: 'id',
@@ -176,6 +202,26 @@ export function buildOpenApiDocument(): OpenAPIObject {
         description:
           'The active weight plan — at most one per user. Its Pace drives the ' +
           'derived calorie target and projected date.',
+      },
+      {
+        name: 'plan',
+        description:
+          'The one transactional write onboarding makes — a Profile, a first ' +
+          'weight entry and a Goal, committed together. Write-only: a Plan is ' +
+          'read back through `/goals/current` and `/profile`.',
+      },
+      {
+        name: 'profile',
+        description:
+          'The user as one record: the details they entered, plus the current ' +
+          'weight, the active goal and the recomputed calorie numbers mirrored ' +
+          'onto it read-only.',
+      },
+      {
+        name: 'dashboard',
+        description:
+          'A thin read model over one Tracking Day — what was eaten against a ' +
+          'live-computed target, plus goal progress (ADR-0005).',
       },
       { name: 'health', description: 'Liveness probe' },
     ],
@@ -267,6 +313,132 @@ export function buildOpenApiDocument(): OpenAPIObject {
             },
             400: errorResponse('Validation failed'),
             401: unauthorized,
+          },
+        },
+      },
+      '/plan': {
+        post: {
+          tags: ['plan'],
+          summary: 'Commit an onboarding plan',
+          description:
+            'One transaction over three tables: the profile, the first weight ' +
+            'entry and the active goal. It exists because `POST /goals` needs a ' +
+            'weight entry to derive `startWeightKg` from, and without this the ' +
+            'client would have to know that call order.\n\n' +
+            '`409` when an active goal already exists: onboarding is a ' +
+            'transition made once, and this is the same rule the client states ' +
+            'as a redirect off `/onboarding` (docs/adr/0016). Changing a plan ' +
+            'afterwards is `PATCH /profile` + `PATCH /goals/current`.\n\n' +
+            'The body carries no `recordedAt` — the server stamps the weight ' +
+            'entry, because the goal starts from whichever entry is latest and a ' +
+            'client clock must not get a say in that.',
+          requestBody: jsonBody('CreatePlanRequest'),
+          responses: {
+            201: {
+              description: 'Plan committed; the new active goal',
+              ...jsonContent('GoalResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+            409: errorResponse(
+              'A plan already exists — onboarding is complete',
+            ),
+          },
+        },
+      },
+      '/profile': {
+        get: {
+          tags: ['profile'],
+          summary: 'The caller’s profile, with its derived figures',
+          description:
+            'One GET describes the user. The stored fields are the four ' +
+            'onboarding details; everything else is mirrored or recomputed on ' +
+            'read and never written here — `currentWeightKg` from the latest ' +
+            'weight entry, `targetWeightKg` and `preferredWeeklyChangeKg` from ' +
+            'the active goal, and `maintenanceCalories` / `calorieTarget` from ' +
+            'Mifflin-St Jeor × the activity factor, less the goal’s ' +
+            'pace deficit and clamped to the safety floor. Each is `null` until ' +
+            'its source exists.\n\n' +
+            'The `404` is contractual, as it is on `/goals/current`: it means ' +
+            'onboarding has not written a profile yet.',
+          responses: {
+            200: {
+              description: 'The profile and its derived figures',
+              ...jsonContent('ProfileResponse'),
+            },
+            401: unauthorized,
+            404: errorResponse('No profile — onboarding is not complete'),
+          },
+        },
+        put: {
+          tags: ['profile'],
+          summary: 'Create or replace the profile (onboarding)',
+          description:
+            'Full payload, and `200` rather than `201` even when it creates the ' +
+            'row: the profile is a property of the user, not a collection this ' +
+            'adds to. It carries only the four onboarding details, so anything ' +
+            'else already on the record — the appearance today, the next ' +
+            'preference tomorrow — survives it untouched (ADR-0014). Weight and ' +
+            'goal are not written here; onboarding commits all three together ' +
+            'through `POST /plan`.',
+          requestBody: jsonBody('PutProfileRequest'),
+          responses: {
+            200: {
+              description: 'The stored profile, with its derived figures',
+              ...jsonContent('ProfileResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+          },
+        },
+        patch: {
+          tags: ['profile'],
+          summary: 'Edit the profile from settings',
+          description:
+            'Any subset of the four onboarding details, plus `appearance`, ' +
+            'which `PUT` deliberately does not accept — editing settings and ' +
+            'committing onboarding are two operations, not one shape and its ' +
+            'partial (ADR-0014).',
+          requestBody: jsonBody('PatchProfileRequest'),
+          responses: {
+            200: {
+              description: 'The updated profile, with its derived figures',
+              ...jsonContent('ProfileResponse'),
+            },
+            400: errorResponse('Validation failed'),
+            401: unauthorized,
+            404: errorResponse('No profile to update'),
+          },
+        },
+      },
+      '/dashboard': {
+        get: {
+          tags: ['dashboard'],
+          summary: 'One Tracking Day of progress',
+          description:
+            'A thin read model (ADR-0005): the day’s totals against the ' +
+            'live-computed target, plus the goal block. No chart series — those ' +
+            'are built client-side from `GET /weights` and `GET /meals`.\n\n' +
+            '`date` scopes **only** the meal window. The weight, the calorie ' +
+            'numbers and the goal always reflect present state, so browsing to ' +
+            'a past day shows that day’s meals against today’s target ' +
+            'rather than reconstructing a target from history.\n\n' +
+            '`goal.projectedGoalDate` is `null` both once the target is reached ' +
+            'and on a maintenance plan (pace `0`); read it together with ' +
+            '`goal.reachedTarget` to tell the two apart.\n\n' +
+            'The `404` is contractual: it means onboarding is not complete — ' +
+            'no profile, or no active goal.',
+          parameters: dashboardQueryParams,
+          responses: {
+            200: {
+              description: 'The day’s figures and goal progress',
+              ...jsonContent('DashboardResponse'),
+            },
+            400: errorResponse('Validation failed — `date` is not YYYY-MM-DD'),
+            401: unauthorized,
+            404: errorResponse(
+              'No profile or no active goal — onboarding is not complete',
+            ),
           },
         },
       },

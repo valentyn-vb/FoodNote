@@ -41,10 +41,7 @@ export function InputField({
   description?: React.ReactNode;
 } & React.ComponentProps<typeof Input>) {
   return (
-    <Field
-      className="grow basis-0 gap-1.75"
-      data-invalid={!!error || undefined}
-    >
+    <Field className="grow basis-0" data-invalid={!!error || undefined}>
       <FormLabel htmlFor={id}>{label}</FormLabel>
       <Input id={id} aria-invalid={!!error || undefined} {...props} />
       {description && <FieldDescription>{description}</FieldDescription>}
@@ -69,6 +66,7 @@ export function FigureField({
   unit,
   accent,
   compact,
+  description,
   error,
   className,
   ...props
@@ -77,6 +75,8 @@ export function FigureField({
   label: string;
   unit: string;
   accent?: boolean;
+  /** Helper text under the control — e.g. a value derived from what was typed. */
+  description?: React.ReactNode;
   /**
    * The four-across nutrient row, where the label is a quiet caption over a
    * narrow cell rather than a form label. On its own — one field the screen is
@@ -86,7 +86,7 @@ export function FigureField({
   error?: string;
 } & React.ComponentProps<typeof InputGroupInput>) {
   return (
-    <Field className="gap-1.5" data-invalid={!!error || undefined}>
+    <Field className="grow basis-0" data-invalid={!!error || undefined}>
       <FormLabel
         htmlFor={id}
         className={compact ? 'tracking-wider text-muted-foreground' : undefined}
@@ -100,10 +100,10 @@ export function FigureField({
       </FormLabel>
       <InputGroup
         className={cn(
-          // Four adjacent cells in a dense row: upstream's `shadow-xs` on each
-          // read as grime along the seams rather than as depth. A single field
-          // on its own page keeps it.
-          compact && 'shadow-none',
+          // `Input` carries no shadow, and these two sit in the same rows: with
+          // upstream's `shadow-xs` here, a figure field was the only control on
+          // a lip.
+          'shadow-none',
           accent && 'border-primary bg-accent',
         )}
       >
@@ -120,6 +120,7 @@ export function FigureField({
           {unit}
         </InputGroupAddon>
       </InputGroup>
+      {description && <FieldDescription>{description}</FieldDescription>}
       {error && <FieldError>{error}</FieldError>}
     </Field>
   );

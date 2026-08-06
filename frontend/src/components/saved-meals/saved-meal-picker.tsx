@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { SavedMealResponse } from '@foodnote/shared';
-import { savedMeals as savedMealsApi } from '@/lib/api-client';
+import {
+  createSavedMeal,
+  deleteSavedMeal,
+  listSavedMeals,
+} from '@/lib/actions/saved-meals';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormGroupLabel } from '@/components/form-fields';
@@ -17,10 +21,12 @@ const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
  * The user's Saved Meals, under the parse input. Picking one is the point of the
  * whole feature: a meal logged again without spending a parse.
  *
- * Fetches for itself rather than reading a provider. The drawer unmounts its
- * content on close, so this remounts and re-lists on every open — which is also
- * what makes a meal kept a moment ago show up next time without any shared state
- * to keep in step.
+ * Reads for itself, through `listSavedMeals`, rather than taking the list as a
+ * prop from the route: the drawer is mounted by the shell on every route and the
+ * list is worth nothing until it opens, so a server read would pay for it on
+ * every navigation. The drawer unmounts its content on close, so this remounts
+ * and re-lists on every open — which is also what makes a meal kept a moment ago
+ * show up next time without any shared state to keep in step.
  *
  * Takes whatever height the body has left and scrolls inside it, rather than
  * growing with the list: on a phone the drawer is content-sized, and a dozen
@@ -42,20 +48,19 @@ export function SavedMealPicker({
   );
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Promise chain with a cancelled flag, as the app's other fetches do: setState
-  // only ever runs from the .then/.catch callbacks.
+  // A cancelled flag rather than an AbortController: an action's promise cannot
+  // be aborted, so the guard is on the setState, not on the request.
   useEffect(() => {
     let cancelled = false;
-    savedMealsApi
-      .list()
-      .then((list) => {
-        if (cancelled) return;
-        setSavedMeals(list);
-        setStatus('ready');
-      })
-      .catch(() => {
-        if (!cancelled) setStatus('error');
-      });
+    listSavedMeals().then((result) => {
+      if (cancelled) return;
+      if (!result.ok) {
+        setStatus('error');
+        return;
+      }
+      setSavedMeals(result.data);
+      setStatus('ready');
+    });
     return () => {
       cancelled = true;
     };
@@ -73,34 +78,44 @@ export function SavedMealPicker({
    */
   function remove(saved: SavedMealResponse) {
     setSavedMeals((prev) => prev.filter((m) => m.id !== saved.id));
-    savedMealsApi
-      .remove(saved.id)
-      .then(() =>
-        toast.success(`“${saved.mealName}” removed from My meals`, {
-          action: {
-            label: 'Undo',
-            onClick: () => {
-              savedMealsApi
-                .create(saved)
-                .then((again) =>
-                  setSavedMeals((prev) => [...prev, again].sort(byName)),
-                )
-                .catch(() =>
-                  toast.error("Couldn't undo — the meal is still removed."),
-                );
-            },
-          },
-        }),
-      )
-      .catch(() => {
+    void deleteSavedMeal(
+      saved.id,
+      "Couldn't remove that meal. Please try again.",
+    ).then((result) => {
+      if (!result.ok) {
         setSavedMeals((prev) => [...prev, saved].sort(byName));
-        toast.error("Couldn't remove that meal. Please try again.");
+        toast.error(result.message);
+        return;
+      }
+      toast.success(`“${saved.mealName}” removed from My meals`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            void createSavedMeal(saved).then((again) => {
+              if (!again.ok) {
+                toast.error("Couldn't undo — the meal is still removed.");
+                return;
+              }
+              setSavedMeals((prev) => [...prev, again.data].sort(byName));
+            });
+          },
+        },
       });
+    });
   }
 
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-2">
       <FormGroupLabel>My meals</FormGroupLabel>
+      {/* What a press does, said once for the whole list rather than drawn on
+          every row. Only with rows to say it about — the empty state below
+          already explains what the list is for. */}
+      {status === 'ready' && savedMeals.length > 0 && (
+        <p className="text-xs text-muted-foreground -mt-1">
+          Select a meal to log it again — the pencil edits the saved meal, not
+          your log.
+        </p>
+      )}
 
       {status === 'loading' && (
         <div className="flex flex-col gap-2">
@@ -137,8 +152,11 @@ export function SavedMealPicker({
       )}
 
       {status === 'ready' && savedMeals.length > 0 && (
-        <ul className="-mx-1 flex min-h-24 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1">
+        <ul className="flex min-h-24 flex-col gap-1 overflow-y-auto p-1 overscroll-contain bg-background rounded-lg">
           {savedMeals.map((saved) => (
+            // No divider between rows: each one lights up as a whole on
+            // approach, and a line through the list fought that fill for the
+            // job of saying where one row ends.
             <li key={saved.id}>
               <SavedMealRow
                 saved={saved}

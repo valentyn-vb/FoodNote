@@ -14,6 +14,7 @@ import type {
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
 import type { StoredUser } from '../users/users.repository';
+import { readJwtSecret } from './jwt-secrets';
 
 const BCRYPT_COST = 10;
 
@@ -38,10 +39,14 @@ export interface AuthenticatedUser {
 
 @Injectable()
 export class AuthService {
-  private readonly accessSecret =
-    process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret';
-  private readonly refreshSecret =
-    process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret';
+  private readonly accessSecret = readJwtSecret(
+    'JWT_ACCESS_SECRET',
+    'dev-access-secret',
+  );
+  private readonly refreshSecret = readJwtSecret(
+    'JWT_REFRESH_SECRET',
+    'dev-refresh-secret',
+  );
   private readonly accessTtl = (process.env.JWT_ACCESS_TTL ??
     '15m') as JwtSignOptions['expiresIn'];
   private readonly refreshTtl = (process.env.JWT_REFRESH_TTL ??

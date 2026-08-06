@@ -1,6 +1,3 @@
-'use client';
-
-import type { DashboardResponse } from '@foodnote/shared';
 import { DayNav } from '@/components/day-nav';
 import { Disclaimer } from '@/components/disclaimer';
 import { EmptyMeals } from '@/components/empty-meals';
@@ -10,16 +7,13 @@ import {
   goalDirection,
   splitCaloriesByMealType,
 } from '@/lib/dashboard-transforms';
-import { useMeals } from '@/lib/meals-context';
-import { useWeight } from '@/lib/weight-context';
 import { CurrentGoalCard } from './current-goal-card';
 import { CurrentWeightCard } from './current-weight-card';
 import { DailyCaloriesCard } from './daily-calories-card';
 import { EatenCard } from './eaten-card';
 import { formatFigure } from './helpers';
 import { RemainingCard } from './remaining-card';
-import { DashboardError, DashboardSkeleton } from './states';
-import { useDashboardGate } from './use-dashboard-gate';
+import type { DashboardFigures } from './figures';
 import { WeeklyIntakeCard } from './weekly-intake-card';
 import { WeightTrendCard } from './weight-trend-card';
 
@@ -35,25 +29,24 @@ import { WeightTrendCard } from './weight-trend-card';
  * Calorie widgets follow the selected Tracking Day; weight and goal are always
  * present-state, which is what the API serves — `date` scopes only the meal
  * window (ADR-0005). The calorie labels say which day they mean.
+ *
+ * No `'use client'`: this composes, it does not interact. The directive was here
+ * while the numbers came from two providers, and stayed for a while after they
+ * were deleted — which put this whole file and everything it composes in one
+ * client bundle. The cards that need a browser (a chart, a NumberFlow digit, the
+ * day nav) declare it for themselves, each becoming its own boundary.
  */
-export function Dashboard() {
-  const gate = useDashboardGate();
-
+export function Dashboard({
+  selectedDate,
+  ...figures
+}: DashboardFigures & { selectedDate: string }) {
   return (
     <div className="flex grow flex-col gap-5 lg:gap-4">
-      {/* Outside the gate, so stepping the day is still possible while the day
-          it stepped to is loading or has failed. */}
       <div className="flex justify-center">
-        <DayNav />
+        <DayNav selectedDate={selectedDate} />
       </div>
 
-      {gate.state === 'error' ? (
-        <DashboardError onRetry={gate.retryAll} />
-      ) : gate.state === 'loading' ? (
-        <DashboardSkeleton />
-      ) : (
-        <DashboardBands goal={gate.goal} />
-      )}
+      <DashboardBands {...figures} />
 
       {/* Last at every width, and outside the gate so it doesn't appear from
           nowhere when the data lands — it says the numbers are estimates, which
@@ -69,32 +62,26 @@ export function Dashboard() {
 }
 
 /**
- * The six blocks themselves, rendered only in the gate's 'ready' state — which
- * is what makes `goal`, and the direction derived from it, non-null by type
- * rather than by a second check the layout would have to repeat.
+ * The seven blocks. `goal` is non-null by type because the page cannot render
+ * without it — `requireOnboarded()` redirects first — which is what the gate's
+ * 'ready' state used to buy.
  */
-function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
-  const {
-    eatenKcal,
-    remainingKcal,
-    progressPct,
-    goalKcal,
-    macros,
-    selectedDayMeals,
-    dailyCalories,
-    isToday,
-  } = useMeals();
-  const {
-    status: weightStatus,
-    retry: retryWeight,
-    entries: weightEntries,
-    currentWeightKg,
-    weightTrend,
-    weightChangeKg,
-    weekChangeKg,
-    onWeightsChanged,
-  } = useWeight();
-
+function DashboardBands({
+  goal,
+  eatenKcal,
+  remainingKcal,
+  progressPct,
+  goalKcal,
+  macros,
+  selectedDayMeals,
+  dailyCalories,
+  isToday,
+  weighInCount,
+  currentWeightKg,
+  weightTrend,
+  weightChangeKg,
+  weekChangeKg,
+}: DashboardFigures) {
   const direction = goalDirection(
     goal.startWeightKg,
     goal.targetWeightKg,
@@ -145,16 +132,16 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
         </div>
       </div>
 
-      {/* The day's own two blocks: what was eaten, and where it went.
-          Two thirds against one from `lg`, not an even split: the meal list
-          grows a row per meal while the ring is one figure at a fixed size, so
-          half the row left the ring swimming in its own card. A third of the
-          content column is 256px at 1024 and 383 at 1440, which the ring reads
-          well at; below `lg` they stack, where a third would be 200px or less.
-          The ring stretches to the list's height rather than fixing its own, so
-          the row still has one height. */}
-      <div className="grid gap-5 lg:grid-cols-3 lg:gap-3.5">
-        <Card className="gap-0 overflow-hidden p-0 lg:col-span-2">
+      {/* The day's meals, and the week they sit in. Three fifths against two
+          from `lg`: the list is the block that grows — a row per meal, each a
+          name against a subtotal — while the chart is seven bars at a fixed
+          height, so it takes the remainder rather than the larger share. Two
+          fifths is 302px at 1024 and 454 at 1440, above the ~188 at which
+          recharts starts dropping weekday labels (#123). Below `lg` they stack
+          full width. The chart stretches to the list's height rather than fixing
+          its own, so the row still has one height. */}
+      <div className="grid gap-5 lg:grid-cols-5 lg:gap-3.5">
+        <Card className="gap-0 overflow-hidden p-0 lg:col-span-3">
           {/* Title over a line of context, the shape ChartCard gives the three
               cards beside it — this one composes Card directly because the
               accordion runs edge to edge, which a padded body cannot do. */}
@@ -193,32 +180,34 @@ function DashboardBands({ goal }: { goal: DashboardResponse['goal'] }) {
             <MealGroupsAccordion meals={selectedDayMeals} />
           )}
         </Card>
-        <DailyCaloriesCard
-          className="min-h-72"
-          segments={splitCaloriesByMealType(selectedDayMeals, remainingKcal)}
-          remainingKcal={remainingKcal}
+        <WeeklyIntakeCard
+          className="min-h-72 lg:col-span-2"
+          data={dailyCalories}
+          calorieTarget={goalKcal}
         />
       </div>
 
-      {/* The two week-scale charts, side by side. Never three across:
-          the shell's sidebar is a fixed 256px, so at 1024 the content
-          column is 768 and a third of it is 169px — under the ~188 at
-          which recharts starts dropping weekday labels (#123). */}
-      <div className="grid gap-5 md:grid-cols-2 lg:gap-3.5">
+      {/* Trend and split, side by side. Even at `md`, two thirds against one
+          from `lg`: the ring is one figure at a fixed size, so half of 1150 left
+          it drawn small in the middle of an empty card, while the trend line is
+          the block that reads better the wider it gets. A third is 247px at 1024
+          and 374 at 1440, which the ring fills.
+
+          Never three across with the chart above: the shell's sidebar is a fixed
+          256px, so at 1024 the content column is 768 and a third of it is
+          169px. */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-3.5">
         <WeightTrendCard
-          className="h-72"
-          status={weightStatus}
-          onRetry={retryWeight}
-          entries={weightEntries}
-          onWeightsChanged={onWeightsChanged}
+          className="h-72 lg:col-span-2"
+          weighInCount={weighInCount}
           trend={weightTrend}
           monthChangeKg={weightChangeKg}
           projectedGoalDate={goal.projectedGoalDate}
         />
-        <WeeklyIntakeCard
+        <DailyCaloriesCard
           className="h-72"
-          data={dailyCalories}
-          calorieTarget={goalKcal}
+          segments={splitCaloriesByMealType(selectedDayMeals, remainingKcal)}
+          remainingKcal={remainingKcal}
         />
       </div>
     </>

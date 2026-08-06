@@ -19,19 +19,23 @@ if (typeof window !== 'undefined') {
 // (app)/layout.tsx (useRouter) or reaching for a close/back control
 // (useRouter/usePathname) needs this or it throws on mount, not on the
 // assertion. Individual tests override with vi.mocked(...).mockReturnValue
-// when a specific push/back call needs asserting on.
+// when a specific push/back call needs asserting on — which is why each hook is
+// a `vi.fn` wrapping its default rather than a bare arrow: `vi.mocked()` hands
+// back the function itself, so a plain arrow has no `mockReturnValue` to call
+// and the override fails at the override, a long way from the assertion it was
+// written for.
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
+  useRouter: vi.fn(() => ({
     push: vi.fn(),
     replace: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
     refresh: vi.fn(),
     prefetch: vi.fn(),
-  }),
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useParams: () => ({}),
+  })),
+  usePathname: vi.fn(() => '/'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
 }));
 
 // This setup file runs for every test file, including the node-environment

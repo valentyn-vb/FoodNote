@@ -11,8 +11,13 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 ## Commands
 
 - `npm run dev` — shared (watch) + backend + frontend
-- `npm test` / `npm run format:check` — must pass before a PR
+- `npm test` / `npm run typecheck` / `npm run format:check` — must pass before a PR
 - `npm run db:up` — start local Postgres 16 (Docker, waits for healthy); `db:down` / `db:logs` to stop / tail
+- `npm run test:e2e -w backend` — the Nest integration suite (`backend/test/`,
+  supertest against the real AppModule). Needs Postgres and **its own database**:
+  pass `DATABASE_URL=…/foodnote_test`, never the dev `foodnote` — these specs
+  write and delete rows. Outside `npm test` for the same reason the smoke net
+  is: it needs Docker
 - `npm run test:e2e` — the smoke net. Needs Docker; creates the `foodnote_e2e`
   database, builds `shared` and `backend`, seeds a fresh account for the run,
   then starts both servers itself. Deliberately outside `npm test`: the default
@@ -26,7 +31,43 @@ Calorie-tracking capstone. npm-workspaces monorepo:
 - `CONTEXT.md` is the domain glossary (the ubiquitous language) — use its terms in code, tests, and docs, and update it when the model changes; architectural decisions are recorded in `docs/adr/`
 - adding, removing, or changing an endpoint means updating the OpenAPI docs (`backend/src/docs/openapi.ts`, served at `/api/docs`) in the same change — schemas come from `shared/`, so only the route wiring needs a new entry
 - every form — including a single field inside a drawer or dialog — follows **Forms** below
+- a read belongs to the route that shows it, and a read only one component needs belongs behind that component's own `<Suspense>` — see **Reading data** below
 - comment only what the code can't say: a constraint, a measured value, a decision that reads as a mistake. Never restate the line below it, and don't narrate a change — that belongs in the commit
+
+## Reading data
+
+Server components read; the browser doesn't. `serverFetch` is the only door to
+data and redirects to `/login` on a 401, so the session check cannot be forgotten
+by a page that forgets to ask. Server data crosses to a client component as a
+prop (#89) — a client hook reading the query string obliges its page into a
+Suspense boundary, which is why `/login` takes `next` as a prop rather than
+calling `useSearchParams()`.
+
+**A read belongs to the route that shows it.** A layout does **not** re-render on
+navigation, so what a layout must not hold is route-varying data: put the day's
+meals in one and `?date=` stops working. `(app)/layout.tsx` reads two things
+anyway, and both are properties of the user rather than of a route:
+
+- **the user** (`getCurrentUser()`), because identity does not vary by route, and
+  the header and the sidebar's menu name it. It changes through one mutation, the
+  profile-edit action, and that action's `refresh()` re-renders the layout along
+  with the page — `refresh()` rather than `revalidatePath()` because nothing here
+  is cached (`meals.ts` argues it).
+- **the profile**, but only when the appearance cookie is absent (ADR 0014 — the
+  cookie is the cache, the profile is the truth). Once it exists, never.
+
+**A read only one thing needs waits behind that thing's own boundary.** Everything
+a layout awaits blocks the whole route: the header, the sidebar, and the page
+under them, `loading.tsx` included. The reached-target dialog's reads — the
+dashboard's present state, and the profile it computes plan options from — used to
+sit in the layout and hold up all of it, so `/dashboard` arrived in a single
+chunk. They are `(app)/goal-reached-gate.tsx` now, a Server Component under
+`<Suspense fallback={null}>`: `null` is honest because the dialog draws nothing
+until a target is reached. Its reads keep their own guard — no goal means no
+dashboard read, since `GET /dashboard` 404s until onboarding is finished.
+
+Reads are memoized (`cache()`), so the gate, a page and `requireOnboarded()`
+asking for the same goal pay for one request between them.
 
 ## Forms
 

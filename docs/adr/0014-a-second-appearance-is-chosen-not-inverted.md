@@ -277,6 +277,45 @@ deliberate divergence. Keeping upstream's dark rule would leave one component
 disagreeing with itself across appearances. It is replaced, and the reason is
 commented in `button.tsx`, where whoever diffs against upstream will be standing.
 
+## The landing page keeps one appearance
+
+Amended after the fact: this ADR was written as though every route had two
+appearances, and `/` never did.
+
+The deck in `components/marketing/**` is a self-contained visual system — the
+lint rule exempts it by name, `landing.css` says why — and its surfaces are
+hardcoded: a white gradient in `.glass-card`, six hand-mixed tile gradients in
+`analytics-slide`, `bg-white/70`..`/95` in three more. Its _text_, though, came
+from this app's tokens, and those flip. So a signed-in reader who had chosen
+`dark` met the deck as cream on white: the nav lost all four labels, the Hammy
+bubble lost its headline, and every feature tile lost its title and its body. The
+gradient mesh, being built from tokens, adapted correctly and made the contrast
+worse.
+
+Pinned rather than given a dark palette. That is the cheaper half of a real
+choice and it is the right half here: `/` is the one route a visitor meets before
+choosing an appearance at all, so the second palette would exist for the small
+set of readers who have already signed in and gone back to the marketing page —
+and there is nothing to mix it from, because the six tile gradients are hand-set
+values rather than roles.
+
+The pin is a block in `landing.css` restating the light set on
+`:root:has(main[data-landing])`. Three details are load-bearing:
+
+- **on `:root`, not on the deck.** `IntroSlide` and `AnalyticsSlide` paint no
+  surface of their own, so what shows behind them is body's background, and body
+  is outside `main`. `color-scheme` is a document-level property besides — on a
+  subtree it would leave the scrollbars dark against a light page.
+- **`:has()` is the route scope.** The stylesheet is fetched for `/` and not
+  dropped on the way out, so the rule has to go inert by itself; the attribute
+  disappearing from the DOM is what does it. Verified across a client-side
+  navigation to `/dashboard`, which gets the dark set as before.
+- **the whole set, not the nine tokens the deck reads today.** A dark override
+  added to `globals.css` later would otherwise land on a slide with a white
+  background and nobody would re-check the deck. `landing.spec.ts` asserts both
+  halves — the same names as the dark set, at `:root`'s values — for the reason
+  `globals.spec.ts` asserts the dark set's two copies agree.
+
 ## The control, and why it is not a form
 
 The setting appears twice: a `Theme` section third on `/profile`, and a

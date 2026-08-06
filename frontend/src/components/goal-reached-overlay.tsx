@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import confetti from 'canvas-confetti';
 import { useReducedMotion } from 'motion/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import {
   weightKgSchema,
+  type DashboardResponse,
   type Pace,
   type ProfileResponse,
 } from '@foodnote/shared';
@@ -24,8 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { InputField } from '@/components/form-fields';
-import { goals, profile } from '@/lib/api-client';
-import { useMeals } from '@/lib/meals-context';
+import { createGoal, updateGoal } from '@/lib/actions/goals';
 import { formatPace } from '@/lib/utils';
 import type { DialogRootChangeEventDetails } from '@base-ui/react/dialog';
 
@@ -63,20 +63,37 @@ type DialogView = 'choice' | 'target-input' | 'target-plan';
 /**
  * Non-dismissable celebration and required action dialog for a reached goal.
  * Once a goal is reached, the user must choose: switch to maintenance or set a
- * new target. Closing happens only after one of those actions completes
- * successfully (refetchDashboard flips reachedTarget to false). X, Escape, and
- * outside-click are blocked.
+ * new target. X, Escape, and outside-click are blocked.
  *
  * No new state is persisted to the server: the dialog is driven purely by
- * reachedTarget on the dashboard payload, so dismissal is implicit in the
- * action result.
+ * `reachedTarget`, so dismissal is implicit in the write. Both writes are actions
+ * that revalidate, and the re-rendered tree arrives with `reachedTarget` false —
+ * which is what closes this. Nothing here has to ask for that refetch, and
+ * nothing here holds a copy of the answer.
+ *
+ * The profile arrives as a prop for the same reason. The plan step needs the
+ * body figures the options are computed from, and this used to fetch them from the
+ * browser when the user asked for a new target — a request that could fail, with
+ * an error message under a field for a value the user had just typed correctly.
+ * The layout reads it instead, and only when a reached target makes this
+ * reachable.
  */
-export function GoalReachedOverlay() {
-  const { goal, maintenanceKcal, refetchDashboard } = useMeals();
+export function GoalReachedOverlay({
+  goal,
+  maintenanceKcal,
+  profile,
+}: {
+  goal: DashboardResponse['goal'] | null;
+  maintenanceKcal: number | null;
+  /**
+   * Null when the layout had no reason to read it, which includes every render
+   * where this dialog stays closed — the plan step is the only thing that needs it.
+   */
+  profile: ProfileResponse | null;
+}) {
   const shouldReduceMotion = useReducedMotion();
   const [view, setView] = useState<DialogView>('choice');
   const [switchingMaintenance, setSwitchingMaintenance] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [targetWeightValue, setTargetWeightValue] = useState<number | null>(
     null,
   );
@@ -103,47 +120,36 @@ export function GoalReachedOverlay() {
 
   async function handleSwitchMaintenance() {
     setSwitchingMaintenance(true);
-    try {
-      await goals.update({ preferredWeeklyChangeKg: 0 });
-      await refetchDashboard();
+    const result = await updateGoal({ preferredWeeklyChangeKg: 0 });
+    if (result.ok) {
       toast.success('Switched to maintenance', {
         description: goal
           ? `Your daily calories now hold you at ${goal.currentWeightKg} kg.`
           : undefined,
       });
-    } catch {
-      toast.error("Couldn't switch to maintenance. Please try again.");
-    } finally {
-      setSwitchingMaintenance(false);
+    } else {
+      toast.error(result.message);
     }
+    setSwitchingMaintenance(false);
   }
 
-  async function handleTargetInputContinue(data: TargetWeightForm) {
-    try {
-      setTargetWeightValue(data.targetWeightKg);
-      const profileResponse = await profile.current();
-      setProfileData(profileResponse);
-      setView('target-plan');
-    } catch {
-      form.setError('targetWeightKg', {
-        message: "Couldn't load your profile. Please try again.",
-      });
-    }
+  function handleTargetInputContinue(data: TargetWeightForm) {
+    setTargetWeightValue(data.targetWeightKg);
+    setView('target-plan');
   }
 
   async function handlePlanConfirm(pace: Pace) {
     if (!targetWeightValue) return;
-    try {
-      await goals.create({
-        targetWeightKg: targetWeightValue,
-        preferredWeeklyChangeKg: pace,
-      });
-      await refetchDashboard();
+    const result = await createGoal({
+      targetWeightKg: targetWeightValue,
+      preferredWeeklyChangeKg: pace,
+    });
+    if (result.ok) {
       toast.success('New target set', {
         description: `Target: ${targetWeightValue} kg · ${formatPace(pace)} kg/week`,
       });
-    } catch {
-      toast.error("Couldn't set your new target. Please try again.");
+    } else {
+      toast.error(result.message);
     }
   }
 
@@ -161,13 +167,7 @@ export function GoalReachedOverlay() {
         {view === 'choice' && (
           <>
             <DialogHeader className="items-center gap-2 text-center">
-              <Image
-                src="/mascot/celebrate.webp"
-                alt=""
-                width={96}
-                height={96}
-                priority
-              />
+              <Mascot src="/mascot/celebrate.webp" className="w-24" priority />
               <DialogTitle>You hit your target</DialogTitle>
               <DialogDescription>
                 {goal
@@ -260,7 +260,7 @@ export function GoalReachedOverlay() {
           </>
         )}
 
-        {view === 'target-plan' && profileData && targetWeightValue && (
+        {view === 'target-plan' && profile && targetWeightValue && (
           <>
             <DialogHeader className="gap-2">
               <Button
@@ -281,10 +281,10 @@ export function GoalReachedOverlay() {
 
             <PlanSelection
               input={{
-                ...profileData,
+                ...profile,
                 targetWeightKg: targetWeightValue,
                 currentWeightKg:
-                  profileData.currentWeightKg ?? goal?.currentWeightKg ?? 0,
+                  profile.currentWeightKg ?? goal?.currentWeightKg ?? 0,
               }}
               onConfirm={handlePlanConfirm}
               fromDate={new Date().toISOString().slice(0, 10)}

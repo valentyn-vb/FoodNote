@@ -154,6 +154,17 @@ entirely), not shown disabled; a Manual Plan is what remains when every preset i
 hidden.
 _Avoid_: plan choice, tier
 
+**Plan**:
+What a Plan Option becomes when it is committed: a Profile, a first Weight Entry
+and a Goal, written together in one transaction (`POST /api/plan`). Nothing is
+stored under the name — a Plan is read back as its parts, through
+`GET /goals/current` and `GET /profile` — so it is a write-only resource, and
+there is no `GET /api/plan`. Committing one is the transition onboarding makes
+once: a second attempt is refused (409), and changing a plan afterwards edits the
+Profile and the Goal separately. Onboarding is complete when, and only when, an
+active Goal exists.
+_Avoid_: setup, onboarding payload, plan (for a Goal on its own)
+
 **Sex**:
 Biological sex (`male` | `female`) — the input the BMR formula and the
 calorie safety floor require. Not gender identity; UI copy may clarify, the

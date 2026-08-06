@@ -1,6 +1,6 @@
 'use client';
 
-import { InputField } from '@/components/form-fields';
+import { FigureField } from '@/components/form-fields';
 import { formatGoalDate, formatPace } from '@/lib/utils';
 import {
   caloriesSchema,
@@ -95,9 +95,10 @@ export function ManualPlanForm({
       noValidate
       className="flex"
     >
-      <InputField
+      <FigureField
         id="dailyCalories"
-        label="Daily calories (kcal)"
+        label="Daily calories"
+        unit="kcal"
         type="number"
         inputMode="numeric"
         autoFocus

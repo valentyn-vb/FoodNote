@@ -36,7 +36,9 @@ test('logging a weight moves the change stat', async ({ page }) => {
   // produce the same figure by accident, and it must stay *above* the seeded
   // 75 kg goal: reaching a goal raises GoalReachedOverlay, which is
   // deliberately non-dismissable, so every later test in the run dies on a
-  // click it can't reach. The seed's latest weight is 88.
+  // click it can't reach. The seed's latest weight is 79.8 — the 88 is the
+  // 40-day-old entry `seed-accounts.mjs` appends, which is what gives the
+  // month-long comparison something to reach back to.
   await page.getByLabel('Weight (kg)').fill('84.2');
   await page.getByRole('button', { name: 'Save weight' }).click();
 

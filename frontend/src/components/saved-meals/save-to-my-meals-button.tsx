@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import type { MealSource } from '@foodnote/shared';
+import { savedMealFrom, type MealSource } from '@foodnote/shared';
 import type { UseFormReturn } from 'react-hook-form';
-import { savedMeals as savedMealsApi } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
+import { createSavedMeal } from '@/lib/actions/saved-meals';
+import { QuietButton } from '@/components/quiet-button';
 import { toWireItems, type MealDraftValues } from '@/components/meal-fields';
 
 /**
@@ -34,41 +34,28 @@ export function SaveToMyMealsButton({
     if (!(await form.trigger())) return;
     setState('saving');
     const values = form.getValues();
-    try {
-      // No mealType and no recordedAt: those describe an occasion, and a Saved
-      // Meal has none — the user picks them each time it is logged.
-      await savedMealsApi.create({
-        mealName: values.mealName,
-        totalCalories: values.totalCalories,
-        proteinGrams: values.proteinGrams,
-        carbsGrams: values.carbsGrams,
-        fatGrams: values.fatGrams,
-        source,
-        items: toWireItems(values.items),
-      });
-      setState('kept');
-      toast.success(`“${values.mealName}” is in My meals`);
-    } catch {
+    // No mealType and no recordedAt: those describe an occasion, and a Saved
+    // Meal has none — the user picks them each time it is logged. `savedMealFrom`
+    // is what drops them, over the schema rather than a field list.
+    const result = await createSavedMeal(
+      savedMealFrom({ ...values, source, items: toWireItems(values.items) }),
+    );
+    if (!result.ok) {
       // Back to idle, not a dead end: the meal is still there to keep.
       setState('idle');
-      toast.error("Couldn't keep that meal. Please try again.");
+      toast.error(result.message);
+      return;
     }
+    setState('kept');
+    toast.success(`“${values.mealName}” is in My meals`);
   }
 
   const kept = state === 'kept';
 
   return (
-    // Quiet, and the same shape as the drawer's other secondary links: `py-2`
-    // puts it at ~36px where `p-0` would leave a 20px strip to hit.
-    <Button
-      type="button"
-      variant="link"
-      className="h-auto gap-1 px-1 py-2 text-sm text-muted-foreground"
-      onClick={keep}
-      disabled={state !== 'idle'}
-    >
+    <QuietButton onClick={keep} disabled={state !== 'idle'}>
       {kept ? <BookmarkCheck aria-hidden /> : <Bookmark aria-hidden />}
       {kept ? 'In My meals' : 'Save to My meals'}
-    </Button>
+    </QuietButton>
   );
 }

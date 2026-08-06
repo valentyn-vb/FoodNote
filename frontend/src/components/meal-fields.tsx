@@ -1,7 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2Icon } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import {
   caloriesSchema,
@@ -32,6 +31,8 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { MacroLine } from '@/components/macro-line';
+import { MACRO_FIELDS } from '@/lib/macros';
 import { FigureField, FormGroupLabel, InputField } from './form-fields';
 import { ToggleField } from './toggle-field';
 
@@ -103,17 +104,18 @@ export function withPortionFigures(item: MealItem): FormMealItem {
  * Two callers: logging a meal, and keeping one for reuse.
  */
 export function toWireItems(items: MealDraftValues['items']): MealItem[] {
+  // Named rather than reached by discarding the four display fields: that took
+  // an eslint-disable for bindings nothing read, and a field the wire schema
+  // gains would go missing at runtime instead of failing to compile here.
   return (items ?? []).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ({ calories, proteinGrams, carbsGrams, fatGrams, ...item }) => item,
+    ({ name, quantityDescription, portionGrams, per100g }) => ({
+      name,
+      quantityDescription,
+      portionGrams,
+      per100g,
+    }),
   );
 }
-
-const MACRO_FIELDS = [
-  { name: 'proteinGrams', label: 'Protein', short: 'P' },
-  { name: 'carbsGrams', label: 'Carbs', short: 'C' },
-  { name: 'fatGrams', label: 'Fat', short: 'F' },
-] as const;
 
 // `type="number"` keeps RHF's numeric coercion and the numeric keypad; ui/Input
 // handles the wheel-rewrites-the-value hazard that comes with it.
@@ -280,20 +282,17 @@ export function MealTotalsSummary({
   return (
     <div className={NUTRIENT_GRID}>
       {cells.map(({ label, unit, value }) => (
-        <Card
-          key={label}
-          className="items-center gap-0.5 rounded-lg px-4 py-3 shadow-none"
-        >
-          <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+        <div key={label} className="rounded-md bg-muted px-3 py-1.5">
+          <span className="block text-xs font-medium tracking-wide text-muted-foreground">
             {label}
           </span>
-          <span className="flex items-baseline gap-1 text-lg font-bold tabular-nums">
-            <NumberFlow value={value} />
+          <span className="flex items-baseline gap-1 text-base font-semibold tabular-nums">
+            <NumberFlow value={Math.round(value)} />
             <span className="text-sm font-normal text-muted-foreground">
               {unit}
             </span>
           </span>
-        </Card>
+        </div>
       ))}
     </div>
   );
@@ -399,35 +398,15 @@ export function MealItemsFields({
  * "196 kcal" for one portion cannot. It updates as figures are edited, so the
  * implied density is visible while correcting one.
  *
- * Written out — `protein`, not `P` — because this is a sentence to read, not a
- * row of fields to scan; the abbreviations belong on the inputs, where there is
- * no room for anything else. Rounded to whole grams: a tenth of a gram of fat is
- * below what the parser can honestly claim, and it made the line look like a
- * measurement rather than a check.
+ * The line itself is `MacroLine`, shared with the saved-meal picker.
  */
 function Per100gLine({ per100g }: { per100g: NutritionPer100g }) {
   return (
-    <p className="text-xs text-muted-foreground">
-      Per 100 g<span aria-hidden> · </span>
-      {/* The figures carry the app's text colour and the words around them stay
-          muted: the line reads as prose but its numbers are still findable at a
-          glance, without a fill or a second type size. */}
-      <span className="tabular-nums text-foreground">
-        {Math.round(per100g.calories)} kcal
-      </span>
-      {/* The three that share a shape come from the one table the inputs above
-          are built from, so a renamed or added macro cannot appear on the fields
-          and go missing from the line. */}
-      {MACRO_FIELDS.map(({ name, label }) => (
-        <Fragment key={name}>
-          <span aria-hidden> · </span>
-          <span className="tabular-nums text-foreground">
-            {Math.round(per100g[name])} g
-          </span>
-          {` ${label.toLowerCase()}`}
-        </Fragment>
-      ))}
-    </p>
+    <MacroLine
+      lead="Per 100 g"
+      caloriesKcal={per100g.calories}
+      macros={per100g}
+    />
   );
 }
 
@@ -511,9 +490,15 @@ function MealItemRow({
           <Input
             aria-label={`Item ${index + 1} name`}
             placeholder="Item name"
-            // Reads as text until focused — an item's name, not a form
-            // field: no box, no shadow, the underline does the work.
-            className="min-w-24 grow-2 basis-0 border-transparent font-semibold shadow-none focus-visible:underline"
+            // The same fill and radius as the figure fields under it: the row
+            // sits on a tinted wash, so a transparent field disappeared into the
+            // card and only the placeholder said anything was editable. Flat, and
+            // focus is the ring the field already carries — an underline
+            // decorates the *element*, so on an empty item it drew a line under
+            // the placeholder and "Item name" read as a value to clear first.
+            // `placeholder:font-normal` because the weight is on the element:
+            // a semibold placeholder reads as a name already typed in.
+            className="min-w-24 grow-2 basis-0 rounded-sm bg-card font-semibold shadow-none placeholder:font-normal"
             {...form.register(`items.${index}.name`)}
           />
         )}
@@ -551,14 +536,19 @@ function MealItemRow({
           </span>
         )}
 
+        {/* The same control as the one on a meal row (`meal-line.tsx`): a muted
+            ghost icon carrying its own 44px touch target. `gap-2.5` on the row
+            clears the overhang — the target is 6px wider than the 32px box on
+            each side, so nothing of the weight input beside it is covered. */}
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label={`Remove item ${index + 1}`}
           onClick={onRemove}
+          className="touch-target text-muted-foreground"
         >
-          <Trash2 />
+          <Trash2Icon />
         </Button>
       </div>
 

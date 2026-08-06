@@ -5,7 +5,6 @@ import {
   DetailsForm,
 } from '@/components/onboarding/details-form';
 import {
-  DEFAULT_PLAN_PACE,
   onboardingFormSchema,
   type OnboardingFormValues,
 } from '@/components/onboarding/form-schema';
@@ -22,9 +21,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ACTIVITY_LEVEL_LABELS } from '@/lib/activity-levels';
-import { cn } from '@/lib/utils';
-import { goals, profile, weights } from '@/lib/api-client';
+import { DetailRow } from '@/components/detail-row';
+import { ACTIVITY_LEVEL_LABELS, SEX_LABELS } from '@/lib/enum-labels';
+import { saveDetails } from '@/lib/actions/profile';
 import type { ProfileResponse } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -32,48 +31,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Edit2Icon } from 'lucide-react';
 
-const SEX_LABELS = { female: 'Female', male: 'Male' } as const;
-
-/**
- * One label/value pair of the details list. The dividers live on the `<dl>`
- * rather than as a `border-b … last:border-b-0` on every row. `numeric` gives
- * the value tabular figures — a weight, an age.
- */
-function DetailRow({
-  label,
-  value,
-  numeric = true,
-}: {
-  label: string;
-  value: React.ReactNode;
-  numeric?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3.5">
-      <dt className="text-sm font-semibold">{label}</dt>
-      <dd
-        className={cn(
-          'text-sm font-semibold text-muted-foreground',
-          numeric && 'tabular-nums',
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-type PersonalDetailsSectionProps = {
-  profileData: ProfileResponse | null;
-  loading: boolean;
-  onProfileChange: (profile: ProfileResponse) => void;
-};
-
 export function PersonalDetailsSection({
-  profileData,
-  loading,
-  onProfileChange,
-}: PersonalDetailsSectionProps) {
+  profile,
+}: {
+  profile: ProfileResponse;
+}) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const form = useForm<OnboardingFormValues>({
@@ -81,75 +43,52 @@ export function PersonalDetailsSection({
   });
 
   function handleOpenChange(next: boolean) {
-    if (loading || saving) return;
-    if (next && profileData) {
+    if (saving) return;
+    if (next) {
       form.reset({
-        age: profileData.age,
-        sex: profileData.sex,
-        heightCm: profileData.heightCm,
-        activityLevel: profileData.activityLevel,
-        currentWeightKg: profileData.currentWeightKg ?? undefined,
-        targetWeightKg: profileData.targetWeightKg ?? undefined,
+        age: profile.age,
+        sex: profile.sex,
+        heightCm: profile.heightCm,
+        activityLevel: profile.activityLevel,
+        currentWeightKg: profile.currentWeightKg ?? undefined,
+        targetWeightKg: profile.targetWeightKg ?? undefined,
       });
     }
     setOpen(next);
   }
 
   async function handleSave(values: OnboardingFormValues) {
-    if (!profileData) return;
-    const previous = profileData;
-
+    // Closed first, deliberately: the write is three calls deep and the list
+    // behind the dialog is where its result is read.
     setOpen(false);
     setSaving(true);
-    const weightChanged = values.currentWeightKg !== previous.currentWeightKg;
-    const targetWeightChanged =
-      values.targetWeightKg !== previous.targetWeightKg;
-    try {
-      if (weightChanged) {
-        await weights.create({
-          weightKg: values.currentWeightKg,
-          recordedAt: new Date().toISOString(),
-        });
-      }
-      if (targetWeightChanged) {
-        await goals.create({
-          targetWeightKg: values.targetWeightKg,
-          preferredWeeklyChangeKg:
-            previous.preferredWeeklyChangeKg ?? DEFAULT_PLAN_PACE,
-        });
-      }
-      const updated = await profile.put({
-        ...previous,
-        ...values,
-      });
-      onProfileChange({
-        ...updated,
-        currentWeightKg: values.currentWeightKg,
-        targetWeightKg: values.targetWeightKg,
-      });
-      if (weightChanged || targetWeightChanged) {
-        toast.warning('Details saved — check your plan', {
-          description:
-            'Your daily target was recalculated. The pace behind it may no longer fit — review it under Current plan.',
-          position: 'top-center',
-          closeButton: true,
-          duration: Infinity,
-        });
-        return;
-      }
 
-      toast.success('Details updated', {
-        description:
-          updated.calorieTarget &&
-          updated.calorieTarget !== previous.calorieTarget
-            ? `New daily calorie target: ${updated.calorieTarget.toLocaleString()} kcal`
-            : undefined,
-      });
-    } catch {
-      toast.error("Couldn't save your details. Please try again.");
-    } finally {
-      setSaving(false);
+    const result = await saveDetails(values);
+    setSaving(false);
+
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
     }
+
+    if (result.data.replan) {
+      toast.warning('Details saved — check your plan', {
+        description:
+          'Your daily target was recalculated. The pace behind it may no longer fit — review it under Current plan.',
+        position: 'top-center',
+        closeButton: true,
+        duration: Infinity,
+      });
+      return;
+    }
+
+    toast.success('Details updated', {
+      description:
+        result.data.calorieTarget != null &&
+        result.data.calorieTarget !== profile.calorieTarget
+          ? `New daily calorie target: ${result.data.calorieTarget.toLocaleString()} kcal`
+          : undefined,
+    });
   }
 
   return (
@@ -158,14 +97,10 @@ export function PersonalDetailsSection({
         <h2 className="text-sm text-muted-foreground">Personal details</h2>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger
-            disabled={loading || saving}
+            disabled={saving}
             render={<Button variant="outline" size="sm" />}
           >
-            {loading || saving ? (
-              <Spinner />
-            ) : (
-              <Edit2Icon className="size-3 mr-1" />
-            )}
+            {saving ? <Spinner /> : <Edit2Icon className="size-3 mr-1" />}
             Edit details
           </DialogTrigger>
           {/* See edit-profile-dialog: upstream's DialogContent has no height
@@ -194,32 +129,20 @@ export function PersonalDetailsSection({
       </div>
       <Card className="gap-0 overflow-hidden py-0">
         <dl className="divide-y divide-border">
-          <DetailRow
-            label="Sex"
-            value={profileData ? SEX_LABELS[profileData.sex] : '—'}
-          />
-          <DetailRow label="Age" value={profileData?.age ?? '—'} />
-          <DetailRow
-            label="Height"
-            value={profileData ? `${profileData.heightCm} cm` : '—'}
-          />
+          <DetailRow label="Sex" value={SEX_LABELS[profile.sex]} />
+          <DetailRow label="Age" value={profile.age} />
+          <DetailRow label="Height" value={`${profile.heightCm} cm`} />
           <DetailRow
             label="Weight goal"
             value={
-              profileData?.targetWeightKg != null
-                ? `${profileData.targetWeightKg} kg`
-                : profileData
-                  ? 'Not set'
-                  : '—'
+              profile.targetWeightKg != null
+                ? `${profile.targetWeightKg} kg`
+                : 'Not set'
             }
           />
           <DetailRow
             label="Activity level"
-            value={
-              profileData
-                ? ACTIVITY_LEVEL_LABELS[profileData.activityLevel]
-                : '—'
-            }
+            value={ACTIVITY_LEVEL_LABELS[profile.activityLevel]}
           />
         </dl>
       </Card>

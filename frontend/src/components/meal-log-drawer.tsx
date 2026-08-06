@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, useTransition } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
-import Image from 'next/image';
+import { Mascot } from '@/components/mascot';
 import { MascotDisc } from '@/components/mascot-disc';
 import { ArrowLeftIcon, Pencil, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
@@ -64,15 +64,16 @@ import {
   withPortionFigures,
   type MealDraftValues,
 } from '@/components/meal-fields';
+import { QuietButton } from '@/components/quiet-button';
 import { SavedMealPicker } from '@/components/saved-meals/saved-meal-picker';
 import { SaveToMyMealsButton } from '@/components/saved-meals/save-to-my-meals-button';
 import { cn } from '@/lib/utils';
-import { useMeals } from '@/lib/meals-context';
-import {
-  ApiError,
-  meals as mealsApi,
-  savedMeals as savedMealsApi,
-} from '@/lib/api-client';
+import { useSearchParams } from 'next/navigation';
+import { deleteMeal, saveMeal, updateMeal } from '@/lib/actions/meals';
+import { updateSavedMeal } from '@/lib/actions/saved-meals';
+import { DAY_PARAM, trackingDayFrom } from '@/lib/dashboard-transforms';
+import { requestAiParse } from '@/lib/ai-parse';
+import { ApiError } from '@/lib/api-error';
 import { mealTypeForHour } from '@/lib/dashboard-transforms';
 import { macroCalorieSuggestion, sumItems } from '@/lib/meal-draft';
 import { useControllableState } from '@/hooks/use-controllable-state';
@@ -235,9 +236,18 @@ type MealLogDrawerProps = {
 export function MealLogDrawer(props: MealLogDrawerProps) {
   const { open: controlledOpen, onOpenChange, trigger } = props;
   const editing = props.mode === 'edit' ? props.meal : undefined;
-  // MealsProvider owns the optimistic save/reconcile + the success toast+undo,
-  // since Undo (DELETE) needs the server id and rollback is the provider's job.
-  const { saveMeal, updateMeal } = useMeals();
+  // The toast and its Undo live here now, because the action that saved the meal
+  // is what returns the id Undo needs to delete. MealsProvider used to own both,
+  // together with an optimistic insert this no longer needs: the meal appears
+  // when the revalidated tree does.
+  const [, startSaving] = useTransition();
+  // Which Tracking Day a new meal belongs to. A meal, unlike a weight, can be
+  // logged onto a past day — the drawer stamps the time of day and the URL says
+  // which day it lands on.
+  const trackingDay = trackingDayFrom(
+    useSearchParams().get(DAY_PARAM),
+    new Date(),
+  );
   const isMobile = useIsMobile();
   const [open, setOpen] = useControllableState(
     controlledOpen,
@@ -345,20 +355,20 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
       than closing, so the corrected figures are visible where they were picked
       — leaving the step unmounts the picker, which re-lists on the way in. */
   async function saveTemplate(id: string, values: MealDraftValues) {
-    try {
-      await savedMealsApi.update(id, {
-        mealName: values.mealName,
-        totalCalories: values.totalCalories,
-        proteinGrams: values.proteinGrams,
-        carbsGrams: values.carbsGrams,
-        fatGrams: values.fatGrams,
-        items: toWireItems(values.items),
-      });
-      setView({ step: 'ai-input' });
-      toast.success(`“${values.mealName}” updated`);
-    } catch {
-      toast.error("Couldn't save your changes. Please try again.");
+    const result = await updateSavedMeal(id, {
+      mealName: values.mealName,
+      totalCalories: values.totalCalories,
+      proteinGrams: values.proteinGrams,
+      carbsGrams: values.carbsGrams,
+      fatGrams: values.fatGrams,
+      items: toWireItems(values.items),
+    });
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
     }
+    setView({ step: 'ai-input' });
+    toast.success(`“${values.mealName}” updated`);
   }
 
   async function runParse({ description }: AiParseRequest) {
@@ -377,7 +387,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
     setView({ step: 'loading' });
 
     try {
-      const result = await mealsApi.aiParse({ description }, controller.signal);
+      const result = await requestAiParse({ description }, controller.signal);
       if (controller.signal.aborted) return;
       if (result.parsed) loadParsedMeal(result.meal);
       else setView({ step: 'not-food', reason: result.reason });
@@ -457,13 +467,41 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
       // No recordedAt and no source in the patch: an edit corrects a meal's
       // figures, it doesn't move it to another Tracking Day or turn an AI parse
       // into a manual entry.
-      updateMeal(editing, { ...values, items });
+      startSaving(async () => {
+        const result = await updateMeal(editing.id, { ...values, items });
+        if (!result.ok) toast.error(result.message);
+      });
     } else {
-      saveMeal({
-        ...values,
-        items,
-        recordedAt: new Date().toISOString(),
-        source: draftSource,
+      // Only the day part of the stamp is the selected day — the time of day is
+      // what orders meals inside a Tracking Day, so it stays "now".
+      const recordedAt = `${trackingDay}T${new Date().toISOString().slice(11)}`;
+      startSaving(async () => {
+        const result = await saveMeal({
+          ...values,
+          items,
+          recordedAt,
+          source: draftSource,
+        });
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        const saved = result.data;
+        // CELEBRATE mascot moment (design doc: quiet, it happens every meal).
+        toast.success('Meal saved', {
+          icon: <Mascot src="/mascot/celebrate.webp" className="w-6" />,
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              void deleteMeal(
+                saved.id,
+                "Couldn't undo — your meal is still saved.",
+              ).then((undone) => {
+                if (!undone.ok) toast.error(undone.message);
+              });
+            },
+          },
+        });
       });
     }
     // Closing resets: DrawerPortal unmounts the content, and `handleOpenChange`
@@ -522,9 +560,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
               <DescriptionField
                 parseForm={parseForm}
                 autoFocus
-                rows={4}
                 placeholder="Chicken breast 200 g, rice 150 g and a salad…"
-                className="min-h-32"
               />
               <ExampleChips control={parseForm.control} onPick={pickExample} />
             </form>
@@ -618,6 +654,12 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
               template is the pencil's job, not a side effect of logging. */}
           <DrawerFooter className="items-center gap-2 pb-5">
             <SaveButton control={form.control} label="Log" />
+            {/* The way out. This step is reached from the picker, and it used to
+                be a dead end: the only exits were logging the meal or closing
+                the drawer, so a row opened by mistake had to be paid for. */}
+            <QuietButton onClick={() => setView({ step: 'ai-input' })}>
+              Cancel
+            </QuietButton>
           </DrawerFooter>
         </StepPanel>
       )}
@@ -687,7 +729,7 @@ export function MealLogDrawer(props: MealLogDrawerProps) {
             }}
           >
             <DrawerBody>
-              <DescriptionField parseForm={parseForm} autoFocus rows={3} />
+              <DescriptionField parseForm={parseForm} autoFocus />
             </DrawerBody>
           </RecoverStep>
         </StepPanel>
@@ -826,12 +868,7 @@ function MealReviewBody({
         {parse?.confidenceNote && (
           <Item className="bg-accent">
             <ItemMedia variant="image">
-              <Image
-                src="/mascot/reassure.webp"
-                alt=""
-                width={40}
-                height={40}
-              />
+              <Mascot src="/mascot/reassure.webp" className="w-10" />
             </ItemMedia>
             <ItemContent>
               {/* `line-clamp-none`: the note is the model's own words about
@@ -951,28 +988,6 @@ function EditStep({
 }
 
 /**
- * A secondary action that reads as a link but is still a target: `py-2` puts it
- * at ~36px where `p-0` left a 20px strip. WCAG 2.5.8's inline-text exemption
- * doesn't apply — none of these sit inside a sentence.
- */
-function QuietButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      type="button"
-      variant="link"
-      className={cn(
-        'h-auto gap-1 px-1 py-2 text-sm text-muted-foreground',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-/**
  * The one description field, used by the input step and by the not-food step's
  * second try — the same field of the same form, so a retry keeps what was
  * typed, and `min(3)`/`max(500)` finally produce a message instead of silently
@@ -998,7 +1013,13 @@ function DescriptionField({
         <InputGroupTextarea
           id={id}
           aria-invalid={error ? true : undefined}
-          className={cn('min-h-22', className)}
+          // Two lines at rest, growing with what is typed: `ui/textarea` carries
+          // `field-sizing-content`, so the height follows the content and no
+          // `rows` is needed — a `rows` here would only raise the floor again,
+          // which is what a 128px empty box was. Capped, because the field
+          // takes 500 characters and the footer's action has to stay in view; the
+          // textarea scrolls past the cap.
+          className={cn('min-h-16 max-h-48', className)}
           {...props}
           {...parseForm.register('description')}
         />

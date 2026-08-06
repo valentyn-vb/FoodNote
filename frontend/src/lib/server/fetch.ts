@@ -1,9 +1,15 @@
+// The access cookie and the Authorization header it becomes are built here, so a
+// client import is a token in a browser bundle. `server-only` makes that a build
+// error instead of a review item — the class of mistake it catches is silent
+// otherwise: a `'use client'` module's exports reach a Server Component as client
+// references, with no type error and nothing in the console.
+import 'server-only';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { z } from 'zod';
 import { ApiError, apiErrorMessage } from '@/lib/api-error';
 import { ACCESS_COOKIE } from './cookies';
-import { env } from './env';
+import { forwardedFor, nestUrl } from './nest';
 
 /**
  * The only door to Nest from the server.
@@ -26,7 +32,7 @@ async function request(path: string, init: RequestInit): Promise<Response> {
   // here without one means there was no session to renew.
   if (!accessToken) redirect('/login');
 
-  const res = await fetch(`${env.API_URL}/api${path}`, {
+  const res = await fetch(nestUrl(path), {
     ...init,
     // Every read is per-user and cookie-dependent, so there is nothing here a
     // cache could legitimately share. Explicit rather than inherited: a default
@@ -35,15 +41,15 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
-      // Once every call to Nest originates in a Vercel function, `req.ip`
-      // collapses to a handful of egress addresses and the per-IP auth throttle
-      // buckets every user together. Forwarding the real client address is what
-      // keeps that limit per-user — see `backend/src/common/trust-proxy.ts`.
       ...forwardedFor(await headers()),
       ...init.headers,
     },
   });
 
+  // A redirect *is* a thrown error, so an action that wraps this call in a
+  // try/catch swallows it and reports a save failure instead — leaving the user
+  // on a form that can never succeed. Every action therefore opens its catch with
+  // `unstable_rethrow(err)`; that repetition is this line's cost.
   if (res.status === 401) redirect('/login');
 
   if (!res.ok) {
@@ -93,9 +99,4 @@ export async function serverSend(
   init: RequestInit = {},
 ): Promise<void> {
   await request(path, init);
-}
-
-function forwardedFor(incoming: Headers): Record<string, string> {
-  const value = incoming.get('x-forwarded-for');
-  return value ? { 'x-forwarded-for': value } : {};
 }

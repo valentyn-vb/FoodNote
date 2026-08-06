@@ -1,4 +1,4 @@
-import { addDays, todayUtc } from './dashboard-transforms';
+import { DAY_MS, addDays, isDay, todayUtc } from './dashboard-transforms';
 
 /**
  * The weights page's range control: which span of the journal is on screen.
@@ -50,7 +50,47 @@ export const RANGE_LABELS: Record<WeightRangePreset, string> = {
 /** Inclusive UTC day bounds for `GET /weights?from&to`. */
 export type WeightRange = { from: string; to: string };
 
-const DAY_MS = 86_400_000;
+/**
+ * The window's two ends in the URL, named as the API names them.
+ *
+ * Two parameters rather than a preset and an offset, for the same reason the
+ * state was the range itself: a hand-picked window is nameable this way and no
+ * (preset, offset) pair can spell it. `DAY_PARAM`'s neighbours here — the day
+ * and the range are both "which slice of the journal is on screen", and both
+ * now live where a link can carry them.
+ */
+export const RANGE_FROM_PARAM = 'from';
+export const RANGE_TO_PARAM = 'to';
+
+/** The window a bare `/weights` shows. */
+export const DEFAULT_RANGE_PRESET: WeightRangePreset = '7D';
+
+/**
+ * The window a request is asking for — the range control's `trackingDayFrom`.
+ *
+ * Read from the URL, so both ends are untrusted input: a hand-edited link, a
+ * repeated key, a reversed pair, a window ending next year. Every rejection
+ * falls back to the default window rather than erroring, because none of these
+ * is a state worth an error screen — the reader either mangled a link or is
+ * probing, and in both cases the last week of the journal is the honest answer.
+ *
+ * A single day is rejected along with the rest: the calendar's own `min={1}`
+ * refuses to commit one, and every change figure under a one-day window would
+ * compare a reading against itself.
+ */
+export function weightRangeFrom(
+  // `string[]` because a server page's `searchParams` yields one for a repeated
+  // key, `null` because `useSearchParams().get()` returns it.
+  from: string | string[] | null | undefined,
+  to: string | string[] | null | undefined,
+  now: Date,
+): WeightRange {
+  const fallback = presetRange(DEFAULT_RANGE_PRESET, now);
+  if (!isDay(from) || !isDay(to)) return fallback;
+  if (from >= to) return fallback;
+  if (to > todayUtc(now)) return fallback;
+  return { from, to };
+}
 
 /** Whole days from `from` to `to` — the window's own length, and its step. */
 export function rangeDays({ from, to }: WeightRange): number {
@@ -123,29 +163,6 @@ const utcMonthDayYear = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 });
-
-/**
- * A calendar cell's date as the day string the API takes.
- *
- * react-day-picker works in local midnight, so `toISOString().slice(0, 10)` —
- * what the rest of this app does to a `Date` — names the day *before* for any
- * viewer east of UTC: tapping Aug 1 in Berlin fetched Jul 31. The day the
- * reader tapped is the one printed on the cell, which is its local parts.
- */
-export function calendarDay(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-/**
- * The inverse, for the calendar's `disabled` bound and its opening month: a
- * UTC-midnight `Date` would be a different *day* to the cells it is compared
- * against, and west of UTC that disabled today.
- */
-export function calendarDate(day: string): Date {
-  return new Date(`${day}T00:00:00`);
-}
 
 /**
  * The window in words, for under the hero figure — "Jul 5 – Aug 4".

@@ -48,7 +48,7 @@ export function PlanOptionCard({ option, selected }: PlanOptionCardProps) {
       // driven by `data-checked`. The border keeps its width and only changes
       // colour — thickening it on selection shifts the content half a pixel in
       // every direction, which reads as a twitch.
-      className="cursor-pointer gap-1.5 rounded-lg px-4.5 py-4 text-left transition-colors duration-150 outline-none hover:border-primary/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:border-primary data-checked:bg-accent"
+      className="cursor-pointer gap-2 rounded-lg px-4 py-4 text-left shadow-none transition-colors duration-150 outline-none hover:border-primary/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:border-primary data-checked:bg-accent"
     >
       <span aria-hidden className={cn('block text-sm', tone)}>
         {paceLine}

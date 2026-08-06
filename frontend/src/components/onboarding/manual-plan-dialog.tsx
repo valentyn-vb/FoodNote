@@ -42,8 +42,8 @@ type ManualPlanDialogProps = {
   startFromPace: Pace | null;
   /**
    * True when the active plan is already a manual one, so this edits rather than
-   * creates — the label has to say so, or "Create your own plan" reads as if the
-   * plan they are already on is about to be thrown away.
+   * creates — the label has to say so, or the trigger reads as if the plan they
+   * are already on is about to be thrown away.
    */
   isCustomPlan?: boolean;
   onConfirm: (pace: Pace) => void | Promise<void>;
@@ -75,7 +75,13 @@ export function ManualPlanDialog({
 }: ManualPlanDialogProps) {
   const [open, setOpen] = useState(false);
   const range = manualCalorieRange(input);
-  const label = isCustomPlan ? 'Edit your custom plan' : 'Create your own plan';
+  // Named after what the user does here — types a daily calorie budget — rather
+  // than after the Manual Plan it produces. CONTEXT.md puts "custom goal",
+  // "manual target" and "daily goal" on the Avoid list, and "Create your own
+  // plan" said nothing about calories at all.
+  const label = isCustomPlan
+    ? 'Edit your daily calories'
+    : 'Set your own daily calories';
   const form = useForm<ManualPlanFormValues>({
     resolver: zodResolver(manualPlanFormSchema(range)),
   });
@@ -137,7 +143,7 @@ export function ManualPlanDialog({
           {onRemove && (
             <Button type="button" variant="destructive" onClick={handleRemove}>
               <Trash2 size={16} />
-              Remove custom plan
+              Back to a preset pace
             </Button>
           )}
           <div className="flex flex-col-reverse gap-2.5 sm:flex-row">

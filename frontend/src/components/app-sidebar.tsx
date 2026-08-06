@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import type { AuthUser } from '@foodnote/shared';
 import {
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
@@ -41,7 +41,8 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/components/auth-provider';
+import { Mascot } from '@/components/mascot';
+import { logout } from '@/lib/actions/auth';
 import { LogWeightAction } from '@/components/log-weight-action';
 import { fullNameOf, initialsOf } from '@/lib/user-display';
 
@@ -50,18 +51,18 @@ import { fullNameOf, initialsOf } from '@/lib/user-display';
 // places, and as rows they went away with the collapsed rail. They live in
 // AppHeader now — except that below 768 the header row has no space for "Log
 // weight", so the sheet carries it back as a button rather than as a nav row.
-export function AppSidebar() {
+export function AppSidebar({ user }: { user: AuthUser }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user: authUser, logout } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
   const { appearance, setAppearance } = useAppearance();
-  const fullName = fullNameOf(authUser);
-  const initials = initialsOf(authUser);
+  const fullName = fullNameOf(user);
+  const initials = initialsOf(user);
 
-  async function handleLogout() {
-    await logout();
-    router.replace('/login');
+  // The action clears both cookies and redirects; there is no local session
+  // state left to reset, nothing to navigate by hand, and no pending state to
+  // draw — the menu unmounts with the navigation.
+  function handleLogout() {
+    void logout();
   }
 
   // A sheet does not unmount on navigation, so following a link inside it has
@@ -82,12 +83,21 @@ export function AppSidebar() {
             the wordmark goes. With the padding kept, the logo was pushed past
             the edge and `overflow-hidden` cut it in half. */}
         <div className="flex h-12 items-center gap-2 overflow-hidden px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 lg:h-14">
-          <Image
+          {/* Through `Mascot`, which owns the drawn size of each file and pairs a
+              `w-*` with `h-auto`. Hand-rolled here with `size-8`, this was the one
+              call site fixing both dimensions, and fractional layout renders the
+              row's 32px box at 31 — which is precisely the ratio mismatch
+              `next/image` warns about.
+
+              `priority` because the component is lazy by default and this logo is
+              in the first screen of every app route: the request used to start
+              after layout, measured at 410ms against a 460ms first paint, so the
+              row painted with a hole and filled at 765ms. */}
+          <Mascot
             src="/mascot/default.webp"
             alt="FoodNote mascot"
-            width={32}
-            height={32}
-            className="size-8 shrink-0 rounded-full"
+            className="w-8 shrink-0 rounded-full"
+            priority
           />
           <span className="truncate text-lg font-bold group-data-[collapsible=icon]:hidden">
             FoodNote
@@ -126,12 +136,12 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={pathname === '/weights'}
-                  tooltip="Weights"
+                  tooltip="Weight History"
                   onClick={closeSheet}
                   render={<Link href="/weights" />}
                 >
                   <TrendingDownIcon />
-                  <span>Weights</span>
+                  <span>Weight History</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -172,7 +182,7 @@ export function AppSidebar() {
                     {fullName}
                   </span>
                   <span className="truncate text-sm text-muted-foreground">
-                    {authUser?.email}
+                    {user.email}
                   </span>
                 </div>
                 <ChevronsUpDownIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />

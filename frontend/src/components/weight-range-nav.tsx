@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 import { StepperNav } from '@/components/stepper-nav';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { todayUtc } from '@/lib/dashboard-transforms';
 import {
-  RANGE_LABELS,
-  WEIGHT_RANGE_PRESETS,
   calendarDate,
   calendarDay,
+  todayUtc,
+} from '@/lib/dashboard-transforms';
+import {
+  RANGE_FROM_PARAM,
+  RANGE_LABELS,
+  RANGE_TO_PARAM,
+  WEIGHT_RANGE_PRESETS,
   canStepForward,
   matchPreset,
   presetRange,
@@ -30,9 +35,16 @@ import {
  * Which span of the weight journal is on screen: a preset length, a step
  * through the journal in units of that length, or two dates picked by hand.
  *
- * Controlled, and `now` is a prop rather than read from the clock — the page
- * owns the range so the chart, the change figures and the entry list all read
- * one window, and the module's own convention is that time is passed in
+ * The window is `?from=&to=`, so changing it is a navigation and the page
+ * re-reads on the server for the window it moved to — the same shape `DayNav`
+ * has, and it makes a span shareable besides. It was `useState` on the page,
+ * which is the half of #148 that did not survive the server-first move: the
+ * chart, the change figures and the entry list are one server read now, so they
+ * still cannot describe different windows.
+ *
+ * `now` stays a prop rather than read from the clock: the page passes the same
+ * instant it derived its figures from, so the label and the numbers cannot land
+ * on different days, and the module's convention is that time is passed in
  * (dashboard-transforms' header) so this stays testable without faking a clock.
  *
  * Which preset reads as pressed is derived from the range, never stored, so a
@@ -42,36 +54,68 @@ import {
 export function WeightRangeNav({
   range,
   now,
-  onChange,
 }: {
   range: WeightRange;
   now: Date;
-  onChange: (next: WeightRange) => void;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
   const [calendarOpen, setCalendarOpen] = useState(false);
-  // The calendar's own draft, cleared each time it opens so picking a window is
-  // always the same two clicks. Seeding it with the current range instead would
-  // make the first click *extend* that range and commit on the spot, which is a
-  // different gesture depending on which day you happen to hit.
+  // The calendar's own draft. `undefined` means "nothing picked yet", and the
+  // calendar then shows the window that is actually on screen — highlighted in
+  // primary, as the selected day is on /meals. It used to *stay* empty on open,
+  // which left the picker claiming no window was chosen at all.
+  //
+  // Picking is still the same two clicks wherever you start: the first click on
+  // a shown range replaces the draft with a one-day range at that date rather
+  // than extending the range it lands next to, so the gesture does not depend on
+  // which day you happen to hit.
   const [draft, setDraft] = useState<DateRange | undefined>(undefined);
 
   const active = matchPreset(range, now);
 
-  function handleSelect(next: DateRange | undefined) {
+  function goToRange(next: WeightRange) {
+    const params = new URLSearchParams({
+      [RANGE_FROM_PARAM]: next.from,
+      [RANGE_TO_PARAM]: next.to,
+    });
+    // `push`, not `replace`: the window is where the reader is, so Back should
+    // take them to the span they came from — as stepping the day does.
+    startTransition(() => {
+      router.push(`${pathname}?${params}`);
+    });
+  }
+
+  // `clicked` rather than `next` on the first press: `next` is what the calendar
+  // computed against the window it was *showing*, so honouring it would extend
+  // the range on screen — which is the gesture the cleared draft used to avoid,
+  // and the reason it was cleared. Starting a one-day draft at the clicked date
+  // keeps "two clicks, from wherever you start" while the shown window stays
+  // visible until the first of them.
+  function handleSelect(next: DateRange | undefined, clicked: Date) {
+    if (!draft) {
+      setDraft({ from: clicked, to: undefined });
+      return;
+    }
     setDraft(next);
     if (!next?.from || !next.to) return;
-    onChange({ from: calendarDay(next.from), to: calendarDay(next.to) });
+    goToRange({ from: calendarDay(next.from), to: calendarDay(next.to) });
     setCalendarOpen(false);
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-4">
       <StepperNav
         previousLabel="Earlier period"
         nextLabel="Later period"
-        onPrevious={() => onChange(shiftRange(range, -1, now))}
-        onNext={() => onChange(shiftRange(range, 1, now))}
-        nextDisabled={!canStepForward(range, now)}
+        onPrevious={() => goToRange(shiftRange(range, -1, now))}
+        onNext={() => goToRange(shiftRange(range, 1, now))}
+        // Both arrows go dead while the navigation is in flight: each step is a
+        // server read, and a second click during one steps from the window
+        // already on screen rather than from the one being fetched.
+        previousDisabled={isPending}
+        nextDisabled={!canStepForward(range, now) || isPending}
       >
         <Popover
           open={calendarOpen}
@@ -103,7 +147,15 @@ export function WeightRangeNav({
               // it would compare a reading against itself. `min` makes the
               // second click land on a different day or clear the draft.
               min={1}
-              selected={draft}
+              // The window on screen until a first click replaces it, so the
+              // picker opens saying which span is being shown instead of
+              // showing an empty grid.
+              selected={
+                draft ?? {
+                  from: calendarDate(range.from),
+                  to: calendarDate(range.to),
+                }
+              }
               onSelect={handleSelect}
               defaultMonth={calendarDate(range.to)}
               disabled={{ after: calendarDate(todayUtc(now)) }}
@@ -122,7 +174,7 @@ export function WeightRangeNav({
           // "three periods back" is 90 days at 30D and three years at 1Y, so
           // carrying a past window across a change lands somewhere nobody
           // asked for.
-          if (next) onChange(presetRange(next, now));
+          if (next) goToRange(presetRange(next, now));
         }}
         // The group has no visible label to bind to, so it names itself or a
         // screen reader announces five bare options.

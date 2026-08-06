@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# API_URL has no default any more, so the app does not start without a local
+# env file. The example is the only thing telling a new checkout that.
+!.env.example
 
 # vercel
 .vercel

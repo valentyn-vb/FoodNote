@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { calendarDate, calendarDay } from './dashboard-transforms';
 import {
   RANGE_DAYS,
-  calendarDate,
-  calendarDay,
   WEIGHT_RANGE_PRESETS,
   canStepForward,
   matchPreset,
@@ -10,6 +9,8 @@ import {
   rangeDays,
   rangeLabel,
   shiftRange,
+  weightRangeFrom,
+  DEFAULT_RANGE_PRESET,
 } from './weight-range';
 
 // Fixed instant, mid-day UTC, so nothing here depends on when the suite runs.
@@ -166,5 +167,66 @@ describe('rangeLabel', () => {
     expect(rangeLabel(presetRange('1Y', NOW))).toBe(
       'Aug 4, 2025 – Aug 4, 2026',
     );
+  });
+});
+
+describe('weightRangeFrom', () => {
+  const fallback = presetRange(DEFAULT_RANGE_PRESET, NOW);
+
+  it('given a well-formed window in the past, when read, then it is honoured', () => {
+    expect(weightRangeFrom('2026-06-05', '2026-07-05', NOW)).toEqual({
+      from: '2026-06-05',
+      to: '2026-07-05',
+    });
+  });
+
+  it('given no parameters at all, when read, then the default window stands', () => {
+    expect(weightRangeFrom(undefined, undefined, NOW)).toEqual(fallback);
+    expect(weightRangeFrom(null, null, NOW)).toEqual(fallback);
+  });
+
+  it('given only one end, when read, then the default window stands', () => {
+    // Half a window is not a window: the other end would have to be invented,
+    // and any invention here is a span the reader did not ask for.
+    expect(weightRangeFrom('2026-06-05', undefined, NOW)).toEqual(fallback);
+    expect(weightRangeFrom(undefined, '2026-07-05', NOW)).toEqual(fallback);
+  });
+
+  it('given a repeated key, when read, then the default window stands', () => {
+    // `searchParams` hands an array for `?from=a&from=b`, which names no day.
+    expect(
+      weightRangeFrom(['2026-06-05', '2026-06-06'], '2026-07-05', NOW),
+    ).toEqual(fallback);
+  });
+
+  it('given a value that is not a day, when read, then the default window stands', () => {
+    expect(weightRangeFrom('yesterday', '2026-07-05', NOW)).toEqual(fallback);
+    expect(weightRangeFrom('2026-6-5', '2026-07-05', NOW)).toEqual(fallback);
+    // Shaped like a day, but no such day exists.
+    expect(weightRangeFrom('2026-02-30', '2026-07-05', NOW)).toEqual(fallback);
+  });
+
+  it('given the ends the wrong way round, when read, then the default window stands', () => {
+    expect(weightRangeFrom('2026-07-05', '2026-06-05', NOW)).toEqual(fallback);
+  });
+
+  it('given both ends on one day, when read, then the default window stands', () => {
+    // Every change figure under a one-day window compares a reading against
+    // itself, which is why the calendar refuses to commit one either.
+    expect(weightRangeFrom('2026-07-05', '2026-07-05', NOW)).toEqual(fallback);
+  });
+
+  it('given a window ending in the future, when read, then the default window stands', () => {
+    // The journal has nothing past today, and an axis drawn to next year
+    // squashes every real reading into a corner.
+    expect(weightRangeFrom('2026-08-01', '2026-12-31', NOW)).toEqual(fallback);
+  });
+
+  it('given a window ending today, when read, then it is honoured', () => {
+    // The boundary the future check must not catch.
+    expect(weightRangeFrom('2026-08-01', '2026-08-04', NOW)).toEqual({
+      from: '2026-08-01',
+      to: '2026-08-04',
+    });
   });
 });

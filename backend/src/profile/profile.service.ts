@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { calorieTargetForPace, hasReachedTarget, tdee } from '@foodnote/shared';
 import type {
   PatchProfileRequest,
@@ -24,17 +24,35 @@ export class ProfileService {
     return this.profiles.findOne({ where: { userId } });
   }
 
-  async put(userId: string, data: PutProfileRequest): Promise<ProfileResponse> {
+  /**
+   * The row, without the derived response around it — which is the whole reason
+   * it is separate. `PlanService` calls this inside its transaction, and
+   * `buildResponse` recomputes the calorie numbers from the weight journal and the
+   * active goal: run it there and it reads a half-written plan. The plan endpoint
+   * returns a `GoalResponse` and never needs the profile view.
+   *
+   * `manager` scopes the write to the caller's transaction.
+   */
+  async putEntity(
+    userId: string,
+    data: PutProfileRequest,
+    manager?: EntityManager,
+  ): Promise<UserProfile> {
+    const repo = manager ? manager.getRepository(UserProfile) : this.profiles;
     // A merge onto the existing row, not a fresh entity: PUT replaces the
     // onboarding facts and its payload deliberately carries nothing else (ADR
     // 0014), so anything the request never mentions — the appearance today, the
     // next preference tomorrow — has to survive it. `create()` + `save()` would
     // blank every unlisted column instead, one silent reset per field.
-    const profile = this.profiles.merge(
-      (await this.find(userId)) ?? this.profiles.create({ userId }),
+    const profile = repo.merge(
+      (await repo.findOne({ where: { userId } })) ?? repo.create({ userId }),
       data,
     );
-    await this.profiles.save(profile); // create-or-replace: PK is userId
+    return repo.save(profile); // create-or-replace: PK is userId
+  }
+
+  async put(userId: string, data: PutProfileRequest): Promise<ProfileResponse> {
+    const profile = await this.putEntity(userId, data);
     return this.buildResponse(userId, profile);
   }
 

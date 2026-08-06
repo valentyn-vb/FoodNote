@@ -11,21 +11,34 @@ import {
 } from '@/components/onboarding/form-schema';
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
-import { goals, profile, weights } from '@/lib/api-client';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { createPlan } from '@/lib/actions/plan';
 import type { Pace } from '@foodnote/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { ReviewStep } from './review-step';
 
-type Step = 'details' | 'plan';
+type Step = 'details' | 'plan' | 'review';
 
 export function OnboardingWizard() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('details');
+  const [pace, setPace] = useState<Pace | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fixed once, and read by both the picker and the review step: derived twice
+  // it would differ across midnight, and the goal date confirmed would not be
+  // the one chosen.
+  const [fromDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
@@ -36,92 +49,114 @@ export function OnboardingWizard() {
     setStep('plan');
   };
 
-  const goBack = () => {
+  const goToReview = (picked: Pace) => {
     setSubmitError(null);
-    setStep('details');
+    setPace(picked);
+    setStep('review');
   };
 
-  const handleConfirm = async (pace: Pace) => {
+  const goBack = (to: Step) => () => {
+    setSubmitError(null);
+    setStep(to);
+  };
+
+  // One call: the profile, the first weight entry and the goal are one
+  // transaction on the server (docs/adr/0016), so there is no half-saved plan to
+  // recover from here — and no navigation either, since the action redirects.
+  const handleConfirm = async () => {
+    if (pace === null) return;
     setSubmitError(null);
     setSubmitting(true);
-    try {
-      const values = form.getValues();
-      await profile.put({
-        age: values.age,
-        sex: values.sex,
-        heightCm: values.heightCm,
-        activityLevel: values.activityLevel,
-      });
-      // Weight is written only to the journal, never the profile.
-      await weights.create({
-        weightKg: values.currentWeightKg,
-        recordedAt: new Date().toISOString(),
-      });
-      await goals.create({
-        targetWeightKg: values.targetWeightKg,
-        preferredWeeklyChangeKg: pace,
-      });
-      router.push('/dashboard');
-    } catch {
-      setSubmitError("Couldn't save your plan. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    const result = await createPlan({
+      ...form.getValues(),
+      preferredWeeklyChangeKg: pace,
+    });
+    // Only a failure returns; a success redirected out of this tree.
+    setSubmitError(result.ok ? null : result.message);
+    setSubmitting(false);
   };
 
+  // Unreachable through the UI — the pace is set on the way in. It guards a hot
+  // reload, which restores the step and not the state beside it.
+  if (step === 'review' && pace !== null) {
+    return (
+      <Card>
+        <CardHeader>
+          <p className="text-sm text-muted-foreground">Step 3 of 3</p>
+          <CardTitle className="text-xl font-bold">Check it over</CardTitle>
+          <CardDescription>Nothing is saved until you confirm.</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <ReviewStep
+            values={form.getValues()}
+            pace={pace}
+            fromDate={fromDate}
+            submitting={submitting}
+            submitError={submitError}
+            onBack={goBack('plan')}
+            onConfirm={handleConfirm}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return step === 'plan' ? (
-    <div className="mx-auto flex w-full max-w-md flex-col px-5 pt-2.5 pb-4.5">
-      <div className="flex flex-col gap-1 pb-3.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={goBack}
-          aria-label="Back"
-          className="mb-2 -ml-2"
-        >
-          <ChevronLeft />
-        </Button>
-        <h1 className="font-heading text-2xl font-semibold">
-          Choose your plan
-        </h1>
-        <p className="text-sm font-semibold text-muted-foreground">
+    <Card>
+      <CardHeader>
+        <p className="text-sm text-muted-foreground">Step 2 of 3</p>
+        <CardTitle className="text-xl font-bold">Choose your plan</CardTitle>
+        <CardDescription>
           Based on your goal, here are a few daily-calorie options.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <PlanSelection
-        input={form.getValues()}
-        onConfirm={handleConfirm}
-        submitting={submitting}
-        submitError={submitError}
-      />
-    </div>
+      <CardContent>
+        <PlanSelection
+          input={form.getValues()}
+          fromDate={fromDate}
+          onConfirm={goToReview}
+          confirmLabel="Review"
+          secondaryAction={
+            // `px-6` matches the confirm button beside it: `lg` is px-2.5, and
+            // two buttons ending a step should not be padded differently.
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={goBack('details')}
+              className="px-6"
+            >
+              <ChevronLeft />
+              Back
+            </Button>
+          }
+        />
+      </CardContent>
+    </Card>
   ) : (
-    <div className="mx-auto flex w-full max-w-md flex-col pt-1.5 pb-5">
-      <div className="flex flex-col gap-1 px-5 pb-4.5">
-        <h1 className="font-heading text-2xl font-semibold">
-          Tell us about you
-        </h1>
-        <p className="text-sm font-semibold text-muted-foreground">
+    <Card>
+      <CardHeader>
+        <p className="text-sm text-muted-foreground">Step 1 of 3</p>
+        <CardTitle className="text-xl font-bold">Tell us about you</CardTitle>
+        <CardDescription>
           We&apos;ll use this to calculate your daily calorie target.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <DetailsForm form={form} onSubmit={goToPlan} />
+      <CardContent>
+        <DetailsForm form={form} onSubmit={goToPlan} />
+      </CardContent>
 
-      <Disclaimer className="px-5 pt-4 pb-1" />
-
-      <div className="flex flex-col gap-2.5 px-5 pt-3">
-        <Button
-          type="submit"
-          form={DETAILS_FORM_ID}
-          size="lg"
-          className="w-full"
-        >
+      {/* `items-stretch` because CardFooter is `flex items-center`, which would
+          otherwise shrink a full-width button to the width of its text. */}
+      <CardFooter className="flex-col items-stretch gap-4">
+        <Disclaimer />
+        <Button type="submit" form={DETAILS_FORM_ID} size="lg">
           Continue
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

@@ -24,8 +24,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PanelLeftIcon } from 'lucide-react';
+import { SIDEBAR_COOKIE_NAME } from '@/lib/sidebar-cookie';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
+// Upstream declares SIDEBAR_COOKIE_NAME here; it is imported instead — see
+// `lib/sidebar-cookie.ts` for why. The only divergence in this file.
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';

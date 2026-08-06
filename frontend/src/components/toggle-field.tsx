@@ -25,7 +25,7 @@ export function ToggleField<T extends FieldValues>({
   error?: string;
 }) {
   return (
-    <Field className="gap-1.75" data-invalid={!!error || undefined}>
+    <Field data-invalid={!!error || undefined}>
       <FormLabel>{label}</FormLabel>
       <Controller
         control={control}

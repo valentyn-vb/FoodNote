@@ -3,7 +3,6 @@
 import { PlanSelection } from '@/components/onboarding/plan-selection';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { goals, profile } from '@/lib/api-client';
+import { changePlanPace } from '@/lib/actions/goals';
 import { formatPace } from '@/lib/utils';
 import {
   type Pace,
@@ -22,23 +21,13 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-type CurrentPlanSectionProps = {
-  profileData: ProfileResponse | null;
-  loading: boolean;
-  onProfileChange: (profile: ProfileResponse) => void;
-};
-
-export function CurrentPlanSection({
-  profileData,
-  loading,
-  onProfileChange,
-}: CurrentPlanSectionProps) {
+export function CurrentPlanSection({ profile }: { profile: ProfileResponse }) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   function handleOpenChange(next: boolean) {
-    if (loading || submitting) return;
+    if (submitting) return;
     if (next) setSubmitError(null);
     setOpen(next);
   }
@@ -46,44 +35,41 @@ export function CurrentPlanSection({
   async function handleConfirm(pace: Pace) {
     setSubmitError(null);
     setSubmitting(true);
-    try {
-      await goals.update({ preferredWeeklyChangeKg: pace });
-      // Re-read so the card shows the server-recomputed calorie target.
-      const updated = await profile.current();
-      onProfileChange(updated);
-      setOpen(false);
-      toast.success('Plan updated', {
-        description:
-          updated.calorieTarget != null
-            ? `New daily calorie target: ${updated.calorieTarget.toLocaleString()} kcal`
-            : undefined,
-      });
-    } catch {
-      setSubmitError("Couldn't update your plan. Please try again.");
-    } finally {
-      setSubmitting(false);
+
+    const result = await changePlanPace(pace);
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.message);
+      return;
     }
+
+    setOpen(false);
+    toast.success('Plan updated', {
+      description:
+        result.data.calorieTarget != null
+          ? `New daily calorie target: ${result.data.calorieTarget.toLocaleString()} kcal`
+          : undefined,
+    });
   }
 
-  const target = profileData?.targetWeightKg;
-  const pace = profileData?.preferredWeeklyChangeKg;
+  const target = profile.targetWeightKg;
+  const pace = profile.preferredWeeklyChangeKg;
 
   // Memoised because PlanSelection keys its option math on this object.
   const planInput: PlanInput | null = useMemo(
     () =>
-      profileData != null &&
-      profileData.currentWeightKg != null &&
-      profileData.targetWeightKg != null
+      profile.currentWeightKg != null && profile.targetWeightKg != null
         ? {
-            age: profileData.age,
-            sex: profileData.sex,
-            heightCm: profileData.heightCm,
-            activityLevel: profileData.activityLevel,
-            currentWeightKg: profileData.currentWeightKg,
-            targetWeightKg: profileData.targetWeightKg,
+            age: profile.age,
+            sex: profile.sex,
+            heightCm: profile.heightCm,
+            activityLevel: profile.activityLevel,
+            currentWeightKg: profile.currentWeightKg,
+            targetWeightKg: profile.targetWeightKg,
           }
         : null,
-    [profileData],
+    [profile],
   );
 
   return (
@@ -91,8 +77,8 @@ export function CurrentPlanSection({
       <h2 className="text-sm text-muted-foreground px-2">Current plan</h2>
       <Card className="gap-1 p-4">
         <p className="text-2xl font-bold tracking-tight tabular-nums">
-          {profileData?.calorieTarget != null
-            ? `${profileData.calorieTarget.toLocaleString()} kcal / day`
+          {profile.calorieTarget != null
+            ? `${profile.calorieTarget.toLocaleString()} kcal / day`
             : '—'}
         </p>
         <p className="text-sm text-muted-foreground">
@@ -110,12 +96,11 @@ export function CurrentPlanSection({
             // The plan math needs a weight to compute from and a target to
             // reach, and PATCH /goals/current needs the goal that supplies the
             // target — without both there is nothing to change.
-            disabled={loading || planInput === null}
+            disabled={planInput === null}
             // An unstyled primitive, so it renders *as* a Button rather than
             // restating a button's look.
             render={<Button variant="outline" size="sm" className="w-fit" />}
           >
-            {loading && <Spinner />}
             Change plan
           </DialogTrigger>
           {/* The option list is the tall part, so the dialog caps its own

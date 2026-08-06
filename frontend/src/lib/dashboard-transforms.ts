@@ -17,7 +17,8 @@ import {
  * (see common.ts / the "Tracking Day" glossary entry).
  */
 
-const DAY_MS = 86_400_000;
+/** Exported so `weight-range.ts` steps a window in the same unit. */
+export const DAY_MS = 86_400_000;
 
 export type WeightTrendPoint = {
   /** Epoch ms. A real time axis, so a week of elapsed time reads as a week. */
@@ -55,6 +56,88 @@ export function addDays(isoDate: string, days: number): string {
 /** True when `isoDate` is strictly after today UTC. */
 export function isFutureDay(isoDate: string, now: Date): boolean {
   return isoDate > todayUtc(now);
+}
+
+/**
+ * How far back the weight journal is read.
+ *
+ * Here rather than beside the provider that used to own it: a `'use client'`
+ * module's plain exports become client references on the server, so importing
+ * this from there gave a Server Component `undefined` — and `undefined` days
+ * makes an Invalid Date two calls later, which surfaces as `RangeError` from
+ * `toISOString` with nothing in the message about where the number came from.
+ */
+export const WEIGHT_WINDOW_DAYS = 60;
+
+/** The `?date=` parameter the Tracking Day now lives in, on `/dashboard` and `/meals`. */
+export const DAY_PARAM = 'date';
+
+/**
+ * The Tracking Day a request is asking for.
+ *
+ * The day used to be `useState` inside `MealsProvider`, which is why it survived
+ * a navigation between the dashboard and `/meals`. Read on the server it has to
+ * live in the URL instead — and that turns it into untrusted input: anything can
+ * arrive here, including a future day the API has no data for, or a string that
+ * is not a date at all. Both fall back to today rather than erroring, which is
+ * the same thing `setSelectedDate` did with a future date.
+ */
+/**
+ * A day that exists, not merely a string shaped like one.
+ *
+ * The round trip is the point: `Date.parse` accepts `2026-02-30` — DD is within
+ * 01–31, so the format matches and the arithmetic then rolls it over to March 2.
+ * A NaN check alone therefore passes a day that is not a day, and the window or
+ * the tracking day silently becomes one nobody named. Re-formatting what was
+ * parsed and comparing catches every such rollover in one line.
+ *
+ * `null` because `useSearchParams().get()` returns it, `string[]` because a
+ * server page's `searchParams` does when the key is repeated. Both are "not a
+ * day I can use".
+ */
+export function isDay(
+  value: string | string[] | null | undefined,
+): value is string {
+  if (typeof value !== 'string') return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = Date.parse(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed)) return false;
+  return new Date(parsed).toISOString().slice(0, 10) === value;
+}
+
+export function trackingDayFrom(
+  // `null` because `useSearchParams().get()` returns it, and an array because a
+  // server page's `searchParams` does when the key is repeated. Both are "not a
+  // day I can use", which is the first branch below.
+  value: string | string[] | null | undefined,
+  now: Date,
+): string {
+  if (!isDay(value)) return todayUtc(now);
+  if (isFutureDay(value, now)) return todayUtc(now);
+  return value;
+}
+
+/**
+ * A calendar cell's date as the day string the API takes.
+ *
+ * react-day-picker works in local midnight, so `toISOString().slice(0, 10)` —
+ * what the rest of this app does to a `Date` — names the day *before* for any
+ * viewer east of UTC: tapping Aug 1 in Berlin fetched Jul 31. The day the
+ * reader tapped is the one printed on the cell, which is its local parts.
+ */
+export function calendarDay(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * The inverse, for the calendar's `disabled` bound and its opening month: a
+ * UTC-midnight `Date` would be a different *day* to the cells it is compared
+ * against, and west of UTC that disabled today.
+ */
+export function calendarDate(day: string): Date {
+  return new Date(`${day}T00:00:00`);
 }
 
 /**
@@ -189,10 +272,11 @@ export function groupMealsByType(meals: MealResponse[]): MealGroup[] {
   });
 }
 
-/** "420 kcal · 2 meals" — the subtotal line every group header shows. */
+/** "2 meals · 420 kcal" — the subtotal line every group header shows, in the
+ * order the day's own total beside the card title reads. */
 export function formatGroupSummary(group: MealGroup): string {
   const meals = `${group.meals.length} ${group.meals.length === 1 ? 'meal' : 'meals'}`;
-  return `${group.totalKcal} kcal · ${meals}`;
+  return `${meals} · ${group.totalKcal} kcal`;
 }
 
 /**
@@ -379,14 +463,17 @@ export function buildWeightTrend(
 function carryForward(
   weights: WeightEntryResponse[],
 ): (atMs: number) => number | undefined {
-  const sorted = [...weights].sort((a, b) =>
-    a.recordedAt.localeCompare(b.recordedAt),
-  );
+  // Parsed once here rather than per lookup: the index is asked the same
+  // question for four or five anchors on /weights, and re-parsing every
+  // `recordedAt` each time was the whole cost of the loop.
+  const readings = weights
+    .map((w) => [Date.parse(w.recordedAt), w.weightKg] as [number, number])
+    .sort(([a], [b]) => a - b);
 
   return (atMs) => {
     let found: number | undefined;
-    for (const w of sorted) {
-      if (Date.parse(w.recordedAt) <= atMs) found = w.weightKg;
+    for (const [ms, weightKg] of readings) {
+      if (ms <= atMs) found = weightKg;
       else break;
     }
     return found;
@@ -428,6 +515,26 @@ export function weightChangeOverDays(
 ): number | null {
   const then = carryForward(weights)(now.getTime() - days * DAY_MS);
   return then === undefined ? null : round1(currentWeightKg - then);
+}
+
+/**
+ * The same figure for several periods at once, over one carry-forward index.
+ *
+ * /weights draws four of these under the chart, and calling the singular per
+ * period rebuilt and re-sorted the whole journal each time — five passes over a
+ * year of weigh-ins to answer five questions of the same index.
+ */
+export function weightChangesOverDays(
+  weights: WeightEntryResponse[],
+  currentWeightKg: number,
+  now: Date,
+  periods: readonly number[],
+): (number | null)[] {
+  const weightAtOrBefore = carryForward(weights);
+  return periods.map((days) => {
+    const then = weightAtOrBefore(now.getTime() - days * DAY_MS);
+    return then === undefined ? null : round1(currentWeightKg - then);
+  });
 }
 
 /**

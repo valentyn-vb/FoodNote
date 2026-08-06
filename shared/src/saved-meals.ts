@@ -35,6 +35,20 @@ export const savedMealResponseSchema = mealResponseSchema.omit(OCCASION_FIELDS);
 
 export const listSavedMealsResponseSchema = z.array(savedMealResponseSchema);
 
+/**
+ * The food half of a meal: what a Saved Meal keeps, with the occasion dropped.
+ *
+ * The schema does the projecting, so there is no field list to drift — a field
+ * added to a meal is kept or omitted by `OCCASION_FIELDS` alone. It replaces
+ * three hand-written copies of the same seven assignments, one of which was an
+ * implicit reliance on the request parse stripping `id` on its way out.
+ */
+export function savedMealFrom(
+  meal: CreateSavedMealRequest,
+): CreateSavedMealRequest {
+  return createSavedMealRequestSchema.parse(meal);
+}
+
 export type CreateSavedMealRequest = z.infer<
   typeof createSavedMealRequestSchema
 >;

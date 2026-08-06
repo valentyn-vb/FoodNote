@@ -11,20 +11,23 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import type { Appearance } from '@foodnote/shared';
-import { profile } from '@/lib/api-client';
+import { saveAppearance } from '@/lib/actions/profile';
 import {
   APPEARANCE_ATTRIBUTE,
   APPEARANCE_COOKIE,
   APPEARANCE_COOKIE_MAX_AGE_S,
-  appearanceOrDefault,
 } from '@/lib/appearance';
 
 /**
  * The one thing in the app that knows about the appearance. Both controls — the
  * section on /profile and the sidebar's submenu — are consumers, so they cannot
- * disagree; and network, cookie and DOM attribute are written in one place, which
- * is what makes moving the cookie write into a Server Action later (#86) a
- * one-function edit.
+ * disagree; and the cookie and the DOM attribute are written in one place.
+ *
+ * The profile write moved to a Server Action; the *cookie* write did not, and that
+ * is the point of it staying here. The cookie is a cache of the profile, so it has
+ * to be filled on the visit where the server supplied a value the browser had none
+ * for — an effect that runs on mount fills it for free, where a Server Action
+ * would cost a round trip on every load of a device that has never chosen.
  *
  * It is deliberately NOT the source of the first frame: the root layout already
  * stamped the attribute from the cookie, and this only continues what the server
@@ -47,27 +50,30 @@ export function useAppearance(): AppearanceContextValue {
   return ctx;
 }
 
-function readCookie(): string | undefined {
-  return document.cookie
-    .split('; ')
-    .find((pair) => pair.startsWith(`${APPEARANCE_COOKIE}=`))
-    ?.split('=')[1];
-}
-
 function writeCookie(value: Appearance) {
-  // The BFF's writing half does not exist yet, so this is the browser's job for
-  // now — the same shape `ui/sidebar.tsx` uses for its own open state. No
-  // httpOnly, no secret.
+  // The same shape `ui/sidebar.tsx` uses for its own open state. No httpOnly, no
+  // secret: this is a cache of a preference, and the browser is the one filling it.
   document.cookie = `${APPEARANCE_COOKIE}=${value}; path=/; max-age=${APPEARANCE_COOKIE_MAX_AGE_S}; samesite=lax`;
 }
 
-export function AppearanceProvider({ children }: { children: ReactNode }) {
-  // Seeded from the cookie the server just rendered from, so the first client
-  // value matches the painted one. `useState` initialisers run during render on
-  // the client only — this component is never server-rendered.
-  const [appearance, setLocal] = useState<Appearance>(() =>
-    appearanceOrDefault(readCookie()),
-  );
+export function AppearanceProvider({
+  initial,
+  children,
+}: {
+  /** Resolved on the server: the cookie, or the stored profile when there is none. */
+  initial: Appearance;
+  children: ReactNode;
+}) {
+  // Seeded from the server, which read the same cookie to stamp <html>, so the
+  // first client value cannot disagree with the painted one.
+  //
+  // It used to read `document.cookie` in this initialiser, on the stated
+  // assumption that the component is never server-rendered — true only while
+  // `(app)/layout.tsx` held a client auth gate that returned a spinner during
+  // SSR. With the gate gone this renders on the server, where `document` does not
+  // exist: the read threw on every request and the subtree silently lost its
+  // server render. A prop cannot have that problem.
+  const [appearance, setLocal] = useState<Appearance>(initial);
 
   // The attribute and the cookie are the state, projected: every transition
   // below moves `appearance` and nothing else, so neither copy can be the one a
@@ -78,26 +84,6 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     writeCookie(appearance);
   }, [appearance]);
 
-  // The profile is the truth. On a first visit from a new device the cookie is
-  // absent and the page painted `system`, so this is where a stored preference
-  // arrives — one frame late, by design.
-  useEffect(() => {
-    let cancelled = false;
-    profile
-      .current()
-      .then((p) => {
-        if (!cancelled) setLocal(p.appearance);
-      })
-      // A profile that does not exist yet (404 during onboarding) is not an
-      // error worth a toast: `system` is the right answer for that user.
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-    // Once, on mount: this reconciles the cache with the truth, and re-running it
-    // on every local change would fight the optimistic write below.
-  }, []);
-
   const setAppearance = useCallback(
     (next: Appearance) => {
       const previous = appearance;
@@ -105,9 +91,10 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       // a colour switch tells the user less than the colour does.
       setLocal(next);
 
-      profile.patch({ appearance: next }).catch(() => {
+      void saveAppearance(next).then((result) => {
+        if (result.ok) return;
         setLocal(previous);
-        toast.error("Couldn't save your appearance.");
+        toast.error(result.message);
       });
     },
     [appearance],

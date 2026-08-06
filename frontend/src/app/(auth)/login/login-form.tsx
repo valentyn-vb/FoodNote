@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginRequestSchema, type LoginRequest } from '@foodnote/shared';
-import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
@@ -18,37 +16,36 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
-import { ApiError } from '@/lib/api-client';
+import { login } from '@/lib/actions/auth';
+import { applyActionError } from '@/lib/actions/apply-error';
+import { FORM_ERROR } from '@/lib/actions/result';
 import { AuthTextField } from '../auth-text-field';
 
-export function LoginForm() {
-  const { login } = useAuth();
-  const router = useRouter();
-  // Deliberately generic: the backend never says which of email/password was
-  // wrong, and neither do we.
-  const [formError, setFormError] = useState<string | null>(null);
+export function LoginForm({ destination }: { destination?: string }) {
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    setFormError(null);
-    try {
-      await login(data);
-      router.push('/dashboard');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setFormError('Invalid email or password.');
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
-    }
+  // The action is the write transport and nothing more: react-hook-form still
+  // owns the fields, the schema and the messages. `isPending` is the only pending
+  // state — `formState.isSubmitting` settles the moment the action resolves,
+  // which is before the redirect it triggers has navigated anywhere.
+  const onSubmit = form.handleSubmit((data) => {
+    startTransition(async () => {
+      const result = await login(data, destination);
+      // A success never gets here: the action redirects, so only a failure
+      // returns.
+      if (!result.ok) applyActionError(form, result);
+    });
   });
 
-  const { isSubmitting } = form.formState;
+  // Drawn inline rather than in a toast: the backend does not say which of the
+  // two was wrong, so there is no field to hang it under, and this is the most
+  // common failure of the most-used form in the app.
+  const formError = form.formState.errors[FORM_ERROR]?.message;
 
   return (
     <Card>
@@ -81,10 +78,10 @@ export function LoginForm() {
           <Button
             type="submit"
             size="lg"
-            disabled={isSubmitting}
+            disabled={isPending}
             className="w-full"
           >
-            {isSubmitting && <Spinner />}
+            {isPending && <Spinner />}
             Log in
           </Button>
         </form>

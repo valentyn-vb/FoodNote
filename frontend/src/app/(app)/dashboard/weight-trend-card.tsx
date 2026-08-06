@@ -1,39 +1,38 @@
 'use client';
 
-import type { WeightEntryResponse } from '@foodnote/shared';
+import Link from 'next/link';
+import { ChartCard } from '@/components/chart-card';
 import { WeightTrendChart } from '@/components/weight-trend-chart';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   formatGoalDate,
   formatTrendDate,
   type WeightTrendPoint,
 } from '@/lib/dashboard-transforms';
-import { ChartCard } from './chart-card';
-import { InlineError } from './states';
-import { WeightHistoryDrawer } from './weight-history-drawer';
 
 /**
  * The weight journal as a line, with the projection to the target picking up
  * where it ends. The sub-line states in words what the chart shows in shape —
  * how many weigh-ins it is drawn from, which way they moved, and when the plan
  * lands — because a six-point line at 235px is a gesture, not a reading.
+ *
+ * It carried its own three states — skeleton, inline error, chart — because the
+ * weight journal was a second client fetch that could fail on its own while the
+ * tiles were fine. It is read on the server beside the other two now, so the
+ * three fail and retry as one: `loading.tsx` covers the wait and `error.tsx` the
+ * failure. The granularity is genuinely lost, and it was worth less than it cost
+ * — a card offering "try again" for a request the rest of the page had already
+ * survived.
  */
 export function WeightTrendCard({
-  status,
-  onRetry,
-  entries,
-  onWeightsChanged,
+  weighInCount,
   trend,
   monthChangeKg,
   projectedGoalDate,
   className,
 }: {
-  status: 'loading' | 'error' | 'ready';
-  onRetry: () => void;
-  entries: WeightEntryResponse[];
-  onWeightsChanged: () => void;
+  weighInCount: number;
   trend: WeightTrendPoint[];
   monthChangeKg: number;
   projectedGoalDate: string | null;
@@ -44,55 +43,50 @@ export function WeightTrendCard({
   // provider's 60-day window: the axis is cropped to the readings, so naming
   // the window described a span the chart no longer draws.
   const firstWeighIn = trend.find((point) => point.actual !== undefined)?.t;
-  const count = `${entries.length} ${entries.length === 1 ? 'weigh-in' : 'weigh-ins'}`;
-  const subtitle =
-    status === 'ready'
-      ? [
-          firstWeighIn === undefined
-            ? count
-            : `${count} since ${formatTrendDate(firstWeighIn)}`,
-          monthChangeKg !== 0 &&
-            `${direction} ${Math.abs(monthChangeKg)} kg this month`,
-          projectedGoalDate && `goal by ${formatGoalDate(projectedGoalDate)}`,
-        ]
-          .filter(Boolean)
-          .join(' · ')
-      : undefined;
+  const count = `${weighInCount} ${weighInCount === 1 ? 'weigh-in' : 'weigh-ins'}`;
+  const subtitle = [
+    firstWeighIn === undefined
+      ? count
+      : `${count} since ${formatTrendDate(firstWeighIn)}`,
+    monthChangeKg !== 0 &&
+      `${direction} ${Math.abs(monthChangeKg)} kg this month`,
+    projectedGoalDate && `goal by ${formatGoalDate(projectedGoalDate)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <ChartCard
       title="Weight trend"
       subtitle={subtitle}
+      // A link, not a drawer. The drawer was the whole journal's only home
+      // before /weights existed; now it was a second, smaller copy of that page
+      // — the same rows over the dashboard's 60-day window, with no range to
+      // move and no chart beside them. Two lists of one journal drift, and this
+      // one already had: it offered a delete on entries the page would not.
+      // `buttonVariants` on the Link, not `Button render={<Link/>}` — ui/button
+      // says why: the latter logs that Base UI wanted a real <button>, and the
+      // `nativeButton={false}` that silences it stamps `role="button"` on the
+      // anchor, so the a11y tree announces a button and drops the URL.
       action={
-        status === 'ready' && (
-          <WeightHistoryDrawer
-            entries={entries}
-            onWeightsChanged={onWeightsChanged}
-            trigger={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="touch-target -my-1 text-brand-ink"
-              >
-                View full history
-                <ChevronRight />
-              </Button>
-            }
-          />
-        )
+        <Link
+          href="/weights"
+          className={buttonVariants({
+            variant: 'ghost',
+            size: 'sm',
+            className: 'touch-target -my-1 text-brand-ink',
+          })}
+        >
+          View full history
+          <ChevronRight />
+        </Link>
       }
       className={className}
     >
-      {status === 'ready' ? (
-        <WeightTrendChart
-          className="aspect-auto min-h-0 w-full grow basis-0"
-          data={trend}
-        />
-      ) : status === 'error' ? (
-        <InlineError onRetry={onRetry} />
-      ) : (
-        <Skeleton className="min-h-0 w-full grow basis-0" />
-      )}
+      <WeightTrendChart
+        className="aspect-auto min-h-0 w-full grow basis-0"
+        data={trend}
+      />
     </ChartCard>
   );
 }
