@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { seedDemoAccount } from '../src/database/seed';
 import { Goal } from '../src/goal/goal.entity';
 import { MealEntry } from '../src/meal/meal-entry.entity';
+import { SavedMeal } from '../src/saved-meal/saved-meal.entity';
 import { User } from '../src/user/user.entity';
 import { WeightEntry } from '../src/weight/weight-entry.entity';
 import { App } from 'supertest/types';
@@ -14,6 +15,7 @@ describe('seedDemoAccount (e2e)', () => {
   let users: Repository<User>;
   let weights: Repository<WeightEntry>;
   let meals: Repository<MealEntry>;
+  let savedMeals: Repository<SavedMeal>;
   let goals: Repository<Goal>;
 
   const EMAIL = 'e2e-seed-demo@example.com';
@@ -32,6 +34,7 @@ describe('seedDemoAccount (e2e)', () => {
     users = app.get<Repository<User>>(getRepositoryToken(User));
     weights = app.get<Repository<WeightEntry>>(getRepositoryToken(WeightEntry));
     meals = app.get<Repository<MealEntry>>(getRepositoryToken(MealEntry));
+    savedMeals = app.get<Repository<SavedMeal>>(getRepositoryToken(SavedMeal));
     goals = app.get<Repository<Goal>>(getRepositoryToken(Goal));
   });
 
@@ -49,15 +52,13 @@ describe('seedDemoAccount (e2e)', () => {
     await app.close();
   });
 
-  it('creates a user with ~3 weeks of weights and meals, and exactly one active goal', async () => {
+  it('creates a user with ~3 months of weights and meals, and exactly one active goal', async () => {
     const result = await seedDemoAccount(app, {
       email: EMAIL,
       password: PASSWORD,
     });
 
     expect(result.created).toBe(true);
-    if (!result.created) return; // narrows the union for TS below
-
     expect(result.weightCount).toBeGreaterThan(15);
     expect(result.mealCount).toBeGreaterThan(60);
 
@@ -86,7 +87,6 @@ describe('seedDemoAccount (e2e)', () => {
       password: PASSWORD,
     });
     expect(first.created).toBe(true);
-    if (!first.created) return;
 
     const before = await rowCounts(first.userId);
     const second = await seedDemoAccount(app, {
@@ -97,5 +97,61 @@ describe('seedDemoAccount (e2e)', () => {
 
     expect(second.created).toBe(false);
     expect(after).toEqual(before);
+    // Same account, and nothing was missing — so the run reports no writes.
+    expect(second.userId).toBe(first.userId);
+    expect(second.weightCount).toBe(0);
+    expect(second.mealCount).toBe(0);
+    expect(second.savedMealCount).toBe(0);
+  });
+
+  // The reason the skip became a top-up: the demo account is the one anybody
+  // presents from, so it has to be refillable in place rather than deleted and
+  // re-seeded.
+  it('tops up what is missing on an account that already exists', async () => {
+    const first = await seedDemoAccount(app, {
+      email: EMAIL,
+      password: PASSWORD,
+    });
+    const before = await rowCounts(first.userId);
+
+    // A gap of the kind a top-up exists to close: a whole day's weigh-in, one
+    // day's lunch, and a Saved Meal.
+    const oldestWeight = await weights.findOneOrFail({
+      where: { userId: first.userId },
+      order: { recordedAt: 'ASC' },
+    });
+    await weights.delete({ id: oldestWeight.id });
+    const someLunch = await meals.findOneOrFail({
+      where: { userId: first.userId, mealType: 'lunch' },
+      order: { recordedAt: 'ASC' },
+    });
+    await meals.delete({ id: someLunch.id });
+    const savedBefore = await savedMeals.count({
+      where: { userId: first.userId },
+    });
+    const someSaved = await savedMeals.findOneOrFail({
+      where: { userId: first.userId },
+    });
+    await savedMeals.delete({ id: someSaved.id });
+
+    const again = await seedDemoAccount(app, {
+      email: EMAIL,
+      password: PASSWORD,
+    });
+
+    expect(again.created).toBe(false);
+    expect(again.weightCount).toBe(1);
+    expect(again.mealCount).toBe(1);
+    expect(again.savedMealCount).toBe(1);
+    expect(await rowCounts(first.userId)).toEqual(before);
+    expect(await savedMeals.count({ where: { userId: first.userId } })).toBe(
+      savedBefore,
+    );
+    // Still one goal, and still the original one: a top-up must not replace a
+    // goal, which would reset startWeightKg and startDate to today.
+    const goal = await goals.findOneOrFail({
+      where: { userId: first.userId },
+    });
+    expect(goal.status).toBe('active');
   });
 });
