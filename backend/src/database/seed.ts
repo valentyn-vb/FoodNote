@@ -261,9 +261,21 @@ export async function seedDemoAccount(
     const progress = (DAYS - 1 - i) / (DAYS - 1);
     const weightKg =
       Math.round((startKg - totalDropKg * progress + jitter(i)) * 10) / 10;
+    // Never later than now: before 07:15 UTC today's slot is in the future, and
+    // Current Weight is whichever entry has the latest recordedAt — so a
+    // future-stamped seed entry outranks anything logged during a run. The
+    // smoke net's weight scenario logged a weight and watched the dashboard
+    // not move, on every run started before 07:15 and no other.
+    //
+    // Weights only. The meal stamps below are what order a Tracking Day's list,
+    // and collapsing today's three onto one instant would make that order
+    // arbitrary — a different flake in place of this one.
+    const recordedAt = new Date(
+      Math.min(daysAgo(i, 7, 15).getTime(), Date.now()),
+    );
     await weights.create(userId, {
       weightKg,
-      recordedAt: daysAgo(i, 7, 15).toISOString(),
+      recordedAt: recordedAt.toISOString(),
     });
     weightCount++;
   }
