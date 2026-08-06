@@ -31,7 +31,9 @@ const byName = (a: SavedMealResponse, b: SavedMealResponse) =>
  * Takes whatever height the body has left and scrolls inside it, rather than
  * growing with the list: on a phone the drawer is content-sized, and a dozen
  * saved meals would push the description field and the Parse action off the
- * screen. The floor is what a clamped sheet shrinks it to instead of to nothing.
+ * screen. The floor is one row — what a clamped sheet shrinks it to instead of to
+ * nothing — so a single saved meal is exactly its own height, not a short list in
+ * a tall box.
  */
 export function SavedMealPicker({
   onPick,
@@ -152,7 +154,7 @@ export function SavedMealPicker({
       )}
 
       {status === 'ready' && savedMeals.length > 0 && (
-        <ul className="flex min-h-24 flex-col gap-1 overflow-y-auto p-1 overscroll-contain bg-background rounded-lg">
+        <ul className="flex min-h-16 flex-col gap-1 overflow-y-auto p-1 overscroll-contain bg-background rounded-lg">
           {savedMeals.map((saved) => (
             // No divider between rows: each one lights up as a whole on
             // approach, and a line through the list fought that fill for the
